@@ -1,0 +1,3558 @@
+import { useState, useRef, useEffect } from "react";
+import { LecturerCard } from "./components/ui/LecturerCard";
+import { MajorCard } from "./components/ui/MajorCard";
+import {
+  Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
+  Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
+  Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
+  Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
+  MapPin, Phone, ArrowRight, Star, Monitor
+} from "lucide-react";
+
+const CERULEAN = "#077E9E";
+const CRIMSON = "#8B1A1A";
+const BLACK = "#212121";
+const GRAY_BG = "#F8F8F8";
+const GRAY_LIGHT = "#E0E0E0";
+const MUTED = "#666666";
+
+const artworks = [
+  { id: 1, title: "Neon Cityscape Poster", student: "Nguyễn Minh Anh", likes: 142, h: 320, img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", category: "Poster", tool: "Illustrator", year: "2024", isPublic: true },
+  { id: 2, title: "Brand Identity UEF", student: "Trần Bảo Long", likes: 89, h: 240, img: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg", category: "Branding", tool: "Figma", year: "2024", isPublic: true },
+  { id: 3, title: "3D Abstract Geometry", student: "Lê Thị Hương", likes: 203, h: 380, img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80", category: "3D Art", tool: "Blender", year: "2023", isPublic: false },
+  { id: 4, title: "Vintage Travel Series", student: "Phạm Quốc Việt", likes: 56, h: 270, img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80", category: "Illustration", tool: "Procreate", year: "2023", isPublic: true },
+  { id: 5, title: "UI Design System", student: "Hoàng Thị Mai", likes: 175, h: 300, img: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=800&q=80", category: "UI/UX", tool: "Figma", year: "2024", isPublic: true },
+  { id: 6, title: "Cultural Festival Poster", student: "Vũ Đăng Khoa", likes: 98, h: 350, img: "https://images.unsplash.com/photo-1541462608143-67571c6738dd?w=800&q=80", category: "Poster", tool: "Photoshop", year: "2023", isPublic: true },
+  { id: 7, title: "Minimal Logo Collection", student: "Đặng Thu Hiền", likes: 130, h: 260, img: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&q=80", category: "Branding", tool: "Illustrator", year: "2024", isPublic: false },
+  { id: 8, title: "Futuristic UI Concept", student: "Bùi Minh Khải", likes: 214, h: 290, img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80", category: "UI/UX", tool: "Figma", year: "2024", isPublic: true },
+];
+
+function NavBar({ activePage, setActivePage }) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <nav style={{ background: "#fff", borderBottom: `1px solid ${GRAY_LIGHT}`, height: 60, display: "flex", alignItems: "center", padding: "0 48px", gap: 32, position: "sticky", top: 0, zIndex: 100, justifyContent: "space-between" }}>
+      <div onClick={() => setActivePage("gallery")} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+        <div style={{ width: 28, height: 28, background: BLACK, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ color: "#fff", fontSize: 13, fontWeight: 700, fontFamily: "serif" }}>P</span>
+        </div>
+        <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.5px", color: BLACK }}>PortfolioUEF</span>
+      </div>
+      <div style={{ display: "flex", gap: 4 }}>
+        {[
+          { id: "gallery", label: "Gallery" },
+          { id: "about", label: "Giới thiệu" },
+          { id: "portfolio", label: "Portfolio" },
+          { id: "dashboard", label: "Dashboard" },
+          { id: "admin", label: "Admin" },
+        ].map(p => (
+          <button key={p.id} onClick={() => setActivePage(p.id)} style={{ padding: "6px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: activePage === p.id ? 600 : 400, color: activePage === p.id ? "#fff" : MUTED, background: activePage === p.id ? BLACK : "transparent", transition: "all .15s" }}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, background: GRAY_BG, borderRadius: 8, padding: "7px 12px", width: 200, border: `1px solid ${GRAY_LIGHT}` }}>
+          <Search size={14} color={MUTED} />
+          <span style={{ fontSize: 13, color: MUTED }}>Tìm kiếm tác phẩm...</span>
+        </div>
+        <button onClick={() => setActivePage("auth")} style={{ padding: "7px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK }}>Đăng nhập</button>
+        <button onClick={() => setActivePage("upload")} style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Đăng ấn phẩm</button>
+        <div className="relative ml-2" ref={dropdownRef}>
+          <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80" alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
+            <ChevronDown size={14} color={MUTED} />
+          </div>
+          {isDropdownOpen && (
+            <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
+              <div className="px-4 py-3 border-b border-[#E0E0E0] bg-[#F8F8F8]">
+                <p className="text-sm font-bold text-[#212121]">Nguyễn Minh Anh</p>
+                <p className="text-xs text-[#666666]">minhanh@uef.edu.vn</p>
+              </div>
+              <div className="py-1">
+                <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setActivePage("dashboard"); setIsDropdownOpen(false); }}>
+                  <LayoutDashboard size={16} className="text-[#666666]" /> Dashboard Sinh viên
+                </div>
+                <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setActivePage("settings"); setIsDropdownOpen(false); }}>
+                  <Settings size={16} className="text-[#666666]" /> Cài đặt Portfolio
+                </div>
+              </div>
+              <div className="border-t border-[#E0E0E0] py-1">
+                <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#FEF2F2] hover:text-[#8B1A1A] cursor-pointer text-[#8B1A1A] text-sm font-medium transition-colors" onClick={() => { setActivePage("auth"); setIsDropdownOpen(false); }}>
+                  <LogOut size={16} /> Đăng xuất
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+function MasonryGrid({
+  items,
+  showHover = true,
+  onArtworkClick,
+  showBookmarkAction = false,
+  isBookmarked,
+  onBookmarkClick,
+}) {
+  const [hovered, setHovered] = useState(null);
+  const cols = [[], [], []];
+  items.forEach((item, i) => cols[i % 3].push(item));
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+      {cols.map((col, ci) => (
+        <div key={ci} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {col.map(art => (
+            <div key={art.id} onClick={() => onArtworkClick && onArtworkClick(art)} style={{ position: "relative", borderRadius: 12, overflow: "hidden", cursor: "pointer", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG }}
+              onMouseEnter={() => setHovered(art.id)} onMouseLeave={() => setHovered(null)}>
+              <img src={art.img} alt={art.title} style={{ width: "100%", height: art.h, objectFit: "cover", display: "block" }} />
+              {showHover && hovered === art.id && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.18) 55%, transparent 100%)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-end",
+                    padding: "16px 14px",
+                  }}
+                >
+                  {showBookmarkAction && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onBookmarkClick && onBookmarkClick(art);
+                      }}
+                      title="Lưu vào bộ sưu tập"
+                      style={{
+                        position: "absolute",
+                        top: 10,
+                        right: 10,
+                        width: 34,
+                        height: 34,
+                        borderRadius: 10,
+                        border: "1px solid rgba(255,255,255,0.18)",
+                        background: isBookmarked && isBookmarked(art.id) ? "rgba(7,126,158,0.92)" : "rgba(255,255,255,0.14)",
+                        backdropFilter: "blur(10px)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        transition: "all .15s",
+                      }}
+                    >
+                      <Bookmark
+                        size={16}
+                        color={isBookmarked && isBookmarked(art.id) ? "#fff" : "rgba(255,255,255,0.9)"}
+                        fill={isBookmarked && isBookmarked(art.id) ? "#fff" : "none"}
+                      />
+                    </button>
+                  )}
+
+                  <p style={{ color: "#fff", fontWeight: 600, fontSize: 14, margin: 0 }}>{art.title}</p>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                    <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>{art.student}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Heart size={14} color="#ff6b6b" fill="#ff6b6b" />
+                      <span style={{ color: "#fff", fontSize: 12 }}>{art.likes}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!art.isPublic && (
+                <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(255,255,255,0.9)", borderRadius: 6, padding: "4px 8px", border: `1px solid ${GRAY_LIGHT}`, display: "flex", alignItems: "center", gap: 4 }}>
+                  <Lock size={10} color={BLACK} />
+                  <span style={{ color: BLACK, fontSize: 11, fontWeight: 500 }}>Riêng tư</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
+  const [activeFilter, setActiveFilter] = useState("Tất cả");
+  const categories = ["Tất cả", "Poster", "Branding", "UI/UX", "3D Art", "Illustration"];
+  const years = ["Tất cả", "2024", "2023", "2022"];
+  const tools = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate"];
+
+  return (
+    <div style={{ background: "#fff", minHeight: "100vh" }}>
+      <div style={{ padding: "32px 48px 0" }}>
+        <div style={{ marginBottom: 24 }}>
+          <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-1px" }}>Thư viện tác phẩm</h1>
+          <p style={{ color: MUTED, fontSize: 15, marginTop: 6 }}>Khám phá hàng trăm ấn phẩm sáng tạo từ sinh viên Thiết kế Đồ họa UEF</p>
+        </div>
+        <div style={{ display: "flex", gap: 24, marginBottom: 28, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
+          <div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Danh mục</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              {categories.map(c => (
+                <button key={c} onClick={() => setActiveFilter(c)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: activeFilter === c ? "none" : `1px solid ${GRAY_LIGHT}`, background: activeFilter === c ? BLACK : "#fff", color: activeFilter === c ? "#fff" : BLACK, transition: "all .15s" }}>{c}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Năm học</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              {years.map(y => (
+                <button key={y} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK }}>{y}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Công cụ</span>
+            <div style={{ display: "flex", gap: 6 }}>
+              {tools.map(t => (
+                <button key={t} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK }}>{t}</button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <span style={{ fontSize: 13, color: MUTED }}>{artworks.length} tác phẩm được tìm thấy</span>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK }}>Mới nhất</button>
+            <button style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK }}>Nhiều like nhất</button>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "0 48px 64px" }}>
+        <MasonryGrid
+          items={artworks}
+          onArtworkClick={(art) => {
+            setActiveArtworkId && setActiveArtworkId(art.id);
+            setPage("detail");
+          }}
+          showBookmarkAction={true}
+          isBookmarked={isBookmarked}
+          onBookmarkClick={onBookmarkClick}
+        />
+      </div>
+    </div>
+  );
+}
+
+function PortfolioPage({ setPage }) {
+  const privateGrade = { score: 8.5, comment: "Tác phẩm thể hiện tư duy thiết kế tốt, bố cục hài hòa. Cần cải thiện phần typography và độ tương phản màu sắc. Kỹ năng sử dụng công cụ Figma thành thục." };
+
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactState, setContactState] = useState("idle");
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Demo data (UI tĩnh) — sau này map từ JSONB: social_links + featured case studies
+  // ────────────────────────────────────────────────────────────────────────────
+  const profile = {
+    fullName: "Nguyễn Minh Anh",
+    profileHeadline: "Graphic Designer · UI/UX Enthusiast · UEF",
+    bio:
+      "Đam mê thiết kế đồ họa và trải nghiệm người dùng. Tập trung vào Brand Identity, Poster Design và Motion Graphics.",
+    avatarUrl: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg",
+    socialLinks: [
+      { label: "Behance", href: "https://behance.net/minhanh", icon: "globe" },
+      { label: "LinkedIn", href: "https://linkedin.com/in/minhanh", icon: "link" },
+      { label: "Email", href: "mailto:minhanh@uef.edu.vn", icon: "mail" },
+    ],
+  };
+
+  const featuredWorks = [
+    { id: "cs-1", title: "Brand Identity UEF", img: artworks[1].img, tools: ["Illustrator", "Figma"], colClass: "col-span-12 lg:col-span-7", rowSpan: 10 },
+    { id: "cs-2", title: "Neon Cityscape Poster", img: artworks[0].img, tools: ["Illustrator", "Photoshop"], colClass: "col-span-12 sm:col-span-6 lg:col-span-5", rowSpan: 5 },
+    { id: "cs-3", title: "Futuristic UI Concept", img: artworks[7].img, tools: ["Figma", "Design System"], colClass: "col-span-12 sm:col-span-6 lg:col-span-5", rowSpan: 5 },
+    { id: "cs-4", title: "Cultural Festival Poster", img: artworks[5].img, tools: ["Photoshop"], colClass: "col-span-12 sm:col-span-4", rowSpan: 5 },
+    { id: "cs-5", title: "Vintage Travel Series", img: artworks[3].img, tools: ["Procreate"], colClass: "col-span-12 sm:col-span-4", rowSpan: 5 },
+    { id: "cs-6", title: "3D Abstract Geometry", img: artworks[2].img, tools: ["Blender"], colClass: "col-span-12 sm:col-span-4", rowSpan: 5 },
+  ];
+
+  const handleContactSubmit = () => {
+    setContactState("loading");
+    setTimeout(() => {
+      setContactState("success");
+    }, 1500);
+  };
+
+  const closeContactModal = () => {
+    setIsContactModalOpen(false);
+    setTimeout(() => setContactState("idle"), 300);
+  };
+
+  return (
+    <div className="bg-white min-h-screen">
+      <style>{`
+        /* Portfolio public — phác thảo UI mới (Hero + Featured Bento) */
+        .portfolio-hero-grid {
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 28px;
+        }
+        @media (max-width: 1024px) {
+          .portfolio-hero-grid { grid-template-columns: 1fr; }
+        }
+        .bento-grid {
+          display: grid;
+          grid-template-columns: repeat(12, minmax(0, 1fr));
+          grid-auto-rows: 26px;
+          gap: 14px;
+        }
+        @media (max-width: 640px) {
+          .bento-grid { grid-auto-rows: 24px; }
+        }
+      `}</style>
+
+      {/* HERO SECTION (Flow #1 — UI tĩnh) */}
+      <section className="relative overflow-hidden border-b border-[#E0E0E0]">
+        {/* background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#077E9E]/10 via-white to-white" />
+        <div className="absolute -top-24 -right-24 w-[520px] h-[520px] rounded-full bg-[#077E9E]/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -left-28 w-[520px] h-[520px] rounded-full bg-black/5 blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 pt-14 pb-10">
+          <div className="portfolio-hero-grid items-start">
+            {/* left */}
+            <div>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-sm bg-[#F8F8F8]">
+                  <img src={profile.avatarUrl} alt={profile.fullName} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-1">
+                    Portfolio công khai
+                  </p>
+                  <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#212121] leading-[1.05]">
+                    {profile.fullName}
+                  </h1>
+                </div>
+              </div>
+
+              <p className="text-base sm:text-lg text-[#666666] font-medium mb-3">
+                {profile.profileHeadline}
+              </p>
+              <p className="text-sm sm:text-[15px] text-[#444444] leading-relaxed max-w-2xl">
+                {profile.bio}
+              </p>
+
+              {/* social links */}
+              <div className="flex flex-wrap gap-2.5 mt-6">
+                {profile.socialLinks.map((l) => {
+                  const iconMap = {
+                    globe: <Globe size={16} className="text-[#077E9E]" />,
+                    link: <Link size={16} className="text-[#077E9E]" />,
+                    mail: <Mail size={16} className="text-[#077E9E]" />,
+                  };
+                  return (
+                    <a
+                      key={l.label}
+                      href={l.href}
+                      target={l.href.startsWith("http") ? "_blank" : undefined}
+                      rel={l.href.startsWith("http") ? "noreferrer" : undefined}
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:border-[#077E9E] hover:shadow-sm transition-all"
+                    >
+                      {iconMap[l.icon]}
+                      <span>{l.label}</span>
+                      {l.href.startsWith("http") && <ExternalLink size={14} className="text-[#666666]" />}
+                    </a>
+                  );
+                })}
+              </div>
+
+              {/* CTA */}
+              <div className="flex flex-wrap gap-3 mt-8">
+                <button
+                  className="px-5 py-2.5 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors"
+                  onClick={() => setIsContactModalOpen(true)}
+                >
+                  Liên hệ
+                </button>
+                <button className="px-5 py-2.5 rounded-xl border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:bg-[#F8F8F8] transition-colors">
+                  Chia sẻ
+                </button>
+              </div>
+
+              {/* quick stats (giữ tinh thần thiết kế cũ) */}
+              <div className="mt-10 flex flex-wrap gap-8 border-t border-[#E0E0E0] pt-6">
+                {[{ label: "Tác phẩm", val: "12" }, { label: "Lượt xem", val: "2.4K" }, { label: "Lượt thích", val: "847" }].map((s) => (
+                  <div key={s.label} className="flex items-end gap-2">
+                    <span className="text-2xl font-extrabold text-[#212121] tracking-tight">{s.val}</span>
+                    <span className="text-sm text-[#666666] pb-0.5">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* right (teaser bento nhỏ để tăng “wow”) */}
+            <div className="bg-white/70 backdrop-blur-sm border border-[#E0E0E0] rounded-2xl p-4 shadow-sm">
+              <p className="text-xs font-semibold tracking-widest uppercase text-[#666666] mb-3">
+                Featured snapshot
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {featuredWorks.slice(0, 4).map((w) => (
+                  <div key={w.id} className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] aspect-[4/3]">
+                    <img src={w.img} alt={w.title} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-[#666666] mt-3 leading-relaxed">
+                * Demo UI — sau này “Featured” sẽ được chọn tự động theo highlight của giảng viên / lượt view / pin.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 pb-20">
+        {/* FEATURED CASE STUDIES (Flow #3 — UI tĩnh) */}
+        <section className="pt-12">
+          <div className="flex items-end justify-between gap-6 mb-6">
+            <div>
+              <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2">Featured Case Studies</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#212121] tracking-tight">Những đồ án xuất sắc</h2>
+              <p className="text-sm text-[#666666] mt-2 max-w-2xl">
+                Bento grid giúp nhấn mạnh 4–6 đồ án tốt nhất (không “đổ” tất cả ảnh ra cùng lúc), hover để xem tên đồ án & công cụ.
+              </p>
+            </div>
+            <button className="hidden sm:inline-flex px-4 py-2 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#212121] hover:bg-[#F8F8F8] transition-colors">
+              Xem tất cả →
+            </button>
+          </div>
+
+          <div className="bento-grid">
+            {featuredWorks.map((w) => (
+              <div
+                key={w.id}
+                onClick={() => setPage && setPage("detail")}
+                className={`group relative overflow-hidden rounded-2xl border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer ${w.colClass}`}
+                style={{ gridRow: `span ${w.rowSpan}` }}
+              >
+                <img
+                  src={w.img}
+                  alt={w.title}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-x-0 bottom-0 p-5 translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <p className="text-white text-[15px] font-bold leading-snug mb-3">{w.title}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {w.tools.map((t) => (
+                      <span
+                        key={t}
+                        className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-white"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* giữ nguyên các block cũ phía dưới (tạm thời), để không phá layout hiện có */}
+        <div className="mt-10" style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, borderRadius: 10, padding: "14px 18px", marginBottom: 28, display: "flex", gap: 14, alignItems: "flex-start" }}>
+          <div style={{ background: BLACK, borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 4 }}>
+            <Lock size={12} color="#fff" />
+            <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>RIÊNG TƯ</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: BLACK }}>Nhận xét từ Giảng viên · GV. Trần Văn Phúc</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 12, color: MUTED }}>Điểm tổng kết:</span>
+                <span style={{ fontSize: 22, fontWeight: 700, color: CERULEAN }}>{privateGrade.score}</span>
+                <span style={{ fontSize: 13, color: MUTED }}>/10</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, color: "#555", marginTop: 6, lineHeight: 1.6, marginBottom: 0 }}>{privateGrade.comment}</p>
+          </div>
+        </div>
+
+        <div style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
+          <div style={{ display: "flex", gap: 0 }}>
+            {["Tất cả tác phẩm", "Poster", "Branding", "UI/UX"].map((t, i) => (
+              <button key={t} style={{ padding: "10px 20px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: i === 0 ? 600 : 400, color: i === 0 ? BLACK : MUTED, borderBottom: i === 0 ? `2px solid ${BLACK}` : "2px solid transparent", marginBottom: -1 }}>{t}</button>
+            ))}
+          </div>
+        </div>
+        <MasonryGrid items={artworks.slice(0, 6)} onArtworkClick={() => setPage("detail")} />
+        <div style={{ height: 64 }} />
+      </main>
+
+      {isContactModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-[#E0E0E0] flex justify-between items-center bg-[#F8F8F8]">
+              <h3 className="font-bold text-lg text-[#212121]">Gửi tin nhắn liên hệ</h3>
+              <button onClick={closeContactModal} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
+            </div>
+            {contactState === "success" ? (
+              <div className="p-8 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-[#E8F4F8] rounded-full flex items-center justify-center mb-4">
+                  <Check size={32} className="text-[#077E9E]" />
+                </div>
+                <h4 className="text-xl font-bold text-[#212121] mb-2">Đã gửi thành công!</h4>
+                <p className="text-sm text-[#666666] mb-6">Tin nhắn của bạn đã được chuyển đến sinh viên Nguyễn Minh Anh.</p>
+                <button onClick={closeContactModal} className="w-full py-2.5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-semibold text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Đóng</button>
+              </div>
+            ) : (
+              <div className="p-6 flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">Họ Tên / Đơn vị</label>
+                  <input type="text" placeholder="Nhập tên của bạn" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">Email liên hệ</label>
+                  <input type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">Mục đích</label>
+                  <select className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white cursor-pointer">
+                    <option>Tuyển dụng / Thực tập</option>
+                    <option>Hợp tác dự án (Freelance)</option>
+                    <option>Khác</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">Nội dung</label>
+                  <textarea placeholder="Nhập nội dung tin nhắn..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
+                </div>
+                <button onClick={handleContactSubmit} disabled={contactState === "loading"} className={`mt-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all flex justify-center items-center gap-2 ${contactState === "loading" ? "bg-[#666666] cursor-wait" : "bg-[#077E9E] hover:opacity-90 cursor-pointer"}`}>
+                  {contactState === "loading" ? "Đang gửi..." : <><Send size={16} /> Gửi tin nhắn</>}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ToggleSwitch({ isOn, onToggle }) {
+  return (
+    <div onClick={onToggle} style={{ width: 38, height: 20, borderRadius: 10, background: isOn ? CERULEAN : GRAY_LIGHT, cursor: "pointer", position: "relative", transition: "background .2s", flexShrink: 0 }}>
+      <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: isOn ? 20 : 2, transition: "left .2s", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
+    </div>
+  );
+}
+
+function DashboardSidebar({ active, setPage }) {
+  const items = [
+    { icon: <Image size={18} />, label: "Tác phẩm của tôi", page: "dashboard" },
+    { icon: <MessageSquare size={18} />, label: "Hộp thư", page: "messages" },
+    { icon: <Settings size={18} />, label: "Cài đặt", page: "settings" },
+  ];
+
+  return (
+    <div style={{ width: 220, background: "#fff", borderRight: `1px solid ${GRAY_LIGHT}`, padding: "28px 0", flexShrink: 0 }}>
+      <div style={{ padding: "0 20px 20px", borderBottom: `1px solid ${GRAY_LIGHT}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80" alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} />
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: BLACK }}>Minh Anh</p>
+            <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Sinh viên K2021</p>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "16px 0" }}>
+        {items.map(item => (
+          <div key={item.label} onClick={() => setPage(item.page)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", cursor: "pointer", background: active === item.label ? "#F0F8FB" : "transparent", borderRight: active === item.label ? `3px solid ${CERULEAN}` : "3px solid transparent" }}>
+            <span style={{ color: active === item.label ? CERULEAN : MUTED, display: "flex" }}>{item.icon}</span>
+            <span style={{ fontSize: 13, fontWeight: active === item.label ? 600 : 400, color: active === item.label ? CERULEAN : BLACK }}>{item.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DashboardPage({ setPage }) {
+  const [artworkState, setArtworkState] = useState(artworks.map(a => ({ ...a })));
+  const togglePublic = (id) => setArtworkState(prev => prev.map(a => a.id === id ? { ...a, isPublic: !a.isPublic } : a));
+
+  const stats = [
+    { label: "Tổng tác phẩm", val: "12", icon: <Image size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Lượt xem", val: "2,417", icon: <Eye size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Lượt thích", val: "847", icon: <Heart size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Tác phẩm công khai", val: artworkState.filter(a => a.isPublic).length.toString(), icon: <Globe size={24} color={BLACK} strokeWidth={1.5} /> },
+  ];
+
+  return (
+    <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
+      <DashboardSidebar active="Tác phẩm của tôi" setPage={setPage} />
+
+      <div style={{ flex: 1, padding: "32px 40px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Tác phẩm của tôi</h2>
+            <p style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>Quản lý và kiểm soát quyền hiển thị tác phẩm</p>
+          </div>
+          <button onClick={() => setPage("upload")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 22px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+            <Plus size={18} color="#fff" />
+            Đăng ấn phẩm mới
+          </button>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
+          {stats.map(s => (
+            <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", border: `1px solid ${GRAY_LIGHT}` }}>
+              <div style={{ marginBottom: 8 }}>{s.icon}</div>
+              <p style={{ fontSize: 24, fontWeight: 700, margin: "0 0 2px", color: BLACK }}>{s.val}</p>
+              <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+          {artworkState.map(art => (
+            <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+              <div style={{ position: "relative", background: GRAY_BG }}>
+                <img src={art.img} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail")} />
+                <div style={{ position: "absolute", top: 8, left: 8 }}>
+                  <span style={{ background: art.isPublic ? "#E8F4F8" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#B3D9E8" : GRAY_LIGHT}` }}>{art.isPublic ? "Công khai" : "Riêng tư"}</span>
+                </div>
+              </div>
+              <div style={{ padding: "12px 14px" }}>
+                <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                  <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.category}</span>
+                  <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.tool}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px solid ${GRAY_LIGHT}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 11, color: MUTED }}>Công khai</span>
+                    <ToggleSwitch isOn={art.isPublic} onToggle={() => togglePublic(art.id)} />
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
+                    </button>
+                    <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid #F5C5C5`, background: "#FEF2F2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Trash2 size={14} color={CRIMSON} strokeWidth={1.5} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function UploadPage({ setPage }) {
+  const [showPopup, setShowPopup] = useState(false);
+  const [uploadState, setUploadState] = useState("idle"); // idle, loading, success
+  const [checked1, setChecked1] = useState(false);
+  const [checked2, setChecked2] = useState(false);
+  const [checked3, setChecked3] = useState(false);
+  const [tags, setTags] = useState(["Poster", "Typography"]);
+  const [tagInput, setTagInput] = useState("");
+
+  const handleUploadSubmit = () => {
+    setUploadState("loading");
+    setTimeout(() => {
+      setUploadState("success");
+      setTimeout(() => {
+        setUploadState("idle");
+        setShowPopup(false);
+        if (setPage) setPage("dashboard");
+      }, 1500);
+    }, 1500);
+  };
+
+  return (
+    <div style={{ background: "#fff", minHeight: "100vh", padding: "40px 64px", position: "relative" }}>
+      {showPopup && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: "36px 40px", width: 480, boxShadow: "0 24px 64px rgba(0,0,0,0.35)" }}>
+            {uploadState === "success" ? (
+              <div className="flex flex-col items-center justify-center text-center py-4">
+                <div className="w-16 h-16 bg-[#E8F4F8] rounded-full flex items-center justify-center mb-4">
+                  <Check size={32} className="text-[#077E9E]" />
+                </div>
+                <h4 className="text-xl font-bold text-[#212121] mb-2">Đăng tải thành công!</h4>
+                <p className="text-sm text-[#666666]">Tác phẩm của bạn đã được gửi lên hệ thống.</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 40, height: 40, background: "#FEF2F2", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ShieldAlert size={20} color={CRIMSON} strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: BLACK }}>Cam kết Học thuật</h3>
+                    <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>Bắt buộc trước khi đăng bài</p>
+                  </div>
+                </div>
+                <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, marginBottom: 20, background: GRAY_BG, padding: "12px 14px", borderRadius: 8, borderLeft: `3px solid ${CRIMSON}` }}>
+                  Để đảm bảo tính trung thực và toàn vẹn học thuật, bạn cần xác nhận các cam kết sau trước khi đăng tác phẩm lên hệ thống.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {[
+                    { id: "c1", state: checked1, set: setChecked1, text: "Tôi xác nhận tác phẩm này là sản phẩm tự thực hiện, không sử dụng bất kỳ công cụ AI tạo sinh nào (Midjourney, DALL·E, Stable Diffusion, v.v.)" },
+                    { id: "c2", state: checked2, set: setChecked2, text: "Tôi không sao chép hoặc sử dụng tác phẩm của người khác mà không có sự cho phép và ghi rõ nguồn" },
+                    { id: "c3", state: checked3, set: setChecked3, text: "Tôi hiểu rằng vi phạm cam kết này sẽ dẫn đến hậu quả theo quy chế học vụ của trường UEF" },
+                  ].map(c => (
+                    <label key={c.id} style={{ display: "flex", gap: 10, cursor: "pointer", alignItems: "flex-start" }}>
+                      <div onClick={() => c.set(!c.state)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${c.state ? CERULEAN : GRAY_LIGHT}`, background: c.state ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>
+                        {c.state && <Check size={14} color="#fff" strokeWidth={3} />}
+                      </div>
+                      <span style={{ fontSize: 13, color: "#333", lineHeight: 1.5 }}>{c.text}</span>
+                    </label>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
+                  <button onClick={() => setShowPopup(false)} disabled={uploadState === "loading"} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: uploadState === "loading" ? "not-allowed" : "pointer", color: MUTED }}>Hủy</button>
+                  <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3) ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3) ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3) && uploadState !== "loading" ? "pointer" : "not-allowed" }}>
+                    {uploadState === "loading" ? "Đang xử lý..." : "Xác nhận & Đăng bài"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6, color: BLACK }}>Đăng ấn phẩm mới</h2>
+        <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>Chia sẻ tác phẩm sáng tạo của bạn với cộng đồng UEF</p>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Ảnh tác phẩm</label>
+            <div style={{ border: `2px dashed ${GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG }}>
+              <img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&q=80" alt="preview" style={{ width: "100%", height: 400, objectFit: "cover", display: "block" }} />
+              <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                <FileImage size={36} color="#fff" strokeWidth={1.5} />
+                <p style={{ color: "#fff", fontSize: 14, fontWeight: 600, margin: 0 }}>Kéo thả hoặc chọn ảnh</p>
+                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, margin: 0 }}>PNG, JPG, SVG • Tối đa 20MB</p>
+                <button style={{ marginTop: 6, padding: "8px 20px", borderRadius: 8, border: "2px solid #fff", background: "transparent", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Chọn file</button>
+              </div>
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Ảnh bổ sung</label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {["1550745165-9bc0b252726f", "1614850523459-c2f4c699c52e", "1572375992501-4b087315dc0f"].map(id => (
+                  <div key={id} style={{ width: 80, height: 64, borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG }}>
+                    <img src={`https://images.unsplash.com/photo-${id}?w=200&q=60`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                ))}
+                <div style={{ width: 80, height: 64, borderRadius: 8, border: `2px dashed ${GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: GRAY_BG }}>
+                  <Plus size={22} color={MUTED} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tiêu đề tác phẩm *</label>
+              <input defaultValue="Neon Cityscape Poster Series" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Mô tả</label>
+              <textarea defaultValue="Bộ poster được lấy cảm hứng từ văn hóa đô thị hiện đại, kết hợp giữa neon light và kiến trúc đương đại. Thực hiện trong khuôn khổ môn Thiết kế Đồ họa 3 năm học 2024." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 110, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Danh mục & Công cụ</label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
+                  <option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option>
+                </select>
+                <select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
+                  <option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tags</label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>
+                {tags.map(t => (
+                  <span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>
+                    {t}
+                    <X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== t))} style={{ cursor: "pointer" }} />
+                  </span>
+                ))}
+                <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} />
+              </div>
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Quyền hiển thị</label>
+              <div style={{ display: "flex", gap: 10 }}>
+                {["Công khai", "Riêng tư"].map((opt, i) => (
+                  <label key={opt} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 8, border: `1px solid ${i === 0 ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", flex: 1, background: i === 0 ? "#F0F8FB" : GRAY_BG }}>
+                    <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${i === 0 ? CERULEAN : GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff" }}>
+                      {i === 0 && <div style={{ width: 8, height: 8, borderRadius: "50%", background: CERULEAN }} />}
+                    </div>
+                    <span style={{ fontSize: 13, color: BLACK, fontWeight: i === 0 ? 600 : 400 }}>{opt}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginTop: "auto", paddingTop: 8 }}>
+              <button onClick={() => setShowPopup(true)} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: "0.3px" }}>
+                Đăng tác phẩm
+              </button>
+              <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>Bạn sẽ cần xác nhận cam kết học thuật trước khi hoàn tất</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked }) {
+  const [liked, setLiked] = useState(false);
+  const [score, setScore] = useState("");
+  const [comment, setComment] = useState("");
+  const art = artworks.find((a) => a.id === activeArtworkId) || artworks[2];
+
+  return (
+    <div style={{ background: "#fff", minHeight: "100vh" }}>
+      <div style={{ padding: "20px 48px", borderBottom: `1px solid ${GRAY_LIGHT}`, display: "flex", gap: 6, alignItems: "center" }}>
+        <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("gallery")}>Gallery</span>
+        <span style={{ fontSize: 13, color: MUTED }}>/</span>
+        <span style={{ fontSize: 13, color: MUTED }}>3D Art</span>
+        <span style={{ fontSize: 13, color: MUTED }}>/</span>
+        <span style={{ fontSize: 13, color: BLACK, fontWeight: 500 }}>{art.title}</span>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "65fr 35fr", minHeight: "calc(100vh - 105px)" }}>
+        <div style={{ background: GRAY_BG, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: 32 }}>
+          <img src={art.img} alt={art.title} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
+          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
+            <p style={{ color: "rgba(0,0,0,0.06)", fontSize: 48, fontWeight: 900, transform: "rotate(-25deg)", userSelect: "none", letterSpacing: 4, textTransform: "uppercase" }}>UEF · PORTFOLIO</p>
+          </div>
+          <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
+            {[<Maximize2 size={16} />, <ArrowDownCircle size={16} />, <ExternalLink size={16} />].map((icon, i) => (
+              <button key={i} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>{icon}</button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ borderLeft: `1px solid ${GRAY_LIGHT}`, padding: "32px 28px", overflow: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+              <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.category}</span>
+              <span style={{ fontSize: 12, color: MUTED }}>12 Tháng 3, 2024</span>
+            </div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px", color: BLACK, lineHeight: 1.3 }}>{art.title}</h1>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <img src="https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg" alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} />
+              <span style={{ fontSize: 13, color: MUTED }}>{art.student}</span>
+              <span style={{ fontSize: 12, color: MUTED }}>·</span>
+              <span style={{ fontSize: 12, color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("portfolio")}>Xem portfolio</span>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
+            {["3D Art", "Blender", "Abstract", "Geometry", "2024", "Năm 3"].map(tag => (
+              <span key={tag} style={{ background: GRAY_BG, fontSize: 11, padding: "4px 10px", borderRadius: 12, color: "#555", cursor: "pointer", border: `1px solid ${GRAY_LIGHT}` }}>{tag}</span>
+            ))}
+          </div>
+
+          <p style={{ fontSize: 13, color: "#444", lineHeight: 1.75, marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
+            Tác phẩm 3D này được tạo ra bằng Blender 4.0, thể hiện sự kết hợp giữa hình học trừu tượng và ánh sáng động. Lấy cảm hứng từ kiến trúc tối giản Nhật Bản và nghệ thuật số hiện đại.
+          </p>
+
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
+            <div style={{ display: "flex", gap: 14 }}>
+              <button onClick={() => setLiked(!liked)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${liked ? "#F5C5C5" : GRAY_LIGHT}`, background: liked ? "#FEF2F2" : "#fff", cursor: "pointer" }}>
+                <Heart size={16} fill={liked ? "#E53E3E" : "none"} color={liked ? "#E53E3E" : MUTED} />
+                <span style={{ fontSize: 13, color: liked ? "#E53E3E" : MUTED, fontWeight: liked ? 600 : 400 }}>{art.likes + (liked ? 1 : 0)}</span>
+              </button>
+              <button style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer" }}>
+                <MessageSquare size={16} color={MUTED} />
+                <span style={{ fontSize: 13, color: MUTED }}>14</span>
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={() => onBookmarkClick && onBookmarkClick(art)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: 8,
+                  border: `1px solid ${isBookmarked && isBookmarked(art.id) ? "#B3D9E8" : GRAY_LIGHT}`,
+                  background: isBookmarked && isBookmarked(art.id) ? "#F0F8FB" : "#fff",
+                  fontSize: 13,
+                  cursor: "pointer",
+                  color: isBookmarked && isBookmarked(art.id) ? CERULEAN : BLACK,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontWeight: isBookmarked && isBookmarked(art.id) ? 600 : 400,
+                }}
+              >
+                <Bookmark
+                  size={16}
+                  fill={isBookmarked && isBookmarked(art.id) ? CERULEAN : "none"}
+                  color={isBookmarked && isBookmarked(art.id) ? CERULEAN : MUTED}
+                />{" "}
+                {isBookmarked && isBookmarked(art.id) ? "Đã lưu" : "Lưu"}
+              </button>
+              <button style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Liên hệ</button>
+            </div>
+          </div>
+
+          <div style={{ background: GRAY_BG, borderRadius: 12, padding: "20px", border: `1px solid ${GRAY_LIGHT}` }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+              <div style={{ width: 28, height: 28, background: "#E8F4F8", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Check size={16} color={CERULEAN} strokeWidth={2} />
+              </div>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: BLACK }}>Đánh giá của Giảng viên</p>
+                <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Chỉ giảng viên môn học mới có thể chấm điểm</p>
+              </div>
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Điểm số (0–10)</label>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input value={score} onChange={e => setScore(e.target.value)} type="number" min="0" max="10" step="0.5" placeholder="8.5" style={{ width: 80, padding: "9px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, color: CERULEAN, background: "#fff", outline: "none", textAlign: "center" }} />
+                <div>
+                  <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Nhập điểm từ 0 đến 10</p>
+                  {score && <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <div key={n} style={{ width: 14, height: 5, borderRadius: 2, background: parseFloat(score) >= n ? CERULEAN : GRAY_LIGHT }} />)}
+                  </div>}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Lời phê bình & Nhận xét</label>
+              <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Nhận xét về kỹ thuật thực hiện, tư duy thiết kế, điểm mạnh và góp ý cải thiện..." style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 100, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
+            </div>
+            <button style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: score && comment ? CERULEAN : GRAY_LIGHT, color: score && comment ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: score && comment ? "pointer" : "not-allowed" }}>
+              Lưu đánh giá
+            </button>
+          </div>
+
+          <div style={{ marginTop: 32 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>Bình luận</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
+              <div style={{ border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, padding: 12, background: GRAY_BG }}>
+                <textarea placeholder="Để lại bình luận của bạn..." style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                  <button style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                    <Send size={14} color="#fff" /> Gửi bình luận
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <img src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&q=80" alt="avatar" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+                <div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>Trần Quang Huy</p>
+                    <span style={{ fontSize: 11, color: MUTED }}>2 giờ trước</span>
+                  </div>
+                  <p style={{ fontSize: 13, color: BLACK, margin: 0, lineHeight: 1.5 }}>Ánh sáng trong render 3D này rất đẹp. Bạn dùng render engine nào vậy?</p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 12 }}>
+                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80" alt="avatar" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+                <div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>Lê Thị Hương (Tác giả)</p>
+                    <span style={{ fontSize: 11, color: MUTED }}>1 giờ trước</span>
+                  </div>
+                  <p style={{ fontSize: 13, color: BLACK, margin: 0, lineHeight: 1.5 }}>Cảm ơn bạn! Mình sử dụng Cycles trong Blender nhé.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div style={{ padding: "40px 48px 64px", borderTop: `1px solid ${GRAY_LIGHT}` }}>
+        <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 24 }}>Khám phá thêm</h3>
+        <MasonryGrid items={artworks.slice(3, 6)} showHover={true} onArtworkClick={() => setPage("detail")} />
+      </div>
+
+    </div>
+  );
+}
+
+function AuthPage({ setPage }) {
+  return (
+    <div style={{ display: "flex", height: "100vh", width: "100%" }}>
+      <div style={{ flex: 1, position: "relative" }}>
+        <img src="https://cdn-media.sforum.vn/storage/app/media/wp-content/uploads/2023/08/hoc-phi-uef-.jpg" alt="auth-bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
+        <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => setPage("gallery")}>
+          <div style={{ width: 32, height: 32, background: "#fff", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: BLACK, fontSize: 15, fontWeight: 800, fontFamily: "serif" }}>P</span>
+          </div>
+          <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>PortfolioUEF</span>
+        </div>
+      </div>
+      <div style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 64px" }}>
+        <h2 style={{ fontSize: 28, fontWeight: 700, color: BLACK, marginBottom: 8 }}>Đăng nhập</h2>
+        <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>Chào mừng trở lại với hệ thống Portfolio UEF</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Email</label>
+            <input type="email" placeholder="sv@uef.edu.vn" style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mật khẩu</label>
+            <input type="password" placeholder="••••••••" style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }} />
+          </div>
+        </div>
+        <button onClick={() => setPage("dashboard")} style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 32, cursor: "pointer" }}>Đăng nhập</button>
+      </div>
+    </div>
+  )
+}
+
+
+
+function AdminDashboardPage({ setPage }) {
+  const stats = [
+    { label: "Ấn phẩm đang hiển thị", value: artworks.length, hint: "Tổng ấn phẩm công khai", accent: "#077E9E" },
+    { label: "Bài bị báo cáo", value: 2, hint: "Cần xử lý", accent: "#8B1A1A" },
+    { label: "Tổng tài khoản", value: 1234, hint: "SV + GV + Admin", accent: "#212121" },
+    { label: "Lượt tương tác", value: "8.7K", hint: "+2.4% tuần này", accent: "#055F78" },
+  ];
+
+  const categoryCounts = [
+    { label: "Thiết kế TH", value: 58, color: "#077E9E" },
+    { label: "Đồ hoạ ứng dụng", value: 47, color: "#0C9DBF" },
+    { label: "Bao bì", value: 38, color: "#8B1A1A" },
+    { label: "Motion", value: 29, color: "#212121" },
+    { label: "UI/UX", value: 24, color: "#055F78" },
+    { label: "Khác", value: 21, color: "#666666" },
+  ];
+
+  const recent = [
+    { color: "#077E9E", text: "GV Trần Văn Phúc vừa chấm điểm 3 ấn phẩm" },
+    { color: "#8B1A1A", text: "Có 2 ấn phẩm được báo cáo vi phạm" },
+    { color: "#212121", text: "Sinh viên Nguyễn Minh Anh đăng ấn phẩm mới" },
+    { color: "#055F78", text: "Xuất Tập san PDF thành công" },
+  ];
+
+  const flagged = artworks.slice(0, 6).map((a, i) => ({
+    ...a,
+    subject: ["Thiết kế TH", "Đồ hoạ ứng dụng", "Motion Design", "UX/UI"][i % 4],
+    createdAt: ["05/05/2026", "04/05/2026", "03/05/2026", "02/05/2026"][i % 4],
+    status: i % 4 === 0 ? "Bị báo cáo" : i % 4 === 1 ? "Đang hiển thị" : i % 4 === 2 ? "Đã ẩn" : "Nổi bật",
+  }));
+
+  const statusBadge = (s) => {
+    if (s === "Bị báo cáo") return "bg-red-50 text-[#8B1A1A] border border-[#F5C5C5]";
+    if (s === "Đã ẩn") return "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]";
+    if (s === "Nổi bật") return "bg-blue-50 text-[#077E9E] border border-[#B3D9E8]";
+    return "bg-white text-[#212121] border border-[#E0E0E0]";
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-white relative">
+      <AdminSidebar active="admin" setPage={setPage} />
+      <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-[#212121]">Tổng quan Quản trị</h2>
+            <p className="text-sm text-[#666666] mt-1">Theo dõi số liệu hệ thống và xử lý vi phạm / cảnh cáo ấn phẩm</p>
+          </div>
+          <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 bg-[#077E9E] text-white rounded-lg text-sm font-semibold hover:bg-[#055F78] transition-colors flex items-center gap-2">
+            <FileDown size={16} /> Báo cáo PDF
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          {stats.map((s) => (
+            <div key={s.label} className="bg-white border border-[#E0E0E0] rounded-xl p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{s.label}</p>
+                  <p className="text-3xl font-extrabold text-[#212121] leading-none">{s.value}</p>
+                </div>
+                <div className="w-3 h-3 rounded-full" style={{ background: s.accent }} />
+              </div>
+              <p className="text-xs text-[#666666] mt-3">{s.hint}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          <div className="xl:col-span-2 bg-white border border-[#E0E0E0] rounded-xl overflow-hidden">
+            <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-[#212121]">Ấn phẩm cần chú ý</h3>
+                <p className="text-xs text-[#666666] mt-1">Danh sách bài bị báo cáo / đã ẩn / nổi bật</p>
+              </div>
+              <button onClick={() => setPage("admin_artworks")} className="text-sm font-semibold text-[#077E9E] hover:text-[#055F78] transition-colors">
+                Mở trang xử lý →
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Tên ấn phẩm</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Sinh viên</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Môn học</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ngày</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {flagged.map((a) => (
+                    <tr key={a.id} className="border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <img src={a.img} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
+                          <span className="text-sm font-semibold text-[#212121] truncate max-w-[260px]">{a.title}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.student}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.subject}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(a.status)}`}>{a.status}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <div className="bg-white border border-[#E0E0E0] rounded-xl p-5">
+              <h3 className="text-sm font-bold text-[#212121] mb-4">Phân bổ ấn phẩm theo môn học</h3>
+              <div className="space-y-3">
+                {categoryCounts.map((c) => (
+                  <div key={c.label} className="flex items-center gap-3">
+                    <span className="w-24 text-xs text-[#666666]">{c.label}</span>
+                    <div className="flex-1 h-2.5 bg-[#F8F8F8] rounded-full overflow-hidden border border-[#E0E0E0]">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, (c.value / 60) * 100)}%`, background: c.color }} />
+                    </div>
+                    <span className="w-10 text-right text-xs font-semibold text-[#212121]">{c.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#E0E0E0] rounded-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-[#212121]">Hoạt động gần đây</h3>
+                <span className="text-xs text-[#666666]">Hôm nay</span>
+              </div>
+              <div className="space-y-3">
+                {recent.map((r, idx) => (
+                  <div key={idx} className="flex items-start gap-3">
+                    <span className="mt-1 w-2.5 h-2.5 rounded-full" style={{ background: r.color }} />
+                    <p className="text-sm text-[#666666] leading-relaxed">{r.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white border border-[#E0E0E0] rounded-xl p-5">
+              <h3 className="text-sm font-bold text-[#212121] mb-4">Thao tác nhanh</h3>
+              <div className="space-y-2">
+                <button onClick={() => setPage("admin_artworks")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors text-left">
+                  <ShieldAlert size={16} className="text-[#8B1A1A]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[#212121]">Xử lý vi phạm</p>
+                    <p className="text-xs text-[#666666]">Ẩn / xóa / highlight ấn phẩm</p>
+                  </div>
+                </button>
+                <button onClick={() => setPage("admin_users")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors text-left">
+                  <Users size={16} className="text-[#077E9E]" />
+                  <div>
+                    <p className="text-sm font-semibold text-[#212121]">Quản lý tài khoản</p>
+                    <p className="text-xs text-[#666666]">Phân quyền và khóa/mở khóa</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+function MessagesPage({ setPage }) {
+  const [messages, setMessages] = useState([
+    { id: 1, sender: "Nguyễn Công Tuấn", company: "FPT Software", purpose: "Tuyển dụng", excerpt: "Chào em, công ty hiện đang có vị trí UI/UX Designer thực tập. Portfolio của em rất ấn tượng, hy vọng em có thể sắp xếp thời gian...", isRead: false, time: "10:30 AM", fullText: "Chào em,\n\nCông ty hiện đang có vị trí UI/UX Designer thực tập. Portfolio của em rất ấn tượng, hy vọng em có thể sắp xếp thời gian để tham gia phỏng vấn cùng team Design bên anh vào tuần sau.\n\nThời gian dự kiến: Thứ 4 (15/03) lúc 14:00.\nHình thức: Online qua Google Meet.\n\nPhản hồi lại email này nếu em sắp xếp được nhé.\n\nTrân trọng,\nCông Tuấn" },
+    { id: 2, sender: "Trần Mai Hương", company: "Be Group", purpose: "Hợp tác dự án", excerpt: "Portfolio của bạn rất ấn tượng. Mình muốn trao đổi về một dự án thiết kế cho chiến dịch sắp tới...", isRead: true, time: "Hôm qua", fullText: "Chào bạn,\n\nPortfolio của bạn rất ấn tượng. Mình muốn trao đổi về một dự án thiết kế cho chiến dịch quảng bá sắp tới của Be Group. Dự án kéo dài khoảng 3 tuần, công việc chủ yếu là thiết kế key visual và adaptation cho social media.\n\nNếu bạn đang có thời gian trống và hứng thú, báo mình nhé để mình gửi JD chi tiết.\n\nCảm ơn bạn,\nMai Hương" },
+    { id: 3, sender: "Lê Văn Thành", company: "VNG", purpose: "Phỏng vấn", excerpt: "Xin chúc mừng, bạn đã vượt qua vòng hồ sơ. Mời bạn tham gia buổi phỏng vấn vị trí 3D Artist vào tuần tới...", isRead: true, time: "12/03/2024", fullText: "Chào bạn,\n\nXin chúc mừng, bạn đã vượt qua vòng hồ sơ. Mời bạn tham gia buổi phỏng vấn vị trí 3D Artist vào tuần tới tại văn phòng VNG Campus.\n\nVui lòng chuẩn bị sẵn các file source của dự án 'Neon Cityscape' để present cho hội đồng phỏng vấn.\n\nHẹn gặp bạn sớm!" },
+  ]);
+
+  const [expandedId, setExpandedId] = useState(null);
+
+  const toggleMessage = (id) => {
+    if (expandedId === id) {
+      setExpandedId(null);
+    } else {
+      setExpandedId(id);
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m));
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
+      <DashboardSidebar active="Hộp thư" setPage={setPage} />
+      <div style={{ flex: 1, padding: "32px 40px" }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 24px", color: BLACK }}>Hộp thư đến</h2>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {messages.map(msg => (
+            <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#F0F8FB", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#B3D9E8"}`, overflow: "hidden" }}>
+              <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
+                <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
+                  {msg.sender.charAt(0)}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                    <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.sender}</p>
+                    <span style={{ fontSize: 13, color: MUTED }}>• {msg.company}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>
+                    <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.excerpt}</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                  <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.time}</span>
+                  {msg.isRead ? <MailOpen size={14} color={MUTED} /> : <Mail size={14} color={CERULEAN} />}
+                </div>
+              </div>
+              {expandedId === msg.id && (
+                <div style={{ padding: "0 20px 20px 80px" }}>
+                  <div style={{ padding: "16px", background: GRAY_BG, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
+                    <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.fullText}</p>
+                  </div>
+                  <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                    <button style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Phản hồi qua Email</button>
+                    <button style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK }}>Lưu trữ</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AdminSidebar({ active, setPage }) {
+  const items = [
+    { icon: <LayoutDashboard size={18} />, label: "Tổng quan", page: "admin" },
+    { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users" },
+    { icon: <ShieldAlert size={18} />, label: "Cảnh cáo ấn phẩm", page: "admin_artworks" },
+    { icon: <Folder size={18} />, label: "Quản lý bộ sưu tập", page: "admin_export" },
+  ];
+
+  return (
+    <div className="w-64 bg-[#F8F8F8] border-r border-[#E0E0E0] flex-shrink-0 flex flex-col h-full overflow-y-auto">
+      <div className="p-6 border-b border-[#E0E0E0]">
+        <h3 className="font-bold text-[#212121] text-sm uppercase tracking-wider">Admin Panel</h3>
+        <p className="text-xs text-[#666666] mt-1">Hệ thống quản trị UEF</p>
+      </div>
+      <div className="py-4">
+        {items.map(item => (
+          <div key={item.label} onClick={() => setPage(item.page)} className={`flex items-center gap-3 px-6 py-3 cursor-pointer border-r-4 ${active === item.page ? 'bg-[#E8F4F8] border-[#077E9E] text-[#077E9E]' : 'border-transparent text-[#212121] hover:bg-white'}`}>
+            <span className={active === item.page ? 'text-[#077E9E]' : 'text-[#666666]'}>{item.icon}</span>
+            <span className={`text-sm ${active === item.page ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-auto p-6">
+        <button onClick={() => setPage("portal")} className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm font-medium hover:bg-white transition-colors text-[#212121]">
+          <Globe size={16} /> Về trang Portal
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EditArtworkPage({ setPage }) {
+  const [isPublic, setIsPublic] = useState(true);
+  const art = artworks[1]; // mock data cho trang edit
+
+  return (
+    <div className="bg-white min-h-[calc(100vh-60px)] px-16 py-10">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex items-center gap-2 text-sm text-[#666666] mb-6 cursor-pointer hover:text-[#212121] transition-colors inline-flex" onClick={() => setPage("dashboard")}>
+          <ArrowDownCircle className="rotate-90" size={16} /> Quay lại Tác phẩm của tôi
+        </div>
+        <h2 className="text-2xl font-bold text-[#212121] mb-1">Chỉnh sửa Ấn phẩm</h2>
+        <p className="text-sm text-[#666666] mb-8">Cập nhật thông tin chi tiết cho tác phẩm của bạn</p>
+
+        <div className="grid grid-cols-2 gap-8">
+          <div>
+            <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh hiện tại</label>
+            <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer">
+              <img src={art.img} alt="cover" className="w-full h-[400px] object-cover block" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <button className="px-5 py-2.5 rounded-lg border-2 border-white text-white text-sm font-semibold flex items-center gap-2 hover:bg-white hover:text-[#212121] transition-colors"><Image size={16} /> Đổi ảnh mới</button>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-5">
+            <div>
+              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tiêu đề tác phẩm</label>
+              <input defaultValue={art.title} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Mô tả</label>
+              <textarea defaultValue="Đây là một bộ nhận diện thương hiệu hoàn chỉnh dành cho chiến dịch sắp tới." className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[100px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Danh mục & Công cụ</label>
+              <div className="grid grid-cols-2 gap-3">
+                <select defaultValue={art.category} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
+                  <option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option>
+                </select>
+                <select defaultValue={art.tool} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
+                  <option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Quyền hiển thị</label>
+              <div className="flex items-center gap-3 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg px-4 py-3">
+                <span className="text-sm font-medium text-[#212121] flex-1">Cho phép công khai tác phẩm trên hệ thống</span>
+                <ToggleSwitch isOn={isPublic} onToggle={() => setIsPublic(!isPublic)} />
+              </div>
+            </div>
+            <div className="mt-auto pt-6 border-t border-[#E0E0E0] flex gap-3">
+              <button className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> Xóa ấn phẩm</button>
+              <button className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer"><Check size={16} /> Lưu thay đổi</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AdminUsersPage({ setPage }) {
+  const [users, setUsers] = useState([
+    { id: 1, name: "Nguyễn Minh Anh", email: "minhanh@uef.edu.vn", role: "Sinh viên", joined: "12/08/2023", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80", isLocked: false },
+    { id: 2, name: "Trần Bảo Long", email: "longtb@uef.edu.vn", role: "Sinh viên", joined: "15/08/2023", avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&q=80", isLocked: true },
+    { id: 3, name: "GV. Trần Văn Phúc", email: "phuctv@uef.edu.vn", role: "Giảng viên", joined: "01/01/2020", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&q=80", isLocked: false },
+    { id: 4, name: "Admin System", email: "admin@uef.edu.vn", role: "Admin", joined: "01/01/2020", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80", isLocked: false },
+  ]);
+
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null });
+  const [importFileName, setImportFileName] = useState("");
+  const importInputRef = useRef(null);
+
+  const toggleLockUser = (userId) => {
+    setUsers(users.map(u => u.id === userId ? { ...u, isLocked: !u.isLocked } : u));
+    setConfirmModal({ isOpen: false, user: null });
+  };
+
+  const setRole = (userId, role) => {
+    setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
+  };
+
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportFileName(file.name);
+    e.target.value = "";
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-white relative">
+      <AdminSidebar active="admin_users" setPage={setPage} />
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-[#212121]">Quản lý Tài khoản</h2>
+            <p className="text-sm text-[#666666] mt-1">Danh sách người dùng và phân quyền hệ thống</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <button onClick={() => importInputRef.current?.click()} className="px-4 py-2 bg-[#077E9E] text-white rounded-lg text-sm font-semibold hover:bg-[#055F78] transition-colors flex items-center gap-2">
+              <ArrowDownCircle size={16} className="-rotate-90" />
+              Import Excel
+            </button>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" size={16} />
+              <input placeholder="Tìm kiếm user..." className="pl-10 pr-4 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm w-64 outline-none focus:border-[#077E9E]" />
+            </div>
+          </div>
+        </div>
+        {importFileName && (
+          <div className="mb-5 bg-[#E8F4F8] border border-[#B3D9E8] text-[#077E9E] rounded-lg px-4 py-3 text-sm flex items-center justify-between">
+            <span className="font-medium">Đã chọn file: {importFileName}</span>
+            <button onClick={() => setImportFileName("")} className="text-[#077E9E] hover:text-[#055F78] font-semibold text-sm">Bỏ chọn</button>
+          </div>
+        )}
+
+        <div className="border border-[#E0E0E0] rounded-xl overflow-hidden shadow-sm">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr>
+                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Họ Tên</th>
+                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Email</th>
+                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Vai trò</th>
+                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ngày tham gia</th>
+                <th className="bg-[#F8F8F8] text-[#666666] text-center px-4 py-3 text-xs uppercase tracking-wider font-semibold">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id} className="border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <img src={u.avatar} className="w-8 h-8 rounded-full object-cover bg-[#E0E0E0]" />
+                      <span className="text-sm font-semibold text-[#212121]">{u.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[#666666]">{u.email}</td>
+                  <td className="px-4 py-3">
+                    <div className="relative inline-flex w-40">
+                      <select
+                        value={u.role}
+                        onChange={(e) => setRole(u.id, e.target.value)}
+                        className="w-full appearance-none px-3 py-2 rounded-lg border border-[#E0E0E0] bg-white text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] cursor-pointer pr-9 hover:bg-[#F8F8F8] transition-colors"
+                      >
+                        <option value="Sinh viên">Sinh viên</option>
+                        <option value="Giảng viên">Giảng viên</option>
+                        <option value="Admin">Admin</option>
+                      </select>
+                      <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#666666]" />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-[#666666]">{u.joined}</td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="flex items-center justify-center">
+                      <button onClick={() => u.isLocked ? toggleLockUser(u.id) : setConfirmModal({ isOpen: true, user: u })} className={`px-3 py-1.5 flex items-center gap-2 rounded-md border transition-colors cursor-pointer ${u.isLocked ? 'border-[#077E9E] text-[#077E9E] hover:bg-[#077E9E] hover:text-white' : 'border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white'}`} title={u.isLocked ? "Mở khóa" : "Khóa tài khoản"}>
+                        {u.isLocked ? <Unlock size={14} /> : <Lock size={14} />}
+                        <span className="text-xs font-semibold">{u.isLocked ? "Mở khóa" : "Khóa tài khoản"}</span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden flex flex-col p-6 text-center">
+            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShieldAlert size={28} className="text-[#8B1A1A]" />
+            </div>
+            <h3 className="font-bold text-lg text-[#212121] mb-2">Khóa tài khoản?</h3>
+            <p className="text-sm text-[#666666] mb-6">Bạn có chắc chắn muốn khóa tài khoản của <strong>{confirmModal.user?.name}</strong>? Người dùng sẽ không thể đăng nhập vào hệ thống.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmModal({ isOpen: false, user: null })} className="flex-1 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Hủy</button>
+              <button onClick={() => toggleLockUser(confirmModal.user?.id)} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">Xác nhận Khóa</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AdminArtworksPage({ setPage }) {
+  const seed = artworks.map((a, i) => ({
+    ...a,
+    subject: ["Thiết kế TH", "Đồ hoạ ứng dụng", "Motion Design", "UX/UI"][i % 4],
+    createdAt: ["05/05", "04/05", "03/05", "02/05", "01/05"][i % 5],
+    status: i % 5 === 0 ? "Bị báo cáo" : i % 5 === 1 ? "Đang hiển thị" : i % 5 === 2 ? "Đã ẩn" : i % 5 === 3 ? "Vi phạm" : "Nổi bật",
+    score: i % 3 === 0 ? 9.2 : i % 3 === 1 ? 8.8 : null,
+    isHighlighted: i % 5 === 4,
+  }));
+
+  const [items, setItems] = useState(seed);
+  const [activeTab, setActiveTab] = useState("all");
+  const [query, setQuery] = useState("");
+  const [filterSubject, setFilterSubject] = useState("Tất cả");
+  const [filterYear, setFilterYear] = useState("Tất cả");
+  const [filterTool, setFilterTool] = useState("Tất cả");
+  const [selectedId, setSelectedId] = useState(seed[0]?.id ?? null);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, mode: "delete", artId: null });
+
+  const tabs = [
+    { key: "all", label: "Tất cả", match: () => true },
+    { key: "reported", label: "Bị báo cáo", match: (a) => a.status === "Bị báo cáo" || a.status === "Vi phạm" },
+    { key: "hidden", label: "Đã ẩn", match: (a) => a.status === "Đã ẩn" },
+    { key: "highlight", label: "Nổi bật", match: (a) => a.isHighlighted || a.status === "Nổi bật" },
+  ];
+
+  const filtered = items
+    .filter((a) => {
+      const t = tabs.find((x) => x.key === activeTab);
+      return t ? t.match(a) : true;
+    })
+    .filter((a) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return `${a.title} ${a.student} ${a.category} ${a.tool}`.toLowerCase().includes(q);
+    })
+    .filter((a) => (filterSubject === "Tất cả" ? true : a.subject === filterSubject))
+    .filter((a) => (filterYear === "Tất cả" ? true : a.year === filterYear))
+    .filter((a) => (filterTool === "Tất cả" ? true : a.tool === filterTool));
+
+  const selected = items.find((a) => a.id === selectedId) ?? null;
+
+  const toggleSelectAll = (checked) => {
+    setSelectedIds(checked ? filtered.map((a) => a.id) : []);
+  };
+
+  const toggleSelect = (id, checked) => {
+    setSelectedIds((prev) => (checked ? Array.from(new Set([...prev, id])) : prev.filter((x) => x !== id)));
+  };
+
+  const setStatus = (ids, status) => {
+    setItems((prev) => prev.map((a) => (ids.includes(a.id) ? { ...a, status } : a)));
+    setSelectedIds([]);
+  };
+
+  const removeItems = (ids) => {
+    setItems((prev) => prev.filter((a) => !ids.includes(a.id)));
+    setSelectedIds([]);
+    if (ids.includes(selectedId)) {
+      const next = filtered.find((a) => !ids.includes(a.id));
+      setSelectedId(next?.id ?? null);
+    }
+  };
+
+  const toggleHighlight = (ids) => {
+    setItems((prev) => prev.map((a) => (ids.includes(a.id) ? { ...a, isHighlighted: !a.isHighlighted } : a)));
+    setSelectedIds([]);
+  };
+
+  const badge = (s) => {
+    if (s === "Vi phạm") return "bg-red-50 text-[#8B1A1A] border border-[#F5C5C5]";
+    if (s === "Bị báo cáo") return "bg-red-50 text-[#8B1A1A] border border-[#F5C5C5]";
+    if (s === "Đã ẩn") return "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]";
+    if (s === "Nổi bật") return "bg-blue-50 text-[#077E9E] border border-[#B3D9E8]";
+    return "bg-white text-[#212121] border border-[#E0E0E0]";
+  };
+
+  const statusText = (s) => {
+    if (s === "Đang hiển thị") return "Công khai";
+    if (s === "Bị báo cáo") return "Báo cáo";
+    return s;
+  };
+
+  const openConfirm = (mode, artId) => setConfirmModal({ isOpen: true, mode, artId });
+  const closeConfirm = () => setConfirmModal({ isOpen: false, mode: "delete", artId: null });
+
+  const confirmAction = () => {
+    if (!confirmModal.artId) return;
+    if (confirmModal.mode === "delete") removeItems([confirmModal.artId]);
+    if (confirmModal.mode === "hide") setStatus([confirmModal.artId], "Đã ẩn");
+    closeConfirm();
+  };
+
+  const tabCount = (key) => {
+    const t = tabs.find((x) => x.key === key);
+    if (!t) return 0;
+    return items.filter((a) => t.match(a)).length;
+  };
+
+  const FilterSelect = ({ value, onChange, children }) => (
+    <div className="relative">
+      <select
+        value={value}
+        onChange={onChange}
+        className="appearance-none px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] cursor-pointer pr-9 hover:bg-[#F8F8F8] transition-colors"
+      >
+        {children}
+      </select>
+      <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#666666]" />
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-white relative">
+      <AdminSidebar active="admin_artworks" setPage={setPage} />
+
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="p-8 border-b border-[#E0E0E0]">
+          <div className="flex items-start justify-between gap-6">
+            <div>
+              <h2 className="text-2xl font-bold text-[#212121]">Xử lý Ấn phẩm</h2>
+              <p className="text-sm text-[#666666] mt-1">Xử lý vi phạm / báo cáo và quản lý trạng thái hiển thị</p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => { setActiveTab(t.key); setSelectedIds([]); }}
+                className={`px-3.5 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                  activeTab === t.key ? "bg-[#212121] text-white border-[#212121]" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8] hover:text-[#212121]"
+                }`}
+              >
+                {t.label} <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${activeTab === t.key ? "bg-white/15 text-white" : "bg-[#F8F8F8] border border-[#E0E0E0] text-[#666666]"}`}>{tabCount(t.key)}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[260px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" size={16} />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm theo tên ấn phẩm, sinh viên, tags..." className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+            </div>
+            <FilterSelect value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
+              <option value="Tất cả">Môn học: Tất cả</option>
+              <option value="Thiết kế TH">Thiết kế TH</option>
+              <option value="Đồ hoạ ứng dụng">Đồ hoạ ứng dụng</option>
+              <option value="Motion Design">Motion Design</option>
+              <option value="UX/UI">UX/UI</option>
+            </FilterSelect>
+            <FilterSelect value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+              <option value="Tất cả">Năm học: Tất cả</option>
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+              <option value="2022">2022</option>
+            </FilterSelect>
+            <FilterSelect value={filterTool} onChange={(e) => setFilterTool(e.target.value)}>
+              <option value="Tất cả">Công cụ: Tất cả</option>
+              <option value="Illustrator">Illustrator</option>
+              <option value="Photoshop">Photoshop</option>
+              <option value="Figma">Figma</option>
+              <option value="Blender">Blender</option>
+              <option value="Procreate">Procreate</option>
+            </FilterSelect>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={() => setStatus(selectedIds, "Đã ẩn")}
+                disabled={selectedIds.length === 0}
+                className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+                  selectedIds.length === 0 ? "bg-[#F8F8F8] text-[#999999] border-[#E0E0E0] cursor-not-allowed" : "bg-white text-[#212121] border-[#E0E0E0] hover:bg-[#F8F8F8]"
+                }`}
+              >
+                Ẩn đã chọn
+              </button>
+              <button
+                onClick={() => toggleHighlight(selectedIds)}
+                disabled={selectedIds.length === 0}
+                className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+                  selectedIds.length === 0 ? "bg-[#F8F8F8] text-[#999999] border-[#E0E0E0] cursor-not-allowed" : "bg-[#E8F4F8] text-[#077E9E] border-[#B3D9E8] hover:bg-[#D9EEF6]"
+                }`}
+              >
+                Highlight
+              </button>
+              <button
+                onClick={() => setSelectedIds([])}
+                disabled={selectedIds.length === 0}
+                className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+                  selectedIds.length === 0 ? "bg-[#F8F8F8] text-[#999999] border-[#E0E0E0] cursor-not-allowed" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8] hover:text-[#212121]"
+                }`}
+              >
+                Bỏ chọn
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-hidden flex">
+          <div className="w-[56%] min-w-[640px] border-r border-[#E0E0E0] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-[#E0E0E0]">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.length > 0 && selectedIds.length === filtered.length}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <span className="text-sm font-semibold text-[#212121]">{filtered.length} ấn phẩm</span>
+              </div>
+              {selectedIds.length > 0 && (
+                <span className="text-sm text-[#666666]">Đã chọn {selectedIds.length}</span>
+              )}
+            </div>
+
+            <div className="overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 z-10">
+                  <tr>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold w-10"></th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ấn phẩm / Sinh viên</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Môn học</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ngày</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold w-36">Trạng thái</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold text-right">Điểm</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((a) => (
+                    <tr
+                      key={a.id}
+                      onClick={() => setSelectedId(a.id)}
+                      className={`border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors cursor-pointer ${
+                        selectedId === a.id ? "bg-[#E8F4F8]" : "bg-white"
+                      }`}
+                    >
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(a.id)}
+                          onChange={(e) => toggleSelect(a.id, e.target.checked)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-4 h-4"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <img src={a.img} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-[#212121] truncate">{a.title}</p>
+                            <p className="text-xs text-[#666666] truncate">{a.student}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.subject}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${badge(a.status)}`}>{statusText(a.status)}</span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm font-semibold text-[#212121]">{a.score ?? "—"}</td>
+                    </tr>
+                  ))}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12 text-[#666666]">Không có ấn phẩm phù hợp.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 bg-[#F8F8F8]">
+            {!selected && (
+              <div className="bg-white border border-[#E0E0E0] rounded-xl p-8 text-center text-[#666666]">
+                Chọn một ấn phẩm để xem chi tiết
+              </div>
+            )}
+
+            {selected && (
+              <div className="bg-white border border-[#E0E0E0] rounded-xl overflow-hidden">
+                <div className="p-5 border-b border-[#E0E0E0] flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Chi tiết ấn phẩm</p>
+                    <h3 className="text-lg font-bold text-[#212121] truncate">{selected.title}</h3>
+                    <p className="text-sm text-[#666666] mt-1">{selected.student}</p>
+                  </div>
+                  <button onClick={() => setSelectedId(null)} className="text-sm font-semibold text-[#666666] hover:text-[#212121] transition-colors">Đóng</button>
+                </div>
+
+                <div className="p-5">
+                  <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8]">
+                    <img src={selected.img} className="w-full h-64 object-cover" />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mt-5">
+                    <div>
+                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Môn học</p>
+                      <p className="text-sm font-semibold text-[#212121]">{selected.subject}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Công cụ</p>
+                      <p className="text-sm font-semibold text-[#212121]">{selected.tool}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Trạng thái</p>
+                      <span className={`inline-flex whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${badge(selected.status)}`}>{statusText(selected.status)}</span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Điểm</p>
+                      <p className="text-sm font-semibold text-[#212121]">{selected.score ?? "Chưa chấm"}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-4">
+                    <p className="text-sm text-[#666666] leading-relaxed">
+                      Hành động tại đây dành cho xử lý vi phạm / hiển thị. Việc chấm điểm được thực hiện trực tiếp trên trang chi tiết ấn phẩm của sinh viên.
+                    </p>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-3 gap-3">
+                    <button onClick={() => setStatus([selected.id], "Đang hiển thị")} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#212121] hover:bg-[#F8F8F8] transition-colors">
+                      Công khai
+                    </button>
+                    <button onClick={() => openConfirm("hide", selected.id)} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
+                      Ẩn bài
+                    </button>
+                    <button onClick={() => openConfirm("delete", selected.id)} className="py-2.5 rounded-lg border border-[#F5C5C5] bg-red-50 text-sm font-bold text-[#8B1A1A] hover:bg-red-100 transition-colors">
+                      Xóa vĩnh viễn
+                    </button>
+                  </div>
+
+                  <button onClick={() => toggleHighlight([selected.id])} className={`mt-3 w-full py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+                    selected.isHighlighted ? "bg-[#212121] text-white border-[#212121]" : "bg-[#E8F4F8] text-[#077E9E] border-[#B3D9E8] hover:bg-[#D9EEF6]"
+                  }`}>
+                    {selected.isHighlighted ? "Bỏ Highlight" : "Highlight ấn phẩm"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden flex flex-col p-6 text-center">
+            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShieldAlert size={28} className="text-[#8B1A1A]" />
+            </div>
+            <h3 className="font-bold text-lg text-[#212121] mb-2">{confirmModal.mode === "hide" ? "Ẩn ấn phẩm?" : "Xóa ấn phẩm?"}</h3>
+            <p className="text-sm text-[#666666] mb-6">
+              {confirmModal.mode === "hide"
+                ? "Ấn phẩm sẽ bị ẩn khỏi gallery công khai."
+                : "Ấn phẩm sẽ bị xóa khỏi danh sách. Hành động này không thể hoàn tác trong prototype."}
+            </p>
+            <div className="flex gap-3">
+              <button onClick={closeConfirm} className="flex-1 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Hủy</button>
+              <button onClick={confirmAction} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">Xác nhận</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCreateCollection }) {
+  return (
+    <div className="flex h-screen overflow-hidden bg-white">
+      <AdminSidebar active="admin_export" setPage={setPage} />
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-8 pb-6 border-b border-[#E0E0E0]">
+          <div>
+            <h2 className="text-2xl font-bold text-[#212121]">Cấu hình xuất PDF Triển lãm</h2>
+            <p className="text-sm text-[#666666] mt-1">
+              Chọn bộ sưu tập & mở trang cấu hình tiền kỳ (pre-export): chỉnh tên tập san, lời tựa giám tuyển, kéo-thả thứ tự, chọn theme.
+            </p>
+          </div>
+          <button
+            onClick={() => onQuickCreateCollection && onQuickCreateCollection()}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#077E9E] text-white rounded-xl font-bold hover:bg-[#055F78] transition-colors shadow-sm cursor-pointer w-full lg:w-auto"
+          >
+            <Plus size={18} />
+            Tạo bộ sưu tập mới
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {collections.map((c) => {
+            const thumbs = c.items.slice(0, 3).map((it) => artworks.find((a) => a.id === it.artworkId)?.img).filter(Boolean);
+            return (
+              <div
+                key={c.id}
+                onClick={() => onOpenExportConfig && onOpenExportConfig(c.id)}
+                className="bg-white border border-[#E0E0E0] rounded-2xl p-5 hover:shadow-lg hover:border-[#077E9E] transition-all cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-1">Bộ sưu tập</p>
+                    <h3 className="text-lg font-bold text-[#212121] truncate">{c.name}</h3>
+                    <p className="text-sm text-[#666666] mt-1">{c.items.length} tác phẩm · Theme: <span className="font-semibold text-[#212121]">{c.theme}</span></p>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-[#E8F4F8] border border-[#B3D9E8] flex items-center justify-center text-[#077E9E] flex-shrink-0">
+                    <FileDown size={18} />
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {thumbs.length > 0 ? (
+                    thumbs.map((src, idx) => (
+                      <div key={idx} className="aspect-[4/3] rounded-xl overflow-hidden bg-[#F8F8F8] border border-[#E0E0E0]">
+                        <img src={src} className="w-full h-full object-cover" />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-3 border border-dashed border-[#E0E0E0] rounded-xl p-4 text-sm text-[#666666]">
+                      Chưa có tác phẩm. Hãy “Lưu” từ Gallery/Detail để thêm vào bộ sưu tập.
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-[11px] text-[#666666]">
+                    * Ghi chú giám tuyển (note) sẽ ưu tiên in kèm khi export.
+                  </span>
+                  <span className="text-sm font-bold text-[#077E9E]">Mở cấu hình →</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CollectionExportConfigPage({ setPage, collection, onUpdateCollection }) {
+  const [dragIndex, setDragIndex] = useState(null);
+
+  if (!collection) {
+    return (
+      <div className="flex h-screen overflow-hidden bg-white">
+        <AdminSidebar active="admin_export" setPage={setPage} />
+        <div className="flex-1 p-8">
+          <p className="text-sm text-[#666666]">Không tìm thấy bộ sưu tập.</p>
+          <button onClick={() => setPage("admin_export")} className="mt-4 px-4 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold hover:bg-[#F8F8F8]">
+            Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const detailedItems = collection.items
+    .map((it) => ({ ...it, artwork: artworks.find((a) => a.id === it.artworkId) }))
+    .filter((it) => it.artwork);
+
+  const reorder = (from, to) => {
+    if (from === null || from === undefined) return;
+    const next = [...collection.items];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onUpdateCollection && onUpdateCollection({ items: next });
+  };
+
+  const themes = [
+    { id: "Classic", desc: "Bố cục truyền thống, sạch sẽ, ưu tiên đọc." },
+    { id: "Modern", desc: "Khoảng trắng nhiều, typography hiện đại." },
+    { id: "Asymmetrical", desc: "Bố cục lệch nhịp, nhấn mạnh thị giác." },
+  ];
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-white">
+      <AdminSidebar active="admin_export" setPage={setPage} />
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex items-end justify-between gap-6 mb-8 pb-6 border-b border-[#E0E0E0]">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Pre-export</p>
+            <h2 className="text-2xl font-bold text-[#212121] truncate">/dashboard/collections/export/{collection.id}</h2>
+            <p className="text-sm text-[#666666] mt-1">
+              Chỉ làm UI cấu hình. Logic render PDF bằng @react-pdf/renderer bạn xử lý ở backend/React-PDF.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors">
+              Quay lại
+            </button>
+            <button className="px-5 py-2.5 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors flex items-center gap-2">
+              <FileDown size={16} /> Tiếp tục xuất PDF
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* LEFT PANEL */}
+          <div className="bg-white border border-[#E0E0E0] rounded-2xl p-6">
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Sidebar</p>
+
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-[#212121] mb-2">Tên Tập San</label>
+                <input
+                  value={collection.name}
+                  onChange={(e) => onUpdateCollection && onUpdateCollection({ name: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-xl text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
+                  placeholder="VD: Triển lãm Đồ án Xuất sắc 2026"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#212121] mb-2">Lời tựa giám tuyển (Curatorial Essay)</label>
+                <textarea
+                  value={collection.curatorEssay}
+                  onChange={(e) => onUpdateCollection && onUpdateCollection({ curatorEssay: e.target.value })}
+                  className="w-full min-h-[120px] px-4 py-3 border border-[#E0E0E0] rounded-2xl text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] resize-y"
+                  placeholder="Mở đầu triển lãm: chủ đề, tiêu chí chọn, tinh thần dàn trang…"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#212121] mb-3">Theme dàn trang</label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {themes.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => onUpdateCollection && onUpdateCollection({ theme: t.id })}
+                      className={`text-left p-3 rounded-2xl border transition-all ${
+                        collection.theme === t.id ? "border-[#077E9E] bg-[#E8F4F8]" : "border-[#E0E0E0] hover:border-[#B3D9E8] hover:bg-[#F8F8F8]"
+                      }`}
+                    >
+                      <p className="text-sm font-bold text-[#212121]">{t.id}</p>
+                      <p className="text-[11px] text-[#666666] mt-1 leading-relaxed">{t.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#212121] mb-3">
+                  Thứ tự tác phẩm (Kéo & Thả)
+                </label>
+                <div className="space-y-2">
+                  {detailedItems.length === 0 && (
+                    <div className="text-sm text-[#666666] border border-dashed border-[#E0E0E0] rounded-xl p-4">
+                      Chưa có tác phẩm trong bộ sưu tập.
+                    </div>
+                  )}
+                  {detailedItems.map((it, idx) => (
+                    <div
+                      key={`${it.artworkId}-${idx}`}
+                      draggable
+                      onDragStart={() => setDragIndex(idx)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => {
+                        reorder(dragIndex, idx);
+                        setDragIndex(null);
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-2xl border border-[#E0E0E0] bg-white hover:shadow-sm transition-all cursor-grab"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-[#F8F8F8] border border-[#E0E0E0] overflow-hidden flex-shrink-0">
+                        <img src={it.artwork.img} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-[#212121] truncate">{it.artwork.title}</p>
+                        <p className="text-[11px] text-[#666666] truncate">{it.artwork.student}</p>
+                      </div>
+                      <div className="text-[#666666] flex items-center gap-2 flex-shrink-0">
+                        <GripVertical size={16} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT PANEL */}
+          <div className="bg-white border border-[#E0E0E0] rounded-2xl p-6">
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Preview</p>
+
+            <div className="rounded-2xl border border-[#E0E0E0] bg-[#F8F8F8] p-5">
+              <p className="text-[11px] text-[#666666] mb-2">
+                * Khi export, ưu tiên trích xuất <span className="font-semibold text-[#212121]">COLLECTION_ITEMS.note</span> để in kèm mỗi tác phẩm.
+              </p>
+              <h3 className="text-xl font-extrabold text-[#212121]">{collection.name}</h3>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-[#E0E0E0]">
+                  Theme: {collection.theme}
+                </span>
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-[#E0E0E0]">
+                  {collection.items.length} tác phẩm
+                </span>
+              </div>
+              {collection.curatorEssay?.trim() && (
+                <p className="text-sm text-[#444444] leading-relaxed mt-4 whitespace-pre-line">
+                  {collection.curatorEssay}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {detailedItems.map((it, idx) => (
+                <div key={`${it.artworkId}-pv-${idx}`} className="flex gap-3 p-4 rounded-2xl border border-[#E0E0E0] bg-white">
+                  <div className="w-16 h-12 rounded-xl overflow-hidden bg-[#F8F8F8] border border-[#E0E0E0] flex-shrink-0">
+                    <img src={it.artwork.img} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-[#212121] truncate">
+                      {idx + 1}. {it.artwork.title}
+                    </p>
+                    <p className="text-[12px] text-[#666666] truncate">{it.artwork.student}</p>
+                    <p className="text-[12px] text-[#444444] mt-2 leading-relaxed">
+                      <span className="font-semibold">Ghi chú:</span>{" "}
+                      {it.note?.trim() ? it.note : <span className="text-[#666666]">Không có ghi chú</span>}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              {detailedItems.length === 0 && (
+                <div className="text-sm text-[#666666] border border-dashed border-[#E0E0E0] rounded-xl p-4">
+                  Preview trống — hãy thêm tác phẩm vào bộ sưu tập trước.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LandingPage({ setPage }) {
+  const artworks = [
+    { id: 1, img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", title: "Kỷ niệm UEF", student: "Nguyễn Lê Minh Anh", likes: 142 },
+    { id: 2, img: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg", title: "Poster Design", student: "Trần Bảo Long", likes: 89 },
+    { id: 3, img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80", title: "Typography", student: "Lê Thị Hương", likes: 203 },
+    { id: 4, img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80", title: "Packaging", student: "Phạm Quốc Việt", likes: 56 },
+  ];
+
+  return (
+    <div className="min-h-screen bg-white font-sans text-[#212121]">
+      {/* Header */}
+      <header className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-50">
+        <div className="flex items-center gap-3">
+          <div className="bg-[#212121] text-white font-serif font-bold text-xl px-3 py-1 rounded-md">UEF</div>
+          <div>
+            <h1 className="font-bold text-sm leading-tight">Design Gallery</h1>
+            <p className="text-[10px] text-gray-500 uppercase tracking-wide">Khoa Thiết kế Đồ họa</p>
+          </div>
+        </div>
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+          <button className="text-[#077E9E] border-b-2 border-[#077E9E] pb-1">Trang chủ</button>
+          <button onClick={() => setPage("gallery")} className="text-gray-500 hover:text-[#212121]">Gallery</button>
+          <button onClick={() => setPage("about")} className="text-gray-500 hover:text-[#212121]">Giới thiệu Khoa</button>
+        </nav>
+        <div className="flex items-center gap-4 text-sm font-medium">
+          <span className="text-gray-400">VI / EN</span>
+          <button onClick={() => setPage("auth")} className="bg-[#077E9E] text-white px-5 py-2 rounded-lg hover:bg-[#066a85] transition-colors">Đăng nhập</button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="px-8 py-20 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
+        <div className="flex-1">
+          <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
+            <span className="w-8 h-px bg-[#077E9E]"></span> Khoa Thiết kế Đồ họa
+          </p>
+          <h2 className="text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6">
+            Nơi trưng bày<br />
+            <span className="text-[#077E9E]">tác phẩm</span> thiết kế<br />
+            của sinh viên UEF
+          </h2>
+          <div className="space-y-1 mb-10 max-w-sm">
+            <div className="h-0.5 bg-gray-200 w-full"></div>
+            <div className="h-0.5 bg-gray-200 w-4/5"></div>
+            <div className="h-0.5 bg-gray-200 w-3/5"></div>
+          </div>
+          <div className="flex flex-wrap gap-4 mb-4">
+            <button onClick={() => setPage("gallery")} className="bg-[#077E9E] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#066a85] transition-colors">
+              Khám phá Gallery <ArrowRight size={18} />
+            </button>
+            <button onClick={() => setPage("auth")} className="bg-white text-[#212121] border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+              Đăng nhập sinh viên
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mb-16">* Dành cho sinh viên đăng nhập bằng email @uef.edu.vn</p>
+          
+          <div className="flex flex-wrap items-center gap-8 border-t border-gray-100 pt-8">
+            <div>
+              <p className="text-3xl font-bold mb-1">500+</p>
+              <p className="text-xs text-gray-500">Ấn phẩm trưng bày</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold mb-1">120+</p>
+              <p className="text-xs text-gray-500">Giảng viên tham gia</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold mb-1">18</p>
+              <p className="text-xs text-gray-500">Môn học</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold mb-1">4 khoá</p>
+              <p className="text-xs text-gray-500">Hành trình sáng tạo</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 w-full relative">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-1 space-y-3">
+              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-[3/4]">
+                <img src={artworks[0].img} alt="Artwork" className="w-full h-full object-cover" />
+              </div>
+              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-square">
+                <img src={artworks[2].img} alt="Artwork" className="w-full h-full object-cover" />
+              </div>
+            </div>
+            <div className="col-span-1 space-y-3 pt-8">
+              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-square">
+                <img src={artworks[1].img} alt="Artwork" className="w-full h-full object-cover" />
+              </div>
+              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-[3/4]">
+                <img src={artworks[3].img} alt="Artwork" className="w-full h-full object-cover" />
+              </div>
+            </div>
+            <div className="col-span-1 space-y-3">
+              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-[3/4]">
+                <img src="https://images.unsplash.com/photo-1541462608143-67571c6738dd?w=800&q=80" alt="Artwork" className="w-full h-full object-cover" />
+              </div>
+              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-square">
+                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" alt="Artwork" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          </div>
+          <div className="absolute -bottom-6 -right-6 flex gap-2">
+            <span className="bg-[#077E9E] text-white text-[10px] px-3 py-1.5 rounded-full font-medium">3d art</span>
+            <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] px-3 py-1.5 rounded-full font-medium">branding</span>
+            <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] px-3 py-1.5 rounded-full font-medium">poster</span>
+            <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] px-3 py-1.5 rounded-full font-medium">packaging</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="px-8 py-20 bg-gray-50/50">
+        <div className="max-w-7xl mx-auto">
+          <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
+            <span className="w-6 h-px bg-[#077E9E]"></span> Tính năng cốt lõi
+          </p>
+          <h2 className="text-3xl font-extrabold mb-12">Mọi thứ bạn cần trong một nền tảng</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-white p-8 rounded-2xl border border-[#077E9E] shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 bg-[#E8F4F8] text-[#077E9E] rounded-lg flex items-center justify-center mb-6">
+                <Image size={20} />
+              </div>
+              <h3 className="font-bold text-lg mb-3">Gallery Triển lãm</h3>
+              <p className="text-sm text-gray-500 leading-relaxed mb-6">Hiển thị toàn bộ ấn phẩm theo Masonry Layout, lọc theo môn học, năm học, công cụ và thể loại.</p>
+              <div className="flex items-center gap-2 text-xs font-medium text-[#077E9E] bg-[#E8F4F8] w-fit px-3 py-1.5 rounded-md">
+                <Image size={14} /> gallery
+              </div>
+            </div>
+            
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
+                <User size={20} />
+              </div>
+              <h3 className="font-bold text-lg mb-3">Portfolio Cá nhân</h3>
+              <p className="text-sm text-gray-500 leading-relaxed mb-6">Mỗi sinh viên có trang portfolio riêng với URL chia sẻ, phù hợp gửi cho nhà tuyển dụng.</p>
+              <div className="flex items-center gap-2 text-xs font-medium text-[#077E9E] bg-[#E8F4F8] w-fit px-3 py-1.5 rounded-md">
+                <User size={14} /> portfolio cá nhân
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
+                <Star size={20} />
+              </div>
+              <h3 className="font-bold text-lg mb-3">Điểm số & Nhận xét</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">Giảng viên chấm điểm trực tiếp trên hệ thống. Sinh viên nhận thông báo và xem kết quả công khai hoặc ẩn.</p>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
+                <Monitor size={20} />
+              </div>
+              <h3 className="font-bold text-lg mb-3">Đa thiết bị</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">Giao diện responsive, hiển thị hoàn hảo trên desktop, tablet và điện thoại di động.</p>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
+                <Heart size={20} />
+              </div>
+              <h3 className="font-bold text-lg mb-3">Nổi bật & Tương tác</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">Like, Bookmark ấn phẩm. Giảng viên highlight tác phẩm xuất sắc lên đầu Gallery.</p>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
+                <Users size={20} />
+              </div>
+              <h3 className="font-bold text-lg mb-3">Kết nối Tuyển dụng</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">Nhà tuyển dụng liên hệ sinh viên qua form -&gt; email chuyển tiếp thẳng đến @uef.edu.vn.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Latest Artworks */}
+      <section className="px-8 py-20">
+        <div className="max-w-7xl mx-auto border-t border-gray-100 pt-16">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
+                <span className="w-6 h-px bg-[#077E9E]"></span> Sản phẩm nổi bật
+              </p>
+              <h2 className="text-3xl font-extrabold">Khám phá ấn phẩm mới nhất</h2>
+            </div>
+            <button onClick={() => setPage("gallery")} className="text-sm font-semibold border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50">
+              Xem toàn bộ Gallery &rsaquo;
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {artworks.map((work, idx) => (
+              <div key={work.id} className="group cursor-pointer">
+                <div className={`rounded-xl overflow-hidden mb-4 relative ${idx % 2 === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
+                  <img src={work.img} alt={work.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  {idx === 0 && (
+                    <div className="absolute top-3 left-3 bg-[#077E9E] text-white text-[10px] font-bold px-2 py-1 rounded">Nổi bật</div>
+                  )}
+                </div>
+                <h4 className="font-bold text-[15px] mb-1">{work.title}</h4>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>{work.student}</span>
+                  <span className="flex items-center gap-1"><Heart size={12} /> {work.likes}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Steps Section */}
+      <section className="px-8 py-20 bg-gray-50/50">
+        <div className="max-w-7xl mx-auto border-t border-gray-100 pt-16">
+          <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2 justify-center">
+            <span className="w-6 h-px bg-[#077E9E]"></span> Hướng dẫn
+          </p>
+          <h2 className="text-3xl font-extrabold text-center mb-16">Bắt đầu chỉ trong 3 bước</h2>
+          
+          <div className="flex flex-col md:flex-row justify-center items-center gap-8 relative max-w-4xl mx-auto">
+            <div className="hidden md:block absolute top-6 left-[15%] right-[15%] h-px bg-gray-300 z-0 border-t border-dashed border-gray-300"></div>
+            
+            <div className="flex-1 flex flex-col items-center text-center z-10">
+              <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">1</div>
+              <h3 className="font-bold mb-2">Đăng nhập</h3>
+              <p className="text-sm text-gray-500">Dùng email @uef.edu.vn để đăng nhập vào hệ thống</p>
+            </div>
+            
+            <div className="flex-1 flex flex-col items-center text-center z-10">
+              <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">2</div>
+              <h3 className="font-bold mb-2">Đăng tải ấn phẩm</h3>
+              <p className="text-sm text-gray-500">Upload ảnh/PDF kèm thông tin môn học, công cụ và mô tả</p>
+            </div>
+            
+            <div className="flex-1 flex flex-col items-center text-center z-10">
+              <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">3</div>
+              <h3 className="font-bold mb-2">Chia sẻ Portfolio</h3>
+              <p className="text-sm text-gray-500">Nhận link portfolio cá nhân để gửi cho nhà tuyển dụng</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Footer */}
+      <section className="bg-[#1A1A1A] text-white px-8 py-20">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+          <div>
+            <h2 className="text-3xl font-extrabold mb-3">Sẵn sàng trưng bày tác phẩm của bạn?</h2>
+            <p className="text-gray-400">Dành cho sinh viên Thiết kế Đồ họa UEF — đăng nhập ngay hôm nay</p>
+          </div>
+          <div className="flex gap-4">
+            <button onClick={() => setPage("auth")} className="bg-[#077E9E] hover:bg-[#066a85] text-white px-8 py-3 rounded-lg font-bold transition-colors">Đăng nhập ngay</button>
+            <button onClick={() => setPage("gallery")} className="border border-gray-600 hover:border-gray-400 text-white px-8 py-3 rounded-lg font-bold transition-colors">Xem Gallery</button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-[#111111] text-gray-400 py-10 px-8 text-sm">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-gray-800 text-white font-serif font-bold w-8 h-8 flex items-center justify-center rounded">UEF</div>
+            <div>
+              <p className="font-bold text-white">UEF Design Gallery - Khoa Thiết kế Đồ họa</p>
+              <p className="text-xs mt-1">© 2024 Trương Vĩnh Ký - Khóa 21 - Tài chính TP.HCM</p>
+            </div>
+          </div>
+          <div className="flex gap-6">
+            <button onClick={() => setPage("gallery")} className="hover:text-white">Gallery</button>
+            <button onClick={() => setPage("about")} className="hover:text-white">Giới thiệu Khoa</button>
+            <a href="#" className="hover:text-white">Liên hệ</a>
+            <a href="#" className="hover:text-white">Chính sách</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+const lecturers = [
+  { name: "TS. Nguyễn Văn Tài", title: "Trưởng Khoa · Branding & Identity", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80", email: "nvtai@uef.edu.vn" },
+  { name: "ThS. Lê Minh Phương", title: "Typography & Editorial Design", img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80", email: "lmphuong@uef.edu.vn" },
+  { name: "TS. Trần Quang Khải", title: "3D Art & Motion Graphics", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80", email: "tqkhai@uef.edu.vn" },
+  { name: "ThS. Vũ Thu Hà", title: "UX/UI Design & Interaction", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80", email: "vtha@uef.edu.vn" },
+];
+
+
+const lecturersList = [
+  { name: "PGS. TS. Nguyễn Minh Khoa", title: "Trưởng Khoa Thiết kế Đồ họa", bio: "Chuyên ngành: Visual Communication, Brand Identity & Design Strategy. Hơn 20 năm kinh nghiệm giảng dạy và thực chiến.", skills: ["Typography", "Brand Identity", "Visual Communication"], img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80" },
+  { name: "ThS. Trần Thị Lan Anh", title: "Giảng viên chính", bio: "Chuyên ngành: UI/UX Design, Digital Product Design & Figma. Cố vấn thiết kế cho nhiều startup công nghệ.", skills: ["UI/UX", "Figma", "Product Design"], img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80" },
+  { name: "ThS. Lê Quốc Bảo", title: "Giảng viên", bio: "Chuyên ngành: Motion Graphics, After Effects & 3D Animation. Freelance director với hơn 50 dự án thương mại lớn.", skills: ["Motion Graphics", "After Effects", "3D"], img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80" },
+  { name: "ThS. Phạm Hồng Nhung", title: "Giảng viên", bio: "Chuyên ngành: Typography, Editorial Design & Packaging. Từng đoạt 2 giải thưởng thiết kế bao bì quốc tế.", skills: ["Typography", "Editorial", "Packaging"], img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80" },
+  { name: "TS. Nguyễn Đình Trọng", title: "Giảng viên cao cấp", bio: "Chuyên ngành: Illustration, Concept Art & Character Design. Cộng tác viên cho studio game và phim hoạt hình.", skills: ["Illustration", "Concept Art", "Character"], img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80" },
+  { name: "ThS. Vũ Thanh Tuyền", title: "Giảng viên", bio: "Chuyên ngành: Photography, Photo Editing & Visual Storytelling. Nhiếp ảnh gia thương mại với studio tự do.", skills: ["Photography", "Photoshop", "Lightroom"], img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80" },
+];
+
+const ABOUT_TABS = [
+  { label: "Chương trình đào tạo", id: "chuong-trinh-dao-tao" },
+  { label: "Đội ngũ giảng viên", id: "doi-ngu-giang-vien" },
+  { label: "Cơ sở vật chất", id: "co-so-vat-chat" },
+  { label: "Liên hệ", id: "lien-he" },
+];
+
+const facilitiesList = [
+  {
+    title: "Studio Thiết kế",
+    desc: "Không gian làm việc nhóm với bảng vẽ, bàn cắt, khu in ấn thử nghiệm và hệ thống trình chiếu cho critique.",
+    icon: PenTool,
+    img: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&q=80",
+  },
+  {
+    title: "Phòng máy chuyên dụng",
+    desc: "Máy cấu hình cao cho Adobe CC, 3D và motion; màn hình chuẩn màu phục vụ thiết kế và hậu kỳ.",
+    icon: Monitor,
+    img: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&q=80",
+  },
+  {
+    title: "Thiết bị ghi hình",
+    desc: "Bộ kit quay/chụp, đèn studio và phụ kiện giúp sinh viên hoàn thiện sản phẩm ảnh, video và content marketing.",
+    icon: FileImage,
+    img: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1200&q=80",
+  },
+];
+
+const softwareStack = [
+  "Adobe Photoshop",
+  "Adobe Illustrator",
+  "Adobe After Effects",
+  "Figma",
+  "Blender",
+  "Procreate",
+];
+
+function AboutPage({ setPage }) {
+  const [activeTab, setActiveTab] = useState(ABOUT_TABS[0].label);
+  const contactFormDefaults = { name: "", email: "", subject: "", message: "" };
+  const [contactForm, setContactForm] = useState(contactFormDefaults);
+  const [contactState, setContactState] = useState("idle");
+
+  const scrollToTab = (t) => {
+    setActiveTab(t.label);
+    const el = document.getElementById(t.id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  useEffect(() => {
+    const sections = ABOUT_TABS
+      .map((t) => document.getElementById(t.id))
+      .filter(Boolean);
+
+    if (sections.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (!visible) return;
+        const match = ABOUT_TABS.find((t) => t.id === visible.target.id);
+        if (match) setActiveTab(match.label);
+      },
+      { threshold: [0.2, 0.35, 0.5], rootMargin: "-20% 0px -70% 0px" }
+    );
+
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  const submitContact = (e) => {
+    e.preventDefault();
+    setContactState("loading");
+    setTimeout(() => {
+      setContactState("success");
+      setContactForm(contactFormDefaults);
+      setTimeout(() => setContactState("idle"), 2000);
+    }, 1200);
+  };
+
+  return (
+    <div className="bg-white min-h-[calc(100vh-58px)] font-sans w-full">
+      {/* Hero Section */}
+      <section className="bg-[#077E9E] text-white pt-20 pb-24 relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
+          <p className="text-white/80 font-semibold text-sm tracking-wider uppercase mb-4">
+            Khoa Thiết Kế Đồ Họa
+          </p>
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 font-serif">
+            Nơi Sáng Tạo
+            <br /> Được Triển Lãm
+          </h1>
+          <p className="text-lg md:text-xl text-white/90 max-w-2xl leading-relaxed mb-12">
+            Khoa Thiết kế Đồ họa UEF đào tạo thế hệ nhà thiết kế chuyên nghiệp, trang bị kỹ năng thực chiến và tư duy sáng tạo để đáp ứng nhu cầu ngành công nghiệp sáng tạo hiện đại.
+          </p>
+          
+          <div className="flex flex-wrap items-center gap-8 md:gap-16 border-t border-white/20 pt-8 mt-4">
+            <div>
+              <p className="text-4xl font-bold tracking-tight mb-1">500+</p>
+              <p className="text-sm text-white/80 font-medium">Ấn phẩm trưng bày</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold tracking-tight mb-1">12</p>
+              <p className="text-sm text-white/80 font-medium">Giảng viên chuyên môn</p>
+            </div>
+            <div>
+              <p className="text-4xl font-bold tracking-tight mb-1">1,200+</p>
+              <p className="text-sm text-white/80 font-medium">Sinh viên theo học</p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Background shapes */}
+        <div className="absolute top-0 right-0 bottom-0 w-1/2 overflow-hidden pointer-events-none opacity-20">
+          <div className="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] rounded-full bg-white blur-3xl"></div>
+        </div>
+      </section>
+
+      {/* Tab Navigation (Sticky) */}
+      <div className="sticky top-[58px] z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 flex overflow-x-auto no-scrollbar">
+          {ABOUT_TABS.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => scrollToTab(t)}
+              className={`whitespace-nowrap px-6 py-4 text-sm font-semibold transition-colors relative ${
+                activeTab === t.label ? "text-[#077E9E]" : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              {t.label}
+              {activeTab === t.label && (
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#077E9E] rounded-t-full"></span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16">
+        
+        {/* Chương trình đào tạo Section */}
+        <section id="chuong-trinh-dao-tao" className="mb-24 pt-8 scroll-mt-[120px]">
+          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Về Chương Trình</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 max-w-2xl leading-tight">Đào tạo Nhà thiết kế Chuyên nghiệp Thế kỷ 21</h2>
+          <p className="text-gray-600 mb-12 max-w-3xl leading-relaxed text-[15px]">
+            Khoa Thiết kế Đồ họa trực thuộc Trường Đại học Kinh tế - Tài chính TP. Hồ Chí Minh (UEF), được thành lập với sứ mệnh đào tạo nguồn nhân lực chất lượng cao cho ngành công nghiệp sáng tạo tại Việt Nam và khu vực Đông Nam Á.<br/><br/>
+            Chương trình đào tạo kết hợp lý thuyết học thuật và thực hành chuyên sâu, giúp sinh viên không chỉ thành thạo các công cụ thiết kế chuyên nghiệp mà còn phát triển tư duy thẩm mỹ và khả năng giải quyết vấn đề bằng ngôn ngữ thiết kế.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <MajorCard 
+              title="Thiết kế đồ họa Truyền thông" 
+              desc="Brand identity, print design, packaging, typography và visual communication."
+            />
+            <MajorCard 
+              title="Thiết kế Kỹ thuật số & UI/UX" 
+              desc="Web design, mobile app, user experience và interactive design."
+            />
+            <MajorCard 
+              title="Motion Graphics & Video" 
+              desc="Animation, motion design, video editing và visual effects."
+            />
+            <MajorCard 
+              title="Minh họa & Nghệ thuật 3D" 
+              desc="Digital illustration, concept art, character design và 3D modeling."
+            />
+          </div>
+
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="bg-white border border-gray-200 rounded-2xl p-8">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Chuẩn đầu ra</h3>
+              <div className="space-y-3 text-sm text-gray-600">
+                {[
+                  "Tư duy giải quyết vấn đề bằng thiết kế và khả năng trình bày case study",
+                  "Kỹ năng sử dụng công cụ và quy trình làm việc chuyên nghiệp",
+                  "Khả năng làm việc nhóm, phản biện và iterate theo feedback",
+                  "Portfolio đủ mạnh để ứng tuyển Graphic Designer / UI/UX / Motion",
+                ].map((it) => (
+                  <div key={it} className="flex items-start gap-3">
+                    <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Check className="w-4 h-4 text-[#077E9E]" />
+                    </div>
+                    <span>{it}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-[#055F78] text-white rounded-2xl p-8 relative overflow-hidden">
+              <h3 className="text-lg font-bold mb-4">Công cụ & phần mềm</h3>
+              <p className="text-white/80 text-sm leading-relaxed mb-6">
+                Sinh viên được tiếp cận bộ công cụ tiêu chuẩn ngành, kết hợp workshop cập nhật xu hướng và pipeline làm việc hiện đại.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {softwareStack.map((s) => (
+                  <span key={s} className="bg-white/10 border border-white/20 text-white text-[11px] font-medium px-2.5 py-1 rounded-md">
+                    {s}
+                  </span>
+                ))}
+              </div>
+              <div className="absolute -bottom-16 -right-16 w-56 h-56 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+            </div>
+          </div>
+        </section>
+
+        {/* Đội ngũ giảng viên Section */}
+        <section id="doi-ngu-giang-vien" className="mb-24 pt-8 scroll-mt-[120px]">
+          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Đội ngũ giảng viên</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Những Người Thầy Dẫn Đường Sáng Tạo</h2>
+          <p className="text-gray-600 mb-12 max-w-3xl leading-relaxed text-[15px]">
+            Đội ngũ giảng viên Khoa Thiết kế Đồ họa UEF bao gồm các chuyên gia với nhiều năm kinh nghiệm thực tiễn trong ngành và nền tảng học thuật vững chắc.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {lecturers.map((lec) => (
+              <div key={lec.email} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-[#077E9E] transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <img src={lec.img} alt={lec.name} className="w-14 h-14 rounded-full object-cover border border-gray-200" />
+                  <div>
+                    <p className="text-gray-900 font-bold text-sm">{lec.name}</p>
+                    <p className="text-[#077E9E] text-xs font-semibold">{lec.title}</p>
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                  <Mail className="w-4 h-4 text-[#666666]" />
+                  <span>{lec.email}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+            {lecturersList.map((lec) => (
+              <LecturerCard key={lec.name} {...lec} avatar={lec.img} />
+            ))}
+          </div>
+          
+          <div className="flex justify-center">
+            <button className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+              Xem toàn bộ giảng viên (12)
+            </button>
+          </div>
+        </section>
+
+        {/* Highlight Colorful Block */}
+        <section className="mb-24 pt-8">
+          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Ấn phẩm sinh viên nổi bật</p>
+          <div className="mb-8">
+            <MasonryGrid items={artworks.slice(0, 6)} showHover={true} />
+          </div>
+          <button onClick={() => setPage && setPage("gallery")} className="w-full py-4 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-xl font-semibold text-[15px] transition-colors">
+            Xem Gallery đầy đủ
+          </button>
+        </section>
+
+        <section id="co-so-vat-chat" className="mb-24 pt-8 scroll-mt-[120px]">
+          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Cơ sở vật chất</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Không gian sáng tạo & thiết bị chuẩn ngành</h2>
+          <p className="text-gray-600 mb-12 max-w-3xl leading-relaxed text-[15px]">
+            Mô hình học tập đặt trọng tâm vào studio và thực hành. Sinh viên được sử dụng phòng máy, studio và thiết bị hỗ trợ sản xuất để tối ưu chất lượng đồ án.
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+            {facilitiesList.map((f) => {
+              const I = f.icon;
+              return (
+                <div key={f.title} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-[#077E9E] transition-all duration-300">
+                  <div className="h-44 bg-gray-100 overflow-hidden">
+                    <img src={f.img} alt={f.title} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="p-6">
+                    <div className="flex items-start gap-4 mb-3">
+                      <div className="w-12 h-12 rounded-xl bg-[#077E9E]/10 flex items-center justify-center flex-shrink-0">
+                        <I className="w-6 h-6 text-[#077E9E]" />
+                      </div>
+                      <div>
+                        <h3 className="text-gray-900 font-bold">{f.title}</h3>
+                        <p className="text-gray-500 text-sm leading-relaxed mt-1">{f.desc}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {["Mở cửa theo lịch học", "Hỗ trợ đồ án", "Tài nguyên dùng chung"].map((t) => (
+                        <span key={t} className="bg-blue-50 text-[#077E9E] border border-[#077E9E]/20 text-[11px] font-medium px-2.5 py-1 rounded-md">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="bg-[#F8F8F8] border border-gray-200 rounded-2xl p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Hỗ trợ sản xuất</h3>
+                <div className="space-y-3 text-sm text-gray-600">
+                  {[
+                    "Quy trình mượn/trả thiết bị rõ ràng, hỗ trợ theo lịch",
+                    "Khu vực in thử và kiểm tra màu sắc trước khi nộp",
+                    "Không gian critique giúp cải thiện sản phẩm qua từng vòng review",
+                  ].map((it) => (
+                    <div key={it} className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-4 h-4 text-[#077E9E]" />
+                      </div>
+                      <span>{it}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-xl p-6">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Tài nguyên phần mềm</h3>
+                <p className="text-gray-500 text-sm leading-relaxed mb-4">
+                  Danh mục phần mềm được sử dụng trong học phần và đồ án, phục vụ thiết kế, 3D, motion và prototyping.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {softwareStack.map((s) => (
+                    <span key={s} className="bg-blue-50 text-[#077E9E] border border-[#077E9E]/20 text-[11px] font-medium px-2.5 py-1 rounded-md">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Liên hệ & CTA Section */}
+        <section id="lien-he" className="pt-8 scroll-mt-[120px]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
+            
+            {/* Liên hệ */}
+            <div>
+              <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Thông tin liên hệ</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-8">Kết nối với chúng tôi</h2>
+              
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-5 h-5 text-[#077E9E]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 mb-1">Địa chỉ</p>
+                    <p className="text-sm text-gray-600">141-145 Điện Biên Phủ, Phường 15, Q. Bình Thạnh, TP.HCM</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-5 h-5 text-[#077E9E]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 mb-1">Email</p>
+                    <a href="mailto:khoathietke@uef.edu.vn" className="text-sm text-gray-600 hover:text-[#077E9E]">khoathietke@uef.edu.vn</a>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-5 h-5 text-[#077E9E]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 mb-1">Điện thoại</p>
+                    <p className="text-sm text-gray-600">(028) 5422 5555</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Globe className="w-5 h-5 text-[#077E9E]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 mb-1">Website</p>
+                    <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="text-sm text-gray-600 hover:text-[#077E9E]">uef.edu.vn</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white border border-gray-200 rounded-2xl p-8 md:p-10">
+              <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Form liên hệ</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Gửi tin nhắn nhanh</h3>
+
+              <form onSubmit={submitContact} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-2">Họ và tên</label>
+                    <input
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm((s) => ({ ...s, name: e.target.value }))}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
+                      placeholder="Nguyễn Văn A"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-2">Email</label>
+                    <input
+                      type="email"
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm((s) => ({ ...s, email: e.target.value }))}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
+                      placeholder="email@company.com"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Chủ đề</label>
+                  <input
+                    value={contactForm.subject}
+                    onChange={(e) => setContactForm((s) => ({ ...s, subject: e.target.value }))}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
+                    placeholder="Tuyển dụng / Hợp tác / Tham quan khoa"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">Nội dung</label>
+                  <textarea
+                    value={contactForm.message}
+                    onChange={(e) => setContactForm((s) => ({ ...s, message: e.target.value }))}
+                    rows={5}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] resize-none"
+                    placeholder="Mô tả nhu cầu của bạn..."
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setContactForm(contactFormDefaults)}
+                    className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Làm mới
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={contactState === "loading"}
+                    className={`px-6 py-2.5 rounded-lg text-sm font-bold text-white transition-colors flex items-center gap-2 ${
+                      contactState === "loading" ? "bg-[#077E9E]/70" : "bg-[#077E9E] hover:bg-[#055F78]"
+                    }`}
+                  >
+                    <Send className="w-4 h-4" />
+                    {contactState === "success" ? "Đã gửi" : contactState === "loading" ? "Đang gửi..." : "Gửi liên hệ"}
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+          </div>
+
+          <div className="mt-12 bg-[#055F78] rounded-2xl p-8 md:p-10 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+            <div className="relative z-10">
+              <h3 className="text-2xl font-bold mb-2">Bạn là Nhà tuyển dụng?</h3>
+              <p className="text-white/80 text-[15px] leading-relaxed max-w-2xl">
+                Khám phá ngay portfolio các sản phẩm sinh viên để tìm kiếm ứng viên tiềm năng cho doanh nghiệp của bạn.
+              </p>
+            </div>
+            <button onClick={() => setPage && setPage("portfolio")} className="relative z-10 bg-white text-[#055F78] px-6 py-3.5 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 w-max">
+              Khám phá Portfolio <ArrowRight className="w-4 h-4" />
+            </button>
+            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div className="absolute top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Modal: Lưu vào Bộ sưu tập (Pinterest/Spotify-like)
+// - Checkbox chọn nhiều bộ sưu tập
+// - Tạo bộ sưu tập mới nhanh
+// - Textarea "Ghi chú của giám tuyển" -> COLLECTION_ITEMS.note (mô phỏng bằng state)
+// ──────────────────────────────────────────────────────────────────────────────
+function SaveToCollectionModal({
+  open,
+  artwork,
+  collections,
+  onClose,
+  onSave,
+  onCreateCollection,
+}) {
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [note, setNote] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+
+  useEffect(() => {
+    if (!open || !artwork) return;
+    const pre = collections
+      .filter((c) => c.items.some((it) => it.artworkId === artwork.id))
+      .map((c) => c.id);
+    const firstNote =
+      collections
+        .flatMap((c) => c.items.map((it) => ({ ...it, collectionId: c.id })))
+        .find((it) => it.artworkId === artwork.id)?.note || "";
+    setSelectedIds(pre);
+    setNote(firstNote);
+    setCreating(false);
+    setNewName("");
+  }, [open, artwork, collections]);
+
+  if (!open || !artwork) return null;
+
+  const toggle = (id) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const submitCreate = () => {
+    const name = newName.trim();
+    if (!name) return;
+    const id = onCreateCollection ? onCreateCollection(name) : null;
+    if (id) setSelectedIds((prev) => [...prev, id]);
+    setCreating(false);
+    setNewName("");
+  };
+
+  return (
+    <div className="fixed inset-0 z-[70] bg-black/50 flex items-end sm:items-center justify-center p-3 sm:p-6">
+      <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl overflow-hidden">
+        {/* header */}
+        <div className="px-5 sm:px-6 py-4 border-b border-[#E0E0E0] bg-[#F8F8F8] flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-xl overflow-hidden border border-[#E0E0E0] bg-white flex-shrink-0">
+              <img src={artwork.img} alt={artwork.title} className="w-full h-full object-cover" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider">Lưu vào bộ sưu tập</p>
+              <p className="text-sm font-bold text-[#212121] truncate">{artwork.title}</p>
+              <p className="text-xs text-[#666666] truncate">{artwork.student}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-lg border border-[#E0E0E0] bg-white hover:bg-[#F8F8F8] transition-colors flex items-center justify-center text-[#666666]"
+            title="Đóng"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="px-5 sm:px-6 py-5">
+          {/* collections */}
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Chọn bộ sưu tập</p>
+            <div className="max-h-44 overflow-auto pr-1 space-y-2">
+              {collections.map((c) => (
+                <label
+                  key={c.id}
+                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl border border-[#E0E0E0] hover:border-[#B3D9E8] hover:bg-[#F0F8FB] transition-colors cursor-pointer"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-[#212121] truncate">{c.name}</p>
+                    <p className="text-[11px] text-[#666666]">{c.items.length} tác phẩm</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(c.id)}
+                    onChange={() => toggle(c.id)}
+                    className="w-4 h-4 accent-[#077E9E]"
+                  />
+                </label>
+              ))}
+            </div>
+
+            {/* quick create */}
+            <div className="mt-3">
+              {!creating ? (
+                <button
+                  onClick={() => setCreating(true)}
+                  className="text-sm font-semibold text-[#077E9E] hover:opacity-80 transition-opacity inline-flex items-center gap-2"
+                >
+                  <Plus size={16} /> + Tạo bộ sưu tập mới
+                </button>
+              ) : (
+                <div className="flex gap-2 mt-2">
+                  <input
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitCreate()}
+                    placeholder="Tên bộ sưu tập…"
+                    className="flex-1 px-3 py-2 rounded-xl border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
+                  />
+                  <button
+                    onClick={submitCreate}
+                    className="px-3 py-2 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors"
+                  >
+                    Tạo
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCreating(false);
+                      setNewName("");
+                    }}
+                    className="px-3 py-2 rounded-xl border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors"
+                  >
+                    Hủy
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* curator note */}
+          <div className="mb-2">
+            <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">
+              Ghi chú của giám tuyển
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Ghi nhận xét chuyên môn riêng (sẽ lưu vào COLLECTION_ITEMS.note và ưu tiên in kèm khi xuất PDF)…"
+              className="w-full min-h-[110px] px-4 py-3 rounded-2xl border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] resize-y"
+            />
+          </div>
+        </div>
+
+        {/* footer */}
+        <div className="px-5 sm:px-6 py-4 border-t border-[#E0E0E0] bg-white flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] bg-white text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors"
+          >
+            Đóng
+          </button>
+          <button
+            onClick={() => onSave && onSave({ artworkId: artwork.id, selectedCollectionIds: selectedIds, note })}
+            className="px-4 py-2.5 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors"
+          >
+            Lưu thay đổi
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PortfolioSettingsPage({ setPage }) {
+  return (
+    <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
+      <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
+        <div className="p-6 border-b border-[#E0E0E0]">
+          <h2 className="text-lg font-bold text-[#212121]">Cài đặt</h2>
+        </div>
+        <div className="p-4 flex-1">
+          <div onClick={() => setPage("settings")} className="flex items-center gap-3 px-4 py-2 text-[#666666] hover:bg-[#F8F8F8] rounded-lg cursor-pointer mb-1"><User size={18} /> Tài khoản</div>
+          <div className="flex items-center gap-3 px-4 py-2 bg-[#E8F4F8] text-[#077E9E] rounded-lg cursor-pointer font-medium mb-1"><Briefcase size={18} /> Portfolio</div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-10">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-[#212121] mb-2">Cài đặt Portfolio</h2>
+          <p className="text-[#666666] text-sm mb-8">Quản lý cách hiển thị hồ sơ năng lực của bạn với nhà tuyển dụng.</p>
+
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
+            <h3 className="font-bold text-[#212121] mb-4">Thông tin cơ bản</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">Đường dẫn Portfolio (Slug)</label>
+                <div className="flex items-center">
+                  <span className="px-4 py-2 bg-[#F8F8F8] border border-r-0 border-[#E0E0E0] rounded-l-lg text-[#666666] text-sm">portfoliohub.uef.edu.vn/</span>
+                  <input type="text" defaultValue="minhanh" className="flex-1 px-4 py-2 border border-[#E0E0E0] rounded-r-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">Tiêu đề nghề nghiệp (Profile Headline)</label>
+                <input type="text" defaultValue="Graphic Designer & Visual Artist" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
+            <h3 className="font-bold text-[#212121] mb-4">Mạng xã hội</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">Behance</label>
+                <div className="relative">
+                  <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" />
+                  <input type="text" placeholder="https://behance.net/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">LinkedIn</label>
+                <div className="relative">
+                  <Link size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" />
+                  <input type="text" placeholder="https://linkedin.com/in/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-8 flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-[#212121] mb-1">Trạng thái Portfolio</h3>
+              <p className="text-sm text-[#666666]">Chuyển sang "Riêng tư" nếu bạn không muốn ai xem được portfolio này.</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" className="sr-only peer" defaultChecked />
+              <div className="w-11 h-6 bg-[#E0E0E0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#077E9E]"></div>
+            </label>
+          </div>
+
+          <button className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer">Lưu cài đặt</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SettingsPage({ setPage }) {
+  return (
+    <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
+      <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
+        <div className="p-6 border-b border-[#E0E0E0]">
+          <h2 className="text-lg font-bold text-[#212121]">Cài đặt</h2>
+        </div>
+        <div className="p-4 flex-1">
+          <div className="flex items-center gap-3 px-4 py-2 bg-[#E8F4F8] text-[#077E9E] rounded-lg cursor-pointer font-medium mb-1"><User size={18} /> Tài khoản</div>
+          <div onClick={() => setPage("portfolio_settings")} className="flex items-center gap-3 px-4 py-2 text-[#666666] hover:bg-[#F8F8F8] rounded-lg cursor-pointer mb-1"><Briefcase size={18} /> Portfolio</div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-10">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-[#212121] mb-2">Cài đặt Tài khoản</h2>
+          <p className="text-[#666666] text-sm mb-8">Quản lý thông tin cá nhân và bảo mật tài khoản.</p>
+
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
+            <h3 className="font-bold text-[#212121] mb-4">Ảnh đại diện</h3>
+            <div className="flex items-center gap-6">
+              <img src="https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg" className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
+              <div>
+                <div className="flex gap-3 mb-2">
+                  <button className="px-4 py-2 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Tải ảnh mới</button>
+                  <button className="px-4 py-2 bg-white border border-[#8B1A1A] text-[#8B1A1A] rounded-lg text-sm font-medium hover:bg-[#8B1A1A] hover:text-white transition-colors cursor-pointer">Xóa ảnh</button>
+                </div>
+                <p className="text-xs text-[#666666]">Định dạng JPG, PNG hoặc GIF. Tối đa 5MB.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
+            <h3 className="font-bold text-[#212121] mb-4">Thông tin cá nhân</h3>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">Họ và Tên</label>
+                  <input type="text" defaultValue="Nguyễn Minh Anh" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">Mã Sinh viên</label>
+                  <input type="text" defaultValue="21DGR00042" disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">Địa chỉ Email</label>
+                <input type="email" defaultValue="minhanh@uef.edu.vn" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-8">
+            <h3 className="font-bold text-[#212121] mb-4">Đổi mật khẩu</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">Mật khẩu hiện tại</label>
+                <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">Mật khẩu mới</label>
+                  <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">Xác nhận mật khẩu mới</label>
+                  <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer">Lưu thay đổi</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PortalPage({ setPage }) {
+  return (
+    <div className="min-h-screen bg-[#F8F8F8] p-10 flex flex-col items-center">
+      <div className="max-w-6xl w-full mt-10">
+        <h1 className="text-4xl font-bold text-[#212121] text-center mb-16 tracking-tight">Hệ thống Prototype Portfolio UEF</h1>
+
+        <div className="grid grid-cols-3 gap-8">
+          {/* Column 1 */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-lg font-bold text-[#212121] mb-2 flex items-center gap-2">
+              <Globe size={20} className="text-[#077E9E]" /> Public Views
+            </h2>
+            <div onClick={() => setPage("landing")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Globe size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Trang Chủ (Landing Page)</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Trang đón khách giới thiệu nền tảng</p>
+            </div>
+            <div onClick={() => setPage("auth")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Lock size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Trang Đăng nhập</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Màn hình đăng nhập sinh viên / giảng viên</p>
+            </div>
+            <div onClick={() => setPage("gallery")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <LayoutDashboard size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Trang Gallery Tổng hợp</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Hiển thị toàn bộ tác phẩm trên hệ thống</p>
+            </div>
+            <div onClick={() => setPage("about")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Globe size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Trang Giới thiệu (About)</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Trang thông tin về Khoa và giảng viên</p>
+            </div>
+            <div onClick={() => setPage("portfolio")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <User size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Trang Portfolio Cá nhân</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Hồ sơ cá nhân và các tác phẩm của sinh viên</p>
+            </div>
+            <div onClick={() => setPage("detail")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Image size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Trang Chi tiết Ấn phẩm</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Xem chi tiết, bình luận và thả tim tác phẩm</p>
+            </div>
+            <div onClick={() => setPage("about")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Briefcase size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Trang Giới thiệu Khoa</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Thông tin đội ngũ giảng viên và liên hệ</p>
+            </div>
+          </div>
+
+          {/* Column 2 */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-lg font-bold text-[#212121] mb-2 flex items-center gap-2">
+              <PenTool size={20} className="text-[#077E9E]" /> Student Dashboard
+            </h2>
+            <div onClick={() => setPage("dashboard")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Folder size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Dashboard Sinh viên</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Quản lý các ấn phẩm đã tải lên của sinh viên</p>
+            </div>
+            <div onClick={() => setPage("upload")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Plus size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Form Upload Tác phẩm</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Giao diện đăng tải tác phẩm mới</p>
+            </div>
+            <div onClick={() => setPage("edit_artwork")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Edit2 size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Form Chỉnh sửa Ấn phẩm</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Giao diện cập nhật thông tin tác phẩm</p>
+            </div>
+            <div onClick={() => setPage("settings")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Settings size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Cài đặt Tài khoản</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Tùy chỉnh thông tin cá nhân và bảo mật</p>
+            </div>
+            <div onClick={() => setPage("portfolio_settings")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Briefcase size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Cài đặt Portfolio</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Trạng thái công khai và link mạng xã hội</p>
+            </div>
+            <div onClick={() => setPage("messages")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <MessageSquare size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Hộp thư đến</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Quản lý tin nhắn liên hệ từ nhà tuyển dụng</p>
+            </div>
+          </div>
+
+          {/* Column 3 */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-lg font-bold text-[#212121] mb-2 flex items-center gap-2">
+              <ShieldAlert size={20} className="text-[#8B1A1A]" /> Admin & Lecturer
+            </h2>
+            <div onClick={() => setPage("admin")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <LayoutDashboard size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Admin Dashboard</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Màn hình tổng quan của hệ thống quản trị</p>
+            </div>
+            <div onClick={() => setPage("admin_users")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Users size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Quản lý Tài khoản (Users)</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Phân quyền, khóa/mở khóa tài khoản sinh viên</p>
+            </div>
+            <div onClick={() => setPage("admin_artworks")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Trash2 size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Quản lý & Cảnh cáo Ấn phẩm</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Kiểm duyệt post-moderation và xử lý vi phạm</p>
+            </div>
+            <div onClick={() => setPage("admin_export")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <FileDown size={20} className="text-[#077E9E]" />
+                <h3 className="text-[#212121] font-medium text-base">Quản lý Bộ sưu tập & Xuất PDF</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Giao diện kéo thả sắp xếp ấn phẩm để xuất tập san</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function App() {
+  const [page, setPage] = useState("portal");
+  const [activeArtworkId, setActiveArtworkId] = useState(artworks[2]?.id ?? 1);
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // Mock DB (để demo nghiệp vụ giảng viên)
+  // collections ~ COLLECTIONS
+  // collection.items[].note ~ COLLECTION_ITEMS.note
+  // ────────────────────────────────────────────────────────────────────────────
+  const [collections, setCollections] = useState(() => [
+    {
+      id: "col-uef-2026",
+      name: "Triển lãm UEF 2026",
+      curatorEssay: "",
+      theme: "Modern",
+      items: [
+        { artworkId: 1, note: "Chọn vì xử lý màu tốt, nhịp thị giác rõ, phù hợp trang mở màn." },
+        { artworkId: 2, note: "Hệ thống hình & typography sạch. Có thể đặt làm spread 2 trang." },
+      ],
+    },
+    {
+      id: "col-scholarship",
+      name: "Ứng viên học bổng",
+      curatorEssay: "",
+      theme: "Classic",
+      items: [],
+    },
+  ]);
+  const [activeCollectionId, setActiveCollectionId] = useState("col-uef-2026");
+
+  // Bookmark flow state
+  const [saveModal, setSaveModal] = useState({ open: false, artwork: null });
+  const [optimisticSavedIds, setOptimisticSavedIds] = useState([]);
+
+  // Toast
+  const [toast, setToast] = useState(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2200);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const isSavedReal = (artworkId) =>
+    collections.some((c) => c.items.some((it) => it.artworkId === artworkId));
+  const isBookmarked = (artworkId) =>
+    optimisticSavedIds.includes(artworkId) || isSavedReal(artworkId);
+
+  const openSaveFlow = (art) => {
+    if (!art) return;
+    setOptimisticSavedIds((prev) => (prev.includes(art.id) ? prev : [...prev, art.id]));
+    setSaveModal({ open: true, artwork: art });
+    setToast({
+      title: "Đã lưu tạm",
+      message: "Chọn bộ sưu tập và thêm ghi chú giám tuyển để lưu chính thức.",
+    });
+  };
+
+  const closeSaveFlow = () => {
+    const artId = saveModal.artwork?.id;
+    setSaveModal({ open: false, artwork: null });
+    if (artId && !isSavedReal(artId)) {
+      setOptimisticSavedIds((prev) => prev.filter((x) => x !== artId));
+    }
+  };
+
+  const createCollection = (name) => {
+    const id = `col-${Date.now()}`;
+    setCollections((prev) => [
+      ...prev,
+      { id, name, curatorEssay: "", theme: "Classic", items: [] },
+    ]);
+    setToast({ title: "Đã tạo bộ sưu tập", message: name });
+    return id;
+  };
+
+  const saveToCollections = ({ artworkId, selectedCollectionIds, note }) => {
+    setCollections((prev) =>
+      prev.map((c) => {
+        const has = c.items.some((it) => it.artworkId === artworkId);
+        const shouldHave = selectedCollectionIds.includes(c.id);
+
+        if (shouldHave) {
+          const nextItems = has
+            ? c.items.map((it) => (it.artworkId === artworkId ? { ...it, note } : it))
+            : [...c.items, { artworkId, note }];
+          return { ...c, items: nextItems };
+        }
+
+        if (!shouldHave && has) {
+          return { ...c, items: c.items.filter((it) => it.artworkId !== artworkId) };
+        }
+
+        return c;
+      })
+    );
+
+    setOptimisticSavedIds((prev) => prev.filter((x) => x !== artworkId));
+    setSaveModal({ open: false, artwork: null });
+    setToast({ title: "Đã lưu vào bộ sưu tập", message: "Đã cập nhật ghi chú giám tuyển." });
+  };
+
+  const openExportConfig = (collectionId) => {
+    setActiveCollectionId(collectionId);
+    setPage("collection_export_config");
+  };
+
+  const activeCollection = collections.find((c) => c.id === activeCollectionId) || null;
+  const updateActiveCollection = (patch) => {
+    if (!activeCollectionId) return;
+    setCollections((prev) =>
+      prev.map((c) => (c.id === activeCollectionId ? { ...c, ...patch } : c))
+    );
+  };
+
+  return (
+    <div className="font-sans min-h-screen bg-[#F8F8F8] text-[#212121]">
+      {page !== "auth" && page !== "portal" && page !== "landing" && <NavBar activePage={page} setActivePage={setPage} />}
+      {page === "portal" && <PortalPage setPage={setPage} />}
+      {page === "landing" && <LandingPage setPage={setPage} />}
+      {page === "gallery" && (
+        <GalleryPage
+          setPage={setPage}
+          setActiveArtworkId={setActiveArtworkId}
+          onBookmarkClick={openSaveFlow}
+          isBookmarked={isBookmarked}
+        />
+      )}
+      {page === "portfolio" && <PortfolioPage setPage={setPage} />}
+      {page === "dashboard" && <DashboardPage setPage={setPage} />}
+      {page === "upload" && <UploadPage setPage={setPage} />}
+      {page === "detail" && (
+        <DetailPage
+          setPage={setPage}
+          activeArtworkId={activeArtworkId}
+          onBookmarkClick={openSaveFlow}
+          isBookmarked={isBookmarked}
+        />
+      )}
+      {page === "auth" && <AuthPage setPage={setPage} />}
+      {page === "settings" && <SettingsPage setPage={setPage} />}
+      {page === "portfolio_settings" && <PortfolioSettingsPage setPage={setPage} />}
+      {page === "admin" && <AdminDashboardPage setPage={setPage} />}
+      {page === "about" && <AboutPage setPage={setPage} />}
+      {page === "messages" && <MessagesPage setPage={setPage} />}
+      {page === "edit_artwork" && <EditArtworkPage setPage={setPage} />}
+      {page === "admin_users" && <AdminUsersPage setPage={setPage} />}
+      {page === "admin_artworks" && <AdminArtworksPage setPage={setPage} />}
+      {page === "admin_export" && (
+        <AdminExportPage
+          setPage={setPage}
+          collections={collections}
+          onOpenExportConfig={openExportConfig}
+          onQuickCreateCollection={() => {
+            const id = createCollection(`Bộ sưu tập mới`);
+            openExportConfig(id);
+          }}
+        />
+      )}
+      {page === "collection_export_config" && (
+        <CollectionExportConfigPage
+          setPage={setPage}
+          collection={activeCollection}
+          onUpdateCollection={updateActiveCollection}
+        />
+      )}
+
+      {/* Global: Save flow modal + toast */}
+      <SaveToCollectionModal
+        open={saveModal.open}
+        artwork={saveModal.artwork}
+        collections={collections}
+        onClose={closeSaveFlow}
+        onSave={saveToCollections}
+        onCreateCollection={createCollection}
+      />
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-[80]">
+          <div className="bg-[#212121] text-white rounded-2xl shadow-lg px-4 py-3 w-[320px] border border-white/10">
+            <p className="text-sm font-bold">{toast.title}</p>
+            {toast.message && <p className="text-xs text-white/80 mt-1 leading-relaxed">{toast.message}</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
