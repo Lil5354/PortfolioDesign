@@ -27,7 +27,7 @@ const artworks = [
   { id: 8, title: "Futuristic UI Concept", student: "Bùi Minh Khải", likes: 214, h: 290, img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80", category: "UI/UX", tool: "Figma", year: "2024", isPublic: true },
 ];
 
-function NavBar({ activePage, setActivePage }) {
+function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -41,63 +41,70 @@ function NavBar({ activePage, setActivePage }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isActive = (id) => activePage === id || (id === "home" && (activePage === "home" || activePage === "landing"));
+  const navItems = [
+    { id: "home", label: "Trang chủ" },
+    { id: "about", label: "Giới thiệu" },
+    { id: "gallery", label: "Gallery" },
+  ];
+  if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: "Portfolio" });
+
   return (
-    <nav style={{ background: "#fff", borderBottom: `1px solid ${GRAY_LIGHT}`, height: 60, display: "flex", alignItems: "center", padding: "0 48px", gap: 32, position: "sticky", top: 0, zIndex: 100, justifyContent: "space-between" }}>
-      <div onClick={() => setActivePage("gallery")} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
-        <div style={{ width: 28, height: 28, background: BLACK, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <span style={{ color: "#fff", fontSize: 13, fontWeight: 700, fontFamily: "serif" }}>P</span>
+    <header className="flex items-center justify-between px-8 py-3 border-b border-gray-100 bg-white sticky top-0 z-50">
+      <div className="flex items-center gap-3 cursor-pointer" onClick={() => setPage("home")}>
+        <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
+        <div>
+          <h1 className="font-bold text-sm leading-tight">Design Gallery</h1>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wide">Khoa Thiết kế Đồ họa</p>
         </div>
-        <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: "-0.5px", color: BLACK }}>PortfolioUEF</span>
       </div>
-      <div style={{ display: "flex", gap: 4 }}>
-        {[
-          { id: "gallery", label: "Gallery" },
-          { id: "about", label: "Giới thiệu" },
-          { id: "portfolio", label: "Portfolio" },
-          { id: "dashboard", label: "Dashboard" },
-          { id: "admin", label: "Admin" },
-        ].map(p => (
-          <button key={p.id} onClick={() => setActivePage(p.id)} style={{ padding: "6px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: activePage === p.id ? 600 : 400, color: activePage === p.id ? "#fff" : MUTED, background: activePage === p.id ? BLACK : "transparent", transition: "all .15s" }}>
-            {p.label}
-          </button>
+      <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+        {navItems.map((item) => (
+          <button key={item.id} onClick={() => setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#077E9E] border-b-2 border-[#077E9E]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
         ))}
-      </div>
-      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, background: GRAY_BG, borderRadius: 8, padding: "7px 12px", width: 200, border: `1px solid ${GRAY_LIGHT}` }}>
-          <Search size={14} color={MUTED} />
-          <span style={{ fontSize: 13, color: MUTED }}>Tìm kiếm tác phẩm...</span>
-        </div>
-        <button onClick={() => setActivePage("auth")} style={{ padding: "7px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK }}>Đăng nhập</button>
-        <button onClick={() => setActivePage("upload")} style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Đăng ấn phẩm</button>
-        <div className="relative ml-2" ref={dropdownRef}>
-          <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80" alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
-            <ChevronDown size={14} color={MUTED} />
-          </div>
-          {isDropdownOpen && (
-            <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
-              <div className="px-4 py-3 border-b border-[#E0E0E0] bg-[#F8F8F8]">
-                <p className="text-sm font-bold text-[#212121]">Nguyễn Minh Anh</p>
-                <p className="text-xs text-[#666666]">minhanh@uef.edu.vn</p>
-              </div>
-              <div className="py-1">
-                <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setActivePage("dashboard"); setIsDropdownOpen(false); }}>
-                  <LayoutDashboard size={16} className="text-[#666666]" /> Dashboard Sinh viên
-                </div>
-                <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setActivePage("settings"); setIsDropdownOpen(false); }}>
-                  <Settings size={16} className="text-[#666666]" /> Cài đặt Portfolio
-                </div>
-              </div>
-              <div className="border-t border-[#E0E0E0] py-1">
-                <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#FEF2F2] hover:text-[#8B1A1A] cursor-pointer text-[#8B1A1A] text-sm font-medium transition-colors" onClick={() => { setActivePage("auth"); setIsDropdownOpen(false); }}>
-                  <LogOut size={16} /> Đăng xuất
-                </div>
-              </div>
+      </nav>
+      <div className="flex items-center gap-3 text-sm font-medium">
+        {isLoggedIn ? (
+          <div className="relative" ref={dropdownRef}>
+            <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80" alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
+              <ChevronDown size={14} className="text-[#666666]" />
             </div>
-          )}
-        </div>
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
+                <div className="px-4 py-3 border-b border-[#E0E0E0] bg-[#F8F8F8]">
+                  <p className="text-sm font-bold text-[#212121]">Nguyễn Minh Anh</p>
+                  <p className="text-xs text-[#666666]">minhanh@uef.edu.vn</p>
+                </div>
+                <div className="py-1">
+                  {userRole === "student" ? (
+                    <>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> Dashboard Sinh viên</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> Cài đặt Tài khoản</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> Cài đặt Portfolio</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("messages"); setIsDropdownOpen(false); }}><Mail size={16} className="text-[#666666]" /> Hộp thư</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("admin"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> Dashboard Admin</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> Cài đặt Tài khoản</div>
+                    </>
+                  )}
+                </div>
+                <div className="border-t border-[#E0E0E0] py-1">
+                  <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#FEF2F2] hover:text-[#8B1A1A] cursor-pointer text-[#8B1A1A] text-sm font-medium transition-colors" onClick={() => { onLogout && onLogout(); setIsDropdownOpen(false); }}><LogOut size={16} /> Đăng xuất</div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <button onClick={() => setPage("register")} className="text-gray-500 hover:text-[#212121] px-4 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">Đăng ký</button>
+            <button onClick={() => setPage("auth")} className="bg-[#077E9E] text-white px-5 py-1.5 rounded-lg hover:bg-[#066a85] transition-colors">Đăng nhập</button>
+          </>
+        )}
       </div>
-    </nav>
+    </header>
   );
 }
 
@@ -261,11 +268,12 @@ function PortfolioPage({ setPage }) {
   // ────────────────────────────────────────────────────────────────────────────
   // Demo data (UI tĩnh) — sau này map từ JSONB: social_links + featured case studies
   // ────────────────────────────────────────────────────────────────────────────
+  const yearLabels = { "Năm 1": "Nhà thiết kế mầm non 🌱", "Năm 2": "Nhà thiết kế tập sự 🎨", "Năm 3": "Nhà thiết kế chuyên nghiệp ✨", "Năm 4": "Nhà thiết kế cao cấp 🚀", "Tốt nghiệp": "Nhà thiết kế chính thức 🎓" };
+  const [currentYear, setCurrentYear] = useState("Năm 3");
   const profile = {
     fullName: "Nguyễn Minh Anh",
-    profileHeadline: "Graphic Designer · UI/UX Enthusiast · UEF",
-    bio:
-      "Đam mê thiết kế đồ họa và trải nghiệm người dùng. Tập trung vào Brand Identity, Poster Design và Motion Graphics.",
+    profileHeadline: `${yearLabels[currentYear]} · UI/UX Enthusiast · UEF`,
+    bio: `Sinh viên ${currentYear.toLowerCase()} ngành Thiết kế Đồ họa. Đam mê Brand Identity, Poster Design và Motion Graphics.`,
     avatarUrl: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg",
     socialLinks: [
       { label: "Behance", href: "https://behance.net/minhanh", icon: "globe" },
@@ -343,9 +351,14 @@ function PortfolioPage({ setPage }) {
                 </div>
               </div>
 
-              <p className="text-base sm:text-lg text-[#666666] font-medium mb-3">
+              <p className="text-base sm:text-lg text-[#666666] font-medium mb-2">
                 {profile.profileHeadline}
               </p>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {Object.entries(yearLabels).map(([key]) => (
+                  <button key={key} onClick={() => setCurrentYear(key)} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${currentYear === key ? 'bg-[#077E9E] text-white border-[#077E9E]' : 'bg-white text-[#666666] border-[#E0E0E0] hover:border-[#077E9E]'}`}>{key}</button>
+                ))}
+              </div>
               <p className="text-sm sm:text-[15px] text-[#444444] leading-relaxed max-w-2xl">
                 {profile.bio}
               </p>
@@ -661,12 +674,18 @@ function DashboardPage({ setPage }) {
 
 function UploadPage({ setPage }) {
   const [showPopup, setShowPopup] = useState(false);
-  const [uploadState, setUploadState] = useState("idle"); // idle, loading, success
+  const [uploadState, setUploadState] = useState("idle");
   const [checked1, setChecked1] = useState(false);
   const [checked2, setChecked2] = useState(false);
   const [checked3, setChecked3] = useState(false);
   const [tags, setTags] = useState(["Poster", "Typography"]);
   const [tagInput, setTagInput] = useState("");
+  const [projectYear, setProjectYear] = useState("Năm 3");
+  const [isGroupProject, setIsGroupProject] = useState(false);
+  const [friends, setFriends] = useState([]);
+  const [friendInput, setFriendInput] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [notifyOnConfirm, setNotifyOnConfirm] = useState(true);
 
   const handleUploadSubmit = () => {
     setUploadState("loading");
@@ -763,56 +782,33 @@ function UploadPage({ setPage }) {
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tiêu đề tác phẩm *</label>
-              <input defaultValue="Neon Cityscape Poster Series" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tên học phần *</label><input defaultValue="Design Principles" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Loại đồ án</label>
+              <div style={{ display: "flex", gap: 6 }}>{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${projectYear === y ? CERULEAN : GRAY_LIGHT}`, background: projectYear === y ? "#F0F8FB" : GRAY_BG, color: projectYear === y ? CERULEAN : MUTED, fontSize: 12, fontWeight: projectYear === y ? 600 : 400, cursor: "pointer" }}>{y}</button>))}</div>
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Mô tả</label>
-              <textarea defaultValue="Bộ poster được lấy cảm hứng từ văn hóa đô thị hiện đại, kết hợp giữa neon light và kiến trúc đương đại. Thực hiện trong khuôn khổ môn Thiết kế Đồ họa 3 năm học 2024." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 110, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Danh mục & Công cụ</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
-                  <option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option>
-                </select>
-                <select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
-                  <option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tags</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>
-                {tags.map(t => (
-                  <span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>
-                    {t}
-                    <X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== t))} style={{ cursor: "pointer" }} />
-                  </span>
-                ))}
-                <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} />
-              </div>
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Quyền hiển thị</label>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Loại bài</label>
               <div style={{ display: "flex", gap: 10 }}>
-                {["Công khai", "Riêng tư"].map((opt, i) => (
-                  <label key={opt} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", borderRadius: 8, border: `1px solid ${i === 0 ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", flex: 1, background: i === 0 ? "#F0F8FB" : GRAY_BG }}>
-                    <div style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${i === 0 ? CERULEAN : GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", background: "#fff" }}>
-                      {i === 0 && <div style={{ width: 8, height: 8, borderRadius: "50%", background: CERULEAN }} />}
-                    </div>
-                    <span style={{ fontSize: 13, color: BLACK, fontWeight: i === 0 ? 600 : 400 }}>{opt}</span>
-                  </label>
-                ))}
+                {[{ key: false, label: "Cá nhân", desc: "Tự thực hiện", icon: <User size={16} /> }, { key: true, label: "Nhóm", desc: "Làm việc nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#F0F8FB" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
               </div>
             </div>
-            <div style={{ marginTop: "auto", paddingTop: 8 }}>
-              <button onClick={() => setShowPopup(true)} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: "0.3px" }}>
-                Đăng tác phẩm
-              </button>
-              <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>Bạn sẽ cần xác nhận cam kết học thuật trước khi hoàn tất</p>
+            {isGroupProject && (<div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tag bạn cùng nhóm</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => setFriendInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { setFriends([...friends, friendInput.trim()]); setFriendInput(""); } }} placeholder="Nhập tên bạn bè..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 100, color: BLACK }} /></div></div>)}
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Mô tả</label><textarea defaultValue="Bộ poster được lấy cảm hứng từ văn hóa đô thị hiện đại, kết hợp giữa neon light và kiến trúc đương đại. Thực hiện trong khuôn khổ môn Thiết kế Đồ họa 3 năm học 2024." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Danh mục & Công cụ</label><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}><select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}><option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option></select><select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}><option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option></select></div></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tags</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{tags.map(t => (<span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== t))} style={{ cursor: "pointer" }} /></span>))}<input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} /></div></div>
+            <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
+                <div onClick={() => setAgreedToTerms(!agreedToTerms)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${agreedToTerms ? CERULEAN : GRAY_LIGHT}`, background: agreedToTerms ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>{agreedToTerms && <Check size={12} color="#fff" strokeWidth={3} />}</div>
+                <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6, margin: 0 }}>Tôi cam kết tác phẩm này là sản phẩm tự thực hiện, không sao chép từ nguồn không hợp lệ. Tôi chịu trách nhiệm về nội dung đăng tải. Tôi hiểu rằng tác phẩm sẽ được giảng viên/admin xác nhận trước khi công khai trên hệ thống.</p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div onClick={() => setNotifyOnConfirm(!notifyOnConfirm)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${notifyOnConfirm ? CERULEAN : GRAY_LIGHT}`, background: notifyOnConfirm ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>{notifyOnConfirm && <Check size={12} color="#fff" strokeWidth={3} />}</div>
+                <span style={{ fontSize: 12, color: "#666" }}>Nhận thông báo khi tác phẩm được xác nhận</span>
+              </div>
+            </div>
+            <div style={{ paddingTop: 4 }}>
+              <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>Đăng tác phẩm</button>
+              <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>Sau khi đăng, GV/Admin sẽ xác nhận trước khi công khai</p>
             </div>
           </div>
         </div>
@@ -858,8 +854,8 @@ function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked })
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px", color: BLACK, lineHeight: 1.3 }}>{art.title}</h1>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <img src="https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg" alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} />
-              <span style={{ fontSize: 13, color: MUTED }}>{art.student}</span>
+              <img src="https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg" alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }} onClick={() => setPage("portfolio")} />
+              <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("portfolio")}>{art.student}</span>
               <span style={{ fontSize: 12, color: MUTED }}>·</span>
               <span style={{ fontSize: 12, color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("portfolio")}>Xem portfolio</span>
             </div>
@@ -993,17 +989,16 @@ function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked })
   );
 }
 
-function AuthPage({ setPage }) {
+function AuthPage({ setPage, onLoginSuccess }) {
+  const [authRole, setAuthRole] = useState("student");
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
         <img src="https://cdn-media.sforum.vn/storage/app/media/wp-content/uploads/2023/08/hoc-phi-uef-.jpg" alt="auth-bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
-        <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={() => setPage("gallery")}>
-          <div style={{ width: 32, height: 32, background: "#fff", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: BLACK, fontSize: 15, fontWeight: 800, fontFamily: "serif" }}>P</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>PortfolioUEF</span>
+        <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
+          <img src="/logo-uef.png" alt="UEF" style={{ height: 32, filter: "brightness(0) invert(1)" }} />
+          <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
         </div>
       </div>
       <div style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 64px" }}>
@@ -1019,7 +1014,12 @@ function AuthPage({ setPage }) {
             <input type="password" placeholder="••••••••" style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }} />
           </div>
         </div>
-        <button onClick={() => setPage("dashboard")} style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 32, cursor: "pointer" }}>Đăng nhập</button>
+        <div style={{ display: "flex", gap: 6, marginTop: 20 }}>
+          {[{ key: "student", label: "Sinh viên" }, { key: "lecturer", label: "Giảng viên" }, { key: "admin", label: "Quản trị" }].map((r) => (
+            <button key={r.key} onClick={() => setAuthRole(r.key)} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{r.label}</button>
+          ))}
+        </div>
+        <button onClick={() => onLoginSuccess && onLoginSuccess(authRole)} style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 20, cursor: "pointer" }}>Đăng nhập</button>
       </div>
     </div>
   )
@@ -1295,7 +1295,11 @@ function AdminSidebar({ active, setPage }) {
 
 function EditArtworkPage({ setPage }) {
   const [isPublic, setIsPublic] = useState(true);
-  const art = artworks[1]; // mock data cho trang edit
+  const [projectYear, setProjectYear] = useState("Năm 3");
+  const [isGroupProject, setIsGroupProject] = useState(false);
+  const [friends, setFriends] = useState([]);
+  const [friendInput, setFriendInput] = useState("");
+  const art = artworks[1];
 
   return (
     <div className="bg-white min-h-[calc(100vh-60px)] px-16 py-10">
@@ -1305,7 +1309,6 @@ function EditArtworkPage({ setPage }) {
         </div>
         <h2 className="text-2xl font-bold text-[#212121] mb-1">Chỉnh sửa Ấn phẩm</h2>
         <p className="text-sm text-[#666666] mb-8">Cập nhật thông tin chi tiết cho tác phẩm của bạn</p>
-
         <div className="grid grid-cols-2 gap-8">
           <div>
             <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh hiện tại</label>
@@ -1316,34 +1319,14 @@ function EditArtworkPage({ setPage }) {
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-5">
-            <div>
-              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tiêu đề tác phẩm</label>
-              <input defaultValue={art.title} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Mô tả</label>
-              <textarea defaultValue="Đây là một bộ nhận diện thương hiệu hoàn chỉnh dành cho chiến dịch sắp tới." className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[100px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Danh mục & Công cụ</label>
-              <div className="grid grid-cols-2 gap-3">
-                <select defaultValue={art.category} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
-                  <option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option>
-                </select>
-                <select defaultValue={art.tool} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
-                  <option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Quyền hiển thị</label>
-              <div className="flex items-center gap-3 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg px-4 py-3">
-                <span className="text-sm font-medium text-[#212121] flex-1">Cho phép công khai tác phẩm trên hệ thống</span>
-                <ToggleSwitch isOn={isPublic} onToggle={() => setIsPublic(!isPublic)} />
-              </div>
-            </div>
-            <div className="mt-auto pt-6 border-t border-[#E0E0E0] flex gap-3">
+          <div className="flex flex-col gap-4">
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tên học phần</label><input defaultValue="Design Principles" className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại đồ án</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#F0F8FB] border-[#077E9E] text-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại bài</label><div className="flex gap-3">{[{ key: false, label: "Cá nhân", icon: <User size={16} /> }, { key: true, label: "Nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#F0F8FB] border-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
+            {isGroupProject && (<div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tag bạn cùng nhóm</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f} <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => setFriendInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { setFriends([...friends, friendInput.trim()]); setFriendInput(""); } }} placeholder="Nhập tên..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" /></div></div>)}
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Mô tả</label><textarea defaultValue="Đây là một bộ nhận diện thương hiệu hoàn chỉnh dành cho chiến dịch sắp tới." className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Danh mục & Công cụ</label><div className="grid grid-cols-2 gap-3"><select defaultValue={art.category} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer"><option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option></select><select defaultValue={art.tool} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer"><option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option></select></div></div>
+            <div className="mt-auto pt-4 border-t border-[#E0E0E0] flex gap-3">
               <button className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> Xóa ấn phẩm</button>
               <button className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer"><Check size={16} /> Lưu thay đổi</button>
             </div>
@@ -2119,7 +2102,43 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
   );
 }
 
-function LandingPage({ setPage }) {
+function RegisterPage({ setPage }) {
+  return (
+    <div style={{ display: "flex", height: "100vh", width: "100%" }}>
+      <div style={{ flex: 1, position: "relative" }}>
+        <img src="https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=1200&q=80" alt="register-bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(7,126,158,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
+        <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
+          <img src="/logo-uef.png" alt="UEF" style={{ height: 32, filter: "brightness(0) invert(1)" }} />
+          <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
+        </div>
+        <div style={{ position: "absolute", bottom: 48, left: 48, right: 48 }}>
+          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: 22, fontWeight: 300, lineHeight: 1.55, letterSpacing: "-0.3px", margin: "0 0 14px" }}>"Sáng tạo là kết nối mọi thứ với nhau." <br /><span style={{ fontSize: 16, opacity: 0.8 }}>Tham gia cộng đồng sáng tạo UEF</span></p>
+        </div>
+      </div>
+      <div style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 56px", overflow: "auto" }}>
+        <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}><img src="/logo-uef.png" alt="UEF" style={{ height: 30 }} /><span style={{ fontWeight: 700, fontSize: 16, color: BLACK }}>Design Gallery</span></div>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>Tạo tài khoản mới</h1>
+          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>Sử dụng email <strong style={{ color: CERULEAN }}>@uef.edu.vn</strong> để đăng ký</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Họ</label><input type="text" placeholder="Nguyễn" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
+              <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Tên</label><input type="text" placeholder="Minh Anh" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
+            </div>
+            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Email @uef.edu.vn</label><input type="email" placeholder="minhanh@uef.edu.vn" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
+            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mã số sinh viên</label><input type="text" placeholder="21DGR00042" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
+            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mật khẩu</label><input type="password" placeholder="••••••••" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
+            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Xác nhận mật khẩu</label><input type="password" placeholder="••••••••" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
+          </div>
+          <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>Đã có tài khoản? <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>Đăng nhập</span></p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LandingPage({ setPage, isLoggedIn }) {
   const artworks = [
     { id: 1, img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", title: "Kỷ niệm UEF", student: "Nguyễn Lê Minh Anh", likes: 142 },
     { id: 2, img: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg", title: "Poster Design", student: "Trần Bảo Long", likes: 89 },
@@ -2129,25 +2148,6 @@ function LandingPage({ setPage }) {
 
   return (
     <div className="min-h-screen bg-white font-sans text-[#212121]">
-      {/* Header */}
-      <header className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#212121] text-white font-serif font-bold text-xl px-3 py-1 rounded-md">UEF</div>
-          <div>
-            <h1 className="font-bold text-sm leading-tight">Design Gallery</h1>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide">Khoa Thiết kế Đồ họa</p>
-          </div>
-        </div>
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <button className="text-[#077E9E] border-b-2 border-[#077E9E] pb-1">Trang chủ</button>
-          <button onClick={() => setPage("gallery")} className="text-gray-500 hover:text-[#212121]">Gallery</button>
-          <button onClick={() => setPage("about")} className="text-gray-500 hover:text-[#212121]">Giới thiệu Khoa</button>
-        </nav>
-        <div className="flex items-center gap-4 text-sm font-medium">
-          <span className="text-gray-400">VI / EN</span>
-          <button onClick={() => setPage("auth")} className="bg-[#077E9E] text-white px-5 py-2 rounded-lg hover:bg-[#066a85] transition-colors">Đăng nhập</button>
-        </div>
-      </header>
 
       {/* Hero Section */}
       <section className="px-8 py-20 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
@@ -2454,444 +2454,47 @@ const softwareStack = [
 ];
 
 function AboutPage({ setPage }) {
-  const [activeTab, setActiveTab] = useState(ABOUT_TABS[0].label);
-  const contactFormDefaults = { name: "", email: "", subject: "", message: "" };
-  const [contactForm, setContactForm] = useState(contactFormDefaults);
-  const [contactState, setContactState] = useState("idle");
-
-  const scrollToTab = (t) => {
-    setActiveTab(t.label);
-    const el = document.getElementById(t.id);
-    if (!el) return;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  useEffect(() => {
-    const sections = ABOUT_TABS
-      .map((t) => document.getElementById(t.id))
-      .filter(Boolean);
-
-    if (sections.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (!visible) return;
-        const match = ABOUT_TABS.find((t) => t.id === visible.target.id);
-        if (match) setActiveTab(match.label);
-      },
-      { threshold: [0.2, 0.35, 0.5], rootMargin: "-20% 0px -70% 0px" }
-    );
-
-    sections.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
-  const submitContact = (e) => {
-    e.preventDefault();
-    setContactState("loading");
-    setTimeout(() => {
-      setContactState("success");
-      setContactForm(contactFormDefaults);
-      setTimeout(() => setContactState("idle"), 2000);
-    }, 1200);
-  };
+  const [audience, setAudience] = useState("student");
+  const audienceData = [
+    { key: "student", label: "Sinh viên", icon: <Users size={20} />, color: "#077E9E", bg: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&q=80", headline: "Nơi Sáng Tạo Của Bạn Được Tỏa Sáng", desc: "Khoa Thiết kế Đồ họa UEF trang bị cho bạn tư duy thiết kế, kỹ năng công cụ và portfolio chuyên nghiệp để tự tin bước vào ngành công nghiệp sáng tạo." },
+    { key: "employer", label: "Nhà tuyển dụng", icon: <Briefcase size={20} />, color: "#055F78", bg: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1400&q=80", headline: "Săn Lùng Tài Năng Thiết Kế Trẻ", desc: "Khám phá những ấn phẩm xuất sắc nhất từ sinh viên Thiết kế Đồ họa UEF — nguồn nhân lực thiết kế chất lượng cao cho doanh nghiệp của bạn." },
+    { key: "lecturer", label: "Giảng viên", icon: <PenTool size={20} />, color: "#8B1A1A", bg: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1400&q=80", headline: "Đồng Hành Cùng Thế Hệ Nhà Thiết Kế", desc: "Tham gia đội ngũ giảng viên Khoa Thiết kế Đồ họa UEF — nơi bạn có thể truyền cảm hứng và định hướng cho những tài năng trẻ." },
+  ];
+  const current = audienceData.find((a) => a.key === audience) || audienceData[0];
 
   return (
-    <div className="bg-white min-h-[calc(100vh-58px)] font-sans w-full">
-      {/* Hero Section */}
-      <section className="bg-[#077E9E] text-white pt-20 pb-24 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
-          <p className="text-white/80 font-semibold text-sm tracking-wider uppercase mb-4">
-            Khoa Thiết Kế Đồ Họa
-          </p>
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight mb-6 font-serif">
-            Nơi Sáng Tạo
-            <br /> Được Triển Lãm
-          </h1>
-          <p className="text-lg md:text-xl text-white/90 max-w-2xl leading-relaxed mb-12">
-            Khoa Thiết kế Đồ họa UEF đào tạo thế hệ nhà thiết kế chuyên nghiệp, trang bị kỹ năng thực chiến và tư duy sáng tạo để đáp ứng nhu cầu ngành công nghiệp sáng tạo hiện đại.
-          </p>
-          
-          <div className="flex flex-wrap items-center gap-8 md:gap-16 border-t border-white/20 pt-8 mt-4">
-            <div>
-              <p className="text-4xl font-bold tracking-tight mb-1">500+</p>
-              <p className="text-sm text-white/80 font-medium">Ấn phẩm trưng bày</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold tracking-tight mb-1">12</p>
-              <p className="text-sm text-white/80 font-medium">Giảng viên chuyên môn</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold tracking-tight mb-1">1,200+</p>
-              <p className="text-sm text-white/80 font-medium">Sinh viên theo học</p>
-            </div>
-          </div>
+    <div className="bg-white min-h-screen font-sans w-full">
+      <section className="relative pt-16 pb-20 overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={current.bg} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${current.color}dd 0%, rgba(0,0,0,0.7) 100%)` }} />
         </div>
-        
-        {/* Background shapes */}
-        <div className="absolute top-0 right-0 bottom-0 w-1/2 overflow-hidden pointer-events-none opacity-20">
-          <div className="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] rounded-full bg-white blur-3xl"></div>
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 z-10">
+          <div className="flex mb-8 gap-2">{audienceData.map((a) => (<button key={a.key} onClick={() => setAudience(a.key)} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${audience === a.key ? "bg-white text-[#212121] shadow-lg" : "bg-white/15 text-white hover:bg-white/25"}`}>{a.icon} {a.label}</button>))}</div>
+          <p className="text-white/80 font-semibold text-xs tracking-wider uppercase mb-3">Khoa Thiết Kế Đồ Họa</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-5 leading-tight">{current.headline}</h1>
+          <p className="text-white/85 max-w-2xl leading-relaxed text-[15px] md:text-base mb-10">{current.desc}</p>
+          <div className="flex flex-wrap items-center gap-8 md:gap-16 border-t border-white/20 pt-8">
+            <div><p className="text-4xl font-bold tracking-tight text-white mb-1">500+</p><p className="text-sm text-white/70">Ấn phẩm trưng bày</p></div>
+            <div><p className="text-4xl font-bold tracking-tight text-white mb-1">12</p><p className="text-sm text-white/70">Giảng viên chuyên môn</p></div>
+            <div><p className="text-4xl font-bold tracking-tight text-white mb-1">1,200+</p><p className="text-sm text-white/70">Sinh viên theo học</p></div>
+          </div>
         </div>
       </section>
 
-      {/* Tab Navigation (Sticky) */}
-      <div className="sticky top-[58px] z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 flex overflow-x-auto no-scrollbar">
-          {ABOUT_TABS.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => scrollToTab(t)}
-              className={`whitespace-nowrap px-6 py-4 text-sm font-semibold transition-colors relative ${
-                activeTab === t.label ? "text-[#077E9E]" : "text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              {t.label}
-              {activeTab === t.label && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#077E9E] rounded-t-full"></span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16">
-        
-        {/* Chương trình đào tạo Section */}
-        <section id="chuong-trinh-dao-tao" className="mb-24 pt-8 scroll-mt-[120px]">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Về Chương Trình</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 max-w-2xl leading-tight">Đào tạo Nhà thiết kế Chuyên nghiệp Thế kỷ 21</h2>
-          <p className="text-gray-600 mb-12 max-w-3xl leading-relaxed text-[15px]">
-            Khoa Thiết kế Đồ họa trực thuộc Trường Đại học Kinh tế - Tài chính TP. Hồ Chí Minh (UEF), được thành lập với sứ mệnh đào tạo nguồn nhân lực chất lượng cao cho ngành công nghiệp sáng tạo tại Việt Nam và khu vực Đông Nam Á.<br/><br/>
-            Chương trình đào tạo kết hợp lý thuyết học thuật và thực hành chuyên sâu, giúp sinh viên không chỉ thành thạo các công cụ thiết kế chuyên nghiệp mà còn phát triển tư duy thẩm mỹ và khả năng giải quyết vấn đề bằng ngôn ngữ thiết kế.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <MajorCard 
-              title="Thiết kế đồ họa Truyền thông" 
-              desc="Brand identity, print design, packaging, typography và visual communication."
-            />
-            <MajorCard 
-              title="Thiết kế Kỹ thuật số & UI/UX" 
-              desc="Web design, mobile app, user experience và interactive design."
-            />
-            <MajorCard 
-              title="Motion Graphics & Video" 
-              desc="Animation, motion design, video editing và visual effects."
-            />
-            <MajorCard 
-              title="Minh họa & Nghệ thuật 3D" 
-              desc="Digital illustration, concept art, character design và 3D modeling."
-            />
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white border border-gray-200 rounded-2xl p-8">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Chuẩn đầu ra</h3>
-              <div className="space-y-3 text-sm text-gray-600">
-                {[
-                  "Tư duy giải quyết vấn đề bằng thiết kế và khả năng trình bày case study",
-                  "Kỹ năng sử dụng công cụ và quy trình làm việc chuyên nghiệp",
-                  "Khả năng làm việc nhóm, phản biện và iterate theo feedback",
-                  "Portfolio đủ mạnh để ứng tuyển Graphic Designer / UI/UX / Motion",
-                ].map((it) => (
-                  <div key={it} className="flex items-start gap-3">
-                    <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <Check className="w-4 h-4 text-[#077E9E]" />
-                    </div>
-                    <span>{it}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-[#055F78] text-white rounded-2xl p-8 relative overflow-hidden">
-              <h3 className="text-lg font-bold mb-4">Công cụ & phần mềm</h3>
-              <p className="text-white/80 text-sm leading-relaxed mb-6">
-                Sinh viên được tiếp cận bộ công cụ tiêu chuẩn ngành, kết hợp workshop cập nhật xu hướng và pipeline làm việc hiện đại.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {softwareStack.map((s) => (
-                  <span key={s} className="bg-white/10 border border-white/20 text-white text-[11px] font-medium px-2.5 py-1 rounded-md">
-                    {s}
-                  </span>
-                ))}
-              </div>
-              <div className="absolute -bottom-16 -right-16 w-56 h-56 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-            </div>
-          </div>
-        </section>
-
-        {/* Đội ngũ giảng viên Section */}
-        <section id="doi-ngu-giang-vien" className="mb-24 pt-8 scroll-mt-[120px]">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Đội ngũ giảng viên</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Những Người Thầy Dẫn Đường Sáng Tạo</h2>
-          <p className="text-gray-600 mb-12 max-w-3xl leading-relaxed text-[15px]">
-            Đội ngũ giảng viên Khoa Thiết kế Đồ họa UEF bao gồm các chuyên gia với nhiều năm kinh nghiệm thực tiễn trong ngành và nền tảng học thuật vững chắc.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {lecturers.map((lec) => (
-              <div key={lec.email} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-[#077E9E] transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <img src={lec.img} alt={lec.name} className="w-14 h-14 rounded-full object-cover border border-gray-200" />
-                  <div>
-                    <p className="text-gray-900 font-bold text-sm">{lec.name}</p>
-                    <p className="text-[#077E9E] text-xs font-semibold">{lec.title}</p>
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center gap-2 text-xs text-gray-500">
-                  <Mail className="w-4 h-4 text-[#666666]" />
-                  <span>{lec.email}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-            {lecturersList.map((lec) => (
-              <LecturerCard key={lec.name} {...lec} avatar={lec.img} />
-            ))}
-          </div>
-          
-          <div className="flex justify-center">
-            <button className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
-              Xem toàn bộ giảng viên (12)
-            </button>
-          </div>
-        </section>
-
-        {/* Highlight Colorful Block */}
-        <section className="mb-24 pt-8">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Ấn phẩm sinh viên nổi bật</p>
-          <div className="mb-8">
-            <MasonryGrid items={artworks.slice(0, 6)} showHover={true} />
-          </div>
-          <button onClick={() => setPage && setPage("gallery")} className="w-full py-4 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-xl font-semibold text-[15px] transition-colors">
-            Xem Gallery đầy đủ
-          </button>
-        </section>
-
-        <section id="co-so-vat-chat" className="mb-24 pt-8 scroll-mt-[120px]">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Cơ sở vật chất</p>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Không gian sáng tạo & thiết bị chuẩn ngành</h2>
-          <p className="text-gray-600 mb-12 max-w-3xl leading-relaxed text-[15px]">
-            Mô hình học tập đặt trọng tâm vào studio và thực hành. Sinh viên được sử dụng phòng máy, studio và thiết bị hỗ trợ sản xuất để tối ưu chất lượng đồ án.
-          </p>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-            {facilitiesList.map((f) => {
-              const I = f.icon;
-              return (
-                <div key={f.title} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-[#077E9E] transition-all duration-300">
-                  <div className="h-44 bg-gray-100 overflow-hidden">
-                    <img src={f.img} alt={f.title} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="p-6">
-                    <div className="flex items-start gap-4 mb-3">
-                      <div className="w-12 h-12 rounded-xl bg-[#077E9E]/10 flex items-center justify-center flex-shrink-0">
-                        <I className="w-6 h-6 text-[#077E9E]" />
-                      </div>
-                      <div>
-                        <h3 className="text-gray-900 font-bold">{f.title}</h3>
-                        <p className="text-gray-500 text-sm leading-relaxed mt-1">{f.desc}</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      {["Mở cửa theo lịch học", "Hỗ trợ đồ án", "Tài nguyên dùng chung"].map((t) => (
-                        <span key={t} className="bg-blue-50 text-[#077E9E] border border-[#077E9E]/20 text-[11px] font-medium px-2.5 py-1 rounded-md">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="bg-[#F8F8F8] border border-gray-200 rounded-2xl p-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Hỗ trợ sản xuất</h3>
-                <div className="space-y-3 text-sm text-gray-600">
-                  {[
-                    "Quy trình mượn/trả thiết bị rõ ràng, hỗ trợ theo lịch",
-                    "Khu vực in thử và kiểm tra màu sắc trước khi nộp",
-                    "Không gian critique giúp cải thiện sản phẩm qua từng vòng review",
-                  ].map((it) => (
-                    <div key={it} className="flex items-start gap-3">
-                      <div className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check className="w-4 h-4 text-[#077E9E]" />
-                      </div>
-                      <span>{it}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-white border border-gray-200 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Tài nguyên phần mềm</h3>
-                <p className="text-gray-500 text-sm leading-relaxed mb-4">
-                  Danh mục phần mềm được sử dụng trong học phần và đồ án, phục vụ thiết kế, 3D, motion và prototyping.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {softwareStack.map((s) => (
-                    <span key={s} className="bg-blue-50 text-[#077E9E] border border-[#077E9E]/20 text-[11px] font-medium px-2.5 py-1 rounded-md">
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Liên hệ & CTA Section */}
-        <section id="lien-he" className="pt-8 scroll-mt-[120px]">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24">
-            
-            {/* Liên hệ */}
-            <div>
-              <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Thông tin liên hệ</p>
-              <h2 className="text-3xl font-bold text-gray-900 mb-8">Kết nối với chúng tôi</h2>
-              
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-5 h-5 text-[#077E9E]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900 mb-1">Địa chỉ</p>
-                    <p className="text-sm text-gray-600">141-145 Điện Biên Phủ, Phường 15, Q. Bình Thạnh, TP.HCM</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-5 h-5 text-[#077E9E]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900 mb-1">Email</p>
-                    <a href="mailto:khoathietke@uef.edu.vn" className="text-sm text-gray-600 hover:text-[#077E9E]">khoathietke@uef.edu.vn</a>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-5 h-5 text-[#077E9E]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900 mb-1">Điện thoại</p>
-                    <p className="text-sm text-gray-600">(028) 5422 5555</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4">
-                  <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-5 h-5 text-[#077E9E]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-900 mb-1">Website</p>
-                    <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="text-sm text-gray-600 hover:text-[#077E9E]">uef.edu.vn</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white border border-gray-200 rounded-2xl p-8 md:p-10">
-              <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Form liên hệ</p>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Gửi tin nhắn nhanh</h3>
-
-              <form onSubmit={submitContact} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">Họ và tên</label>
-                    <input
-                      value={contactForm.name}
-                      onChange={(e) => setContactForm((s) => ({ ...s, name: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
-                      placeholder="Nguyễn Văn A"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={contactForm.email}
-                      onChange={(e) => setContactForm((s) => ({ ...s, email: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
-                      placeholder="email@company.com"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Chủ đề</label>
-                  <input
-                    value={contactForm.subject}
-                    onChange={(e) => setContactForm((s) => ({ ...s, subject: e.target.value }))}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
-                    placeholder="Tuyển dụng / Hợp tác / Tham quan khoa"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Nội dung</label>
-                  <textarea
-                    value={contactForm.message}
-                    onChange={(e) => setContactForm((s) => ({ ...s, message: e.target.value }))}
-                    rows={5}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] resize-none"
-                    placeholder="Mô tả nhu cầu của bạn..."
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setContactForm(contactFormDefaults)}
-                    className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Làm mới
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={contactState === "loading"}
-                    className={`px-6 py-2.5 rounded-lg text-sm font-bold text-white transition-colors flex items-center gap-2 ${
-                      contactState === "loading" ? "bg-[#077E9E]/70" : "bg-[#077E9E] hover:bg-[#055F78]"
-                    }`}
-                  >
-                    <Send className="w-4 h-4" />
-                    {contactState === "success" ? "Đã gửi" : contactState === "loading" ? "Đang gửi..." : "Gửi liên hệ"}
-                  </button>
-                </div>
-              </form>
-            </div>
-            
-          </div>
-
-          <div className="mt-12 bg-[#055F78] rounded-2xl p-8 md:p-10 text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
-            <div className="relative z-10">
-              <h3 className="text-2xl font-bold mb-2">Bạn là Nhà tuyển dụng?</h3>
-              <p className="text-white/80 text-[15px] leading-relaxed max-w-2xl">
-                Khám phá ngay portfolio các sản phẩm sinh viên để tìm kiếm ứng viên tiềm năng cho doanh nghiệp của bạn.
-              </p>
-            </div>
-            <button onClick={() => setPage && setPage("portfolio")} className="relative z-10 bg-white text-[#055F78] px-6 py-3.5 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 w-max">
-              Khám phá Portfolio <ArrowRight className="w-4 h-4" />
-            </button>
-            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-            <div className="absolute top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-xl pointer-events-none"></div>
-          </div>
-        </section>
-
+        {audience === "student" && (<>
+          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Chương trình đào tạo</p><h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Hành Trình Trở Thành Nhà Thiết Kế Chuyên Nghiệp</h2><p className="text-gray-600 mb-10 max-w-3xl leading-relaxed text-[15px]">Từ năm nhất đến tốt nghiệp, bạn sẽ được trang bị toàn diện: tư duy thẩm mỹ, kỹ năng công cụ chuẩn ngành, và portfolio đủ mạnh để ứng tuyển.</p><div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"><MajorCard title="Thiết kế đồ họa Truyền thông" desc="Brand identity, print design, packaging, typography và visual communication." /><MajorCard title="Thiết kế Kỹ thuật số & UI/UX" desc="Web design, mobile app, user experience và interactive design." /><MajorCard title="Motion Graphics & Video" desc="Animation, motion design, video editing và visual effects." /><MajorCard title="Minh họa & Nghệ thuật 3D" desc="Digital illustration, concept art, character design và 3D modeling." /></div><button onClick={() => setPage("gallery")} className="w-full py-4 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-xl font-semibold transition-colors">Khám phá Gallery ấn phẩm sinh viên →</button></section>
+          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Đội ngũ giảng viên</p><h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Những Người Thầy Dẫn Đường</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">{lecturers.map((lec) => (<div key={lec.email} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-[#077E9E] transition-all"><div className="flex items-center gap-4"><img src={lec.img} alt={lec.name} className="w-14 h-14 rounded-full object-cover border border-gray-200" /><div><p className="text-gray-900 font-bold text-sm">{lec.name}</p><p className="text-[#077E9E] text-xs font-semibold">{lec.title}</p></div></div></div>))}</div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{lecturersList.slice(0, 3).map((lec) => (<LecturerCard key={lec.name} {...lec} avatar={lec.img} />))}</div></section>
+          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Cơ sở vật chất</p><div className="grid grid-cols-1 lg:grid-cols-3 gap-6">{facilitiesList.map((f) => { const I = f.icon; return (<div key={f.title} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-[#077E9E] transition-all"><div className="h-44 bg-gray-100 overflow-hidden"><img src={f.img} alt={f.title} className="w-full h-full object-cover" /></div><div className="p-6"><div className="flex items-start gap-4 mb-3"><div className="w-12 h-12 rounded-xl bg-[#077E9E]/10 flex items-center justify-center flex-shrink-0"><I className="w-6 h-6 text-[#077E9E]" /></div><div><h3 className="text-gray-900 font-bold">{f.title}</h3><p className="text-gray-500 text-sm leading-relaxed mt-1">{f.desc}</p></div></div></div></div>); })}</div></section>
+        </>)}
+        {audience === "employer" && (<>
+          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Dành cho Nhà tuyển dụng</p><h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Tìm Kiếm Tài Năng Thiết Kế Trẻ?</h2><p className="text-gray-600 mb-10 max-w-3xl leading-relaxed text-[15px]">Hơn 500 ấn phẩm đồ án từ sinh viên Thiết kế Đồ họa UEF — chất lượng đã qua đánh giá của giảng viên. Dễ dàng tìm kiếm ứng viên theo kỹ năng, môn học và năm tốt nghiệp.</p><div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">{[{ icon: <Search size={24} />, title: "Duyệt Portfolio", desc: "Xem hồ sơ năng lực và bộ sưu tập tác phẩm của từng sinh viên." }, { icon: <MessageSquare size={24} />, title: "Liên hệ trực tiếp", desc: "Gửi tin nhắn tuyển dụng qua hệ thống." }, { icon: <Star size={24} />, title: "Gợi ý thông minh", desc: "Bộ lọc theo kỹ năng, công cụ, môn học." }].map((item) => (<div key={item.title} className="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg hover:border-[#077E9E] transition-all"><div className="w-12 h-12 bg-[#E8F4F8] rounded-xl flex items-center justify-center mb-5 text-[#077E9E]">{item.icon}</div><h3 className="text-lg font-bold text-gray-900 mb-3">{item.title}</h3><p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p></div>))}</div><button onClick={() => setPage("gallery")} className="w-full py-4 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-xl font-semibold transition-colors">Khám phá Gallery ấn phẩm →</button></section>
+        </>)}
+        {audience === "lecturer" && (<>
+          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Dành cho Giảng viên</p><h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Công Cụ Giảng Dạy & Quản Lý Đồ Án</h2><p className="text-gray-600 mb-10 max-w-3xl leading-relaxed text-[15px]">Hệ thống Portfolio UEF giúp giảng viên chấm điểm, nhận xét trực tiếp trên tác phẩm, quản lý lớp học và xuất bộ sưu tập triển lãm.</p><div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">{[{ icon: <Check size={24} />, title: "Chấm điểm & Nhận xét", desc: "Đánh giá trực tiếp trên từng ấn phẩm." }, { icon: <Folder size={24} />, title: "Quản lý lớp học", desc: "Xem danh sách lớp, theo dõi tiến độ nộp bài." }, { icon: <FileDown size={24} />, title: "Xuất PDF Triển lãm", desc: "Tạo bộ sưu tập, kéo thả sắp xếp và xuất tập san." }].map((item) => (<div key={item.title} className="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg hover:border-[#077E9E] transition-all"><div className="w-12 h-12 bg-[#E8F4F8] rounded-xl flex items-center justify-center mb-5 text-[#077E9E]">{item.icon}</div><h3 className="text-lg font-bold text-gray-900 mb-3">{item.title}</h3><p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p></div>))}</div><button onClick={() => setPage("gallery")} className="w-full py-4 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-xl font-semibold transition-colors">Xem Gallery ấn phẩm sinh viên →</button></section>
+        </>)}
+        <section className="pt-8 border-t border-gray-200"><div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24"><div><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Liên hệ</p><h2 className="text-3xl font-bold text-gray-900 mb-8">Kết nối với Khoa Thiết kế Đồ họa</h2><div className="space-y-6"><div className="flex items-start gap-4"><div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0"><MapPin className="w-5 h-5 text-[#077E9E]" /></div><div><p className="text-sm font-bold text-gray-900 mb-1">Địa chỉ</p><p className="text-sm text-gray-600">141-145 Điện Biên Phủ, Phường 15, Q. Bình Thạnh, TP.HCM</p></div></div><div className="flex items-start gap-4"><div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0"><Mail className="w-5 h-5 text-[#077E9E]" /></div><div><p className="text-sm font-bold text-gray-900 mb-1">Email</p><a href="mailto:khoathietke@uef.edu.vn" className="text-sm text-gray-600 hover:text-[#077E9E]">khoathietke@uef.edu.vn</a></div></div><div className="flex items-start gap-4"><div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0"><Phone className="w-5 h-5 text-[#077E9E]" /></div><div><p className="text-sm font-bold text-gray-900 mb-1">Điện thoại</p><p className="text-sm text-gray-600">(028) 5422 5555</p></div></div></div></div><div className="bg-white border border-gray-200 rounded-2xl p-8 md:p-10"><h3 className="text-xl font-bold text-gray-900 mb-6">Gửi tin nhắn cho chúng tôi</h3><form className="space-y-4"><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-900 mb-2">Họ tên</label><input placeholder="Nguyễn Văn A" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E]" /></div><div><label className="block text-sm font-medium text-gray-900 mb-2">Email</label><input type="email" placeholder="email@company.com" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E]" /></div></div><div><label className="block text-sm font-medium text-gray-900 mb-2">Nội dung</label><textarea rows={4} placeholder="Mô tả nhu cầu..." className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] resize-none" /></div><button className="w-full py-3 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-[#055F78] transition-colors">Gửi tin nhắn</button></form></div></div></section>
       </div>
     </div>
   );
@@ -3371,8 +2974,10 @@ function PortalPage({ setPage }) {
 }
 
 export default function App() {
-  const [page, setPage] = useState("portal");
+  const [page, setPage] = useState("home");
   const [activeArtworkId, setActiveArtworkId] = useState(artworks[2]?.id ?? 1);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState("student");
 
   // ────────────────────────────────────────────────────────────────────────────
   // Mock DB (để demo nghiệp vụ giảng viên)
@@ -3484,11 +3089,17 @@ export default function App() {
     );
   };
 
+  const handleLogin = (role) => { setIsLoggedIn(true); setUserRole(role || "student"); setPage("home"); };
+  const handleLogout = () => { setIsLoggedIn(false); setUserRole("student"); setPage("home"); };
+
   return (
     <div className="font-sans min-h-screen bg-[#F8F8F8] text-[#212121]">
-      {page !== "auth" && page !== "portal" && page !== "landing" && <NavBar activePage={page} setActivePage={setPage} />}
+      {page !== "auth" && page !== "register" && page !== "portal" && (
+        <AppHeader activePage={page} setPage={setPage} isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} />
+      )}
       {page === "portal" && <PortalPage setPage={setPage} />}
-      {page === "landing" && <LandingPage setPage={setPage} />}
+      {page === "home" && <LandingPage setPage={setPage} isLoggedIn={isLoggedIn} />}
+      {page === "landing" && <LandingPage setPage={setPage} isLoggedIn={isLoggedIn} />}
       {page === "gallery" && (
         <GalleryPage
           setPage={setPage}
@@ -3508,7 +3119,8 @@ export default function App() {
           isBookmarked={isBookmarked}
         />
       )}
-      {page === "auth" && <AuthPage setPage={setPage} />}
+      {page === "auth" && <AuthPage setPage={setPage} onLoginSuccess={handleLogin} />}
+      {page === "register" && <RegisterPage setPage={setPage} />}
       {page === "settings" && <SettingsPage setPage={setPage} />}
       {page === "portfolio_settings" && <PortfolioSettingsPage setPage={setPage} />}
       {page === "admin" && <AdminDashboardPage setPage={setPage} />}
