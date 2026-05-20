@@ -661,7 +661,7 @@ function DashboardSidebar({ active, setPage, userData }) {
   );
 }
 
-function DashboardPage({ setPage, userData }) {
+function DashboardPage({ setPage, setActiveArtworkId, userData }) {
   const [artworksList, setArtworksList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -718,7 +718,7 @@ function DashboardPage({ setPage, userData }) {
               {artworksList.map(art => (
                 <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
                   <div style={{ position: "relative", background: GRAY_BG }}>
-                    <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail")} />
+                    <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
                     <div style={{ position: "absolute", top: 8, left: 8 }}>
                       <span style={{ background: art.isPublic ? "#E8F4F8" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#B3D9E8" : GRAY_LIGHT}` }}>{art.isPublic ? "Công khai" : "Riêng tư"}</span>
                     </div>
@@ -3763,7 +3763,7 @@ export default function App() {
         />
       )}
       {page === "portfolio" && <PortfolioPage setPage={setPage} />}
-      {page === "dashboard" && <DashboardPage setPage={setPage} userData={userData} />}
+      {page === "dashboard" && <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />}
       {page === "upload" && <UploadPage setPage={setPage} />}
       {page === "detail" && (
         <DetailPage
