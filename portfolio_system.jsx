@@ -2418,8 +2418,17 @@ function AdminArtworksPage({ setPage }) {
 
                 <div className="p-5">
                   <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8]">
-                    <img src={selected.img} className="w-full h-64 object-cover" />
+                    <img src={selected.coverImageUrl} className="w-full h-64 object-cover" />
                   </div>
+                  {(selected.fileUrls || []).length > 0 && (
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {[selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean).map((url, idx) => (
+                        <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8]">
+                          <img src={url} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4 mt-5">
                     <div>
@@ -2428,11 +2437,14 @@ function AdminArtworksPage({ setPage }) {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Công cụ</p>
-                      <p className="text-sm font-semibold text-[#212121]">{selected.tool}</p>
+                      <p className="text-sm font-semibold text-[#212121]">{(selected.toolsUsed || []).join(", ") || "—"}</p>
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Trạng thái</p>
-                      <span className={`inline-flex whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${badge(selected.status)}`}>{statusText(selected.status)}</span>
+                      <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${selected.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
+                        {selected.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} />}
+                        {selected.isPublic ? "Công khai" : "Riêng tư"}
+                      </span>
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Điểm</p>
@@ -2461,7 +2473,7 @@ function AdminArtworksPage({ setPage }) {
                     </button>
                   </div>
 
-                  <button onClick={() => toggleHighlight([selected.id])} className={`mt-3 w-full py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+                  <button onClick={() => toggleHighlight(selected.id, !selected.isHighlighted)} className={`mt-3 w-full py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
                     selected.isHighlighted ? "bg-[#212121] text-white border-[#212121]" : "bg-[#E8F4F8] text-[#077E9E] border-[#B3D9E8] hover:bg-[#D9EEF6]"
                   }`}>
                     {selected.isHighlighted ? "Bỏ Highlight" : "Highlight ấn phẩm"}
