@@ -1589,22 +1589,25 @@ function AdminDashboardPage({ setPage }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {flagged.map((a) => (
+                  {recentActivity.map((a) => {
+                    const aStatus = a.isPublic ? "Đang hiển thị" : (a.isHighlighted ? "Nổi bật" : "Đã ẩn");
+                    return (
                     <tr key={a.id} className="border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <img src={a.img} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
+                          <img src={a.coverImageUrl} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
                           <span className="text-sm font-semibold text-[#212121] truncate max-w-[260px]">{a.title}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#666666]">{a.student}</td>
-                      <td className="px-4 py-3 text-sm text-[#666666]">{a.subject}</td>
-                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.user?.fullName || ""}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.subject || ""}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("vi-VN") : ""}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(a.status)}`}>{a.status}</span>
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(aStatus)}`}>{aStatus}</span>
                       </td>
                     </tr>
-                  ))}
+                  );
+                })}
                 </tbody>
               </table>
             </div>
@@ -2173,11 +2176,6 @@ function AdminArtworksPage({ setPage }) {
       const next = filtered.find((a) => !ids.includes(a.id));
       setSelectedId(next?.id ?? null);
     }
-  };
-
-  const toggleHighlight = (ids) => {
-    setItems((prev) => prev.map((a) => (ids.includes(a.id) ? { ...a, isHighlighted: !a.isHighlighted } : a)));
-    setSelectedIds([]);
   };
 
   const badge = (s) => {
