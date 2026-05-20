@@ -3,6 +3,7 @@ import { useAuth } from "./lib/AuthContext";
 import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
 import { api } from "./lib/api-client";
+import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -2714,7 +2715,7 @@ function AdminArtworksPage({ setPage }) {
   );
 }
 
-function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCreateCollection }) {
+function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCreateCollection, onOpenCatalogBuilder }) {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <AdminSidebar active="admin_export" setPage={setPage} />
@@ -2737,7 +2738,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {collections.map((c) => {
-            const thumbs = c.items.slice(0, 3).map((it) => artworks.find((a) => a.id === it.artworkId)?.img).filter(Boolean);
+            const thumbs = c.items.slice(0, 3).map((it) => it.artwork?.coverImageUrl).filter(Boolean);
             return (
               <div
                 key={c.id}
@@ -2775,6 +2776,12 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
                   </span>
                   <span className="text-sm font-bold text-[#077E9E]">Mở cấu hình →</span>
                 </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onOpenCatalogBuilder && onOpenCatalogBuilder(c); }}
+                  className="mt-3 w-full py-2 rounded-lg bg-[#212121] text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <FileDown size={14} /> Tạo tập san PDF
+                </button>
               </div>
             );
           })}
@@ -2802,7 +2809,6 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
   }
 
   const detailedItems = collection.items
-    .map((it) => ({ ...it, artwork: artworks.find((a) => a.id === it.artworkId) }))
     .filter((it) => it.artwork);
 
   const reorder = (from, to) => {
@@ -3501,12 +3507,12 @@ function SaveToCollectionModal({
         <div className="px-5 sm:px-6 py-4 border-b border-[#E0E0E0] bg-[#F8F8F8] flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-xl overflow-hidden border border-[#E0E0E0] bg-white flex-shrink-0">
-              <img src={artwork.img} alt={artwork.title} className="w-full h-full object-cover" />
+              <img src={artwork.coverImageUrl || artwork.img} alt={artwork.title} className="w-full h-full object-cover" />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider">Lưu vào bộ sưu tập</p>
               <p className="text-sm font-bold text-[#212121] truncate">{artwork.title}</p>
-              <p className="text-xs text-[#666666] truncate">{artwork.student}</p>
+              <p className="text-xs text-[#666666] truncate">{artwork.student || artwork.user?.fullName || ""}</p>
             </div>
           </div>
           <button
@@ -4258,26 +4264,17 @@ export default function App() {
   // collections ~ COLLECTIONS
   // collection.items[].note ~ COLLECTION_ITEMS.note
   // ────────────────────────────────────────────────────────────────────────────
-  const [collections, setCollections] = useState(() => [
-    {
-      id: "col-uef-2026",
-      name: "Triển lãm UEF 2026",
-      curatorEssay: "",
-      theme: "Modern",
-      items: [
-        { artworkId: 1, note: "Chọn vì xử lý màu tốt, nhịp thị giác rõ, phù hợp trang mở màn." },
-        { artworkId: 2, note: "Hệ thống hình & typography sạch. Có thể đặt làm spread 2 trang." },
-      ],
-    },
-    {
-      id: "col-scholarship",
-      name: "Ứng viên học bổng",
-      curatorEssay: "",
-      theme: "Classic",
-      items: [],
-    },
-  ]);
-  const [activeCollectionId, setActiveCollectionId] = useState("col-uef-2026");
+  const [collections, setCollections] = useState([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(true);
+  const [activeCollectionId, setActiveCollectionId] = useState(null);
+  const [catalogCollection, setCatalogCollection] = useState(null);
+
+  useEffect(() => {
+    api.collections.list().then(data => {
+      setCollections(Array.isArray(data) ? data : []);
+      setCollectionsLoading(false);
+    }).catch(() => setCollectionsLoading(false));
+  }, []);
 
   // Bookmark flow state
   const [saveModal, setSaveModal] = useState({ open: false, artwork: null });
@@ -4314,40 +4311,55 @@ export default function App() {
     }
   };
 
-  const createCollection = (name) => {
-    const id = `col-${Date.now()}`;
-    setCollections((prev) => [
-      ...prev,
-      { id, name, curatorEssay: "", theme: "Classic", items: [] },
-    ]);
+  const createCollection = async (name) => {
+    setCollections((prev) => [...prev, { id: name, name, curatorEssay: "", theme: "Classic", items: [] }]);
     setToast({ title: "Đã tạo bộ sưu tập", message: name });
-    return id;
+    api.collections.create({ collectionName: name }).catch(() => {});
+    return name;
   };
 
-  const saveToCollections = ({ artworkId, selectedCollectionIds, note }) => {
+  const saveToCollections = async ({ artworkId, selectedCollectionIds, note }) => {
+    const prevCollections = [...collections];
     setCollections((prev) =>
       prev.map((c) => {
         const has = c.items.some((it) => it.artworkId === artworkId);
         const shouldHave = selectedCollectionIds.includes(c.id);
-
         if (shouldHave) {
           const nextItems = has
             ? c.items.map((it) => (it.artworkId === artworkId ? { ...it, note } : it))
             : [...c.items, { artworkId, note }];
           return { ...c, items: nextItems };
         }
-
         if (!shouldHave && has) {
           return { ...c, items: c.items.filter((it) => it.artworkId !== artworkId) };
         }
-
         return c;
       })
     );
-
     setOptimisticSavedIds((prev) => prev.filter((x) => x !== artworkId));
     setSaveModal({ open: false, artwork: null });
     setToast({ title: "Đã lưu vào bộ sưu tập", message: "Đã cập nhật ghi chú giám tuyển." });
+
+    try {
+      const ops = [];
+      for (const c of prevCollections) {
+        const has = c.items.some((it) => it.artworkId === artworkId);
+        const shouldHave = selectedCollectionIds.includes(c.id);
+        if (shouldHave && !has) {
+          ops.push(api.collections.addItem(c.id, { artworkId, note: note || undefined }));
+        } else if (shouldHave && has && note !== undefined) {
+          const existingNote = c.items.find((it) => it.artworkId === artworkId)?.note;
+          if (existingNote !== note) {
+            ops.push(api.collections.updateItemNote(c.id, artworkId, note));
+          }
+        } else if (!shouldHave && has) {
+          ops.push(api.collections.removeItem(c.id, artworkId));
+        }
+      }
+      await Promise.all(ops);
+    } catch (e) {
+      console.error("Save to collection API error:", e);
+    }
   };
 
   const openExportConfig = (collectionId) => {
@@ -4361,6 +4373,9 @@ export default function App() {
     setCollections((prev) =>
       prev.map((c) => (c.id === activeCollectionId ? { ...c, ...patch } : c))
     );
+    if (patch.name || patch.curatorEssay !== undefined || patch.theme) {
+      api.collections.update(activeCollectionId, patch).catch(() => {});
+    }
   };
 
   const handleLogin = async (role) => {
@@ -4420,6 +4435,7 @@ export default function App() {
             const id = createCollection(`Bộ sưu tập mới`);
             openExportConfig(id);
           }}
+          onOpenCatalogBuilder={(c) => setCatalogCollection(c)}
         />
       )}
       {page === "collection_export_config" && (
@@ -4446,6 +4462,12 @@ export default function App() {
             {toast.message && <p className="text-xs text-white/80 mt-1 leading-relaxed">{toast.message}</p>}
           </div>
         </div>
+      )}
+      {catalogCollection && (
+        <CatalogBuilderWizard
+          collection={catalogCollection}
+          onClose={() => setCatalogCollection(null)}
+        />
       )}
     </div>
   );
