@@ -8,7 +8,7 @@ import {
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
-  MapPin, Phone, ArrowRight, Star, Monitor
+  MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -939,7 +939,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tên tác phẩm *</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Nhập tên tác phẩm..." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tên môn học *</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Design Graphic - Flowers Garden" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Loại đồ án</label>
               <div style={{ display: "flex", gap: 6 }}>{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${projectYear === y ? CERULEAN : GRAY_LIGHT}`, background: projectYear === y ? "#F0F8FB" : GRAY_BG, color: projectYear === y ? CERULEAN : MUTED, fontSize: 12, fontWeight: projectYear === y ? 600 : 400, cursor: "pointer" }}>{y}</button>))}</div>
             </div>
@@ -1004,6 +1004,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [savingGrade, setSavingGrade] = useState(false);
   const [relatedArtworks, setRelatedArtworks] = useState([]);
   const [liking, setLiking] = useState(false);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
 
   const currentUserId = authUser?.id;
   const currentUserRole = authUser?.role;
@@ -1018,6 +1019,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
 
   useEffect(() => {
     if (!activeArtworkId) return;
+    setActiveImageIdx(0);
     api.artworks.get(activeArtworkId).then(res => {
       setArt({
         ...res,
@@ -1089,6 +1091,12 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     setSavingGrade(false);
   };
 
+  const allImages = [art.coverImageUrl, ...(art.fileUrls || [])].filter(Boolean);
+  const allImagesDeduped = [...new Set(allImages)];
+  const activeImage = allImagesDeduped[activeImageIdx] || allImagesDeduped[0] || art.coverImageUrl;
+
+  const semesterToYear = { HK1: "Năm 1", HK2: "Năm 2", HK3: "Năm 3" };
+
   const timeAgo = (dateStr) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
@@ -1112,8 +1120,17 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "65fr 35fr", minHeight: "calc(100vh - 105px)" }}>
-        <div style={{ background: GRAY_BG, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: 32 }}>
-          <img src={art.coverImageUrl} alt={art.title} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
+        <div style={{ background: GRAY_BG, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "32px 32px 0" }}>
+          <img src={activeImage} alt={art.title} style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
+          {allImagesDeduped.length > 1 && (
+            <div style={{ display: "flex", gap: 8, marginTop: 16, paddingBottom: 24, flexWrap: "wrap", justifyContent: "center", zIndex: 3 }}>
+              {allImagesDeduped.map((url, idx) => (
+                <div key={idx} onClick={() => setActiveImageIdx(idx)} style={{ width: 56, height: 48, borderRadius: 6, overflow: "hidden", border: `2px solid ${idx === activeImageIdx ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", opacity: idx === activeImageIdx ? 1 : 0.55, transition: "all .15s" }}>
+                  <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              ))}
+            </div>
+          )}
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
             <p style={{ color: "rgba(0,0,0,0.06)", fontSize: 48, fontWeight: 900, transform: "rotate(-25deg)", userSelect: "none", letterSpacing: 4, textTransform: "uppercase" }}>UEF · PORTFOLIO</p>
           </div>
@@ -1131,6 +1148,11 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
               <span style={{ fontSize: 12, color: MUTED }}>{new Date(art.createdAt).toLocaleDateString("vi-VN")}</span>
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px", color: BLACK, lineHeight: 1.3 }}>{art.title}</h1>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+              {art.semester && <span style={{ background: "#FEF3E2", color: "#92400E", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><BookOpen size={12} /> {semesterToYear[art.semester] || art.semester}</span>}
+              {art.academicYear && <span style={{ background: "#E8F0FE", color: "#1E40AF", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Calendar size={12} /> {art.academicYear}</span>}
+              {(art.collaborators || []).length > 0 && <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {(art.collaborators || []).length} thành viên</span>}
+            </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <img src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }} onClick={() => setPage("portfolio")} />
               <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("portfolio")}>{art.user?.fullName}</span>
