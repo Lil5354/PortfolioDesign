@@ -1,5 +1,4 @@
 import type { NextAuthConfig } from "next-auth";
-import { NextResponse } from "next/server";
 
 declare module "next-auth" {
   interface User {
@@ -31,41 +30,6 @@ export const authConfig = {
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const role = auth?.user?.role;
-      const pathname = nextUrl.pathname;
-
-      const isPublic =
-        pathname === "/" ||
-        pathname === "/login" ||
-        pathname.startsWith("/gallery") ||
-        pathname.startsWith("/portfolio") ||
-        pathname.startsWith("/artwork") ||
-        pathname.startsWith("/about");
-
-      if (isPublic) return true;
-
-      if (!isLoggedIn) {
-        if (
-          pathname.startsWith("/dashboard") ||
-          pathname.startsWith("/admin")
-        ) {
-          return NextResponse.redirect(new URL("/login", nextUrl));
-        }
-        return false;
-      }
-
-      if (role === "student" && pathname.startsWith("/admin")) {
-        return NextResponse.redirect(new URL("/dashboard", nextUrl));
-      }
-
-      if (
-        (role === "lecturer" || role === "admin") &&
-        pathname.startsWith("/dashboard")
-      ) {
-        return NextResponse.redirect(new URL("/admin/dashboard", nextUrl));
-      }
-
       return true;
     },
     session({ session, token }) {
