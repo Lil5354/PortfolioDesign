@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "./lib/AuthContext";
 import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
@@ -3526,8 +3526,48 @@ function PortalPage({ setPage }) {
 
 export default function App() {
   const { user: authUser, loading, logout, refreshSession } = useAuth();
-  const [page, setPage] = useState("home");
-  const [activeArtworkId, setActiveArtworkId] = useState(artworks[2]?.id ?? 1);
+
+  const getHashState = useCallback(() => {
+    const hash = window.location.hash.replace(/^#\/?/, '');
+    if (!hash) return { page: "home", id: null };
+    const parts = hash.split('/');
+    return { page: parts[0] || "home", id: parts.length > 1 ? parts.slice(1).join('/') : null };
+  }, []);
+
+  const [page, setPageState] = useState(() => getHashState().page);
+  const [activeArtworkId, setActiveArtworkIdState] = useState(() => {
+    const h = getHashState();
+    return h.page === "detail" && h.id ? h.id : (artworks[2]?.id ?? 1);
+  });
+
+  const setActiveArtworkId = useCallback((id) => {
+    setActiveArtworkIdState(id);
+  }, []);
+
+  const setPage = useCallback((newPage) => {
+    setPageState(newPage);
+  }, []);
+
+  // Sync URL hash whenever page or activeArtworkId changes
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) { firstRender.current = false; return; }
+    const path = page === "detail" && activeArtworkId
+      ? `#/detail/${activeArtworkId}`
+      : (page === "home" ? "#/" : `#/${page}`);
+    window.history.pushState({ page, id: activeArtworkId }, "", path);
+  }, [page, activeArtworkId]);
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const onPop = () => {
+      const h = getHashState();
+      setPageState(h.page);
+      if (h.page === "detail" && h.id) setActiveArtworkIdState(h.id);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [getHashState]);
 
   const isLoggedIn = !!authUser;
   const userRole = authUser?.role || "student";
