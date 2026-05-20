@@ -31,8 +31,9 @@ export async function GET(request: NextRequest) {
       where.userId = userId;
     }
 
-    const orderBy: Record<string, string> =
+    const secondarySort: Record<string, string> =
       sort === 'most_likes' ? { likeCount: 'desc' } : { createdAt: 'desc' };
+    const orderBy = [{ isHighlighted: 'desc' }, secondarySort];
 
     const [artworks, total] = await Promise.all([
       prisma.artwork.findMany({
