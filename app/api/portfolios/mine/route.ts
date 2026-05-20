@@ -45,7 +45,7 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json(settings);
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: '' }, { status: 500 });
   }
 }
 
@@ -86,6 +86,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(settings);
   } catch (error) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('PUT portfolio error:', error);
+    return NextResponse.json({ error: error?.toString() || '' }, { status: 500 });
   }
 }
