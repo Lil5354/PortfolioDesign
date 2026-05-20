@@ -3187,6 +3187,7 @@ function PortfolioSettingsPage({ setPage }) {
 function SettingsPage({ setPage }) {
   const { refreshSession } = useAuth();
   const [profile, setProfile] = useState({ fullName: "", studentId: "", email: "", avatarUrl: "" });
+  const [pendingAvatar, setPendingAvatar] = useState(null);
   const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
   const [saving, setSaving] = useState(false);
   const [changingPass, setChangingPass] = useState(false);
@@ -3214,7 +3215,7 @@ function SettingsPage({ setPage }) {
     setSaving(true);
     setMessage({ type: "", text: "" });
     const body = { fullName: profile.fullName };
-    if (profile.avatarUrl && profile.avatarUrl.startsWith("data:")) body.avatarUrl = profile.avatarUrl;
+    if (pendingAvatar !== null) body.avatarUrl = pendingAvatar || "";
     try {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
@@ -3225,6 +3226,8 @@ function SettingsPage({ setPage }) {
       const data = await res.json();
       if (res.ok && data.success) {
         setMessage({ type: "success", text: "Đã cập nhật thông tin!" });
+        setPendingAvatar(null);
+        setProfile(p => ({ ...p, avatarUrl: data.user?.avatarUrl || p.avatarUrl }));
         refreshSession();
         setTimeout(() => refreshSession(), 300);
       } else if (res.status === 401) {
@@ -3304,38 +3307,21 @@ function SettingsPage({ setPage }) {
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <h3 className="font-bold text-[#212121] mb-4">Ảnh đại diện</h3>
             <div className="flex items-center gap-6">
-              <img src={profile.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
+              <img src={pendingAvatar || profile.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
               <div>
                 <div className="flex gap-3 mb-2">
-                  <input type="file" id="avatarInput" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+                  <input type="file" id="avatarInput" accept="image/*" style={{ display: "none" }} onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     const reader = new FileReader();
-                    reader.onload = async (ev) => {
+                    reader.onload = (ev) => {
                       const dataUrl = ev.target?.result;
-                      if (typeof dataUrl !== "string") return;
-                      setProfile(p => ({ ...p, avatarUrl: dataUrl }));
-                      try {
-                        const res = await fetch("/api/user/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ avatarUrl: dataUrl }) });
-                        if (res.ok) {
-                          setMessage({ type: "success", text: "Đã cập nhật ảnh đại diện!" });
-                          refreshSession();
-                        } else {
-                          setMessage({ type: "error", text: "Lỗi lưu ảnh" });
-                        }
-                      } catch { setMessage({ type: "error", text: "Lỗi kết nối" }); }
+                      if (typeof dataUrl === "string") setPendingAvatar(dataUrl);
                     };
                     reader.readAsDataURL(file);
                   }} />
                   <button onClick={() => document.getElementById("avatarInput")?.click()} className="px-4 py-2 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Tải ảnh mới</button>
-                  <button onClick={async () => {
-                    try {
-                      await fetch("/api/user/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ avatarUrl: "" }) });
-                      setProfile(p => ({ ...p, avatarUrl: "" }));
-                      setMessage({ type: "success", text: "Đã xóa ảnh đại diện!" });
-                      refreshSession();
-                    } catch { setMessage({ type: "error", text: "Xóa ảnh thất bại" }); }
-                  }} className="px-4 py-2 bg-white border border-[#8B1A1A] text-[#8B1A1A] rounded-lg text-sm font-medium hover:bg-[#8B1A1A] hover:text-white transition-colors cursor-pointer">Xóa ảnh</button>
+                  <button onClick={() => setPendingAvatar("")} className="px-4 py-2 bg-white border border-[#8B1A1A] text-[#8B1A1A] rounded-lg text-sm font-medium hover:bg-[#8B1A1A] hover:text-white transition-colors cursor-pointer">Xóa ảnh</button>
                 </div>
                 <p className="text-xs text-[#666666]">Định dạng JPG, PNG hoặc GIF. Tối đa 5MB.</p>
               </div>

@@ -25,6 +25,8 @@ declare module "next-auth/jwt" {
     id: string;
     role: string;
     isActive: boolean;
+    name?: string;
+    picture?: string;
   }
 }
 
@@ -98,12 +100,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
-          select: { id: true, role: true, isActive: true },
+          select: { id: true, role: true, isActive: true, fullName: true, avatarUrl: true },
         });
         if (dbUser) {
           token.id = dbUser.id;
           token.role = dbUser.role;
           token.isActive = dbUser.isActive;
+          token.name = dbUser.fullName;
+          token.picture = dbUser.avatarUrl;
         }
       }
       return token;
@@ -112,6 +116,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.name = token.name || session.user.name;
+        session.user.image = token.picture || session.user.image;
       }
       return session;
     },
