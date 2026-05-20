@@ -187,6 +187,7 @@ model PortfolioSetting {
   socialLinks       Json?        @map("social_links") @db.JsonB
   contactEnabled    Boolean      @default(true) @map("contact_enabled")
   displayOrder      DisplayOrder @default(newest) @map("display_order")
+  featuredArtworkIds String[]    @default([]) @map("featured_artwork_ids")
   updatedAt         DateTime     @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id])

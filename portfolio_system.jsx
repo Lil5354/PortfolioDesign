@@ -321,43 +321,54 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 }
 
 function PortfolioPage({ setPage }) {
-  const privateGrade = { score: 8.5, comment: "Tác phẩm thể hiện tư duy thiết kế tốt, bố cục hài hòa. Cần cải thiện phần typography và độ tương phản màu sắc. Kỹ năng sử dụng công cụ Figma thành thục." };
-
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
+  const [portfolioData, setPortfolioData] = useState(null);
+  const [portfolioArtworks, setPortfolioArtworks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // Demo data (UI tĩnh) — sau này map từ JSONB: social_links + featured case studies
-  // ────────────────────────────────────────────────────────────────────────────
-  const yearLabels = { "Năm 1": "Nhà thiết kế mầm non 🌱", "Năm 2": "Nhà thiết kế tập sự 🎨", "Năm 3": "Nhà thiết kế chuyên nghiệp ✨", "Năm 4": "Nhà thiết kế cao cấp 🚀", "Tốt nghiệp": "Nhà thiết kế chính thức 🎓" };
-  const [currentYear, setCurrentYear] = useState("Năm 3");
+  const slug = new URLSearchParams(window.location.search).get("slug") || "demo";
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      api.portfolios.get(slug).catch(() => null),
+      api.portfolios.artworks(slug, { limit: "50" }).catch(() => ({ artworks: [] })),
+      api.portfolios.stats(slug).catch(() => ({ viewCount: 0, likeCount: 0, artworkCount: 0 })),
+    ]).then(([pData, artRes, pStats]) => {
+      if (pData) {
+        pData.stats = { ...(pData.stats || {}), ...pStats };
+        setPortfolioData(pData);
+      }
+      if (artRes?.artworks) setPortfolioArtworks(artRes.artworks);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Đang tải portfolio...</div>;
+  if (!portfolioData) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Portfolio không tồn tại hoặc đang ở chế độ riêng tư.</div>;
+
+  const { user, portfolioSettings, stats, featuredArtworks } = portfolioData;
   const profile = {
-    fullName: "Nguyễn Minh Anh",
-    profileHeadline: `${yearLabels[currentYear]} · UI/UX Enthusiast · UEF`,
-    bio: `Sinh viên ${currentYear.toLowerCase()} ngành Thiết kế Đồ họa. Đam mê Brand Identity, Poster Design và Motion Graphics.`,
-    avatarUrl: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg",
-    socialLinks: [
-      { label: "Behance", href: "https://behance.net/minhanh", icon: "globe" },
-      { label: "LinkedIn", href: "https://linkedin.com/in/minhanh", icon: "link" },
-      { label: "Email", href: "mailto:minhanh@uef.edu.vn", icon: "mail" },
-    ],
+    fullName: user?.fullName || "Sinh viên",
+    profileHeadline: portfolioSettings?.profileHeadline || "Design Student",
+    bio: user?.bio || "",
+    avatarUrl: user?.avatarUrl || "",
+    email: user?.email || "",
   };
+  const socialLinksRaw = portfolioSettings?.socialLinks || {};
+  const socialLinks = [
+    socialLinksRaw.behance && { label: "Behance", href: socialLinksRaw.behance, icon: "globe" },
+    socialLinksRaw.linkedin && { label: "LinkedIn", href: socialLinksRaw.linkedin, icon: "link" },
+    profile.email && portfolioSettings?.showEmail && { label: "Email", href: `mailto:${profile.email}`, icon: "mail" },
+  ].filter(Boolean);
 
-  const featuredWorks = [
-    { id: "cs-1", title: "Brand Identity UEF", img: artworks[1].img, tools: ["Illustrator", "Figma"], colClass: "col-span-12 lg:col-span-7", rowSpan: 10 },
-    { id: "cs-2", title: "Neon Cityscape Poster", img: artworks[0].img, tools: ["Illustrator", "Photoshop"], colClass: "col-span-12 sm:col-span-6 lg:col-span-5", rowSpan: 5 },
-    { id: "cs-3", title: "Futuristic UI Concept", img: artworks[7].img, tools: ["Figma", "Design System"], colClass: "col-span-12 sm:col-span-6 lg:col-span-5", rowSpan: 5 },
-    { id: "cs-4", title: "Cultural Festival Poster", img: artworks[5].img, tools: ["Photoshop"], colClass: "col-span-12 sm:col-span-4", rowSpan: 5 },
-    { id: "cs-5", title: "Vintage Travel Series", img: artworks[3].img, tools: ["Procreate"], colClass: "col-span-12 sm:col-span-4", rowSpan: 5 },
-    { id: "cs-6", title: "3D Abstract Geometry", img: artworks[2].img, tools: ["Blender"], colClass: "col-span-12 sm:col-span-4", rowSpan: 5 },
-  ];
+  const featuredWorks = (featuredArtworks || []).slice(0, 6).map((a, i) => {
+    const layouts = ["col-span-12 lg:col-span-7", "col-span-12 sm:col-span-6 lg:col-span-5", "col-span-12 sm:col-span-6 lg:col-span-5", "col-span-12 sm:col-span-4", "col-span-12 sm:col-span-4", "col-span-12 sm:col-span-4"];
+    return { id: a.id, title: a.title, img: a.coverImageUrl, tools: a.toolsUsed || [], colClass: layouts[i % layouts.length], rowSpan: [10, 5, 5, 5, 5, 5][i % 6] };
+  });
 
-  const handleContactSubmit = () => {
-    setContactState("loading");
-    setTimeout(() => {
-      setContactState("success");
-    }, 1500);
-  };
+  const handleContactSubmit = () => { setContactState("loading"); setTimeout(() => setContactState("success"), 1500); };
 
   const closeContactModal = () => {
     setIsContactModalOpen(false);
@@ -426,7 +437,7 @@ function PortfolioPage({ setPage }) {
 
               {/* social links */}
               <div className="flex flex-wrap gap-2.5 mt-6">
-                {profile.socialLinks.map((l) => {
+                {socialLinks.map((l) => {
                   const iconMap = {
                     globe: <Globe size={16} className="text-[#077E9E]" />,
                     link: <Link size={16} className="text-[#077E9E]" />,
@@ -463,7 +474,7 @@ function PortfolioPage({ setPage }) {
 
               {/* quick stats (giữ tinh thần thiết kế cũ) */}
               <div className="mt-10 flex flex-wrap gap-8 border-t border-[#E0E0E0] pt-6">
-                {[{ label: "Tác phẩm", val: "12" }, { label: "Lượt xem", val: "2.4K" }, { label: "Lượt thích", val: "847" }].map((s) => (
+                {[{ label: "Tác phẩm", val: stats?.artworkCount || 0 }, { label: "Lượt xem", val: stats?.viewCount?.toLocaleString() || "0" }, { label: "Lượt thích", val: stats?.likeCount?.toLocaleString() || "0" }].map((s) => (
                   <div key={s.label} className="flex items-end gap-2">
                     <span className="text-2xl font-extrabold text-[#212121] tracking-tight">{s.val}</span>
                     <span className="text-sm text-[#666666] pb-0.5">{s.label}</span>
@@ -3440,26 +3451,38 @@ function SaveToCollectionModal({
 }
 
 function PortfolioSettingsPage({ setPage }) {
-  const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", isPortfolioPublic: true, socialLinks: {} });
+  const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", isPortfolioPublic: true, socialLinks: {}, featuredArtworkIds: [] });
+  const [myArtworks, setMyArtworks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("/api/portfolios/mine")
-      .then((r) => r.json())
-      .then((data) => {
-        const p = data.portfolioSettings || data;
-        setSettings({
-          portfolioSlug: p.portfolioSlug || "",
-          profileHeadline: p.profileHeadline || "",
-          isPortfolioPublic: p.isPortfolioPublic !== false,
-          socialLinks: p.socialLinks || {},
-        });
-        setLoaded(true);
-      })
-      .catch(() => setLoaded(true));
+    Promise.all([
+      fetch("/api/portfolios/mine").then(r => r.json()),
+      api.users.myArtworks().catch(() => []),
+    ]).then(([data, arts]) => {
+      const p = data.portfolioSettings || data;
+      setSettings({
+        portfolioSlug: p.portfolioSlug || "",
+        profileHeadline: p.profileHeadline || "",
+        isPortfolioPublic: p.isPortfolioPublic !== false,
+        socialLinks: p.socialLinks || {},
+        featuredArtworkIds: p.featuredArtworkIds || [],
+      });
+      setMyArtworks(Array.isArray(arts) ? arts : (arts.artworks || []));
+      setLoaded(true);
+    }).catch(() => setLoaded(true));
   }, []);
+
+  const toggleFeatured = (id) => {
+    setSettings(prev => {
+      const ids = prev.featuredArtworkIds || [];
+      if (ids.includes(id)) return { ...prev, featuredArtworkIds: ids.filter(x => x !== id) };
+      if (ids.length >= 4) return prev;
+      return { ...prev, featuredArtworkIds: [...ids, id] };
+    });
+  };
 
   const save = async () => {
     setSaving(true);
@@ -3473,6 +3496,7 @@ function PortfolioSettingsPage({ setPage }) {
           profileHeadline: settings.profileHeadline,
           isPortfolioPublic: settings.isPortfolioPublic,
           socialLinks: settings.socialLinks,
+          featuredArtworkIds: settings.featuredArtworkIds,
         }),
       });
       const data = await res.json();
@@ -3543,6 +3567,26 @@ function PortfolioSettingsPage({ setPage }) {
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
+            <h3 className="font-bold text-[#212121] mb-1">Ấn phẩm tiêu biểu</h3>
+            <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm để hiển thị ở đầu portfolio. Bấm vào ảnh để chọn/bỏ chọn.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {myArtworks.slice(0, 20).map(a => {
+                const selected = (settings.featuredArtworkIds || []).includes(a.id);
+                return (
+                  <div key={a.id} onClick={() => toggleFeatured(a.id)} className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-[4/3] ${selected ? 'border-[#077E9E] ring-2 ring-[#077E9E] ring-offset-1' : 'border-[#E0E0E0] hover:border-[#999]'}`}>
+                    <img src={a.coverImageUrl} alt={a.title} className="w-full h-full object-cover" />
+                    {selected && <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-[#077E9E] text-white flex items-center justify-center text-xs font-bold"><Check size={14} /></div>}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                      <p className="text-white text-xs font-semibold truncate">{a.title}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-[#666666] mt-3">Đã chọn {(settings.featuredArtworkIds || []).length}/4</p>
           </div>
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-8 flex items-center justify-between">

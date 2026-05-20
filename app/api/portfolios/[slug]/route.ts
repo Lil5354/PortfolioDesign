@@ -26,25 +26,20 @@ export async function GET(
       return NextResponse.json({ error: 'Portfolio not found' }, { status: 404 });
     }
 
-    const [artworkCount, featuredArtworks] = await Promise.all([
-      prisma.artwork.count({
-        where: { userId: setting.userId, isPublic: true },
-      }),
-      prisma.artwork.findMany({
-        where: { userId: setting.userId, isPublic: true, isHighlighted: true },
-        orderBy: { createdAt: 'desc' },
-        take: 6,
-        select: {
-          id: true,
-          title: true,
-          coverImageUrl: true,
-          subject: true,
-          likeCount: true,
-          viewCount: true,
-          createdAt: true,
-        },
-      }),
-    ]);
+    const artworkCount = await prisma.artwork.count({
+      where: { userId: setting.userId, isPublic: true },
+    });
+
+    const featuredIds = (setting.featuredArtworkIds || []) as string[];
+    const featuredArtworks = featuredIds.length > 0
+      ? await prisma.artwork.findMany({
+          where: { id: { in: featuredIds }, userId: setting.userId },
+          select: {
+            id: true, title: true, coverImageUrl: true, subject: true,
+            toolsUsed: true, likeCount: true, viewCount: true, createdAt: true,
+          },
+        })
+      : [];
 
     return NextResponse.json({
       user: setting.user,
@@ -54,10 +49,9 @@ export async function GET(
         contactEnabled: setting.contactEnabled,
         showEmail: setting.showEmail,
         displayOrder: setting.displayOrder,
+        featuredArtworkIds: setting.featuredArtworkIds,
       },
-      stats: {
-        artworkCount,
-      },
+      stats: { artworkCount },
       featuredArtworks,
     });
   } catch (error) {

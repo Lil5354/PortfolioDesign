@@ -67,6 +67,7 @@ export async function PUT(request: NextRequest) {
     if (showEmail !== undefined) data.showEmail = showEmail;
     if (contactEnabled !== undefined) data.contactEnabled = contactEnabled;
     if (displayOrder !== undefined) data.displayOrder = displayOrder;
+    if (featuredArtworkIds !== undefined) data.featuredArtworkIds = featuredArtworkIds;
 
     if (portfolioSlug) {
       const existing = await prisma.portfolioSetting.findUnique({
