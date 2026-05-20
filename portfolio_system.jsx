@@ -666,7 +666,7 @@ function DashboardPage({ setPage, userData }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.artworks.myArtworks().then(res => {
+    api.users.myArtworks().then(res => {
       setArtworksList(Array.isArray(res) ? res : (res.artworks || []));
       setLoading(false);
     }).catch(() => setLoading(false));
