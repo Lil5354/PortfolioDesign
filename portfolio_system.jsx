@@ -1668,6 +1668,7 @@ function AdminDashboardPage({ setPage }) {
         </div>
       </>)}
     </div>
+  </div>
   );
 }
 
