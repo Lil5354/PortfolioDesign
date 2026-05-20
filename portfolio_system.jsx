@@ -353,6 +353,8 @@ function PortfolioPage({ setPage }) {
   if (loading) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Đang tải portfolio...</div>;
   if (!portfolioData) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Portfolio không tồn tại hoặc đang ở chế độ riêng tư.</div>;
 
+  const yearLabels = { "Năm 1": "Design Freshman", "Năm 2": "Design Sophomore", "Năm 3": "Design Junior", "Năm 4": "Design Senior", "Tốt nghiệp": "Graduate" };
+  const [currentYear, setCurrentYear] = useState("Năm 3");
   const { user, portfolioSettings, stats, featuredArtworks } = portfolioData;
   const profile = {
     fullName: user?.fullName || "Sinh viên",
