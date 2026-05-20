@@ -320,14 +320,14 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   );
 }
 
-function PortfolioPage({ setPage, slug: propSlug }) {
+function PortfolioPage({ setPage }) {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
   const [portfolioData, setPortfolioData] = useState(null);
   const [portfolioArtworks, setPortfolioArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const slug = propSlug || new URLSearchParams(window.location.search).get("slug") || "";
+  const slug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
 
   useEffect(() => {
     setLoading(true);
@@ -4207,7 +4207,7 @@ export default function App() {
           isBookmarked={isBookmarked}
         />
       )}
-      {page === "portfolio" && <PortfolioPage setPage={setPage} slug={activeArtworkId || ""} />}
+      {page === "portfolio" && <PortfolioPage setPage={setPage} />}
       {page === "dashboard" && <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />}
       {page === "upload" && <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />}
       {page === "detail" && (
