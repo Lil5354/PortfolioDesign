@@ -2792,7 +2792,11 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
 }
 
 function CollectionExportConfigPage({ setPage, collection, onUpdateCollection }) {
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState([]);
+  const [detailArtwork, setDetailArtwork] = useState(null);
   const [dragIndex, setDragIndex] = useState(null);
+  const [saved, setSaved] = useState(false);
 
   if (!collection) {
     return (
@@ -2819,167 +2823,155 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
     onUpdateCollection && onUpdateCollection({ items: next });
   };
 
-  const themes = [
-    { id: "Classic", desc: "Bố cục truyền thống, sạch sẽ, ưu tiên đọc." },
-    { id: "Modern", desc: "Khoảng trắng nhiều, typography hiện đại." },
-    { id: "Asymmetrical", desc: "Bố cục lệch nhịp, nhấn mạnh thị giác." },
-  ];
+  const toggleDeleteMode = () => {
+    setDeleteMode(!deleteMode);
+    setSelectedForDelete([]);
+  };
+
+  const toggleSelectDelete = (artworkId) => {
+    setSelectedForDelete((prev) =>
+      prev.includes(artworkId) ? prev.filter((x) => x !== artworkId) : [...prev, artworkId]
+    );
+  };
+
+  const executeDelete = () => {
+    if (selectedForDelete.length === 0) return;
+    const next = collection.items.filter((it) => !selectedForDelete.includes(it.artworkId));
+    onUpdateCollection && onUpdateCollection({ items: next });
+    setSelectedForDelete([]);
+    setDeleteMode(false);
+  };
+
+  const linkToDetail = (artworkId) => {
+    const url = `${window.location.origin}/#/detail/${artworkId}`;
+    return url;
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <AdminSidebar active="admin_export" setPage={setPage} />
       <div className="flex-1 overflow-y-auto p-8">
-        <div className="flex items-end justify-between gap-6 mb-8 pb-6 border-b border-[#E0E0E0]">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Pre-export</p>
-            <h2 className="text-2xl font-bold text-[#212121] truncate">/dashboard/collections/export/{collection.id}</h2>
-            <p className="text-sm text-[#666666] mt-1">
-              Chỉ làm UI cấu hình. Logic render PDF bằng @react-pdf/renderer bạn xử lý ở backend/React-PDF.
-            </p>
+        <div className="flex items-start justify-between gap-6 mb-8 pb-6 border-b border-[#E0E0E0]">
+          <div className="min-w-0 flex-1 max-w-xl">
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Cấu hình bộ sưu tập</p>
+            <input
+              value={collection.name}
+              onChange={(e) => onUpdateCollection && onUpdateCollection({ name: e.target.value })}
+              className="w-full text-2xl font-bold text-[#212121] bg-transparent border-none outline-none placeholder:text-[#ccc]"
+              placeholder="Tên bộ sưu tập..."
+            />
+            <textarea
+              value={collection.curatorEssay || ""}
+              onChange={(e) => onUpdateCollection && onUpdateCollection({ curatorEssay: e.target.value })}
+              className="w-full mt-2 text-sm text-[#666666] bg-transparent border-none outline-none resize-none placeholder:text-[#ccc]"
+              rows={2}
+              placeholder="Mô tả bộ sưu tập..."
+            />
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors">
+          <div className="flex gap-2 flex-shrink-0">
+            <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">
               Quay lại
             </button>
-            <button className="px-5 py-2.5 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors flex items-center gap-2">
-              <FileDown size={16} /> Tiếp tục xuất PDF
+            <button onClick={() => { onUpdateCollection && onUpdateCollection({ name: collection.name, curatorEssay: collection.curatorEssay, theme: collection.theme }); setSaved(true); setTimeout(() => setSaved(false), 2000); }} className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 cursor-pointer ${saved ? "bg-green-600 text-white" : "bg-[#212121] text-white hover:opacity-90"}`}>
+              <Check size={16} /> {saved ? "Đã lưu" : "Lưu thay đổi"}
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* LEFT PANEL */}
-          <div className="bg-white border border-[#E0E0E0] rounded-2xl p-6">
-            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Sidebar</p>
-
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-[#212121] mb-2">Tên Tập San</label>
-                <input
-                  value={collection.name}
-                  onChange={(e) => onUpdateCollection && onUpdateCollection({ name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-xl text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
-                  placeholder="VD: Triển lãm Đồ án Xuất sắc 2026"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#212121] mb-2">Lời tựa giám tuyển (Curatorial Essay)</label>
-                <textarea
-                  value={collection.curatorEssay}
-                  onChange={(e) => onUpdateCollection && onUpdateCollection({ curatorEssay: e.target.value })}
-                  className="w-full min-h-[120px] px-4 py-3 border border-[#E0E0E0] rounded-2xl text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] resize-y"
-                  placeholder="Mở đầu triển lãm: chủ đề, tiêu chí chọn, tinh thần dàn trang…"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#212121] mb-3">Theme dàn trang</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {themes.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => onUpdateCollection && onUpdateCollection({ theme: t.id })}
-                      className={`text-left p-3 rounded-2xl border transition-all ${
-                        collection.theme === t.id ? "border-[#077E9E] bg-[#E8F4F8]" : "border-[#E0E0E0] hover:border-[#B3D9E8] hover:bg-[#F8F8F8]"
-                      }`}
-                    >
-                      <p className="text-sm font-bold text-[#212121]">{t.id}</p>
-                      <p className="text-[11px] text-[#666666] mt-1 leading-relaxed">{t.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#212121] mb-3">
-                  Thứ tự tác phẩm (Kéo & Thả)
-                </label>
-                <div className="space-y-2">
-                  {detailedItems.length === 0 && (
-                    <div className="text-sm text-[#666666] border border-dashed border-[#E0E0E0] rounded-xl p-4">
-                      Chưa có tác phẩm trong bộ sưu tập.
-                    </div>
-                  )}
-                  {detailedItems.map((it, idx) => (
-                    <div
-                      key={`${it.artworkId}-${idx}`}
-                      draggable
-                      onDragStart={() => setDragIndex(idx)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => {
-                        reorder(dragIndex, idx);
-                        setDragIndex(null);
-                      }}
-                      className="flex items-center gap-3 p-3 rounded-2xl border border-[#E0E0E0] bg-white hover:shadow-sm transition-all cursor-grab"
-                    >
-                      <div className="w-9 h-9 rounded-xl bg-[#F8F8F8] border border-[#E0E0E0] overflow-hidden flex-shrink-0">
-                        <img src={it.artwork.img} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-[#212121] truncate">{it.artwork.title}</p>
-                        <p className="text-[11px] text-[#666666] truncate">{it.artwork.student}</p>
-                      </div>
-                      <div className="text-[#666666] flex items-center gap-2 flex-shrink-0">
-                        <GripVertical size={16} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT PANEL */}
-          <div className="bg-white border border-[#E0E0E0] rounded-2xl p-6">
-            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Preview</p>
-
-            <div className="rounded-2xl border border-[#E0E0E0] bg-[#F8F8F8] p-5">
-              <p className="text-[11px] text-[#666666] mb-2">
-                * Khi export, ưu tiên trích xuất <span className="font-semibold text-[#212121]">COLLECTION_ITEMS.note</span> để in kèm mỗi tác phẩm.
-              </p>
-              <h3 className="text-xl font-extrabold text-[#212121]">{collection.name}</h3>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-[#E0E0E0]">
-                  Theme: {collection.theme}
-                </span>
-                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-[#E0E0E0]">
-                  {collection.items.length} tác phẩm
-                </span>
-              </div>
-              {collection.curatorEssay?.trim() && (
-                <p className="text-sm text-[#444444] leading-relaxed mt-4 whitespace-pre-line">
-                  {collection.curatorEssay}
-                </p>
-              )}
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {detailedItems.map((it, idx) => (
-                <div key={`${it.artworkId}-pv-${idx}`} className="flex gap-3 p-4 rounded-2xl border border-[#E0E0E0] bg-white">
-                  <div className="w-16 h-12 rounded-xl overflow-hidden bg-[#F8F8F8] border border-[#E0E0E0] flex-shrink-0">
-                    <img src={it.artwork.img} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-[#212121] truncate">
-                      {idx + 1}. {it.artwork.title}
-                    </p>
-                    <p className="text-[12px] text-[#666666] truncate">{it.artwork.student}</p>
-                    <p className="text-[12px] text-[#444444] mt-2 leading-relaxed">
-                      <span className="font-semibold">Ghi chú:</span>{" "}
-                      {it.note?.trim() ? it.note : <span className="text-[#666666]">Không có ghi chú</span>}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {detailedItems.length === 0 && (
-                <div className="text-sm text-[#666666] border border-dashed border-[#E0E0E0] rounded-xl p-4">
-                  Preview trống — hãy thêm tác phẩm vào bộ sưu tập trước.
-                </div>
-              )}
-            </div>
+        {/* Toolbar */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-semibold text-[#212121]">
+            {detailedItems.length} tác phẩm
+          </p>
+          <div className="flex items-center gap-2">
+            {deleteMode && (
+              <>
+                <span className="text-sm text-[#666666]">Đã chọn {selectedForDelete.length}</span>
+                <button onClick={executeDelete} disabled={selectedForDelete.length === 0} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${selectedForDelete.length > 0 ? "bg-[#8B1A1A] text-white" : "bg-[#E0E0E0] text-[#999]"}`}>
+                  Xóa
+                </button>
+              </>
+            )}
+            <button onClick={toggleDeleteMode} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${deleteMode ? "bg-[#8B1A1A] text-white border-[#8B1A1A]" : "bg-white text-[#666] border-[#E0E0E0] hover:border-[#8B1A1A] hover:text-[#8B1A1A]"}`}>
+              <Trash2 size={14} /> {deleteMode ? "Thoát xóa" : "Xóa ấn phẩm"}
+            </button>
           </div>
         </div>
+
+        {/* Artwork Grid */}
+        {detailedItems.length === 0 ? (
+          <div className="text-sm text-[#666666] border border-dashed border-[#E0E0E0] rounded-xl p-8 text-center">
+            Chưa có tác phẩm trong bộ sưu tập.
+          </div>
+        ) : (
+          <div className="grid grid-cols-4 gap-4">
+            {detailedItems.map((it, idx) => (
+              <div
+                key={`${it.artworkId}-${idx}`}
+                draggable
+                onDragStart={() => setDragIndex(idx)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => { reorder(dragIndex, idx); setDragIndex(null); }}
+                onDragEnd={() => setDragIndex(null)}
+                onClick={() => setDetailArtwork(it)}
+                className="group relative bg-white border border-[#E0E0E0] rounded-xl overflow-hidden hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer"
+              >
+                <div className="aspect-[4/3] bg-[#F8F8F8] overflow-hidden">
+                  <img
+                    src={it.artwork?.coverImageUrl || it.artwork?.img || ""}
+                    alt={it.artwork?.title || ""}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    draggable={false}
+                  />
+                </div>
+                <div className="p-3">
+                  <p className="text-sm font-semibold text-[#212121] truncate">{it.artwork?.title || "Untitled"}</p>
+                  <p className="text-xs text-[#666666] truncate">{it.artwork?.user?.fullName || it.artwork?.student || ""}</p>
+                </div>
+                {deleteMode && (
+                  <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedForDelete.includes(it.artworkId)}
+                      onChange={() => toggleSelectDelete(it.artworkId)}
+                      className="w-5 h-5 accent-[#8B1A1A] cursor-pointer"
+                    />
+                  </div>
+                )}
+                {dragIndex !== idx && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[#666]">
+                    <GripVertical size={16} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Detail modal */}
+        {detailArtwork && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setDetailArtwork(null)}>
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <div className="p-5">
+                <img src={detailArtwork.artwork?.coverImageUrl || detailArtwork.artwork?.img} alt={detailArtwork.artwork?.title} className="w-full h-40 object-cover rounded-lg mb-3" />
+                <h3 className="text-lg font-bold text-[#212121]">{detailArtwork.artwork?.title}</h3>
+                <p className="text-sm text-[#666666] mb-3">{detailArtwork.artwork?.user?.fullName || detailArtwork.artwork?.student}</p>
+                {detailArtwork.note && <p className="text-sm text-[#444] bg-[#F8F8F8] rounded-lg p-3 mb-3"><span className="font-semibold">Ghi chú:</span> {detailArtwork.note}</p>}
+                <a
+                  href={linkToDetail(detailArtwork.artworkId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#077E9E] hover:text-[#055F78] transition-colors"
+                >
+                  <ExternalLink size={14} /> Xem chi tiết ấn phẩm
+                </a>
+              </div>
+              <div className="px-5 py-3 border-t border-[#E0E0E0] flex justify-end">
+                <button onClick={() => setDetailArtwork(null)} className="px-4 py-2 rounded-lg text-sm font-semibold text-[#666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Đóng</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
