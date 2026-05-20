@@ -879,7 +879,7 @@ function UploadPage({ setPage }) {
 }
 
 function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
-  const { user: authUser } = useAuth();
+  const { user: authUser, refreshSession } = useAuth();
   const [art, setArt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
@@ -893,9 +893,19 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [savingGrade, setSavingGrade] = useState(false);
   const [relatedArtworks, setRelatedArtworks] = useState([]);
   const [liking, setLiking] = useState(false);
+  const [localSession, setLocalSession] = useState(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
 
-  const currentUserId = authUser?.id;
-  const currentUserRole = authUser?.role;
+  useEffect(() => {
+    fetch("/api/auth/session", { credentials: "include" }).then(r => r.json()).then(s => {
+      setLocalSession(s?.user || null);
+      setSessionLoading(false);
+    }).catch(() => setSessionLoading(false));
+  }, []);
+
+  const activeUser = localSession || authUser;
+  const currentUserId = activeUser?.id;
+  const currentUserRole = activeUser?.role;
   const canGrade = currentUserRole === "lecturer" || currentUserRole === "admin";
 
   const fetchArtwork = () => {
@@ -944,7 +954,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       const newComment = await api.artworks.comments.create(activeArtworkId, commentText.trim());
       setComments(prev => [newComment, ...prev]);
       setCommentText("");
-    } catch {}
+    } catch (e) {
+      alert("Lỗi khi gửi bình luận: " + (e?.message || "Vui lòng thử lại"));
+    }
     setSendingComment(false);
   };
 
@@ -957,8 +969,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
         comment: gradeComment || null,
       });
       setExistingGrade(result);
-      setSavingGrade(false);
-    } catch {}
+    } catch (e) {
+      alert("Lỗi khi lưu đánh giá: " + (e?.message || "Vui lòng thử lại"));
+    }
     setSavingGrade(false);
   };
 
@@ -1016,7 +1029,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-            {[...(art.tags || []), ...(art.toolsUsed || [])].slice(0, 8).map(tag => (
+            {[...new Set([...(art.tags || []), ...(art.toolsUsed || [])])].slice(0, 8).map(tag => (
               <span key={tag} style={{ background: GRAY_BG, fontSize: 11, padding: "4px 10px", borderRadius: 12, color: "#555", cursor: "pointer", border: `1px solid ${GRAY_LIGHT}` }}>{tag}</span>
             ))}
           </div>
