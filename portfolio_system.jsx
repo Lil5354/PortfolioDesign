@@ -1,12 +1,15 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useAuth } from "./lib/AuthContext";
 import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
+import { api } from "./lib/api-client";
+import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
-  MapPin, Phone, ArrowRight, Star, Monitor
+  MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -27,7 +30,7 @@ const artworks = [
   { id: 8, title: "Futuristic UI Concept", student: "Bùi Minh Khải", likes: 214, h: 290, img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80", category: "UI/UX", tool: "Figma", year: "2024", isPublic: true },
 ];
 
-function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout }) {
+function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userData }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -49,6 +52,10 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout }) {
   ];
   if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: "Portfolio" });
 
+  const userName = userData?.name || "Người dùng";
+  const userEmail = userData?.email || "";
+  const userAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+
   return (
     <header className="flex items-center justify-between px-8 py-3 border-b border-gray-100 bg-white sticky top-0 z-50">
       <div className="flex items-center gap-3 cursor-pointer" onClick={() => setPage("home")}>
@@ -67,14 +74,14 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout }) {
         {isLoggedIn ? (
           <div className="relative" ref={dropdownRef}>
             <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80" alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
+              <img src={userAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
               <ChevronDown size={14} className="text-[#666666]" />
             </div>
             {isDropdownOpen && (
               <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
                 <div className="px-4 py-3 border-b border-[#E0E0E0] bg-[#F8F8F8]">
-                  <p className="text-sm font-bold text-[#212121]">Nguyễn Minh Anh</p>
-                  <p className="text-xs text-[#666666]">minhanh@uef.edu.vn</p>
+                  <p className="text-sm font-bold text-[#212121]">{userName}</p>
+                  <p className="text-xs text-[#666666]">{userEmail}</p>
                 </div>
                 <div className="py-1">
                   {userRole === "student" ? (
@@ -197,10 +204,48 @@ function MasonryGrid({
 }
 
 function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
-  const [activeFilter, setActiveFilter] = useState("Tất cả");
-  const categories = ["Tất cả", "Poster", "Branding", "UI/UX", "3D Art", "Illustration"];
-  const years = ["Tất cả", "2024", "2023", "2022"];
-  const tools = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate"];
+  const [category, setCategory] = useState("Tất cả");
+  const [year, setYear] = useState("Tất cả");
+  const [tool, setTool] = useState("Tất cả");
+  const [sort, setSort] = useState("newest");
+  const [page, setPageNum] = useState(1);
+  const [data, setData] = useState({ artworks: [], total: 0, totalPages: 0 });
+  const [loading, setLoading] = useState(true);
+  const limit = 20;
+
+  const categories = ["Tất cả", "Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+  const years = ["Tất cả", "2022-2023", "2023-2024", "2024-2025"];
+  const tools = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate", "After Effects", "InDesign", "Lightroom", "Cinema 4D"];
+
+  useEffect(() => {
+    setLoading(true);
+    setPageNum(1);
+  }, [category, year, tool, sort]);
+
+  useEffect(() => {
+    setLoading(true);
+    const params = { page: String(page), limit: String(limit), sort };
+    if (category !== "Tất cả") params.category = category;
+    if (year !== "Tất cả") params.year = year;
+    if (tool !== "Tất cả") params.tool = tool;
+    api.artworks.list(params).then(res => {
+      setData(res);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [category, year, tool, sort, page]);
+
+  const mapped = (data.artworks || []).map((a, i) => ({
+    id: a.id,
+    title: a.title,
+    student: a.user?.fullName || "Sinh viên",
+    img: a.coverImageUrl,
+    likes: a.likeCount || 0,
+    h: [240, 300, 350, 270, 320, 380][i % 6],
+    isPublic: a.isPublic,
+    category: a.subject,
+  }));
+
+  const paginate = (p) => setPageNum(Math.max(1, Math.min(p, data.totalPages || 1)));
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
@@ -212,90 +257,154 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
         <div style={{ display: "flex", gap: 24, marginBottom: 28, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
           <div>
             <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Danh mục</span>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {categories.map(c => (
-                <button key={c} onClick={() => setActiveFilter(c)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: activeFilter === c ? "none" : `1px solid ${GRAY_LIGHT}`, background: activeFilter === c ? BLACK : "#fff", color: activeFilter === c ? "#fff" : BLACK, transition: "all .15s" }}>{c}</button>
+                <button key={c} onClick={() => { setCategory(c); }} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: category === c ? "none" : `1px solid ${GRAY_LIGHT}`, background: category === c ? BLACK : "#fff", color: category === c ? "#fff" : BLACK, transition: "all .15s" }}>{c}</button>
               ))}
             </div>
           </div>
           <div>
             <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Năm học</span>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {years.map(y => (
-                <button key={y} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK }}>{y}</button>
+                <button key={y} onClick={() => setYear(y)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: year === y ? "none" : `1px solid ${GRAY_LIGHT}`, background: year === y ? BLACK : "#fff", color: year === y ? "#fff" : BLACK, transition: "all .15s" }}>{y}</button>
               ))}
             </div>
           </div>
           <div>
             <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Công cụ</span>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {tools.map(t => (
-                <button key={t} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK }}>{t}</button>
+                <button key={t} onClick={() => setTool(t)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: tool === t ? "none" : `1px solid ${GRAY_LIGHT}`, background: tool === t ? BLACK : "#fff", color: tool === t ? "#fff" : BLACK, transition: "all .15s" }}>{t}</button>
               ))}
             </div>
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <span style={{ fontSize: 13, color: MUTED }}>{artworks.length} tác phẩm được tìm thấy</span>
+          <span style={{ fontSize: 13, color: MUTED }}>{data.total} tác phẩm được tìm thấy</span>
           <div style={{ display: "flex", gap: 8 }}>
-            <button style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK }}>Mới nhất</button>
-            <button style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK }}>Nhiều like nhất</button>
+            <button onClick={() => setSort("newest")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "newest" ? CERULEAN : GRAY_LIGHT}`, background: sort === "newest" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "newest" ? CERULEAN : BLACK, fontWeight: sort === "newest" ? 600 : 400 }}>Mới nhất</button>
+            <button onClick={() => setSort("most_likes")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "most_likes" ? CERULEAN : GRAY_LIGHT}`, background: sort === "most_likes" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "most_likes" ? CERULEAN : BLACK, fontWeight: sort === "most_likes" ? 600 : 400 }}>Nhiều like nhất</button>
           </div>
         </div>
       </div>
       <div style={{ padding: "0 48px 64px" }}>
-        <MasonryGrid
-          items={artworks}
-          onArtworkClick={(art) => {
-            setActiveArtworkId && setActiveArtworkId(art.id);
-            setPage("detail");
-          }}
-          showBookmarkAction={true}
-          isBookmarked={isBookmarked}
-          onBookmarkClick={onBookmarkClick}
-        />
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>Đang tải dữ liệu...</div>
+        ) : mapped.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>Không tìm thấy tác phẩm nào</div>
+        ) : (
+          <>
+            <MasonryGrid
+              items={mapped}
+              onArtworkClick={(art) => {
+                setActiveArtworkId && setActiveArtworkId(art.id);
+                setPage("detail");
+              }}
+              showBookmarkAction={true}
+              isBookmarked={isBookmarked}
+              onBookmarkClick={onBookmarkClick}
+            />
+            {data.totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 40 }}>
+                <button onClick={() => paginate(page - 1)} disabled={page <= 1} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page <= 1 ? GRAY_BG : "#fff", color: page <= 1 ? MUTED : BLACK, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer" }}>Trước</button>
+                {Array.from({ length: data.totalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => paginate(p)} style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: p === page ? CERULEAN : GRAY_BG, color: p === page ? "#fff" : MUTED, fontSize: 13, fontWeight: p === page ? 600 : 400, cursor: "pointer" }}>{p}</button>
+                ))}
+                <button onClick={() => paginate(page + 1)} disabled={page >= data.totalPages} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page >= data.totalPages ? GRAY_BG : "#fff", color: page >= data.totalPages ? MUTED : BLACK, fontSize: 13, cursor: page >= data.totalPages ? "not-allowed" : "pointer" }}>Sau</button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
 }
 
 function PortfolioPage({ setPage }) {
-  const privateGrade = { score: 8.5, comment: "Tác phẩm thể hiện tư duy thiết kế tốt, bố cục hài hòa. Cần cải thiện phần typography và độ tương phản màu sắc. Kỹ năng sử dụng công cụ Figma thành thục." };
-
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPurpose, setContactPurpose] = useState("Tuyển dụng / Thực tập");
+  const [contactContent, setContactContent] = useState("");
+  const [portfolioData, setPortfolioData] = useState(null);
+  const [portfolioArtworks, setPortfolioArtworks] = useState([]);
+  const [portfolioSettingsData, setPortfolioSettingsData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // Demo data (UI tĩnh) — sau này map từ JSONB: social_links + featured case studies
-  // ────────────────────────────────────────────────────────────────────────────
-  const yearLabels = { "Năm 1": "Nhà thiết kế mầm non 🌱", "Năm 2": "Nhà thiết kế tập sự 🎨", "Năm 3": "Nhà thiết kế chuyên nghiệp ✨", "Năm 4": "Nhà thiết kế cao cấp 🚀", "Tốt nghiệp": "Nhà thiết kế chính thức 🎓" };
-  const [currentYear, setCurrentYear] = useState("Năm 3");
+  const slug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
+  const titleByYear = { "Năm 1": "Nhà thiết kế mầm non", "Năm 2": "Nhà thiết kế tập sự", "Năm 3": "Nhà thiết kế chuyên nghiệp", "Năm 4": "Nhà thiết kế cao cấp", "Tốt nghiệp": "Nhà thiết kế xuất sắc" };
+
+  useEffect(() => {
+    setLoading(true);
+    setPortfolioSettingsData(null);
+    const fetchFn = slug ? api.portfolios.get(slug) : api.portfolios.me();
+    const artworksFn = slug ? api.portfolios.artworks(slug, { limit: "50" }) : Promise.resolve({ artworks: [] });
+    const statsFn = slug ? api.portfolios.stats(slug) : Promise.resolve({});
+
+    Promise.all([
+      fetchFn.catch(() => null),
+      artworksFn.catch(() => ({ artworks: [] })),
+      statsFn.catch(() => ({})),
+    ]).then(([pData, artRes, pStats]) => {
+      if (pData) {
+        pData.stats = { ...(pData.stats || {}), ...pStats };
+        if (pData.allArtworks) setPortfolioArtworks(pData.allArtworks);
+        setPortfolioData(pData);
+      }
+      if (artRes?.artworks) setPortfolioArtworks(artRes.artworks);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+
+    api.portfolios.mine().then(data => {
+      setPortfolioSettingsData(data);
+    }).catch(() => {});
+  }, [slug]);
+
+  if (loading) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Đang tải portfolio...</div>;
+  if (!portfolioData) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Portfolio không tồn tại hoặc đang ở chế độ riêng tư.</div>;
+
+  const { user, portfolioSettings, stats, featuredArtworks, privateGrade } = portfolioData;
   const profile = {
-    fullName: "Nguyễn Minh Anh",
-    profileHeadline: `${yearLabels[currentYear]} · UI/UX Enthusiast · UEF`,
-    bio: `Sinh viên ${currentYear.toLowerCase()} ngành Thiết kế Đồ họa. Đam mê Brand Identity, Poster Design và Motion Graphics.`,
-    avatarUrl: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg",
-    socialLinks: [
-      { label: "Behance", href: "https://behance.net/minhanh", icon: "globe" },
-      { label: "LinkedIn", href: "https://linkedin.com/in/minhanh", icon: "link" },
-      { label: "Email", href: "mailto:minhanh@uef.edu.vn", icon: "mail" },
-    ],
+    fullName: user?.fullName || "Sinh viên",
+    profileHeadline: portfolioSettings?.profileHeadline || "Design Student",
+    bio: user?.bio || "",
+    avatarUrl: user?.avatarUrl || "",
+    email: user?.email || "",
   };
+  const socialLinksRaw = portfolioSettings?.socialLinks || {};
+  const socialLinks = [
+    socialLinksRaw.behance && { label: "Behance", href: socialLinksRaw.behance, icon: "globe" },
+    socialLinksRaw.linkedin && { label: "LinkedIn", href: socialLinksRaw.linkedin, icon: "link" },
+    profile.email && portfolioSettings?.showEmail && { label: "Email", href: `mailto:${profile.email}`, icon: "mail" },
+  ].filter(Boolean);
 
-  const featuredWorks = [
-    { id: "cs-1", title: "Brand Identity UEF", img: artworks[1].img, tools: ["Illustrator", "Figma"], colClass: "col-span-12 lg:col-span-7", rowSpan: 10 },
-    { id: "cs-2", title: "Neon Cityscape Poster", img: artworks[0].img, tools: ["Illustrator", "Photoshop"], colClass: "col-span-12 sm:col-span-6 lg:col-span-5", rowSpan: 5 },
-    { id: "cs-3", title: "Futuristic UI Concept", img: artworks[7].img, tools: ["Figma", "Design System"], colClass: "col-span-12 sm:col-span-6 lg:col-span-5", rowSpan: 5 },
-    { id: "cs-4", title: "Cultural Festival Poster", img: artworks[5].img, tools: ["Photoshop"], colClass: "col-span-12 sm:col-span-4", rowSpan: 5 },
-    { id: "cs-5", title: "Vintage Travel Series", img: artworks[3].img, tools: ["Procreate"], colClass: "col-span-12 sm:col-span-4", rowSpan: 5 },
-    { id: "cs-6", title: "3D Abstract Geometry", img: artworks[2].img, tools: ["Blender"], colClass: "col-span-12 sm:col-span-4", rowSpan: 5 },
-  ];
+  const highlightWorks = (portfolioArtworks || []).filter(a => a.isHighlighted).slice(0, 2);
+  const topLikedWorks = (portfolioArtworks || []).filter(a => !a.isHighlighted).sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0)).slice(0, 2);
+  const extraWorks = highlightWorks.length >= 2 ? highlightWorks : [...highlightWorks, ...topLikedWorks].slice(0, 2);
+  const allFeatured = [...(featuredArtworks || []), ...extraWorks.filter(ex => !(featuredArtworks || []).some(f => f.id === ex.id))];
+  const featuredWorks = allFeatured.slice(0, 6).map((a, i) => {
+    const layouts = ["col-span-12 lg:col-span-7", "col-span-12 sm:col-span-6 lg:col-span-5", "col-span-12 sm:col-span-6 lg:col-span-5", "col-span-12 sm:col-span-4", "col-span-12 sm:col-span-4", "col-span-12 sm:col-span-4"];
+    return { id: a.id, title: a.title, img: a.coverImageUrl, tools: a.toolsUsed || [], colClass: layouts[i % layouts.length], rowSpan: [10, 5, 5, 5, 5, 5][i % 6] };
+  });
 
-  const handleContactSubmit = () => {
+  const handleContactSubmit = async () => {
+    if (!contactName || !contactEmail || !contactContent) return;
     setContactState("loading");
-    setTimeout(() => {
+    try {
+      const targetSlug = slug || (portfolioSettingsData?.portfolioSlug || "");
+      await api.portfolios.sendContact(targetSlug, {
+        senderName: contactName,
+        senderEmail: contactEmail,
+        purpose: contactPurpose,
+        content: contactContent,
+      });
       setContactState("success");
-    }, 1500);
+    } catch (e) {
+      alert("Lỗi khi gửi: " + (e?.message || "Vui lòng thử lại"));
+      setContactState("idle");
+    }
   };
 
   const closeContactModal = () => {
@@ -352,20 +461,15 @@ function PortfolioPage({ setPage }) {
               </div>
 
               <p className="text-base sm:text-lg text-[#666666] font-medium mb-2">
-                {profile.profileHeadline}
+                {titleByYear[portfolioSettingsData?.portfolioSettings?.yearLevel || portfolioSettingsData?.yearLevel || portfolioSettings?.yearLevel || "Năm 3"]} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || portfolioSettings?.major || "Thiết kế Đồ họa"} • UEF
               </p>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {Object.entries(yearLabels).map(([key]) => (
-                  <button key={key} onClick={() => setCurrentYear(key)} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${currentYear === key ? 'bg-[#077E9E] text-white border-[#077E9E]' : 'bg-white text-[#666666] border-[#E0E0E0] hover:border-[#077E9E]'}`}>{key}</button>
-                ))}
-              </div>
               <p className="text-sm sm:text-[15px] text-[#444444] leading-relaxed max-w-2xl">
                 {profile.bio}
               </p>
 
               {/* social links */}
               <div className="flex flex-wrap gap-2.5 mt-6">
-                {profile.socialLinks.map((l) => {
+                {socialLinks.map((l) => {
                   const iconMap = {
                     globe: <Globe size={16} className="text-[#077E9E]" />,
                     link: <Link size={16} className="text-[#077E9E]" />,
@@ -402,7 +506,7 @@ function PortfolioPage({ setPage }) {
 
               {/* quick stats (giữ tinh thần thiết kế cũ) */}
               <div className="mt-10 flex flex-wrap gap-8 border-t border-[#E0E0E0] pt-6">
-                {[{ label: "Tác phẩm", val: "12" }, { label: "Lượt xem", val: "2.4K" }, { label: "Lượt thích", val: "847" }].map((s) => (
+                {[{ label: "Tác phẩm", val: stats?.artworkCount || 0 }, { label: "Lượt xem", val: stats?.viewCount?.toLocaleString() || "0" }, { label: "Lượt thích", val: stats?.likeCount?.toLocaleString() || "0" }].map((s) => (
                   <div key={s.label} className="flex items-end gap-2">
                     <span className="text-2xl font-extrabold text-[#212121] tracking-tight">{s.val}</span>
                     <span className="text-sm text-[#666666] pb-0.5">{s.label}</span>
@@ -479,7 +583,7 @@ function PortfolioPage({ setPage }) {
           </div>
         </section>
 
-        {/* giữ nguyên các block cũ phía dưới (tạm thời), để không phá layout hiện có */}
+        {privateGrade && (
         <div className="mt-10" style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, borderRadius: 10, padding: "14px 18px", marginBottom: 28, display: "flex", gap: 14, alignItems: "flex-start" }}>
           <div style={{ background: BLACK, borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 4 }}>
             <Lock size={12} color="#fff" />
@@ -497,6 +601,7 @@ function PortfolioPage({ setPage }) {
             <p style={{ fontSize: 13, color: "#555", marginTop: 6, lineHeight: 1.6, marginBottom: 0 }}>{privateGrade.comment}</p>
           </div>
         </div>
+        )}
 
         <div style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 0 }}>
@@ -522,30 +627,30 @@ function PortfolioPage({ setPage }) {
                   <Check size={32} className="text-[#077E9E]" />
                 </div>
                 <h4 className="text-xl font-bold text-[#212121] mb-2">Đã gửi thành công!</h4>
-                <p className="text-sm text-[#666666] mb-6">Tin nhắn của bạn đã được chuyển đến sinh viên Nguyễn Minh Anh.</p>
+                <p className="text-sm text-[#666666] mb-6">Tin nhắn của bạn đã được chuyển đến {profile.fullName}.</p>
                 <button onClick={closeContactModal} className="w-full py-2.5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-semibold text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Đóng</button>
               </div>
             ) : (
               <div className="p-6 flex flex-col gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">Họ Tên / Đơn vị</label>
-                  <input type="text" placeholder="Nhập tên của bạn" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  <input value={contactName} onChange={e => setContactName(e.target.value)} type="text" placeholder="Nhập tên của bạn" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">Email liên hệ</label>
-                  <input type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  <input value={contactEmail} onChange={e => setContactEmail(e.target.value)} type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">Mục đích</label>
-                  <select className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white cursor-pointer">
-                    <option>Tuyển dụng / Thực tập</option>
-                    <option>Hợp tác dự án (Freelance)</option>
-                    <option>Khác</option>
+                  <select value={contactPurpose} onChange={e => setContactPurpose(e.target.value)} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white cursor-pointer">
+                    <option value="Tuyển dụng / Thực tập">Tuyển dụng / Thực tập</option>
+                    <option value="Hợp tác dự án (Freelance)">Hợp tác dự án (Freelance)</option>
+                    <option value="Khác">Khác</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">Nội dung</label>
-                  <textarea placeholder="Nhập nội dung tin nhắn..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
+                  <textarea value={contactContent} onChange={e => setContactContent(e.target.value)} placeholder="Nhập nội dung tin nhắn..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
                 </div>
                 <button onClick={handleContactSubmit} disabled={contactState === "loading"} className={`mt-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all flex justify-center items-center gap-2 ${contactState === "loading" ? "bg-[#666666] cursor-wait" : "bg-[#077E9E] hover:opacity-90 cursor-pointer"}`}>
                   {contactState === "loading" ? "Đang gửi..." : <><Send size={16} /> Gửi tin nhắn</>}
@@ -567,21 +672,24 @@ function ToggleSwitch({ isOn, onToggle }) {
   );
 }
 
-function DashboardSidebar({ active, setPage }) {
+function DashboardSidebar({ active, setPage, userData }) {
   const items = [
     { icon: <Image size={18} />, label: "Tác phẩm của tôi", page: "dashboard" },
     { icon: <MessageSquare size={18} />, label: "Hộp thư", page: "messages" },
     { icon: <Settings size={18} />, label: "Cài đặt", page: "settings" },
   ];
+  const profileName = userData?.name || "Sinh viên";
+  const profileAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+  const studentYear = "Sinh viên";
 
   return (
     <div style={{ width: 220, background: "#fff", borderRight: `1px solid ${GRAY_LIGHT}`, padding: "28px 0", flexShrink: 0 }}>
       <div style={{ padding: "0 20px 20px", borderBottom: `1px solid ${GRAY_LIGHT}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80" alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} />
+          <img src={profileAvatar} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} />
           <div>
-            <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: BLACK }}>Minh Anh</p>
-            <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Sinh viên K2021</p>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: BLACK }}>{profileName}</p>
+            <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{studentYear}</p>
           </div>
         </div>
       </div>
@@ -597,22 +705,34 @@ function DashboardSidebar({ active, setPage }) {
   );
 }
 
-function DashboardPage({ setPage }) {
-  const [artworkState, setArtworkState] = useState(artworks.map(a => ({ ...a })));
-  const togglePublic = (id) => setArtworkState(prev => prev.map(a => a.id === id ? { ...a, isPublic: !a.isPublic } : a));
+function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userData }) {
+  const [artworksList, setArtworksList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.users.myArtworks().then(res => {
+      setArtworksList(Array.isArray(res) ? res : (res.artworks || []));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const totalArtworks = artworksList.length;
+  const totalViews = artworksList.reduce((s, a) => s + (a.viewCount || 0), 0);
+  const totalLikes = artworksList.reduce((s, a) => s + (a.likeCount || 0), 0);
+  const publicCount = artworksList.filter(a => a.isPublic).length;
 
   const stats = [
-    { label: "Tổng tác phẩm", val: "12", icon: <Image size={24} color={BLACK} strokeWidth={1.5} /> },
-    { label: "Lượt xem", val: "2,417", icon: <Eye size={24} color={BLACK} strokeWidth={1.5} /> },
-    { label: "Lượt thích", val: "847", icon: <Heart size={24} color={BLACK} strokeWidth={1.5} /> },
-    { label: "Tác phẩm công khai", val: artworkState.filter(a => a.isPublic).length.toString(), icon: <Globe size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Tổng tác phẩm", val: totalArtworks.toLocaleString(), icon: <Image size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Lượt xem", val: totalViews.toLocaleString(), icon: <Eye size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Lượt thích", val: totalLikes.toLocaleString(), icon: <Heart size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Tác phẩm công khai", val: publicCount.toString(), icon: <Globe size={24} color={BLACK} strokeWidth={1.5} /> },
   ];
 
   return (
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
-      <DashboardSidebar active="Tác phẩm của tôi" setPage={setPage} />
+      <DashboardSidebar active="Tác phẩm của tôi" setPage={setPage} userData={userData} />
 
-      <div style={{ flex: 1, padding: "32px 40px" }}>
+      <div style={{ flex: 1, padding: "32px 40px", overflow: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Tác phẩm của tôi</h2>
@@ -624,79 +744,167 @@ function DashboardPage({ setPage }) {
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
-          {stats.map(s => (
-            <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", border: `1px solid ${GRAY_LIGHT}` }}>
-              <div style={{ marginBottom: 8 }}>{s.icon}</div>
-              <p style={{ fontSize: 24, fontWeight: 700, margin: "0 0 2px", color: BLACK }}>{s.val}</p>
-              <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>{s.label}</p>
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>Đang tải dữ liệu...</div>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
+              {stats.map(s => (
+                <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", border: `1px solid ${GRAY_LIGHT}` }}>
+                  <div style={{ marginBottom: 8 }}>{s.icon}</div>
+                  <p style={{ fontSize: 24, fontWeight: 700, margin: "0 0 2px", color: BLACK }}>{s.val}</p>
+                  <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>{s.label}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-          {artworkState.map(art => (
-            <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
-              <div style={{ position: "relative", background: GRAY_BG }}>
-                <img src={art.img} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail")} />
-                <div style={{ position: "absolute", top: 8, left: 8 }}>
-                  <span style={{ background: art.isPublic ? "#E8F4F8" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#B3D9E8" : GRAY_LIGHT}` }}>{art.isPublic ? "Công khai" : "Riêng tư"}</span>
-                </div>
-              </div>
-              <div style={{ padding: "12px 14px" }}>
-                <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
-                <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-                  <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.category}</span>
-                  <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.tool}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px solid ${GRAY_LIGHT}` }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 11, color: MUTED }}>Công khai</span>
-                    <ToggleSwitch isOn={art.isPublic} onToggle={() => togglePublic(art.id)} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              {artworksList.map(art => (
+                <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                  <div style={{ position: "relative", background: GRAY_BG }}>
+                    <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
+                    <div style={{ position: "absolute", top: 8, left: 8 }}>
+                      <span style={{ background: art.isPublic ? "#E8F4F8" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#B3D9E8" : GRAY_LIGHT}` }}>{art.isPublic ? "Công khai" : "Riêng tư"}</span>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
-                    </button>
-                    <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid #F5C5C5`, background: "#FEF2F2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Trash2 size={14} color={CRIMSON} strokeWidth={1.5} />
-                    </button>
+                  <div style={{ padding: "12px 14px" }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                      <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.subject}</span>
+                      {(art.toolsUsed || []).slice(0, 1).map(t => (
+                        <span key={t} style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{t}</span>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px solid ${GRAY_LIGHT}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 11, color: MUTED }}>Công khai</span>
+                        <ToggleSwitch isOn={art.isPublic} onToggle={() => {}} />
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => { setActiveArtworkId(art.id); setTimeout(() => setPage("edit_artwork"), 50); }} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
+                        </button>
+                        <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid #F5C5C5`, background: "#FEF2F2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Trash2 size={14} color={CRIMSON} strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
 
-function UploadPage({ setPage }) {
+function UploadPage({ setPage, setActiveArtworkId }) {
   const [showPopup, setShowPopup] = useState(false);
   const [uploadState, setUploadState] = useState("idle");
+  const [createdId, setCreatedId] = useState(null);
   const [checked1, setChecked1] = useState(false);
   const [checked2, setChecked2] = useState(false);
   const [checked3, setChecked3] = useState(false);
-  const [tags, setTags] = useState(["Poster", "Typography"]);
+  const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
+  const [tools, setTools] = useState([]);
+  const [toolInput, setToolInput] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [subject, setSubject] = useState("");
   const [projectYear, setProjectYear] = useState("Năm 3");
   const [isGroupProject, setIsGroupProject] = useState(false);
   const [friends, setFriends] = useState([]);
   const [friendInput, setFriendInput] = useState("");
+  const [friendResults, setFriendResults] = useState([]);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [notifyOnConfirm, setNotifyOnConfirm] = useState(true);
+  const [coverImage, setCoverImage] = useState(null);
+  const [additionalImages, setAdditionalImages] = useState([]);
+  const [error, setError] = useState("");
 
-  const handleUploadSubmit = () => {
+  const yearToSemester = { "Năm 1": "HK1", "Năm 2": "HK2", "Năm 3": "HK3", "Năm 4": "HK1", "Tốt nghiệp": "HK2" };
+  const yearToAcademic = { "Năm 1": "2024-2025", "Năm 2": "2023-2024", "Năm 3": "2022-2023", "Năm 4": "2021-2022", "Tốt nghiệp": "2021-2022" };
+  const allSubjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+
+  const handleFriendSearch = (val) => {
+    setFriendInput(val);
+    if (val.length < 2) { setFriendResults([]); return; }
+    api.users.search(val).then(setFriendResults).catch(() => {});
+  };
+
+  const addFriend = (user) => {
+    if (!friends.find(f => f.id === user.id)) {
+      setFriends([...friends, { id: user.id, fullName: user.fullName, email: user.email }]);
+    }
+    setFriendInput("");
+    setFriendResults([]);
+  };
+
+  const readFileAsDataURL = (file) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const dataUrl = await readFileAsDataURL(file);
+    setCoverImage(dataUrl);
+  };
+
+  const handleAdditionalUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    const max = 10 - (coverImage ? 1 : 0) - additionalImages.length;
+    const toAdd = files.slice(0, max);
+    const urls = await Promise.all(toAdd.map(readFileAsDataURL));
+    setAdditionalImages(prev => [...prev, ...urls].slice(0, 9));
+  };
+
+  const removeAdditional = (idx) => {
+    setAdditionalImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const allFileUrls = coverImage ? [coverImage, ...additionalImages] : [...additionalImages];
+
+  const handleUploadSubmit = async () => {
+    if (!coverImage) { setError("Vui lòng chọn ảnh chính"); return; }
+    if (!title.trim()) { setError("Vui lòng nhập tên học phần"); return; }
+    if (!subject) { setError("Vui lòng chọn danh mục"); return; }
+    if (!checked1 || !checked2 || !checked3) { setError("Vui lòng xác nhận đầy đủ cam kết"); return; }
+    setError("");
     setUploadState("loading");
-    setTimeout(() => {
+    try {
+      const newArtwork = await api.artworks.create({
+        title: title.trim(),
+        description: description.trim() || null,
+        subject,
+        toolsUsed: tools,
+        semester: yearToSemester[projectYear] || "HK1",
+        academicYear: yearToAcademic[projectYear] || "2024-2025",
+        tags: tags.length > 0 ? tags : [subject],
+        collaborators: friends.map(f => f.fullName || f),
+        fileUrls: allFileUrls,
+        coverImageUrl: coverImage,
+        fileUrls: allFileUrls,
+        isPublic: false,
+        isAiConfirmed: checked1,
+      });
+      setCreatedId(newArtwork.id);
       setUploadState("success");
       setTimeout(() => {
         setUploadState("idle");
         setShowPopup(false);
-        if (setPage) setPage("dashboard");
-      }, 1500);
-    }, 1500);
+        setActiveArtworkId(newArtwork.id);
+        setPage("dashboard");
+      }, 1800);
+    } catch (e) {
+      setError(e?.message || "Lỗi khi đăng tác phẩm");
+      setUploadState("idle");
+    }
   };
 
   return (
@@ -740,9 +948,10 @@ function UploadPage({ setPage }) {
                     </label>
                   ))}
                 </div>
+                {error && <p style={{ color: CRIMSON, fontSize: 12, marginTop: 12 }}>{error}</p>}
                 <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
                   <button onClick={() => setShowPopup(false)} disabled={uploadState === "loading"} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: uploadState === "loading" ? "not-allowed" : "pointer", color: MUTED }}>Hủy</button>
-                  <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3) ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3) ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3) && uploadState !== "loading" ? "pointer" : "not-allowed" }}>
+                  <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3 && !uploadState) ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3 && !uploadState) ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3 && !uploadState) ? "pointer" : "not-allowed" }}>
                     {uploadState === "loading" ? "Đang xử lý..." : "Xác nhận & Đăng bài"}
                   </button>
                 </div>
@@ -757,33 +966,40 @@ function UploadPage({ setPage }) {
         <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>Chia sẻ tác phẩm sáng tạo của bạn với cộng đồng UEF</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
           <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Ảnh tác phẩm</label>
-            <div style={{ border: `2px dashed ${GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG }}>
-              <img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&q=80" alt="preview" style={{ width: "100%", height: 400, objectFit: "cover", display: "block" }} />
-              <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                <FileImage size={36} color="#fff" strokeWidth={1.5} />
-                <p style={{ color: "#fff", fontSize: 14, fontWeight: 600, margin: 0 }}>Kéo thả hoặc chọn ảnh</p>
-                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, margin: 0 }}>PNG, JPG, SVG • Tối đa 20MB</p>
-                <button style={{ marginTop: 6, padding: "8px 20px", borderRadius: 8, border: "2px solid #fff", background: "transparent", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Chọn file</button>
-              </div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Ảnh chính *</label>
+            <input type="file" id="coverInput" accept="image/*" style={{ display: "none" }} onChange={handleCoverUpload} />
+            <div onClick={() => document.getElementById("coverInput")?.click()} style={{ border: `2px dashed ${coverImage ? CERULEAN : GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG, cursor: "pointer" }}>
+              {coverImage ? (
+                <img src={coverImage} alt="preview" style={{ width: "100%", height: 400, objectFit: "cover", display: "block" }} />
+              ) : (
+                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                  <FileImage size={36} color={MUTED} strokeWidth={1.5} />
+                  <p style={{ color: MUTED, fontSize: 14, fontWeight: 600, margin: 0 }}>Nhấp để chọn ảnh chính</p>
+                  <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>PNG, JPG • Tối đa 20MB</p>
+                </div>
+              )}
             </div>
             <div style={{ marginTop: 16 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Ảnh bổ sung</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                {["1550745165-9bc0b252726f", "1614850523459-c2f4c699c52e", "1572375992501-4b087315dc0f"].map(id => (
-                  <div key={id} style={{ width: 80, height: 64, borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG }}>
-                    <img src={`https://images.unsplash.com/photo-${id}?w=200&q=60`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Ảnh bổ sung ({additionalImages.length}/9)</label>
+              <input type="file" id="additionalInput" accept="image/*" multiple style={{ display: "none" }} onChange={handleAdditionalUpload} />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {additionalImages.map((url, idx) => (
+                  <div key={idx} style={{ width: 80, height: 64, borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, position: "relative" }}>
+                    <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <div onClick={() => removeAdditional(idx)} style={{ position: "absolute", top: 2, right: 2, width: 18, height: 18, borderRadius: "50%", background: "rgba(0,0,0,0.5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>×</div>
                   </div>
                 ))}
-                <div style={{ width: 80, height: 64, borderRadius: 8, border: `2px dashed ${GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: GRAY_BG }}>
-                  <Plus size={22} color={MUTED} />
-                </div>
+                {additionalImages.length < 9 && (
+                  <div onClick={() => document.getElementById("additionalInput")?.click()} style={{ width: 80, height: 64, borderRadius: 8, border: `2px dashed ${GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: GRAY_BG }}>
+                    <Plus size={22} color={MUTED} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tên học phần *</label><input defaultValue="Design Principles" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tên môn học *</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Design Graphic - Flowers Garden" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Loại đồ án</label>
               <div style={{ display: "flex", gap: 6 }}>{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${projectYear === y ? CERULEAN : GRAY_LIGHT}`, background: projectYear === y ? "#F0F8FB" : GRAY_BG, color: projectYear === y ? CERULEAN : MUTED, fontSize: 12, fontWeight: projectYear === y ? 600 : 400, cursor: "pointer" }}>{y}</button>))}</div>
             </div>
@@ -792,9 +1008,22 @@ function UploadPage({ setPage }) {
                 {[{ key: false, label: "Cá nhân", desc: "Tự thực hiện", icon: <User size={16} /> }, { key: true, label: "Nhóm", desc: "Làm việc nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#F0F8FB" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
               </div>
             </div>
-            {isGroupProject && (<div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tag bạn cùng nhóm</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => setFriendInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { setFriends([...friends, friendInput.trim()]); setFriendInput(""); } }} placeholder="Nhập tên bạn bè..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 100, color: BLACK }} /></div></div>)}
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Mô tả</label><textarea defaultValue="Bộ poster được lấy cảm hứng từ văn hóa đô thị hiện đại, kết hợp giữa neon light và kiến trúc đương đại. Thực hiện trong khuôn khổ môn Thiết kế Đồ họa 3 năm học 2024." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Danh mục & Công cụ</label><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}><select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}><option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option></select><select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}><option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option></select></div></div>
+            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Thêm thành viên nhóm</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Mô tả</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Mô tả về tác phẩm của bạn..." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Danh mục *</label>
+                <select value={subject} onChange={e => setSubject(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
+                  <option value="">-- Chọn --</option>
+                  {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Công cụ</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>
+                  {tools.map(t => (<span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTools(tools.filter(x => x !== t))} style={{ cursor: "pointer", marginLeft: 4 }} /></span>))}
+                  <input value={toolInput} onChange={e => setToolInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && toolInput.trim()) { setTools([...tools, toolInput.trim()]); setToolInput(""); } }} placeholder="Add tool..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} />
+                </div>
+              </div>
+            </div>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tags</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{tags.map(t => (<span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== t))} style={{ cursor: "pointer" }} /></span>))}<input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} /></div></div>
             <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
@@ -817,25 +1046,155 @@ function UploadPage({ setPage }) {
   );
 }
 
-function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked }) {
-  const [liked, setLiked] = useState(false);
-  const [score, setScore] = useState("");
-  const [comment, setComment] = useState("");
-  const art = artworks.find((a) => a.id === activeArtworkId) || artworks[2];
+function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
+  const { user: authUser } = useAuth();
+  const [art, setArt] = useState({
+    title: "Đang tải...", subject: "Đang tải...", coverImageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
+    description: "", tags: [], toolsUsed: [], likeCount: 0, commentCount: 0,
+    createdAt: new Date().toISOString(), user: null, userId: null, isPublic: true,
+  });
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const [gradeScore, setGradeScore] = useState("");
+  const [gradeComment, setGradeComment] = useState("");
+  const [existingGrade, setExistingGrade] = useState(null);
+  const [savingGrade, setSavingGrade] = useState(false);
+  const [relatedArtworks, setRelatedArtworks] = useState([]);
+  const [liking, setLiking] = useState(false);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [showReport, setShowReport] = useState(false);
+  const [reportType, setReportType] = useState("");
+  const [reportDetail, setReportDetail] = useState("");
+  const [sendingReport, setSendingReport] = useState(false);
+
+  const currentUserId = authUser?.id;
+  const currentUserRole = authUser?.role;
+  const canGrade = currentUserRole === "lecturer" || currentUserRole === "admin";
+
+  // Debug log
+  useEffect(() => {
+    console.log("👤 DetailPage - authUser:", authUser);
+    console.log("👤 DetailPage - currentUserId:", currentUserId);
+    console.log("👤 DetailPage - currentUserRole:", currentUserRole);
+  }, [authUser, currentUserId, currentUserRole]);
+
+  useEffect(() => {
+    if (!activeArtworkId) return;
+    setActiveImageIdx(0);
+    api.artworks.get(activeArtworkId).then(res => {
+      setArt({
+        ...res,
+        subject: res.subject || "Ấn phẩm",
+        tags: res.tags || [],
+        toolsUsed: res.toolsUsed || [],
+        description: res.description || "",
+      });
+      setIsLiked(res.isLiked || false);
+      setLikeCount(res.likeCount || 0);
+      setComments(res.comments || []);
+      setExistingGrade(res.grade || null);
+      if (res.grade) {
+        setGradeScore(String(res.grade.score));
+        setGradeComment(res.grade.comment || "");
+      }
+    }).catch(() => {});
+    api.artworks.related(activeArtworkId, 6).then(setRelatedArtworks).catch(() => {});
+  }, [activeArtworkId]);
+
+  const handleLike = async () => {
+    if (liking) return;
+    setLiking(true);
+    const wasLiked = isLiked;
+    setIsLiked(!wasLiked);
+    setLikeCount(prev => wasLiked ? Math.max(0, prev - 1) : prev + 1);
+    try {
+      if (wasLiked) {
+        await api.artworks.unlike(activeArtworkId);
+      } else {
+        await api.artworks.like(activeArtworkId);
+      }
+    } catch {
+      setIsLiked(wasLiked);
+      setLikeCount(prev => wasLiked ? prev + 1 : Math.max(0, prev - 1));
+    }
+    setLiking(false);
+  };
+
+  const handleSendComment = async () => {
+    if (!commentText.trim()) return;
+    if (!currentUserId) {
+      alert("Vui lòng đăng nhập để bình luận");
+      return;
+    }
+    setSendingComment(true);
+    try {
+      const newComment = await api.artworks.comments.create(activeArtworkId, commentText.trim());
+      setComments(prev => [newComment, ...prev]);
+      setCommentText("");
+    } catch (e) {
+      alert("Lỗi khi gửi bình luận: " + (e?.message || "Vui lòng thử lại"));
+    }
+    setSendingComment(false);
+  };
+
+  const handleSaveGrade = async () => {
+    if (!gradeScore || !canGrade) return;
+    setSavingGrade(true);
+    try {
+      const result = await api.artworks.grade(activeArtworkId, {
+        score: parseFloat(gradeScore),
+        comment: gradeComment || null,
+      });
+      setExistingGrade(result);
+    } catch (e) {
+      alert("Lỗi khi lưu đánh giá: " + (e?.message || "Vui lòng thử lại"));
+    }
+    setSavingGrade(false);
+  };
+
+  const allImages = [art.coverImageUrl, ...(art.fileUrls || [])].filter(Boolean);
+  const allImagesDeduped = [...new Set(allImages)];
+  const activeImage = allImagesDeduped[activeImageIdx] || allImagesDeduped[0] || art.coverImageUrl;
+
+  const semesterToYear = { HK1: "Năm 1", HK2: "Năm 2", HK3: "Năm 3" };
+
+  const timeAgo = (dateStr) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "Vừa xong";
+    if (mins < 60) return `${mins} phút trước`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} ngày trước`;
+    return new Date(dateStr).toLocaleDateString("vi-VN");
+  };
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
       <div style={{ padding: "20px 48px", borderBottom: `1px solid ${GRAY_LIGHT}`, display: "flex", gap: 6, alignItems: "center" }}>
         <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("gallery")}>Gallery</span>
         <span style={{ fontSize: 13, color: MUTED }}>/</span>
-        <span style={{ fontSize: 13, color: MUTED }}>3D Art</span>
+        <span style={{ fontSize: 13, color: MUTED }}>{art.subject || "Ấn phẩm"}</span>
         <span style={{ fontSize: 13, color: MUTED }}>/</span>
         <span style={{ fontSize: 13, color: BLACK, fontWeight: 500 }}>{art.title}</span>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "65fr 35fr", minHeight: "calc(100vh - 105px)" }}>
-        <div style={{ background: GRAY_BG, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: 32 }}>
-          <img src={art.img} alt={art.title} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
+        <div style={{ background: GRAY_BG, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "32px 32px 0" }}>
+          <img src={activeImage} alt={art.title} style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
+          {allImagesDeduped.length > 1 && (
+            <div style={{ display: "flex", gap: 8, marginTop: 16, paddingBottom: 24, flexWrap: "wrap", justifyContent: "center", zIndex: 3 }}>
+              {allImagesDeduped.map((url, idx) => (
+                <div key={idx} onClick={() => setActiveImageIdx(idx)} style={{ width: 56, height: 48, borderRadius: 6, overflow: "hidden", border: `2px solid ${idx === activeImageIdx ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", opacity: idx === activeImageIdx ? 1 : 0.55, transition: "all .15s" }}>
+                  <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              ))}
+            </div>
+          )}
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
             <p style={{ color: "rgba(0,0,0,0.06)", fontSize: 48, fontWeight: 900, transform: "rotate(-25deg)", userSelect: "none", letterSpacing: 4, textTransform: "uppercase" }}>UEF · PORTFOLIO</p>
           </div>
@@ -849,37 +1208,69 @@ function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked })
         <div style={{ borderLeft: `1px solid ${GRAY_LIGHT}`, padding: "32px 28px", overflow: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-              <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.category}</span>
-              <span style={{ fontSize: 12, color: MUTED }}>12 Tháng 3, 2024</span>
+              <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.subject}</span>
+              <span style={{ fontSize: 12, color: MUTED }}>{new Date(art.createdAt).toLocaleDateString("vi-VN")}</span>
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px", color: BLACK, lineHeight: 1.3 }}>{art.title}</h1>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+              {art.semester && <span style={{ background: "#FEF3E2", color: "#92400E", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><BookOpen size={12} /> {semesterToYear[art.semester] || art.semester}</span>}
+              {art.academicYear && <span style={{ background: "#E8F0FE", color: "#1E40AF", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Calendar size={12} /> {art.academicYear}</span>}
+              {(art.collaborators || []).length > 0 && <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {(art.collaborators || []).length} thành viên</span>}
+            </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <img src="https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg" alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }} onClick={() => setPage("portfolio")} />
-              <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("portfolio")}>{art.student}</span>
+              <img src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }} onClick={() => setPage("portfolio")} />
+              <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("portfolio")}>{art.user?.fullName}</span>
               <span style={{ fontSize: 12, color: MUTED }}>·</span>
               <span style={{ fontSize: 12, color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("portfolio")}>Xem portfolio</span>
             </div>
           </div>
 
+          {art.subject && <div style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>Danh mục</span>
+            <div style={{ marginTop: 4 }}>
+              <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 8, border: `1px solid #B3D9E8` }}>{art.subject}</span>
+            </div>
+          </div>}
+
+          {(art.toolsUsed || []).length > 0 && <div style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>Công cụ sử dụng</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+              {art.toolsUsed.map(tool => (
+                <span key={tool} style={{ background: "#F0F0F0", color: "#333", fontSize: 12, padding: "4px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>{tool}</span>
+              ))}
+            </div>
+          </div>}
+
+          {(art.collaborators || []).length > 0 && <div style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>Đồng tác giả</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+              {(art.collaborators || []).map(c => (
+                <span key={c} style={{ background: "#F0FDF4", color: "#166534", fontSize: 12, padding: "4px 10px", borderRadius: 8, border: `1px solid #BBF7D0`, display: "flex", alignItems: "center", gap: 4 }}>
+                  <Users size={12} /> @{typeof c === 'object' ? c.fullName || c.email : c}
+                </span>
+              ))}
+            </div>
+          </div>}
+
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-            {["3D Art", "Blender", "Abstract", "Geometry", "2024", "Năm 3"].map(tag => (
+            {(art.tags || []).map(tag => (
               <span key={tag} style={{ background: GRAY_BG, fontSize: 11, padding: "4px 10px", borderRadius: 12, color: "#555", cursor: "pointer", border: `1px solid ${GRAY_LIGHT}` }}>{tag}</span>
             ))}
           </div>
 
           <p style={{ fontSize: 13, color: "#444", lineHeight: 1.75, marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-            Tác phẩm 3D này được tạo ra bằng Blender 4.0, thể hiện sự kết hợp giữa hình học trừu tượng và ánh sáng động. Lấy cảm hứng từ kiến trúc tối giản Nhật Bản và nghệ thuật số hiện đại.
+            {art.description || "Chưa có mô tả cho tác phẩm này."}
           </p>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
             <div style={{ display: "flex", gap: 14 }}>
-              <button onClick={() => setLiked(!liked)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${liked ? "#F5C5C5" : GRAY_LIGHT}`, background: liked ? "#FEF2F2" : "#fff", cursor: "pointer" }}>
-                <Heart size={16} fill={liked ? "#E53E3E" : "none"} color={liked ? "#E53E3E" : MUTED} />
-                <span style={{ fontSize: 13, color: liked ? "#E53E3E" : MUTED, fontWeight: liked ? 600 : 400 }}>{art.likes + (liked ? 1 : 0)}</span>
+              <button onClick={handleLike} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${isLiked ? "#F5C5C5" : GRAY_LIGHT}`, background: isLiked ? "#FEF2F2" : "#fff", cursor: "pointer", transition: "all .15s" }}>
+                <Heart size={16} fill={isLiked ? "#E53E3E" : "none"} color={isLiked ? "#E53E3E" : MUTED} />
+                <span style={{ fontSize: 13, color: isLiked ? "#E53E3E" : MUTED, fontWeight: isLiked ? 600 : 400 }}>{likeCount}</span>
               </button>
               <button style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer" }}>
                 <MessageSquare size={16} color={MUTED} />
-                <span style={{ fontSize: 13, color: MUTED }}>14</span>
+                <span style={{ fontSize: 13, color: MUTED }}>{comments.length}</span>
               </button>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
@@ -903,94 +1294,215 @@ function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked })
                   size={16}
                   fill={isBookmarked && isBookmarked(art.id) ? CERULEAN : "none"}
                   color={isBookmarked && isBookmarked(art.id) ? CERULEAN : MUTED}
-                />{" "}
+                />
                 {isBookmarked && isBookmarked(art.id) ? "Đã lưu" : "Lưu"}
               </button>
-              <button style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Liên hệ</button>
+              <button onClick={() => setShowReport(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <ShieldAlert size={16} /> Báo cáo
+              </button>
             </div>
           </div>
 
-          <div style={{ background: GRAY_BG, borderRadius: 12, padding: "20px", border: `1px solid ${GRAY_LIGHT}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <div style={{ width: 28, height: 28, background: "#E8F4F8", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Check size={16} color={CERULEAN} strokeWidth={2} />
-              </div>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: BLACK }}>Đánh giá của Giảng viên</p>
-                <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Chỉ giảng viên môn học mới có thể chấm điểm</p>
-              </div>
-            </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Điểm số (0–10)</label>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input value={score} onChange={e => setScore(e.target.value)} type="number" min="0" max="10" step="0.5" placeholder="8.5" style={{ width: 80, padding: "9px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, color: CERULEAN, background: "#fff", outline: "none", textAlign: "center" }} />
+          {canGrade && (
+            <div style={{ background: GRAY_BG, borderRadius: 12, padding: "20px", border: `1px solid ${GRAY_LIGHT}`, marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <div style={{ width: 28, height: 28, background: "#E8F4F8", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Check size={16} color={CERULEAN} strokeWidth={2} />
+                </div>
                 <div>
-                  <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Nhập điểm từ 0 đến 10</p>
-                  {score && <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <div key={n} style={{ width: 14, height: 5, borderRadius: 2, background: parseFloat(score) >= n ? CERULEAN : GRAY_LIGHT }} />)}
-                  </div>}
+                  <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: BLACK }}>
+                    {existingGrade ? "Đã chấm điểm" : "Đánh giá của Giảng viên"}
+                  </p>
+                  <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>
+                    {existingGrade ? `Điểm: ${existingGrade.score}/10` : "Nhập điểm và lời nhận xét"}
+                  </p>
+                </div>
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Điểm số (0–10)</label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input value={gradeScore} onChange={e => setGradeScore(e.target.value)} type="number" min="0" max="10" step="0.5" placeholder="8.5" style={{ width: 80, padding: "9px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, color: CERULEAN, background: "#fff", outline: "none", textAlign: "center" }} />
+                  <div>
+                    <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Nhập điểm từ 0 đến 10</p>
+                    {gradeScore && <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <div key={n} style={{ width: 14, height: 5, borderRadius: 2, background: parseFloat(gradeScore) >= n ? CERULEAN : GRAY_LIGHT }} />)}
+                    </div>}
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Lời phê bình & Nhận xét</label>
+                <textarea value={gradeComment} onChange={e => setGradeComment(e.target.value)} placeholder="Nhận xét về kỹ thuật thực hiện, tư duy thiết kế, điểm mạnh và góp ý cải thiện..." style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 100, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
+              </div>
+              <button onClick={handleSaveGrade} disabled={!gradeScore || savingGrade} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: gradeScore && !savingGrade ? CERULEAN : GRAY_LIGHT, color: gradeScore && !savingGrade ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: gradeScore && !savingGrade ? "pointer" : "not-allowed" }}>
+                {savingGrade ? "Đang lưu..." : existingGrade ? "Cập nhật đánh giá" : "Lưu đánh giá"}
+              </button>
+            </div>
+          )}
+
+          {existingGrade && !canGrade && (
+            <div style={{ background: "#F0FFF0", borderRadius: 12, padding: "20px", border: `1px solid #C6F6C6`, marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 32, fontWeight: 700, color: CERULEAN }}>{existingGrade.score}</div>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>Điểm đánh giá</p>
+                  {existingGrade.comment && <p style={{ fontSize: 12, color: "#444", margin: 0, lineHeight: 1.5 }}>{existingGrade.comment}</p>}
+                  {existingGrade.lecturer && <p style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>Bởi: {existingGrade.lecturer.fullName}</p>}
                 </div>
               </div>
             </div>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Lời phê bình & Nhận xét</label>
-              <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Nhận xét về kỹ thuật thực hiện, tư duy thiết kế, điểm mạnh và góp ý cải thiện..." style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 100, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
-            </div>
-            <button style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: score && comment ? CERULEAN : GRAY_LIGHT, color: score && comment ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: score && comment ? "pointer" : "not-allowed" }}>
-              Lưu đánh giá
-            </button>
-          </div>
+          )}
 
           <div style={{ marginTop: 32 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>Bình luận</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>Bình luận ({comments.length})</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
               <div style={{ border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, padding: 12, background: GRAY_BG }}>
-                <textarea placeholder="Để lại bình luận của bạn..." style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                  <button style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                    <Send size={14} color="#fff" /> Gửi bình luận
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: 12 }}>
-                <img src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&q=80" alt="avatar" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-                <div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>Trần Quang Huy</p>
-                    <span style={{ fontSize: 11, color: MUTED }}>2 giờ trước</span>
+                {currentUserId ? (
+                  <>
+                    <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Để lại bình luận của bạn..." style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                      <button onClick={handleSendComment} disabled={!commentText.trim() || sendingComment} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: commentText.trim() && !sendingComment ? CERULEAN : GRAY_LIGHT, color: commentText.trim() && !sendingComment ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: commentText.trim() && !sendingComment ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 6 }}>
+                        <Send size={14} /> {sendingComment ? "Đang gửi..." : "Gửi bình luận"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "16px 0" }}>
+                    <p style={{ fontSize: 13, color: MUTED, margin: "0 0 10px" }}>Vui lòng <strong style={{ color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("auth")}>đăng nhập</strong> để bình luận</p>
                   </div>
-                  <p style={{ fontSize: 13, color: BLACK, margin: 0, lineHeight: 1.5 }}>Ánh sáng trong render 3D này rất đẹp. Bạn dùng render engine nào vậy?</p>
-                </div>
+                )}
               </div>
-
-              <div style={{ display: "flex", gap: 12 }}>
-                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80" alt="avatar" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-                <div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>Lê Thị Hương (Tác giả)</p>
-                    <span style={{ fontSize: 11, color: MUTED }}>1 giờ trước</span>
+              {comments.length === 0 && (
+                <p style={{ fontSize: 13, color: MUTED, textAlign: "center", padding: "20px 0" }}>Chưa có bình luận nào.</p>
+              )}
+              {comments.map(cmt => (
+                <div key={cmt.id} style={{ display: "flex", gap: 12 }}>
+                  <img src={cmt.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+                  <div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>
+                        {cmt.user?.fullName}
+                        {cmt.user?.id === art.userId && <span style={{ fontSize: 11, color: CERULEAN, fontWeight: 400, marginLeft: 4 }}>(Tác giả)</span>}
+                      </p>
+                      <span style={{ fontSize: 11, color: MUTED }}>{timeAgo(cmt.createdAt)}</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: BLACK, margin: 0, lineHeight: 1.5 }}>{cmt.content}</p>
                   </div>
-                  <p style={{ fontSize: 13, color: BLACK, margin: 0, lineHeight: 1.5 }}>Cảm ơn bạn! Mình sử dụng Cycles trong Blender nhé.</p>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
 
         </div>
       </div>
 
-      <div style={{ padding: "40px 48px 64px", borderTop: `1px solid ${GRAY_LIGHT}` }}>
-        <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 24 }}>Khám phá thêm</h3>
-        <MasonryGrid items={artworks.slice(3, 6)} showHover={true} onArtworkClick={() => setPage("detail")} />
-      </div>
+      {showReport && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowReport(false)}>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-[#E0E0E0] flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#212121]">Báo cáo ấn phẩm</h3>
+              <button onClick={() => setShowReport(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-semibold text-[#666666] mb-3">Loại vi phạm</label>
+              <div className="flex flex-wrap gap-2 mb-5">
+                {["Đạo văn / Sao chép", "Nội dung không phù hợp", "Thông tin sai lệch", "Xâm phạm bản quyền", "Spam / Quảng cáo", "Khác"].map(t => (
+                  <button key={t} onClick={() => setReportType(t)} className={`px-3.5 py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${reportType === t ? "bg-[#077E9E] text-white border-[#077E9E]" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8]"}`}>{t}</button>
+                ))}
+              </div>
+              <label className="block text-sm font-semibold text-[#666666] mb-2">Chi tiết vi phạm</label>
+              <textarea value={reportDetail} onChange={e => setReportDetail(e.target.value)} placeholder="Mô tả chi tiết về vi phạm..." className="w-full p-3 rounded-lg border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] resize-vertical min-h-[120px] font-inherit text-[#212121] box-border" style={{ fontFamily: "inherit" }} />
+              <button onClick={async () => {
+                if (!reportType) return;
+                setSendingReport(true);
+                try {
+                  await api.artworks.report(activeArtworkId, { violationType: reportType, detail: reportDetail });
+                  setShowReport(false);
+                  setReportType("");
+                  setReportDetail("");
+                  alert("Cảm ơn bạn! Báo cáo đã được gửi đến quản trị viên.");
+                } catch (e) {
+                  alert("Lỗi khi gửi báo cáo: " + (e?.message || "Vui lòng thử lại"));
+                }
+                setSendingReport(false);
+              }} disabled={!reportType || sendingReport} className={`w-full mt-4 py-2.5 rounded-lg text-sm font-semibold border-none cursor-pointer ${!reportType || sendingReport ? "bg-[#E0E0E0] text-[#999]" : "bg-[#8B1A1A] text-white hover:bg-opacity-90"}`}>
+                {sendingReport ? "Đang gửi..." : "Gửi báo cáo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {relatedArtworks.length > 0 && (
+        <div style={{ padding: "40px 48px 64px", borderTop: `1px solid ${GRAY_LIGHT}` }}>
+          <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 24 }}>Khám phá thêm</h3>
+          <MasonryGrid
+            items={relatedArtworks.map((a, i) => ({
+              id: a.id, title: a.title, student: a.user?.fullName || "", img: a.coverImageUrl,
+              likes: a.likeCount || 0, h: [240, 300, 350, 270, 320][i % 5], isPublic: a.isPublic, category: a.subject,
+            }))}
+            showHover={true}
+            onArtworkClick={(art) => { setPage("detail"); setTimeout(() => setActiveArtworkId(art.id), 50); }}
+          />
+        </div>
+      )}
 
     </div>
   );
 }
 
 function AuthPage({ setPage, onLoginSuccess }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [authRole, setAuthRole] = useState("student");
+  const [loginError, setLoginError] = useState("");
+
+  const [logging, setLogging] = useState(false);
+
+  const handleEmailLogin = async () => {
+    if (!email || !password) {
+      setLoginError("Vui lòng nhập email và mật khẩu");
+      return;
+    }
+    setLoginError("");
+    setLogging(true);
+    try {
+      const csrfRes = await fetch("/api/auth/csrf");
+      const csrfData = await csrfRes.json();
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/api/auth/callback/credentials";
+      const fields = { email, password, csrfToken: csrfData.csrfToken, callbackUrl: window.location.origin + "/" };
+      for (const [k, v] of Object.entries(fields)) {
+        const i = document.createElement("input");
+        i.name = k; i.value = v; form.appendChild(i);
+      }
+      document.body.appendChild(form);
+      form.submit();
+    } catch {
+      setLoginError("Lỗi kết nối đến server");
+      setLogging(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    fetch("/api/auth/csrf").then(r => r.json()).then(data => {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/api/auth/signin/google";
+      const cbInput = document.createElement("input");
+      cbInput.name = "callbackUrl";
+      cbInput.value = window.location.origin + "/";
+      form.appendChild(cbInput);
+      const csrfInput = document.createElement("input");
+      csrfInput.name = "csrfToken";
+      csrfInput.value = data.csrfToken;
+      form.appendChild(csrfInput);
+      document.body.appendChild(form);
+      form.submit();
+    });
+  };
+
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
@@ -1003,23 +1515,71 @@ function AuthPage({ setPage, onLoginSuccess }) {
       </div>
       <div style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 64px" }}>
         <h2 style={{ fontSize: 28, fontWeight: 700, color: BLACK, marginBottom: 8 }}>Đăng nhập</h2>
-        <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>Chào mừng trở lại với hệ thống Portfolio UEF</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Email</label>
-            <input type="email" placeholder="sv@uef.edu.vn" style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }} />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mật khẩu</label>
-            <input type="password" placeholder="••••••••" style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }} />
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 6, marginTop: 20 }}>
+        <p style={{ color: MUTED, fontSize: 14, marginBottom: 24 }}>Chào mừng trở lại với hệ thống Portfolio UEF</p>
+
+        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
           {[{ key: "student", label: "Sinh viên" }, { key: "lecturer", label: "Giảng viên" }, { key: "admin", label: "Quản trị" }].map((r) => (
             <button key={r.key} onClick={() => setAuthRole(r.key)} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{r.label}</button>
           ))}
         </div>
-        <button onClick={() => onLoginSuccess && onLoginSuccess(authRole)} style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 20, cursor: "pointer" }}>Đăng nhập</button>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setLoginError(""); }}
+              placeholder="sv@uef.edu.vn"
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mật khẩu</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
+              placeholder="••••••••"
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+            />
+          </div>
+        </div>
+
+        {loginError && (
+          <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 8, textAlign: "center" }}>{loginError}</p>
+        )}
+
+        <button
+          onClick={handleEmailLogin}
+          style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 16, cursor: "pointer" }}
+        >
+          Đăng nhập
+        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
+          <div style={{ flex: 1, height: 1, background: GRAY_LIGHT }} />
+          <span style={{ fontSize: 12, color: MUTED }}>Hoặc</span>
+          <div style={{ flex: 1, height: 1, background: GRAY_LIGHT }} />
+        </div>
+
+        <button
+          onClick={handleGoogleLogin}
+          style={{ width: "100%", padding: "14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Đăng nhập với Google
+        </button>
+
+        <p style={{ color: "#666", fontSize: 11, marginTop: 16, textAlign: "center", lineHeight: 1.5 }}>
+          Đăng nhập bằng email @uef.edu.vn để sử dụng hệ thống.<br />
+          Sinh viên: <strong>sv@uef.edu.vn</strong> / Mật khẩu: <strong>test123</strong>
+        </p>
       </div>
     </div>
   )
@@ -1028,34 +1588,32 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
 
 function AdminDashboardPage({ setPage }) {
+  const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, totalInteractions: 0 });
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      api.admin.stats(),
+      api.admin.artworks({ limit: "6" }).catch(() => ({ artworks: [] })),
+    ]).then(([stats, artRes]) => {
+      setAdminStats(stats);
+      setRecentActivity((artRes.artworks || []).slice(0, 6));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
   const stats = [
-    { label: "Ấn phẩm đang hiển thị", value: artworks.length, hint: "Tổng ấn phẩm công khai", accent: "#077E9E" },
-    { label: "Bài bị báo cáo", value: 2, hint: "Cần xử lý", accent: "#8B1A1A" },
-    { label: "Tổng tài khoản", value: 1234, hint: "SV + GV + Admin", accent: "#212121" },
-    { label: "Lượt tương tác", value: "8.7K", hint: "+2.4% tuần này", accent: "#055F78" },
+    { label: "Ấn phẩm đang hiển thị", value: adminStats.publishedArtworks || 0, hint: "Tổng ấn phẩm công khai", accent: "#077E9E" },
+    { label: "Bài bị báo cáo", value: adminStats.reportedArtworks || 0, hint: "Cần xử lý", accent: "#8B1A1A" },
+    { label: "Tổng tài khoản", value: adminStats.totalAccounts || 0, hint: "SV + GV + Admin", accent: "#212121" },
+    { label: "Lượt tương tác", value: (adminStats.totalInteractions || 0).toLocaleString(), hint: "Lượt thích + bình luận", accent: "#055F78" },
   ];
 
-  const categoryCounts = [
-    { label: "Thiết kế TH", value: 58, color: "#077E9E" },
-    { label: "Đồ hoạ ứng dụng", value: 47, color: "#0C9DBF" },
-    { label: "Bao bì", value: 38, color: "#8B1A1A" },
-    { label: "Motion", value: 29, color: "#212121" },
-    { label: "UI/UX", value: 24, color: "#055F78" },
-    { label: "Khác", value: 21, color: "#666666" },
-  ];
-
-  const recent = [
-    { color: "#077E9E", text: "GV Trần Văn Phúc vừa chấm điểm 3 ấn phẩm" },
-    { color: "#8B1A1A", text: "Có 2 ấn phẩm được báo cáo vi phạm" },
-    { color: "#212121", text: "Sinh viên Nguyễn Minh Anh đăng ấn phẩm mới" },
-    { color: "#055F78", text: "Xuất Tập san PDF thành công" },
-  ];
-
-  const flagged = artworks.slice(0, 6).map((a, i) => ({
-    ...a,
-    subject: ["Thiết kế TH", "Đồ hoạ ứng dụng", "Motion Design", "UX/UI"][i % 4],
-    createdAt: ["05/05/2026", "04/05/2026", "03/05/2026", "02/05/2026"][i % 4],
-    status: i % 4 === 0 ? "Bị báo cáo" : i % 4 === 1 ? "Đang hiển thị" : i % 4 === 2 ? "Đã ẩn" : "Nổi bật",
+  const categoryCounts = [];
+  const recent = recentActivity.slice(0, 4).map(a => ({
+    color: a.isPublic ? "#077E9E" : "#8B1A1A",
+    text: `${a.user?.fullName || "User"} ${a.isPublic ? "đã được duyệt" : "vừa đăng"} ấn phẩm "${(a.title || "").slice(0, 30)}"`,
   }));
 
   const statusBadge = (s) => {
@@ -1079,7 +1637,8 @@ function AdminDashboardPage({ setPage }) {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        {loading ? <div className="text-center py-16 text-[#666666] text-sm">Đang tải dữ liệu...</div> : (
+        <><div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
             <div key={s.label} className="bg-white border border-[#E0E0E0] rounded-xl p-5">
               <div className="flex items-start justify-between gap-3">
@@ -1118,22 +1677,25 @@ function AdminDashboardPage({ setPage }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {flagged.map((a) => (
+                  {recentActivity.map((a) => {
+                    const aStatus = a.isPublic ? "Đang hiển thị" : (a.isHighlighted ? "Nổi bật" : "Đã ẩn");
+                    return (
                     <tr key={a.id} className="border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <img src={a.img} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
+                          <img src={a.coverImageUrl} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
                           <span className="text-sm font-semibold text-[#212121] truncate max-w-[260px]">{a.title}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-[#666666]">{a.student}</td>
-                      <td className="px-4 py-3 text-sm text-[#666666]">{a.subject}</td>
-                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.user?.fullName || ""}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.subject || ""}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("vi-VN") : ""}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(a.status)}`}>{a.status}</span>
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(aStatus)}`}>{aStatus}</span>
                       </td>
                     </tr>
-                  ))}
+                  );
+                })}
                 </tbody>
               </table>
             </div>
@@ -1191,29 +1753,52 @@ function AdminDashboardPage({ setPage }) {
             </div>
           </div>
         </div>
-      </div>
+      </>)}
     </div>
+  </div>
   );
 }
 
 
 
 function MessagesPage({ setPage }) {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "Nguyễn Công Tuấn", company: "FPT Software", purpose: "Tuyển dụng", excerpt: "Chào em, công ty hiện đang có vị trí UI/UX Designer thực tập. Portfolio của em rất ấn tượng, hy vọng em có thể sắp xếp thời gian...", isRead: false, time: "10:30 AM", fullText: "Chào em,\n\nCông ty hiện đang có vị trí UI/UX Designer thực tập. Portfolio của em rất ấn tượng, hy vọng em có thể sắp xếp thời gian để tham gia phỏng vấn cùng team Design bên anh vào tuần sau.\n\nThời gian dự kiến: Thứ 4 (15/03) lúc 14:00.\nHình thức: Online qua Google Meet.\n\nPhản hồi lại email này nếu em sắp xếp được nhé.\n\nTrân trọng,\nCông Tuấn" },
-    { id: 2, sender: "Trần Mai Hương", company: "Be Group", purpose: "Hợp tác dự án", excerpt: "Portfolio của bạn rất ấn tượng. Mình muốn trao đổi về một dự án thiết kế cho chiến dịch sắp tới...", isRead: true, time: "Hôm qua", fullText: "Chào bạn,\n\nPortfolio của bạn rất ấn tượng. Mình muốn trao đổi về một dự án thiết kế cho chiến dịch quảng bá sắp tới của Be Group. Dự án kéo dài khoảng 3 tuần, công việc chủ yếu là thiết kế key visual và adaptation cho social media.\n\nNếu bạn đang có thời gian trống và hứng thú, báo mình nhé để mình gửi JD chi tiết.\n\nCảm ơn bạn,\nMai Hương" },
-    { id: 3, sender: "Lê Văn Thành", company: "VNG", purpose: "Phỏng vấn", excerpt: "Xin chúc mừng, bạn đã vượt qua vòng hồ sơ. Mời bạn tham gia buổi phỏng vấn vị trí 3D Artist vào tuần tới...", isRead: true, time: "12/03/2024", fullText: "Chào bạn,\n\nXin chúc mừng, bạn đã vượt qua vòng hồ sơ. Mời bạn tham gia buổi phỏng vấn vị trí 3D Artist vào tuần tới tại văn phòng VNG Campus.\n\nVui lòng chuẩn bị sẵn các file source của dự án 'Neon Cityscape' để present cho hội đồng phỏng vấn.\n\nHẹn gặp bạn sớm!" },
-  ]);
-
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    api.messages.list().then(data => {
+      setMessages(Array.isArray(data) ? data : []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
 
   const toggleMessage = (id) => {
     if (expandedId === id) {
       setExpandedId(null);
     } else {
       setExpandedId(id);
+      api.messages.markRead(id).catch(() => {});
       setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m));
     }
+  };
+
+  const handleArchive = async (id) => {
+    try {
+      await api.messages.archive(id);
+      setMessages(prev => prev.filter(m => m.id !== id));
+    } catch (e) {
+      alert("Lỗi khi lưu trữ: " + (e?.message || "Vui lòng thử lại"));
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 86400000 && d.getDate() === now.getDate()) return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    if (diff < 172800000) return "Hôm qua";
+    return d.toLocaleDateString("vi-VN");
   };
 
   return (
@@ -1221,42 +1806,59 @@ function MessagesPage({ setPage }) {
       <DashboardSidebar active="Hộp thư" setPage={setPage} />
       <div style={{ flex: 1, padding: "32px 40px" }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 24px", color: BLACK }}>Hộp thư đến</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {messages.map(msg => (
-            <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#F0F8FB", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#B3D9E8"}`, overflow: "hidden" }}>
-              <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
-                  {msg.sender.charAt(0)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                    <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.sender}</p>
-                    <span style={{ fontSize: 13, color: MUTED }}>• {msg.company}</span>
+        {loading ? (
+          <p style={{ textAlign: "center", color: MUTED, padding: 40 }}>Đang tải...</p>
+        ) : messages.length === 0 ? (
+          <p style={{ textAlign: "center", color: MUTED, padding: 40, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>Chưa có tin nhắn nào.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {messages.map(msg => (
+              <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#F0F8FB", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#B3D9E8"}`, overflow: "hidden" }}>
+                <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
+                    {msg.senderName?.charAt(0) || "?"}
                   </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>
-                    <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.excerpt}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                      <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.senderName}</p>
+                      {msg.senderCompany && <span style={{ fontSize: 13, color: MUTED }}>• {msg.senderCompany}</span>}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      {msg.purpose && <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>}
+                      <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                    <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap" }}>{formatDate(msg.createdAt)}</span>
+                    {msg.isRead ? <MailOpen size={14} color={MUTED} /> : <Mail size={14} color={CERULEAN} />}
                   </div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                  <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.time}</span>
-                  {msg.isRead ? <MailOpen size={14} color={MUTED} /> : <Mail size={14} color={CERULEAN} />}
-                </div>
+                {expandedId === msg.id && (
+                  <div style={{ padding: "0 20px 20px 80px" }}>
+                    <div style={{ padding: "16px", background: GRAY_BG, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
+                      <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                      <a
+                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Phản hồi: ${msg.purpose || "Liên hệ từ Portfolio"}`)}&body=${encodeURIComponent(
+                          `--- Tin nhắn gốc từ ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Mục đích: ${msg.purpose}\n` : ""}${msg.content}\n\n--- Phản hồi của tôi ---\n`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                      >
+                        <Mail size={14} /> Phản hồi qua Email
+                      </a>
+                      <button onClick={() => handleArchive(msg.id)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
+                        <Archive size={14} /> Lưu trữ
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              {expandedId === msg.id && (
-                <div style={{ padding: "0 20px 20px 80px" }}>
-                  <div style={{ padding: "16px", background: GRAY_BG, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
-                    <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.fullText}</p>
-                  </div>
-                  <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                    <button style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Phản hồi qua Email</button>
-                    <button style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK }}>Lưu trữ</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1293,13 +1895,128 @@ function AdminSidebar({ active, setPage }) {
   );
 }
 
-function EditArtworkPage({ setPage }) {
-  const [isPublic, setIsPublic] = useState(true);
+function EditArtworkPage({ setPage, activeArtworkId }) {
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [subject, setSubject] = useState("");
+  const [tools, setTools] = useState([]);
+  const [toolInput, setToolInput] = useState("");
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
   const [projectYear, setProjectYear] = useState("Năm 3");
   const [isGroupProject, setIsGroupProject] = useState(false);
   const [friends, setFriends] = useState([]);
   const [friendInput, setFriendInput] = useState("");
-  const art = artworks[1];
+  const [friendResults, setFriendResults] = useState([]);
+  const [friendSearching, setFriendSearching] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [coverImage, setCoverImage] = useState(null);
+  const [originalCover, setOriginalCover] = useState("");
+  const [additionalImages, setAdditionalImages] = useState([]);
+
+  const allSubjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+  const semesterToYear = { HK1: "Năm 1", HK2: "Năm 2", HK3: "Năm 3" };
+  const yearToSemester = { "Năm 1": "HK1", "Năm 2": "HK2", "Năm 3": "HK3", "Năm 4": "HK1", "Tốt nghiệp": "HK2" };
+  const yearToAcademic = { "Năm 1": "2024-2025", "Năm 2": "2023-2024", "Năm 3": "2022-2023", "Năm 4": "2021-2022", "Tốt nghiệp": "2021-2022" };
+
+  useEffect(() => {
+    if (!activeArtworkId) return;
+    setLoading(true);
+    api.artworks.get(activeArtworkId).then(res => {
+      setTitle(res.title || "");
+      setDescription(res.description || "");
+      setSubject(res.subject || "");
+      setTools(res.toolsUsed || []);
+      setTags(res.tags || []);
+      setOriginalCover(res.coverImageUrl || "");
+      setAdditionalImages((res.fileUrls || []).filter(url => url !== res.coverImageUrl));
+      if (res.semester) {
+        const yr = semesterToYear[res.semester];
+        if (yr) setProjectYear(yr);
+      }
+      const collabs = res.collaborators || [];
+      if (collabs.length > 0) { setIsGroupProject(true); setFriends(collabs); }
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [activeArtworkId]);
+
+  const handleSave = async () => {
+    if (!title.trim()) { setMessage({ type: "error", text: "Vui lòng nhập tên môn học" }); return; }
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const body = {
+        title: title.trim(),
+        description: description.trim() || null,
+        subject: subject || null,
+        toolsUsed: tools,
+        tags,
+        collaborators: friends.map(f => f.fullName || f),
+        fileUrls: [coverImage || originalCover, ...additionalImages].filter(Boolean),
+        coverImageUrl: coverImage || originalCover,
+        semester: yearToSemester[projectYear] || "HK1",
+        academicYear: yearToAcademic[projectYear] || "2024-2025",
+      };
+      await api.artworks.update(activeArtworkId, body);
+      setMessage({ type: "success", text: "Đã cập nhật!" });
+      setTimeout(() => setPage("dashboard"), 1000);
+    } catch (e) {
+      setMessage({ type: "error", text: e?.message || "Lỗi lưu" });
+    }
+    setSaving(false);
+  };
+
+  const handleFriendSearch = (val) => {
+    setFriendInput(val);
+    if (val.length < 2) { setFriendResults([]); return; }
+    setFriendSearching(true);
+    api.users.search(val).then(setFriendResults).catch(() => {}).finally(() => setFriendSearching(false));
+  };
+
+  const addFriend = (user) => {
+    if (!friends.find(f => f.id === user.id)) {
+      setFriends([...friends, { id: user.id, fullName: user.fullName, email: user.email, avatarUrl: user.avatarUrl }]);
+    }
+    setFriendInput("");
+    setFriendResults([]);
+  };
+
+  const readFileAsDataURL = (file) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+
+  const handleCoverChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverImage(await readFileAsDataURL(file));
+  };
+
+  const handleAddImage = async (e) => {
+    const files = Array.from(e.target.files || []);
+    const max = 9 - additionalImages.length;
+    const urls = await Promise.all(files.slice(0, max).map(readFileAsDataURL));
+    setAdditionalImages(prev => [...prev, ...urls].slice(0, 9));
+  };
+
+  const removeImage = (idx) => {
+    setAdditionalImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Xóa ấn phẩm này?")) return;
+    try {
+      await api.artworks.delete(activeArtworkId);
+      setPage("dashboard");
+    } catch (e) {
+      setMessage({ type: "error", text: e?.message || "Lỗi xóa" });
+    }
+  };
+
+  if (loading) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
 
   return (
     <div className="bg-white min-h-[calc(100vh-60px)] px-16 py-10">
@@ -1309,26 +2026,66 @@ function EditArtworkPage({ setPage }) {
         </div>
         <h2 className="text-2xl font-bold text-[#212121] mb-1">Chỉnh sửa Ấn phẩm</h2>
         <p className="text-sm text-[#666666] mb-8">Cập nhật thông tin chi tiết cho tác phẩm của bạn</p>
+        {message.text && (
+          <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
+            {message.text}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-8">
           <div>
-            <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh hiện tại</label>
+            <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh bìa</label>
             <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer">
-              <img src={art.img} alt="cover" className="w-full h-[400px] object-cover block" />
+              <img src={coverImage || originalCover} alt="cover" className="w-full h-[360px] object-cover block" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <button className="px-5 py-2.5 rounded-lg border-2 border-white text-white text-sm font-semibold flex items-center gap-2 hover:bg-white hover:text-[#212121] transition-colors"><Image size={16} /> Đổi ảnh mới</button>
+                <label className="cursor-pointer">
+                  <span className="px-5 py-2.5 rounded-lg border-2 border-white text-white text-sm font-semibold flex items-center gap-2 hover:bg-white hover:text-[#212121] transition-colors"><Image size={16} /> Đổi ảnh bìa</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
+                </label>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh bổ sung ({additionalImages.length}/9)</label>
+              <input type="file" id="editAdditionalInput" accept="image/*" multiple className="hidden" onChange={handleAddImage} />
+              <div className="flex gap-2 flex-wrap">
+                {additionalImages.map((url, idx) => (
+                  <div key={idx} className="relative w-[90px] h-[72px] rounded-lg overflow-hidden border border-[#E0E0E0] group">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button onClick={() => removeImage(idx)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/50 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">×</button>
+                  </div>
+                ))}
+                {additionalImages.length < 9 && (
+                  <button onClick={() => document.getElementById("editAdditionalInput")?.click()} className="w-[90px] h-[72px] rounded-lg border-2 border-dashed border-[#E0E0E0] flex items-center justify-center text-[#666666] hover:border-[#077E9E] hover:text-[#077E9E] transition-colors cursor-pointer"><Plus size={22} /></button>
+                )}
               </div>
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tên học phần</label><input defaultValue="Design Principles" className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tên môn học</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại đồ án</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#F0F8FB] border-[#077E9E] text-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại bài</label><div className="flex gap-3">{[{ key: false, label: "Cá nhân", icon: <User size={16} /> }, { key: true, label: "Nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#F0F8FB] border-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
-            {isGroupProject && (<div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tag bạn cùng nhóm</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f} <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => setFriendInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { setFriends([...friends, friendInput.trim()]); setFriendInput(""); } }} placeholder="Nhập tên..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" /></div></div>)}
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Mô tả</label><textarea defaultValue="Đây là một bộ nhận diện thương hiệu hoàn chỉnh dành cho chiến dịch sắp tới." className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Danh mục & Công cụ</label><div className="grid grid-cols-2 gap-3"><select defaultValue={art.category} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer"><option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option></select><select defaultValue={art.tool} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer"><option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option></select></div></div>
+            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Thêm thành viên nhóm</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Mô tả</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Danh mục</label>
+              <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
+                <option value="">-- Chọn --</option>
+                {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Công cụ</label>
+              <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">
+                {tools.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTools(tools.filter(x => x !== t))} /></span>))}
+                <input value={toolInput} onChange={e => setToolInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && toolInput.trim()) { setTools([...tools, toolInput.trim()]); setToolInput(""); } }} placeholder="Add tool..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
+              </div>
+            </div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tags</label>
+              <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">
+                {tags.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTags(tags.filter(x => x !== t))} /></span>))}
+                <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
+              </div>
+            </div>
             <div className="mt-auto pt-4 border-t border-[#E0E0E0] flex gap-3">
-              <button className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> Xóa ấn phẩm</button>
-              <button className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer"><Check size={16} /> Lưu thay đổi</button>
+              <button onClick={handleDelete} className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> Xóa ấn phẩm</button>
+              <button onClick={handleSave} disabled={saving} className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50"><Check size={16} /> {saving ? "Đang lưu..." : "Lưu thay đổi"}</button>
             </div>
           </div>
         </div>
@@ -1338,24 +2095,34 @@ function EditArtworkPage({ setPage }) {
 }
 
 function AdminUsersPage({ setPage }) {
-  const [users, setUsers] = useState([
-    { id: 1, name: "Nguyễn Minh Anh", email: "minhanh@uef.edu.vn", role: "Sinh viên", joined: "12/08/2023", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80", isLocked: false },
-    { id: 2, name: "Trần Bảo Long", email: "longtb@uef.edu.vn", role: "Sinh viên", joined: "15/08/2023", avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&q=80", isLocked: true },
-    { id: 3, name: "GV. Trần Văn Phúc", email: "phuctv@uef.edu.vn", role: "Giảng viên", joined: "01/01/2020", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&q=80", isLocked: false },
-    { id: 4, name: "Admin System", email: "admin@uef.edu.vn", role: "Admin", joined: "01/01/2020", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80", isLocked: false },
-  ]);
-
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null });
   const [importFileName, setImportFileName] = useState("");
   const importInputRef = useRef(null);
 
-  const toggleLockUser = (userId) => {
-    setUsers(users.map(u => u.id === userId ? { ...u, isLocked: !u.isLocked } : u));
+  const roleLabel = { student: "Sinh viên", lecturer: "Giảng viên", admin: "Admin" };
+
+  const fetchUsers = () => {
+    setLoading(true);
+    api.admin.users().then(res => { setUsers(res.users || []); setLoading(false); }).catch(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  const toggleLockUser = async (user) => {
+    try {
+      await api.admin.lockUser(user.id, !user.isActive);
+      fetchUsers();
+    } catch {}
     setConfirmModal({ isOpen: false, user: null });
   };
 
-  const setRole = (userId, role) => {
-    setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
+  const setRole = async (userId, role) => {
+    try {
+      await api.admin.setUserRole(userId, role);
+      fetchUsers();
+    } catch {}
   };
 
   const handleImportFile = (e) => {
@@ -1399,6 +2166,7 @@ function AdminUsersPage({ setPage }) {
           </div>
         )}
 
+        {loading ? <div className="text-center py-16 text-[#666666] text-sm">Đang tải danh sách...</div> : users.length === 0 ? <div className="text-center py-16 text-[#666666] text-sm">Không có người dùng</div> : (
         <div className="border border-[#E0E0E0] rounded-xl overflow-hidden shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -1411,12 +2179,15 @@ function AdminUsersPage({ setPage }) {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {users.map(u => {
+                const roleVal = roleLabel[u.role] || u.role;
+                const locked = !u.isActive;
+                return (
                 <tr key={u.id} className="border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <img src={u.avatar} className="w-8 h-8 rounded-full object-cover bg-[#E0E0E0]" />
-                      <span className="text-sm font-semibold text-[#212121]">{u.name}</span>
+                      <img src={u.avatarUrl || ''} className="w-8 h-8 rounded-full object-cover bg-[#E0E0E0]" />
+                      <span className="text-sm font-semibold text-[#212121]">{u.fullName}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-[#666666]">{u.email}</td>
@@ -1427,27 +2198,26 @@ function AdminUsersPage({ setPage }) {
                         onChange={(e) => setRole(u.id, e.target.value)}
                         className="w-full appearance-none px-3 py-2 rounded-lg border border-[#E0E0E0] bg-white text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] cursor-pointer pr-9 hover:bg-[#F8F8F8] transition-colors"
                       >
-                        <option value="Sinh viên">Sinh viên</option>
-                        <option value="Giảng viên">Giảng viên</option>
-                        <option value="Admin">Admin</option>
+                        {Object.entries(roleLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
                       <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#666666]" />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-[#666666]">{u.joined}</td>
+                  <td className="px-4 py-3 text-sm text-[#666666]">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "—"}</td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center">
-                      <button onClick={() => u.isLocked ? toggleLockUser(u.id) : setConfirmModal({ isOpen: true, user: u })} className={`px-3 py-1.5 flex items-center gap-2 rounded-md border transition-colors cursor-pointer ${u.isLocked ? 'border-[#077E9E] text-[#077E9E] hover:bg-[#077E9E] hover:text-white' : 'border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white'}`} title={u.isLocked ? "Mở khóa" : "Khóa tài khoản"}>
-                        {u.isLocked ? <Unlock size={14} /> : <Lock size={14} />}
-                        <span className="text-xs font-semibold">{u.isLocked ? "Mở khóa" : "Khóa tài khoản"}</span>
+                      <button onClick={() => locked ? toggleLockUser(u) : setConfirmModal({ isOpen: true, user: u })} className={`px-3 py-1.5 flex items-center gap-2 rounded-md border transition-colors cursor-pointer ${locked ? 'border-[#077E9E] text-[#077E9E] hover:bg-[#077E9E] hover:text-white' : 'border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white'}`} title={locked ? "Mở khóa" : "Khóa tài khoản"}>
+                        {locked ? <Unlock size={14} /> : <Lock size={14} />}
+                        <span className="text-xs font-semibold">{locked ? "Mở khóa" : "Khóa tài khoản"}</span>
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {confirmModal.isOpen && (
@@ -1470,45 +2240,57 @@ function AdminUsersPage({ setPage }) {
 }
 
 function AdminArtworksPage({ setPage }) {
-  const seed = artworks.map((a, i) => ({
-    ...a,
-    subject: ["Thiết kế TH", "Đồ hoạ ứng dụng", "Motion Design", "UX/UI"][i % 4],
-    createdAt: ["05/05", "04/05", "03/05", "02/05", "01/05"][i % 5],
-    status: i % 5 === 0 ? "Bị báo cáo" : i % 5 === 1 ? "Đang hiển thị" : i % 5 === 2 ? "Đã ẩn" : i % 5 === 3 ? "Vi phạm" : "Nổi bật",
-    score: i % 3 === 0 ? 9.2 : i % 3 === 1 ? 8.8 : null,
-    isHighlighted: i % 5 === 4,
-  }));
-
-  const [items, setItems] = useState(seed);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [query, setQuery] = useState("");
   const [filterSubject, setFilterSubject] = useState("Tất cả");
   const [filterYear, setFilterYear] = useState("Tất cả");
   const [filterTool, setFilterTool] = useState("Tất cả");
-  const [selectedId, setSelectedId] = useState(seed[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, mode: "delete", artId: null });
+  const [galleryIdx, setGalleryIdx] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
 
-  const tabs = [
-    { key: "all", label: "Tất cả", match: () => true },
-    { key: "reported", label: "Bị báo cáo", match: (a) => a.status === "Bị báo cáo" || a.status === "Vi phạm" },
-    { key: "hidden", label: "Đã ẩn", match: (a) => a.status === "Đã ẩn" },
-    { key: "highlight", label: "Nổi bật", match: (a) => a.isHighlighted || a.status === "Nổi bật" },
-  ];
+  const fetchArtworks = (params = {}) => {
+    setLoading(true);
+    api.admin.artworks({ limit: 200, ...params }).then(res => {
+      const raw = res.artworks || [];
+      setItems(raw);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  };
 
-  const filtered = items
-    .filter((a) => {
-      const t = tabs.find((x) => x.key === activeTab);
-      return t ? t.match(a) : true;
-    })
-    .filter((a) => {
-      const q = query.trim().toLowerCase();
-      if (!q) return true;
-      return `${a.title} ${a.student} ${a.category} ${a.tool}`.toLowerCase().includes(q);
-    })
-    .filter((a) => (filterSubject === "Tất cả" ? true : a.subject === filterSubject))
-    .filter((a) => (filterYear === "Tất cả" ? true : a.year === filterYear))
-    .filter((a) => (filterTool === "Tất cả" ? true : a.tool === filterTool));
+  useEffect(() => { fetchArtworks({}); }, []);
+
+  useEffect(() => {
+    const params = {};
+    if (query.trim()) params.q = query.trim();
+    fetchArtworks(params);
+  }, [query]);
+
+  useEffect(() => {
+    if (!selectedId) { setReports([]); return; }
+    setReportsLoading(true);
+    api.artworks.reports(selectedId).then(setReports).catch(() => setReports([])).finally(() => setReportsLoading(false));
+  }, [selectedId]);
+
+  const tabMap = { all: "all", reported: "reported", pending: "pending", hidden: "hidden", highlight: "highlight" };
+  const filtered = items.filter(a => {
+    if (activeTab === "hidden") return !a.isPublic && !a.isPending;
+    if (activeTab === "pending") return a.isPending;
+    if (activeTab === "highlight") return a.isHighlighted;
+    if (activeTab === "reported") return (a._count?.reports || 0) > 0;
+    return true;
+  }).filter(a => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (a.title || '').toLowerCase().includes(q) || (a.user?.fullName || '').toLowerCase().includes(q);
+  }).filter(a => filterSubject === "Tất cả" ? true : a.subject === filterSubject)
+    .filter(a => filterYear === "Tất cả" ? true : a.academicYear === filterYear);
 
   const selected = items.find((a) => a.id === selectedId) ?? null;
 
@@ -1520,23 +2302,27 @@ function AdminArtworksPage({ setPage }) {
     setSelectedIds((prev) => (checked ? Array.from(new Set([...prev, id])) : prev.filter((x) => x !== id)));
   };
 
-  const setStatus = (ids, status) => {
-    setItems((prev) => prev.map((a) => (ids.includes(a.id) ? { ...a, status } : a)));
+  const approveArtwork = async (id) => {
+    try { await api.admin.setArtworkStatus(id, true); fetchArtworks(); } catch {}
     setSelectedIds([]);
   };
 
-  const removeItems = (ids) => {
-    setItems((prev) => prev.filter((a) => !ids.includes(a.id)));
+  const hideArtwork = async (id) => {
+    try { await api.admin.setArtworkStatus(id, false); fetchArtworks(); } catch {}
+    setSelectedIds([]);
+  };
+
+  const toggleHighlight = async (id, val) => {
+    try { await api.admin.toggleArtworkHighlight(id, val); fetchArtworks(); } catch {}
+  };
+
+  const removeItems = async (ids) => {
+    try { await Promise.all(ids.map(id => api.admin.deleteArtwork(id))); fetchArtworks(); } catch {}
     setSelectedIds([]);
     if (ids.includes(selectedId)) {
       const next = filtered.find((a) => !ids.includes(a.id));
       setSelectedId(next?.id ?? null);
     }
-  };
-
-  const toggleHighlight = (ids) => {
-    setItems((prev) => prev.map((a) => (ids.includes(a.id) ? { ...a, isHighlighted: !a.isHighlighted } : a)));
-    setSelectedIds([]);
   };
 
   const badge = (s) => {
@@ -1559,14 +2345,18 @@ function AdminArtworksPage({ setPage }) {
   const confirmAction = () => {
     if (!confirmModal.artId) return;
     if (confirmModal.mode === "delete") removeItems([confirmModal.artId]);
-    if (confirmModal.mode === "hide") setStatus([confirmModal.artId], "Đã ẩn");
+    if (confirmModal.mode === "hide") hideArtwork(confirmModal.artId);
     closeConfirm();
   };
 
   const tabCount = (key) => {
-    const t = tabs.find((x) => x.key === key);
-    if (!t) return 0;
-    return items.filter((a) => t.match(a)).length;
+    return items.filter(a => {
+      if (key === "hidden") return !a.isPublic && !a.isPending;
+      if (key === "pending") return a.isPending;
+      if (key === "highlight") return a.isHighlighted;
+      if (key === "reported") return (a._count?.reports || 0) > 0;
+      return true;
+    }).length;
   };
 
   const FilterSelect = ({ value, onChange, children }) => (
@@ -1596,7 +2386,13 @@ function AdminArtworksPage({ setPage }) {
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
-            {tabs.map((t) => (
+            {[
+              { key: "all", label: "Tất cả" },
+              { key: "reported", label: "Báo cáo" },
+              { key: "pending", label: "Chờ duyệt" },
+              { key: "hidden", label: "Đã ẩn" },
+              { key: "highlight", label: "Nổi bật" },
+            ].map((t) => (
               <button
                 key={t.key}
                 onClick={() => { setActiveTab(t.key); setSelectedIds([]); }}
@@ -1638,7 +2434,7 @@ function AdminArtworksPage({ setPage }) {
 
             <div className="flex items-center gap-2 ml-auto">
               <button
-                onClick={() => setStatus(selectedIds, "Đã ẩn")}
+                onClick={() => { selectedIds.forEach(id => hideArtwork(id)); setSelectedIds([]); }}
                 disabled={selectedIds.length === 0}
                 className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
                   selectedIds.length === 0 ? "bg-[#F8F8F8] text-[#999999] border-[#E0E0E0] cursor-not-allowed" : "bg-white text-[#212121] border-[#E0E0E0] hover:bg-[#F8F8F8]"
@@ -1669,7 +2465,7 @@ function AdminArtworksPage({ setPage }) {
         </div>
 
         <div className="flex-1 overflow-hidden flex">
-          <div className="w-[56%] min-w-[640px] border-r border-[#E0E0E0] overflow-hidden flex flex-col">
+          <div className="w-[65%] border-r border-[#E0E0E0] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-[#E0E0E0]">
               <div className="flex items-center gap-3">
                 <input
@@ -1694,7 +2490,6 @@ function AdminArtworksPage({ setPage }) {
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Môn học</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ngày</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold w-36">Trạng thái</th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold text-right">Điểm</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1702,9 +2497,11 @@ function AdminArtworksPage({ setPage }) {
                     <tr
                       key={a.id}
                       onClick={() => setSelectedId(a.id)}
-                      className={`border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors cursor-pointer ${
-                        selectedId === a.id ? "bg-[#E8F4F8]" : "bg-white"
-                      }`}
+                      className={`border-b transition-colors cursor-pointer ${
+                        selectedId === a.id ? "bg-[#E8F4F8]" : (a._count?.reports || 0) > 0 ? "bg-red-50" : a.isPending ? "bg-amber-50" : "bg-white"
+                      } ${
+                        (a._count?.reports || 0) > 0 ? "border-l-4 border-l-[#8B1A1A]" : "border-[#E0E0E0]"
+                      } hover:bg-[#F8F8F8]`}
                     >
                       <td className="px-4 py-3">
                         <input
@@ -1717,24 +2514,33 @@ function AdminArtworksPage({ setPage }) {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <img src={a.img} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
+                          <img src={a.coverImageUrl} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-[#212121] truncate">{a.title}</p>
-                            <p className="text-xs text-[#666666] truncate">{a.student}</p>
+                            <p className="text-xs text-[#666666] truncate">{a.user?.fullName || ""}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.subject}</td>
-                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("vi-VN") : ""}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${badge(a.status)}`}>{statusText(a.status)}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${a.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
+                            {a.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} className="text-[#666666]" />}
+                            {a.isPublic ? "Công khai" : "Riêng tư"}
+                          </span>
+                          {(a._count?.reports || 0) > 0 && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#8B1A1A] bg-red-50 px-2 py-0.5 rounded-full border border-[#F5C5C5]">
+                              <ShieldAlert size={11} /> {(a._count?.reports || 0)}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-[#212121]">{a.score ?? "—"}</td>
                     </tr>
                   ))}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="text-center py-12 text-[#666666]">Không có ấn phẩm phù hợp.</td>
+                      <td colSpan={5} className="text-center py-12 text-[#666666]">Không có ấn phẩm phù hợp.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1761,9 +2567,29 @@ function AdminArtworksPage({ setPage }) {
                 </div>
 
                 <div className="p-5">
-                  <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8]">
-                    <img src={selected.img} className="w-full h-64 object-cover" />
+                  <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer" onClick={() => {
+                    const imgs = [selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean);
+                    setGalleryImages(imgs);
+                    setGalleryIdx(0);
+                  }}>
+                    <img src={selected.coverImageUrl} className="w-full h-64 object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-semibold transition-opacity">Nhấp để phóng to</span>
+                    </div>
                   </div>
+                  {(selected.fileUrls || []).length > 0 && (
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      {[selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean).map((url, idx) => (
+                        <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#077E9E] transition-colors" onClick={() => {
+                          const imgs = [selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean);
+                          setGalleryImages(imgs);
+                          setGalleryIdx(idx);
+                        }}>
+                          <img src={url} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4 mt-5">
                     <div>
@@ -1772,11 +2598,14 @@ function AdminArtworksPage({ setPage }) {
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Công cụ</p>
-                      <p className="text-sm font-semibold text-[#212121]">{selected.tool}</p>
+                      <p className="text-sm font-semibold text-[#212121]">{(selected.toolsUsed || []).join(", ") || "—"}</p>
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Trạng thái</p>
-                      <span className={`inline-flex whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${badge(selected.status)}`}>{statusText(selected.status)}</span>
+                      <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${selected.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
+                        {selected.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} />}
+                        {selected.isPublic ? "Công khai" : "Riêng tư"}
+                      </span>
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Điểm</p>
@@ -1784,25 +2613,64 @@ function AdminArtworksPage({ setPage }) {
                     </div>
                   </div>
 
-                  <div className="mt-5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-4">
-                    <p className="text-sm text-[#666666] leading-relaxed">
-                      Hành động tại đây dành cho xử lý vi phạm / hiển thị. Việc chấm điểm được thực hiện trực tiếp trên trang chi tiết ấn phẩm của sinh viên.
+                  <div className="mt-4">
+                    <a href={`${window.location.origin}/#/detail/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[#077E9E] hover:text-[#055F78] font-semibold flex items-center gap-1.5 transition-colors">
+                      <ExternalLink size={14} /> Xem chi tiết: {selected.title}
+                    </a>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <ShieldAlert size={14} /> Báo cáo vi phạm {reports.length > 0 && <span className="bg-[#8B1A1A] text-white text-[10px] px-2 py-0.5 rounded-full">{reports.length}</span>}
                     </p>
+                    {reportsLoading ? (
+                      <p className="text-sm text-[#666666]">Đang tải...</p>
+                    ) : reports.length === 0 ? (
+                      <p className="text-sm text-[#666666] bg-[#F8F8F8] rounded-lg p-3 border border-[#E0E0E0]">Chưa có báo cáo nào cho ấn phẩm này.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3 max-h-[320px] overflow-y-auto">
+                        {reports.map(r => (
+                          <div key={r.id} className="bg-[#F8F8F8] rounded-lg p-3 border border-[#E0E0E0]">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-semibold text-[#8B1A1A] bg-red-50 px-2 py-0.5 rounded border border-[#F5C5C5]">{r.violationType}</span>
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${r.status === "pending" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" : r.status === "resolved" ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}>
+                                {r.status === "pending" ? "Chờ xử lý" : r.status === "resolved" ? "Đã xử lý" : "Đã bỏ qua"}
+                              </span>
+                            </div>
+                            {r.detail && <p className="text-sm text-[#212121] mb-2">{r.detail}</p>}
+                            <div className="flex items-center justify-between">
+                              <p className="text-[10px] text-[#666666]">
+                                Bởi {r.user?.fullName || r.user?.email || "Người dùng"} · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
+                              </p>
+                              {r.status === "pending" && (
+                                <div className="flex gap-1">
+                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "resolved").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "resolved" } : x)))} className="text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200 hover:bg-green-100 transition-colors cursor-pointer">Xử lý xong</button>
+                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "dismissed").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "dismissed" } : x)))} className="text-[10px] font-semibold text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">Bỏ qua</button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-5 grid grid-cols-3 gap-3">
-                    <button onClick={() => setStatus([selected.id], "Đang hiển thị")} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#212121] hover:bg-[#F8F8F8] transition-colors">
-                      Công khai
-                    </button>
-                    <button onClick={() => openConfirm("hide", selected.id)} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
-                      Ẩn bài
-                    </button>
+                    {!selected.isPublic ? (
+                      <button onClick={() => approveArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#077E9E] bg-white text-[#077E9E] text-sm font-semibold hover:bg-[#F0F8FB] transition-colors">
+                        <Check size={14} className="inline mr-1" /> Duyệt bài
+                      </button>
+                    ) : (
+                      <button onClick={() => hideArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
+                        Ẩn bài
+                      </button>
+                    )}
                     <button onClick={() => openConfirm("delete", selected.id)} className="py-2.5 rounded-lg border border-[#F5C5C5] bg-red-50 text-sm font-bold text-[#8B1A1A] hover:bg-red-100 transition-colors">
                       Xóa vĩnh viễn
                     </button>
                   </div>
 
-                  <button onClick={() => toggleHighlight([selected.id])} className={`mt-3 w-full py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+                  <button onClick={() => toggleHighlight(selected.id, !selected.isHighlighted)} className={`mt-3 w-full py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
                     selected.isHighlighted ? "bg-[#212121] text-white border-[#212121]" : "bg-[#E8F4F8] text-[#077E9E] border-[#B3D9E8] hover:bg-[#D9EEF6]"
                   }`}>
                     {selected.isHighlighted ? "Bỏ Highlight" : "Highlight ấn phẩm"}
@@ -1833,11 +2701,21 @@ function AdminArtworksPage({ setPage }) {
           </div>
         </div>
       )}
+
+      {galleryIdx !== null && galleryImages.length > 0 && (
+        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center" onClick={() => setGalleryIdx(null)}>
+          <button onClick={(e) => { e.stopPropagation(); setGalleryIdx(prev => Math.max(0, prev - 1)); }} className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors z-10 cursor-pointer text-xl leading-none">&lsaquo;</button>
+          <img src={galleryImages[galleryIdx]} alt="" className="max-w-[90vw] max-h-[90vh] object-contain" onClick={(e) => e.stopPropagation()} />
+          <button onClick={(e) => { e.stopPropagation(); setGalleryIdx(prev => Math.min(galleryImages.length - 1, prev + 1)); }} className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors z-10 cursor-pointer text-xl leading-none">&rsaquo;</button>
+          <button onClick={() => setGalleryIdx(null)} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors cursor-pointer"><X size={20} /></button>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm">{galleryIdx + 1} / {galleryImages.length}</div>
+        </div>
+      )}
     </div>
   );
 }
 
-function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCreateCollection }) {
+function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCreateCollection, onOpenCatalogBuilder }) {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <AdminSidebar active="admin_export" setPage={setPage} />
@@ -1860,7 +2738,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {collections.map((c) => {
-            const thumbs = c.items.slice(0, 3).map((it) => artworks.find((a) => a.id === it.artworkId)?.img).filter(Boolean);
+            const thumbs = c.items.slice(0, 3).map((it) => it.artwork?.coverImageUrl).filter(Boolean);
             return (
               <div
                 key={c.id}
@@ -1898,6 +2776,12 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
                   </span>
                   <span className="text-sm font-bold text-[#077E9E]">Mở cấu hình →</span>
                 </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onOpenCatalogBuilder && onOpenCatalogBuilder(c); }}
+                  className="mt-3 w-full py-2 rounded-lg bg-[#212121] text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <FileDown size={14} /> Tạo tập san PDF
+                </button>
               </div>
             );
           })}
@@ -1908,7 +2792,11 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
 }
 
 function CollectionExportConfigPage({ setPage, collection, onUpdateCollection }) {
+  const [deleteMode, setDeleteMode] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState([]);
+  const [detailArtwork, setDetailArtwork] = useState(null);
   const [dragIndex, setDragIndex] = useState(null);
+  const [saved, setSaved] = useState(false);
 
   if (!collection) {
     return (
@@ -1925,7 +2813,6 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
   }
 
   const detailedItems = collection.items
-    .map((it) => ({ ...it, artwork: artworks.find((a) => a.id === it.artworkId) }))
     .filter((it) => it.artwork);
 
   const reorder = (from, to) => {
@@ -1936,173 +2823,199 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
     onUpdateCollection && onUpdateCollection({ items: next });
   };
 
-  const themes = [
-    { id: "Classic", desc: "Bố cục truyền thống, sạch sẽ, ưu tiên đọc." },
-    { id: "Modern", desc: "Khoảng trắng nhiều, typography hiện đại." },
-    { id: "Asymmetrical", desc: "Bố cục lệch nhịp, nhấn mạnh thị giác." },
-  ];
+  const toggleDeleteMode = () => {
+    setDeleteMode(!deleteMode);
+    setSelectedForDelete([]);
+  };
+
+  const toggleSelectDelete = (artworkId) => {
+    setSelectedForDelete((prev) =>
+      prev.includes(artworkId) ? prev.filter((x) => x !== artworkId) : [...prev, artworkId]
+    );
+  };
+
+  const executeDelete = () => {
+    if (selectedForDelete.length === 0) return;
+    const next = collection.items.filter((it) => !selectedForDelete.includes(it.artworkId));
+    onUpdateCollection && onUpdateCollection({ items: next });
+    setSelectedForDelete([]);
+    setDeleteMode(false);
+  };
+
+  const linkToDetail = (artworkId) => {
+    const url = `${window.location.origin}/#/detail/${artworkId}`;
+    return url;
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <AdminSidebar active="admin_export" setPage={setPage} />
       <div className="flex-1 overflow-y-auto p-8">
-        <div className="flex items-end justify-between gap-6 mb-8 pb-6 border-b border-[#E0E0E0]">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Pre-export</p>
-            <h2 className="text-2xl font-bold text-[#212121] truncate">/dashboard/collections/export/{collection.id}</h2>
-            <p className="text-sm text-[#666666] mt-1">
-              Chỉ làm UI cấu hình. Logic render PDF bằng @react-pdf/renderer bạn xử lý ở backend/React-PDF.
-            </p>
+        <div className="flex items-start justify-between gap-6 mb-8 pb-6 border-b border-[#E0E0E0]">
+          <div className="min-w-0 flex-1 max-w-xl">
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Cấu hình bộ sưu tập</p>
+            <input
+              value={collection.name}
+              onChange={(e) => onUpdateCollection && onUpdateCollection({ name: e.target.value })}
+              className="w-full text-2xl font-bold text-[#212121] bg-transparent border-none outline-none placeholder:text-[#ccc]"
+              placeholder="Tên bộ sưu tập..."
+            />
+            <textarea
+              value={collection.curatorEssay || ""}
+              onChange={(e) => onUpdateCollection && onUpdateCollection({ curatorEssay: e.target.value })}
+              className="w-full mt-2 text-sm text-[#666666] bg-transparent border-none outline-none resize-none placeholder:text-[#ccc]"
+              rows={2}
+              placeholder="Mô tả bộ sưu tập..."
+            />
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors">
+          <div className="flex gap-2 flex-shrink-0">
+            <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">
               Quay lại
             </button>
-            <button className="px-5 py-2.5 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors flex items-center gap-2">
-              <FileDown size={16} /> Tiếp tục xuất PDF
+            <button onClick={() => { onUpdateCollection && onUpdateCollection({ name: collection.name, curatorEssay: collection.curatorEssay, theme: collection.theme }); setSaved(true); setTimeout(() => setSaved(false), 2000); }} className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 cursor-pointer ${saved ? "bg-green-600 text-white" : "bg-[#212121] text-white hover:opacity-90"}`}>
+              <Check size={16} /> {saved ? "Đã lưu" : "Lưu thay đổi"}
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* LEFT PANEL */}
-          <div className="bg-white border border-[#E0E0E0] rounded-2xl p-6">
-            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Sidebar</p>
-
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-[#212121] mb-2">Tên Tập San</label>
-                <input
-                  value={collection.name}
-                  onChange={(e) => onUpdateCollection && onUpdateCollection({ name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-xl text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
-                  placeholder="VD: Triển lãm Đồ án Xuất sắc 2026"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#212121] mb-2">Lời tựa giám tuyển (Curatorial Essay)</label>
-                <textarea
-                  value={collection.curatorEssay}
-                  onChange={(e) => onUpdateCollection && onUpdateCollection({ curatorEssay: e.target.value })}
-                  className="w-full min-h-[120px] px-4 py-3 border border-[#E0E0E0] rounded-2xl text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] resize-y"
-                  placeholder="Mở đầu triển lãm: chủ đề, tiêu chí chọn, tinh thần dàn trang…"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#212121] mb-3">Theme dàn trang</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {themes.map((t) => (
-                    <button
-                      key={t.id}
-                      onClick={() => onUpdateCollection && onUpdateCollection({ theme: t.id })}
-                      className={`text-left p-3 rounded-2xl border transition-all ${
-                        collection.theme === t.id ? "border-[#077E9E] bg-[#E8F4F8]" : "border-[#E0E0E0] hover:border-[#B3D9E8] hover:bg-[#F8F8F8]"
-                      }`}
-                    >
-                      <p className="text-sm font-bold text-[#212121]">{t.id}</p>
-                      <p className="text-[11px] text-[#666666] mt-1 leading-relaxed">{t.desc}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#212121] mb-3">
-                  Thứ tự tác phẩm (Kéo & Thả)
-                </label>
-                <div className="space-y-2">
-                  {detailedItems.length === 0 && (
-                    <div className="text-sm text-[#666666] border border-dashed border-[#E0E0E0] rounded-xl p-4">
-                      Chưa có tác phẩm trong bộ sưu tập.
-                    </div>
-                  )}
-                  {detailedItems.map((it, idx) => (
-                    <div
-                      key={`${it.artworkId}-${idx}`}
-                      draggable
-                      onDragStart={() => setDragIndex(idx)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => {
-                        reorder(dragIndex, idx);
-                        setDragIndex(null);
-                      }}
-                      className="flex items-center gap-3 p-3 rounded-2xl border border-[#E0E0E0] bg-white hover:shadow-sm transition-all cursor-grab"
-                    >
-                      <div className="w-9 h-9 rounded-xl bg-[#F8F8F8] border border-[#E0E0E0] overflow-hidden flex-shrink-0">
-                        <img src={it.artwork.img} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-[#212121] truncate">{it.artwork.title}</p>
-                        <p className="text-[11px] text-[#666666] truncate">{it.artwork.student}</p>
-                      </div>
-                      <div className="text-[#666666] flex items-center gap-2 flex-shrink-0">
-                        <GripVertical size={16} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT PANEL */}
-          <div className="bg-white border border-[#E0E0E0] rounded-2xl p-6">
-            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Preview</p>
-
-            <div className="rounded-2xl border border-[#E0E0E0] bg-[#F8F8F8] p-5">
-              <p className="text-[11px] text-[#666666] mb-2">
-                * Khi export, ưu tiên trích xuất <span className="font-semibold text-[#212121]">COLLECTION_ITEMS.note</span> để in kèm mỗi tác phẩm.
-              </p>
-              <h3 className="text-xl font-extrabold text-[#212121]">{collection.name}</h3>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-[#E0E0E0]">
-                  Theme: {collection.theme}
-                </span>
-                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white border border-[#E0E0E0]">
-                  {collection.items.length} tác phẩm
-                </span>
-              </div>
-              {collection.curatorEssay?.trim() && (
-                <p className="text-sm text-[#444444] leading-relaxed mt-4 whitespace-pre-line">
-                  {collection.curatorEssay}
-                </p>
-              )}
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {detailedItems.map((it, idx) => (
-                <div key={`${it.artworkId}-pv-${idx}`} className="flex gap-3 p-4 rounded-2xl border border-[#E0E0E0] bg-white">
-                  <div className="w-16 h-12 rounded-xl overflow-hidden bg-[#F8F8F8] border border-[#E0E0E0] flex-shrink-0">
-                    <img src={it.artwork.img} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-[#212121] truncate">
-                      {idx + 1}. {it.artwork.title}
-                    </p>
-                    <p className="text-[12px] text-[#666666] truncate">{it.artwork.student}</p>
-                    <p className="text-[12px] text-[#444444] mt-2 leading-relaxed">
-                      <span className="font-semibold">Ghi chú:</span>{" "}
-                      {it.note?.trim() ? it.note : <span className="text-[#666666]">Không có ghi chú</span>}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {detailedItems.length === 0 && (
-                <div className="text-sm text-[#666666] border border-dashed border-[#E0E0E0] rounded-xl p-4">
-                  Preview trống — hãy thêm tác phẩm vào bộ sưu tập trước.
-                </div>
-              )}
-            </div>
+        {/* Toolbar */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm font-semibold text-[#212121]">
+            {detailedItems.length} tác phẩm
+          </p>
+          <div className="flex items-center gap-2">
+            {deleteMode && (
+              <>
+                <span className="text-sm text-[#666666]">Đã chọn {selectedForDelete.length}</span>
+                <button onClick={executeDelete} disabled={selectedForDelete.length === 0} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${selectedForDelete.length > 0 ? "bg-[#8B1A1A] text-white" : "bg-[#E0E0E0] text-[#999]"}`}>
+                  Xóa
+                </button>
+              </>
+            )}
+            <button onClick={toggleDeleteMode} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${deleteMode ? "bg-[#8B1A1A] text-white border-[#8B1A1A]" : "bg-white text-[#666] border-[#E0E0E0] hover:border-[#8B1A1A] hover:text-[#8B1A1A]"}`}>
+              <Trash2 size={14} /> {deleteMode ? "Thoát xóa" : "Xóa ấn phẩm"}
+            </button>
           </div>
         </div>
+
+        {/* Artwork Grid */}
+        {detailedItems.length === 0 ? (
+          <div className="text-sm text-[#666666] border border-dashed border-[#E0E0E0] rounded-xl p-8 text-center">
+            Chưa có tác phẩm trong bộ sưu tập.
+          </div>
+        ) : (
+          <div className="grid grid-cols-4 gap-4">
+            {detailedItems.map((it, idx) => (
+              <div
+                key={`${it.artworkId}-${idx}`}
+                draggable
+                onDragStart={() => setDragIndex(idx)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => { reorder(dragIndex, idx); setDragIndex(null); }}
+                onDragEnd={() => setDragIndex(null)}
+                onClick={() => setDetailArtwork(it)}
+                className="group relative bg-white border border-[#E0E0E0] rounded-xl overflow-hidden hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer"
+              >
+                <div className="aspect-[4/3] bg-[#F8F8F8] overflow-hidden">
+                  <img
+                    src={it.artwork?.coverImageUrl || it.artwork?.img || ""}
+                    alt={it.artwork?.title || ""}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    draggable={false}
+                  />
+                </div>
+                <div className="p-3">
+                  <p className="text-sm font-semibold text-[#212121] truncate">{it.artwork?.title || "Untitled"}</p>
+                  <p className="text-xs text-[#666666] truncate">{it.artwork?.user?.fullName || it.artwork?.student || ""}</p>
+                </div>
+                {deleteMode && (
+                  <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={selectedForDelete.includes(it.artworkId)}
+                      onChange={() => toggleSelectDelete(it.artworkId)}
+                      className="w-5 h-5 accent-[#8B1A1A] cursor-pointer"
+                    />
+                  </div>
+                )}
+                {dragIndex !== idx && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[#666]">
+                    <GripVertical size={16} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Detail modal */}
+        {detailArtwork && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setDetailArtwork(null)}>
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <div className="p-5">
+                <img src={detailArtwork.artwork?.coverImageUrl || detailArtwork.artwork?.img} alt={detailArtwork.artwork?.title} className="w-full h-40 object-cover rounded-lg mb-3" />
+                <h3 className="text-lg font-bold text-[#212121]">{detailArtwork.artwork?.title}</h3>
+                <p className="text-sm text-[#666666] mb-3">{detailArtwork.artwork?.user?.fullName || detailArtwork.artwork?.student}</p>
+                {detailArtwork.note && <p className="text-sm text-[#444] bg-[#F8F8F8] rounded-lg p-3 mb-3"><span className="font-semibold">Ghi chú:</span> {detailArtwork.note}</p>}
+                <a
+                  href={linkToDetail(detailArtwork.artworkId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#077E9E] hover:text-[#055F78] transition-colors"
+                >
+                  <ExternalLink size={14} /> Xem chi tiết ấn phẩm
+                </a>
+              </div>
+              <div className="px-5 py-3 border-t border-[#E0E0E0] flex justify-end">
+                <button onClick={() => setDetailArtwork(null)} className="px-4 py-2 rounded-lg text-sm font-semibold text-[#666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Đóng</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 function RegisterPage({ setPage }) {
+  const [form, setForm] = useState({ lastName: "", firstName: "", email: "", password: "", confirmPassword: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const updateField = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!form.lastName || !form.firstName) { setError("Vui lòng nhập họ và tên"); return; }
+    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError("Email không hợp lệ"); return; }
+    if (form.password.length < 8) { setError("Mật khẩu phải có ít nhất 8 ký tự"); return; }
+    if (form.password !== form.confirmPassword) { setError("Mật khẩu xác nhận không khớp"); return; }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          fullName: `${form.lastName} ${form.firstName}`.trim(),
+          password: form.password,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSuccess(true);
+      setTimeout(() => setPage("auth"), 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
@@ -2120,17 +3033,47 @@ function RegisterPage({ setPage }) {
         <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}><img src="/logo-uef.png" alt="UEF" style={{ height: 30 }} /><span style={{ fontWeight: 700, fontSize: 16, color: BLACK }}>Design Gallery</span></div>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>Tạo tài khoản mới</h1>
-          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>Sử dụng email <strong style={{ color: CERULEAN }}>@uef.edu.vn</strong> để đăng ký</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Họ</label><input type="text" placeholder="Nguyễn" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-              <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Tên</label><input type="text" placeholder="Minh Anh" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
+          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>Tạo tài khoản để khám phá và kết nối với cộng đồng sáng tạo</p>
+
+          {success ? (
+            <div style={{ padding: 20, background: "#F0FFF0", borderRadius: 8, textAlign: "center" }}>
+              <p style={{ color: "#2F855A", fontWeight: 600, fontSize: 14 }}>✓ Đăng ký thành công! Đang chuyển đến trang đăng nhập...</p>
             </div>
-            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Email @uef.edu.vn</label><input type="email" placeholder="minhanh@uef.edu.vn" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mã số sinh viên</label><input type="text" placeholder="21DGR00042" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mật khẩu</label><input type="password" placeholder="••••••••" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Xác nhận mật khẩu</label><input type="password" placeholder="••••••••" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-          </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Họ</label>
+                    <input type="text" value={form.lastName} onChange={updateField("lastName")} placeholder="Nguyễn" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Tên</label>
+                    <input type="text" value={form.firstName} onChange={updateField("firstName")} placeholder="Minh Anh" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Email</label>
+                  <input type="email" value={form.email} onChange={updateField("email")} placeholder="example@gmail.com" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mật khẩu</label>
+                  <input type="password" value={form.password} onChange={updateField("password")} placeholder="•••••••• (tối thiểu 8 ký tự, gồm chữ và số)" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Xác nhận mật khẩu</label>
+                  <input type="password" value={form.confirmPassword} onChange={updateField("confirmPassword")} placeholder="••••••••" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                </div>
+              </div>
+
+              {error && <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 12, textAlign: "center" }}>{error}</p>}
+
+              <button type="submit" disabled={loading} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, marginTop: 16, cursor: loading ? "not-allowed" : "pointer" }}>
+                {loading ? "Đang xử lý..." : "Đăng ký"}
+              </button>
+            </form>
+          )}
+
           <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>Đã có tài khoản? <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>Đăng nhập</span></p>
         </div>
       </div>
@@ -2556,12 +3499,12 @@ function SaveToCollectionModal({
         <div className="px-5 sm:px-6 py-4 border-b border-[#E0E0E0] bg-[#F8F8F8] flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-xl overflow-hidden border border-[#E0E0E0] bg-white flex-shrink-0">
-              <img src={artwork.img} alt={artwork.title} className="w-full h-full object-cover" />
+              <img src={artwork.coverImageUrl || artwork.img} alt={artwork.title} className="w-full h-full object-cover" />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider">Lưu vào bộ sưu tập</p>
               <p className="text-sm font-bold text-[#212121] truncate">{artwork.title}</p>
-              <p className="text-xs text-[#666666] truncate">{artwork.student}</p>
+              <p className="text-xs text-[#666666] truncate">{artwork.student || artwork.user?.fullName || ""}</p>
             </div>
           </div>
           <button
@@ -2670,6 +3613,64 @@ function SaveToCollectionModal({
 }
 
 function PortfolioSettingsPage({ setPage }) {
+  const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", major: "", yearLevel: "Năm 3", isPortfolioPublic: true, socialLinks: {}, featuredArtworkIds: [] });
+  const [myArtworks, setMyArtworks] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      api.portfolios.mine().catch(() => ({})),
+      api.users.myArtworks().catch(() => []),
+    ]).then(([data, arts]) => {
+      const p = data.portfolioSettings || data;
+      setSettings({
+        portfolioSlug: p.portfolioSlug || "",
+        profileHeadline: p.profileHeadline || "",
+        major: p.major || "",
+        yearLevel: p.yearLevel || "Năm 3",
+        isPortfolioPublic: p.isPortfolioPublic !== false,
+        socialLinks: p.socialLinks || {},
+        featuredArtworkIds: p.featuredArtworkIds || [],
+      });
+      setMyArtworks(Array.isArray(arts) ? arts : (arts.artworks || []));
+      setLoaded(true);
+    }).catch(() => setLoaded(true));
+  }, []);
+
+  const toggleFeatured = (id) => {
+    setSettings(prev => {
+      const ids = prev.featuredArtworkIds || [];
+      if (ids.includes(id)) return { ...prev, featuredArtworkIds: ids.filter(x => x !== id) };
+      if (ids.length >= 4) return prev;
+      return { ...prev, featuredArtworkIds: [...ids, id] };
+    });
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const data = await api.portfolios.updateMine({
+        portfolioSlug: settings.portfolioSlug,
+        profileHeadline: settings.profileHeadline,
+        major: settings.major,
+        yearLevel: settings.yearLevel,
+        isPortfolioPublic: settings.isPortfolioPublic,
+        socialLinks: settings.socialLinks,
+        featuredArtworkIds: settings.featuredArtworkIds,
+      });
+      setMessage({ type: "success", text: "Đã lưu cài đặt portfolio!" });
+    } catch {
+      setMessage({ type: "error", text: "Lỗi kết nối" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!loaded) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
       <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
@@ -2687,6 +3688,10 @@ function PortfolioSettingsPage({ setPage }) {
           <h2 className="text-2xl font-bold text-[#212121] mb-2">Cài đặt Portfolio</h2>
           <p className="text-[#666666] text-sm mb-8">Quản lý cách hiển thị hồ sơ năng lực của bạn với nhà tuyển dụng.</p>
 
+          {message.text && (
+            <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>{message.text}</div>
+          )}
+
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <h3 className="font-bold text-[#212121] mb-4">Thông tin cơ bản</h3>
             <div className="space-y-4">
@@ -2694,12 +3699,37 @@ function PortfolioSettingsPage({ setPage }) {
                 <label className="block text-sm font-medium text-[#212121] mb-2">Đường dẫn Portfolio (Slug)</label>
                 <div className="flex items-center">
                   <span className="px-4 py-2 bg-[#F8F8F8] border border-r-0 border-[#E0E0E0] rounded-l-lg text-[#666666] text-sm">portfoliohub.uef.edu.vn/</span>
-                  <input type="text" defaultValue="minhanh" className="flex-1 px-4 py-2 border border-[#E0E0E0] rounded-r-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={settings.portfolioSlug} onChange={(e) => setSettings({ ...settings, portfolioSlug: e.target.value })} className="flex-1 px-4 py-2 border border-[#E0E0E0] rounded-r-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">Tiêu đề nghề nghiệp (Profile Headline)</label>
-                <input type="text" defaultValue="Graphic Designer & Visual Artist" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                <input type="text" value={settings.profileHeadline} onChange={(e) => setSettings({ ...settings, profileHeadline: e.target.value })} placeholder="Graphic Designer & Visual Artist" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">Chuyên ngành</label>
+                <select value={settings.major || ""} onChange={(e) => setSettings({ ...settings, major: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] bg-white">
+                  <option value="">Chọn chuyên ngành</option>
+                  <option value="Thiết kế Đồ họa">Thiết kế Đồ họa</option>
+                  <option value="Thiết kế Truyền thông">Thiết kế Truyền thông</option>
+                  <option value="Thiết kế Kỹ thuật số & UI/UX">Thiết kế Kỹ thuật số & UI/UX</option>
+                  <option value="Motion Graphics & Video">Motion Graphics & Video</option>
+                  <option value="Minh họa & Nghệ thuật 3D">Minh họa & Nghệ thuật 3D</option>
+                  <option value="Thiết kế Bao bì">Thiết kế Bao bì</option>
+                  <option value="Thiết kế Nhận diện Thương hiệu">Thiết kế Nhận diện Thương hiệu</option>
+                  <option value="Nhiếp ảnh & Xử lý Hình ảnh">Nhiếp ảnh & Xử lý Hình ảnh</option>
+                  <option value="Thiết kế Quảng cáo">Thiết kế Quảng cáo</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">Năm học</label>
+                <select value={settings.yearLevel} onChange={(e) => setSettings({ ...settings, yearLevel: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] bg-white">
+                  <option value="Năm 1">Năm 1</option>
+                  <option value="Năm 2">Năm 2</option>
+                  <option value="Năm 3">Năm 3</option>
+                  <option value="Năm 4">Năm 4</option>
+                  <option value="Tốt nghiệp">Tốt nghiệp</option>
+                </select>
               </div>
             </div>
           </div>
@@ -2711,16 +3741,63 @@ function PortfolioSettingsPage({ setPage }) {
                 <label className="block text-sm font-medium text-[#212121] mb-2">Behance</label>
                 <div className="relative">
                   <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" />
-                  <input type="text" placeholder="https://behance.net/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={settings.socialLinks.behance || ""} onChange={(e) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, behance: e.target.value } })} placeholder="https://behance.net/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">LinkedIn</label>
                 <div className="relative">
                   <Link size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" />
-                  <input type="text" placeholder="https://linkedin.com/in/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={settings.socialLinks.linkedin || ""} onChange={(e) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, linkedin: e.target.value } })} placeholder="https://linkedin.com/in/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
+            <h3 className="font-bold text-[#212121] mb-1">Ấn phẩm tiêu biểu</h3>
+            <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm để hiển thị ở đầu portfolio.</p>
+            {(settings.featuredArtworkIds || []).length > 0 && (
+              <div className="flex gap-3 mb-4 flex-wrap">
+                {myArtworks.filter(a => (settings.featuredArtworkIds || []).includes(a.id)).map(a => (
+                  <div key={a.id} className="relative w-24 h-20 rounded-lg overflow-hidden border border-[#E0E0E0]">
+                    <img src={a.coverImageUrl} alt={a.title} className="w-full h-full object-cover" />
+                    <button onClick={() => toggleFeatured(a.id)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/50 text-white text-xs flex items-center justify-center cursor-pointer">×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button onClick={() => document.getElementById('featPicker')?.classList.remove('hidden')} className="px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer">
+              {settings.featuredArtworkIds?.length ? "Thay đổi ấn phẩm" : "Chọn ấn phẩm tiêu biểu"} ({(settings.featuredArtworkIds || []).length}/4)
+            </button>
+          </div>
+
+          <div id="featPicker" className="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); }}>
+            <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg text-[#212121]">Chọn ấn phẩm tiêu biểu</h3>
+                <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="text-[#666666] hover:text-[#212121] cursor-pointer"><X size={20} /></button>
+              </div>
+              <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm (đã chọn {(settings.featuredArtworkIds || []).length}/4)</p>
+              {myArtworks.length === 0 ? (
+                <div className="text-center py-10 text-[#666666] text-sm">Bạn chưa có ấn phẩm công khai nào. <a href="/#/upload" className="text-[#077E9E] hover:underline font-semibold">Đăng ấn phẩm mới</a></div>
+              ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {myArtworks.slice(0, 20).map(a => {
+                  const selected = (settings.featuredArtworkIds || []).includes(a.id);
+                  return (
+                    <div key={a.id} onClick={() => toggleFeatured(a.id)} className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-[4/3] ${selected ? 'border-[#077E9E] ring-2 ring-[#077E9E] ring-offset-1' : 'border-[#E0E0E0] hover:border-[#999]'}`}>
+                      <img src={a.coverImageUrl} alt={a.title} className="w-full h-full object-cover" />
+                      {selected && <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-[#077E9E] text-white flex items-center justify-center text-xs font-bold"><Check size={14} /></div>}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                        <p className="text-white text-xs font-semibold truncate">{a.title}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              )}
+              <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="mt-4 w-full py-2.5 rounded-lg bg-[#077E9E] text-white font-semibold cursor-pointer">Xác nhận</button>
             </div>
           </div>
 
@@ -2730,12 +3807,17 @@ function PortfolioSettingsPage({ setPage }) {
               <p className="text-sm text-[#666666]">Chuyển sang "Riêng tư" nếu bạn không muốn ai xem được portfolio này.</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" defaultChecked />
+              <input type="checkbox" className="sr-only peer" checked={settings.isPortfolioPublic} onChange={(e) => setSettings({ ...settings, isPortfolioPublic: e.target.checked })} />
               <div className="w-11 h-6 bg-[#E0E0E0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#077E9E]"></div>
             </label>
           </div>
 
-          <button className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer">Lưu cài đặt</button>
+            <div className="flex items-center gap-4">
+              <button onClick={save} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu cài đặt"}</button>
+              <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="px-6 py-2 border border-[#077E9E] text-[#077E9E] rounded-lg font-bold hover:bg-[#F0F8FB] transition-colors">
+                <ExternalLink size={16} className="inline mr-1.5" />Xem Portfolio
+              </a>
+            </div>
         </div>
       </div>
     </div>
@@ -2743,6 +3825,102 @@ function PortfolioSettingsPage({ setPage }) {
 }
 
 function SettingsPage({ setPage }) {
+  const { refreshSession } = useAuth();
+  const [profile, setProfile] = useState({ fullName: "", studentId: "", email: "", avatarUrl: "" });
+  const [pendingAvatar, setPendingAvatar] = useState(null);
+  const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
+  const [saving, setSaving] = useState(false);
+  const [changingPass, setChangingPass] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/session", { credentials: "include" })
+      .then((r) => r.json())
+      .then((session) => {
+        if (session?.user) {
+          setProfile({
+            fullName: session.user.name || session.user.fullName || "",
+            studentId: session.user.studentId || "",
+            email: session.user.email || "",
+            avatarUrl: session.user.image || session.user.avatarUrl || "",
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  const saveProfile = async () => {
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    const body = { fullName: profile.fullName };
+    if (pendingAvatar !== null) body.avatarUrl = pendingAvatar || "";
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage({ type: "success", text: "Đã cập nhật thông tin!" });
+        setPendingAvatar(null);
+        setProfile(p => ({ ...p, avatarUrl: data.user?.avatarUrl || p.avatarUrl }));
+        refreshSession();
+        setTimeout(() => refreshSession(), 300);
+      } else if (res.status === 401) {
+        setMessage({ type: "error", text: "Phiên đăng nhập hết hạn" });
+      } else {
+        setMessage({ type: "error", text: data.error || "Lỗi cập nhật" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Lỗi kết nối" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (!passwords.current || !passwords.newPass || !passwords.confirm) {
+      setMessage({ type: "error", text: "Vui lòng nhập đầy đủ thông tin" });
+      return;
+    }
+    if (passwords.newPass.length < 8) {
+      setMessage({ type: "error", text: "Mật khẩu mới phải có ít nhất 8 ký tự" });
+      return;
+    }
+    if (passwords.newPass !== passwords.confirm) {
+      setMessage({ type: "error", text: "Mật khẩu xác nhận không khớp" });
+      return;
+    }
+    setChangingPass(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/user/change-password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: passwords.current, newPassword: passwords.newPass }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage({ type: "success", text: "Đổi mật khẩu thành công!" });
+        setPasswords({ current: "", newPass: "", confirm: "" });
+      } else {
+        setMessage({ type: "error", text: data.error || "Đổi mật khẩu thất bại" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Lỗi kết nối" });
+    } finally {
+      setChangingPass(false);
+    }
+  };
+
+  if (!loaded) {
+    return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải thông tin...</div>;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
       <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
@@ -2760,14 +3938,30 @@ function SettingsPage({ setPage }) {
           <h2 className="text-2xl font-bold text-[#212121] mb-2">Cài đặt Tài khoản</h2>
           <p className="text-[#666666] text-sm mb-8">Quản lý thông tin cá nhân và bảo mật tài khoản.</p>
 
+          {message.text && (
+            <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
+              {message.text}
+            </div>
+          )}
+
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <h3 className="font-bold text-[#212121] mb-4">Ảnh đại diện</h3>
             <div className="flex items-center gap-6">
-              <img src="https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg" className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
+              <img src={pendingAvatar || profile.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
               <div>
                 <div className="flex gap-3 mb-2">
-                  <button className="px-4 py-2 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Tải ảnh mới</button>
-                  <button className="px-4 py-2 bg-white border border-[#8B1A1A] text-[#8B1A1A] rounded-lg text-sm font-medium hover:bg-[#8B1A1A] hover:text-white transition-colors cursor-pointer">Xóa ảnh</button>
+                  <input type="file" id="avatarInput" accept="image/*" style={{ display: "none" }} onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      const dataUrl = ev.target?.result;
+                      if (typeof dataUrl === "string") setPendingAvatar(dataUrl);
+                    };
+                    reader.readAsDataURL(file);
+                  }} />
+                  <button onClick={() => document.getElementById("avatarInput")?.click()} className="px-4 py-2 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Tải ảnh mới</button>
+                  <button onClick={() => setPendingAvatar("")} className="px-4 py-2 bg-white border border-[#8B1A1A] text-[#8B1A1A] rounded-lg text-sm font-medium hover:bg-[#8B1A1A] hover:text-white transition-colors cursor-pointer">Xóa ảnh</button>
                 </div>
                 <p className="text-xs text-[#666666]">Định dạng JPG, PNG hoặc GIF. Tối đa 5MB.</p>
               </div>
@@ -2780,16 +3974,16 @@ function SettingsPage({ setPage }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">Họ và Tên</label>
-                  <input type="text" defaultValue="Nguyễn Minh Anh" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={profile.fullName} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">Mã Sinh viên</label>
-                  <input type="text" defaultValue="21DGR00042" disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
+                  <input type="text" value={profile.studentId} disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">Địa chỉ Email</label>
-                <input type="email" defaultValue="minhanh@uef.edu.vn" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                <input type="email" value={profile.email} disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
               </div>
             </div>
           </div>
@@ -2799,22 +3993,29 @@ function SettingsPage({ setPage }) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">Mật khẩu hiện tại</label>
-                <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                <input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">Mật khẩu mới</label>
-                  <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="password" value={passwords.newPass} onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">Xác nhận mật khẩu mới</label>
-                  <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
+              <button onClick={changePassword} disabled={changingPass} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
+                {changingPass ? "Đang xử lý..." : "Đổi mật khẩu"}
+              </button>
             </div>
           </div>
 
-          <button className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer">Lưu thay đổi</button>
+          <div className="flex gap-3">
+            <button onClick={saveProfile} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
+              {saving ? "Đang lưu..." : "Lưu thay đổi"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2974,36 +4175,98 @@ function PortalPage({ setPage }) {
 }
 
 export default function App() {
-  const [page, setPage] = useState("home");
-  const [activeArtworkId, setActiveArtworkId] = useState(artworks[2]?.id ?? 1);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState("student");
+  const { user: authUser, loading, logout, refreshSession } = useAuth();
+
+  const getHashState = useCallback(() => {
+    const hash = window.location.hash.replace(/^#\/?/, '');
+    if (!hash) return { page: "home", id: null };
+    const parts = hash.split('/');
+    return { page: parts[0] || "home", id: parts.length > 1 ? parts.slice(1).join('/') : null };
+  }, []);
+
+  const [page, setPageState] = useState(() => getHashState().page);
+  const [activeArtworkId, setActiveArtworkIdState] = useState(() => {
+    const h = getHashState();
+    return h.page === "detail" && h.id ? h.id : (artworks[2]?.id ?? 1);
+  });
+
+  const setActiveArtworkId = useCallback((id) => {
+    setActiveArtworkIdState(id);
+  }, []);
+
+  const setPage = useCallback((newPage) => {
+    setPageState(newPage);
+  }, []);
+
+  // Sync URL hash whenever page or activeArtworkId changes
+  useEffect(() => {
+    const path = page === "detail" && activeArtworkId
+      ? `#/detail/${activeArtworkId}`
+      : (page === "home" ? "#/" : `#/${page}`);
+    window.history.replaceState({ page, id: activeArtworkId || null }, "", path);
+  }, [page, activeArtworkId]);
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const onPop = () => {
+      const h = getHashState();
+      setPageState(h.page);
+      if (h.page === "detail" && h.id) setActiveArtworkIdState(h.id);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [getHashState]);
+
+  const isLoggedIn = !!authUser;
+  const userRole = authUser?.role || "student";
+  const userData = authUser ? {
+    name: authUser.name || "",
+    email: authUser.email || "",
+    image: authUser.image || "",
+    id: authUser.id || "",
+  } : null;
+
+  // Xử lý OAuth callback - force refresh session sau khi redirect từ Google
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasOAuthParams = urlParams.has('code') || urlParams.has('state') || 
+                          window.location.pathname.includes('callback') ||
+                          window.location.hash.includes('access_token');
+    
+    if (hasOAuthParams) {
+      console.log("🔄 OAuth callback detected in App, forcing refresh...");
+      // Retry multiple times để đảm bảo session được set
+      const retryRefresh = () => {
+        refreshSession();
+        setTimeout(() => refreshSession(), 1000);
+        setTimeout(() => refreshSession(), 2000);
+        setTimeout(() => refreshSession(), 3000);
+      };
+      retryRefresh();
+      
+      // Clean URL sau khi xử lý xong
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 3500);
+    }
+  }, [refreshSession]);
 
   // ────────────────────────────────────────────────────────────────────────────
   // Mock DB (để demo nghiệp vụ giảng viên)
   // collections ~ COLLECTIONS
   // collection.items[].note ~ COLLECTION_ITEMS.note
   // ────────────────────────────────────────────────────────────────────────────
-  const [collections, setCollections] = useState(() => [
-    {
-      id: "col-uef-2026",
-      name: "Triển lãm UEF 2026",
-      curatorEssay: "",
-      theme: "Modern",
-      items: [
-        { artworkId: 1, note: "Chọn vì xử lý màu tốt, nhịp thị giác rõ, phù hợp trang mở màn." },
-        { artworkId: 2, note: "Hệ thống hình & typography sạch. Có thể đặt làm spread 2 trang." },
-      ],
-    },
-    {
-      id: "col-scholarship",
-      name: "Ứng viên học bổng",
-      curatorEssay: "",
-      theme: "Classic",
-      items: [],
-    },
-  ]);
-  const [activeCollectionId, setActiveCollectionId] = useState("col-uef-2026");
+  const [collections, setCollections] = useState([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(true);
+  const [activeCollectionId, setActiveCollectionId] = useState(null);
+  const [catalogCollection, setCatalogCollection] = useState(null);
+
+  useEffect(() => {
+    api.collections.list().then(data => {
+      setCollections(Array.isArray(data) ? data : []);
+      setCollectionsLoading(false);
+    }).catch(() => setCollectionsLoading(false));
+  }, []);
 
   // Bookmark flow state
   const [saveModal, setSaveModal] = useState({ open: false, artwork: null });
@@ -3040,40 +4303,55 @@ export default function App() {
     }
   };
 
-  const createCollection = (name) => {
-    const id = `col-${Date.now()}`;
-    setCollections((prev) => [
-      ...prev,
-      { id, name, curatorEssay: "", theme: "Classic", items: [] },
-    ]);
+  const createCollection = async (name) => {
+    setCollections((prev) => [...prev, { id: name, name, curatorEssay: "", theme: "Classic", items: [] }]);
     setToast({ title: "Đã tạo bộ sưu tập", message: name });
-    return id;
+    api.collections.create({ collectionName: name }).catch(() => {});
+    return name;
   };
 
-  const saveToCollections = ({ artworkId, selectedCollectionIds, note }) => {
+  const saveToCollections = async ({ artworkId, selectedCollectionIds, note }) => {
+    const prevCollections = [...collections];
     setCollections((prev) =>
       prev.map((c) => {
         const has = c.items.some((it) => it.artworkId === artworkId);
         const shouldHave = selectedCollectionIds.includes(c.id);
-
         if (shouldHave) {
           const nextItems = has
             ? c.items.map((it) => (it.artworkId === artworkId ? { ...it, note } : it))
             : [...c.items, { artworkId, note }];
           return { ...c, items: nextItems };
         }
-
         if (!shouldHave && has) {
           return { ...c, items: c.items.filter((it) => it.artworkId !== artworkId) };
         }
-
         return c;
       })
     );
-
     setOptimisticSavedIds((prev) => prev.filter((x) => x !== artworkId));
     setSaveModal({ open: false, artwork: null });
     setToast({ title: "Đã lưu vào bộ sưu tập", message: "Đã cập nhật ghi chú giám tuyển." });
+
+    try {
+      const ops = [];
+      for (const c of prevCollections) {
+        const has = c.items.some((it) => it.artworkId === artworkId);
+        const shouldHave = selectedCollectionIds.includes(c.id);
+        if (shouldHave && !has) {
+          ops.push(api.collections.addItem(c.id, { artworkId, note: note || undefined }));
+        } else if (shouldHave && has && note !== undefined) {
+          const existingNote = c.items.find((it) => it.artworkId === artworkId)?.note;
+          if (existingNote !== note) {
+            ops.push(api.collections.updateItemNote(c.id, artworkId, note));
+          }
+        } else if (!shouldHave && has) {
+          ops.push(api.collections.removeItem(c.id, artworkId));
+        }
+      }
+      await Promise.all(ops);
+    } catch (e) {
+      console.error("Save to collection API error:", e);
+    }
   };
 
   const openExportConfig = (collectionId) => {
@@ -3087,15 +4365,25 @@ export default function App() {
     setCollections((prev) =>
       prev.map((c) => (c.id === activeCollectionId ? { ...c, ...patch } : c))
     );
+    if (patch.name || patch.curatorEssay !== undefined || patch.theme) {
+      api.collections.update(activeCollectionId, patch).catch(() => {});
+    }
   };
 
-  const handleLogin = (role) => { setIsLoggedIn(true); setUserRole(role || "student"); setPage("home"); };
-  const handleLogout = () => { setIsLoggedIn(false); setUserRole("student"); setPage("home"); };
+  const handleLogin = async (role) => {
+    const callbackUrl = "http://localhost:5173/";
+    window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  };
+  
+  const handleLogout = () => {
+    logout();
+    setPage("home");
+  };
 
   return (
     <div className="font-sans min-h-screen bg-[#F8F8F8] text-[#212121]">
       {page !== "auth" && page !== "register" && page !== "portal" && (
-        <AppHeader activePage={page} setPage={setPage} isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} />
+        <AppHeader activePage={page} setPage={setPage} isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} userData={userData} />
       )}
       {page === "portal" && <PortalPage setPage={setPage} />}
       {page === "home" && <LandingPage setPage={setPage} isLoggedIn={isLoggedIn} />}
@@ -3109,11 +4397,12 @@ export default function App() {
         />
       )}
       {page === "portfolio" && <PortfolioPage setPage={setPage} />}
-      {page === "dashboard" && <DashboardPage setPage={setPage} />}
-      {page === "upload" && <UploadPage setPage={setPage} />}
+      {page === "dashboard" && <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />}
+      {page === "upload" && <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />}
       {page === "detail" && (
         <DetailPage
           setPage={setPage}
+          setActiveArtworkId={setActiveArtworkId}
           activeArtworkId={activeArtworkId}
           onBookmarkClick={openSaveFlow}
           isBookmarked={isBookmarked}
@@ -3126,7 +4415,7 @@ export default function App() {
       {page === "admin" && <AdminDashboardPage setPage={setPage} />}
       {page === "about" && <AboutPage setPage={setPage} />}
       {page === "messages" && <MessagesPage setPage={setPage} />}
-      {page === "edit_artwork" && <EditArtworkPage setPage={setPage} />}
+      {page === "edit_artwork" && <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} />}
       {page === "admin_users" && <AdminUsersPage setPage={setPage} />}
       {page === "admin_artworks" && <AdminArtworksPage setPage={setPage} />}
       {page === "admin_export" && (
@@ -3138,6 +4427,7 @@ export default function App() {
             const id = createCollection(`Bộ sưu tập mới`);
             openExportConfig(id);
           }}
+          onOpenCatalogBuilder={(c) => setCatalogCollection(c)}
         />
       )}
       {page === "collection_export_config" && (
@@ -3164,6 +4454,12 @@ export default function App() {
             {toast.message && <p className="text-xs text-white/80 mt-1 leading-relaxed">{toast.message}</p>}
           </div>
         </div>
+      )}
+      {catalogCollection && (
+        <CatalogBuilderWizard
+          collection={catalogCollection}
+          onClose={() => setCatalogCollection(null)}
+        />
       )}
     </div>
   );
