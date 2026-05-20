@@ -661,7 +661,7 @@ function DashboardSidebar({ active, setPage, userData }) {
   );
 }
 
-function DashboardPage({ setPage, setActiveArtworkId, userData }) {
+function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userData }) {
   const [artworksList, setArtworksList] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -737,7 +737,7 @@ function DashboardPage({ setPage, setActiveArtworkId, userData }) {
                         <ToggleSwitch isOn={art.isPublic} onToggle={() => {}} />
                       </div>
                       <div style={{ display: "flex", gap: 6 }}>
-                        <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <button onClick={() => { setActiveArtworkId(art.id); setTimeout(() => setPage("edit_artwork"), 50); }} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
                         </button>
                         <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid #F5C5C5`, background: "#FEF2F2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1723,13 +1723,98 @@ function AdminSidebar({ active, setPage }) {
   );
 }
 
-function EditArtworkPage({ setPage }) {
-  const [isPublic, setIsPublic] = useState(true);
+function EditArtworkPage({ setPage, activeArtworkId }) {
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [subject, setSubject] = useState("");
+  const [tools, setTools] = useState([]);
+  const [toolInput, setToolInput] = useState("");
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
   const [projectYear, setProjectYear] = useState("Năm 3");
   const [isGroupProject, setIsGroupProject] = useState(false);
   const [friends, setFriends] = useState([]);
   const [friendInput, setFriendInput] = useState("");
-  const art = artworks[1];
+  const [saving, setSaving] = useState(false);
+  const [coverImage, setCoverImage] = useState(null);
+  const [originalCover, setOriginalCover] = useState("");
+
+  const allSubjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+  const semesterToYear = { HK1: "Năm 1", HK2: "Năm 2", HK3: "Năm 3" };
+  const yearToSemester = { "Năm 1": "HK1", "Năm 2": "HK2", "Năm 3": "HK3", "Năm 4": "HK1", "Tốt nghiệp": "HK2" };
+  const yearToAcademic = { "Năm 1": "2024-2025", "Năm 2": "2023-2024", "Năm 3": "2022-2023", "Năm 4": "2021-2022", "Tốt nghiệp": "2021-2022" };
+
+  useEffect(() => {
+    if (!activeArtworkId) return;
+    setLoading(true);
+    api.artworks.get(activeArtworkId).then(res => {
+      setTitle(res.title || "");
+      setDescription(res.description || "");
+      setSubject(res.subject || "");
+      setTools(res.toolsUsed || []);
+      setTags(res.tags || []);
+      setOriginalCover(res.coverImageUrl || "");
+      if (res.semester) {
+        const yr = semesterToYear[res.semester];
+        if (yr) setProjectYear(yr);
+      }
+      const collabs = res.collaborators || [];
+      if (collabs.length > 0) { setIsGroupProject(true); setFriends(collabs); }
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [activeArtworkId]);
+
+  const handleSave = async () => {
+    if (!title.trim()) { setMessage({ type: "error", text: "Vui lòng nhập tên môn học" }); return; }
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const body = {
+        title: title.trim(),
+        description: description.trim() || null,
+        subject: subject || null,
+        toolsUsed: tools,
+        tags,
+        collaborators: friends,
+        semester: yearToSemester[projectYear] || "HK1",
+        academicYear: yearToAcademic[projectYear] || "2024-2025",
+        coverImageUrl: coverImage || originalCover,
+        isPublic: false,
+      };
+      await api.artworks.update(activeArtworkId, body);
+      setMessage({ type: "success", text: "Đã cập nhật!" });
+      setTimeout(() => setPage("dashboard"), 1000);
+    } catch (e) {
+      setMessage({ type: "error", text: e?.message || "Lỗi lưu" });
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Xóa ấn phẩm này?")) return;
+    try {
+      await api.artworks.delete(activeArtworkId);
+      setPage("dashboard");
+    } catch (e) {
+      setMessage({ type: "error", text: e?.message || "Lỗi xóa" });
+    }
+  };
+
+  const readFileAsDataURL = (file) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+
+  const handleCoverChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverImage(await readFileAsDataURL(file));
+  };
+
+  if (loading) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
 
   return (
     <div className="bg-white min-h-[calc(100vh-60px)] px-16 py-10">
@@ -1739,26 +1824,51 @@ function EditArtworkPage({ setPage }) {
         </div>
         <h2 className="text-2xl font-bold text-[#212121] mb-1">Chỉnh sửa Ấn phẩm</h2>
         <p className="text-sm text-[#666666] mb-8">Cập nhật thông tin chi tiết cho tác phẩm của bạn</p>
+        {message.text && (
+          <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
+            {message.text}
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-8">
           <div>
             <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh hiện tại</label>
             <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer">
-              <img src={art.img} alt="cover" className="w-full h-[400px] object-cover block" />
+              <img src={coverImage || originalCover} alt="cover" className="w-full h-[400px] object-cover block" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <button className="px-5 py-2.5 rounded-lg border-2 border-white text-white text-sm font-semibold flex items-center gap-2 hover:bg-white hover:text-[#212121] transition-colors"><Image size={16} /> Đổi ảnh mới</button>
+                <label className="cursor-pointer">
+                  <span className="px-5 py-2.5 rounded-lg border-2 border-white text-white text-sm font-semibold flex items-center gap-2 hover:bg-white hover:text-[#212121] transition-colors"><Image size={16} /> Đổi ảnh mới</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
+                </label>
               </div>
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tên học phần</label><input defaultValue="Design Principles" className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tên môn học</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại đồ án</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#F0F8FB] border-[#077E9E] text-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại bài</label><div className="flex gap-3">{[{ key: false, label: "Cá nhân", icon: <User size={16} /> }, { key: true, label: "Nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#F0F8FB] border-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
             {isGroupProject && (<div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tag bạn cùng nhóm</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f} <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => setFriendInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { setFriends([...friends, friendInput.trim()]); setFriendInput(""); } }} placeholder="Nhập tên..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" /></div></div>)}
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Mô tả</label><textarea defaultValue="Đây là một bộ nhận diện thương hiệu hoàn chỉnh dành cho chiến dịch sắp tới." className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Danh mục & Công cụ</label><div className="grid grid-cols-2 gap-3"><select defaultValue={art.category} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer"><option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option></select><select defaultValue={art.tool} className="px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer"><option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option></select></div></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Mô tả</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Danh mục</label>
+              <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
+                <option value="">-- Chọn --</option>
+                {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Công cụ</label>
+              <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">
+                {tools.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTools(tools.filter(x => x !== t))} /></span>))}
+                <input value={toolInput} onChange={e => setToolInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && toolInput.trim()) { setTools([...tools, toolInput.trim()]); setToolInput(""); } }} placeholder="Add tool..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
+              </div>
+            </div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tags</label>
+              <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">
+                {tags.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTags(tags.filter(x => x !== t))} /></span>))}
+                <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
+              </div>
+            </div>
             <div className="mt-auto pt-4 border-t border-[#E0E0E0] flex gap-3">
-              <button className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> Xóa ấn phẩm</button>
-              <button className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer"><Check size={16} /> Lưu thay đổi</button>
+              <button onClick={handleDelete} className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> Xóa ấn phẩm</button>
+              <button onClick={handleSave} disabled={saving} className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50"><Check size={16} /> {saving ? "Đang lưu..." : "Lưu thay đổi"}</button>
             </div>
           </div>
         </div>
@@ -3875,7 +3985,7 @@ export default function App() {
       {page === "admin" && <AdminDashboardPage setPage={setPage} />}
       {page === "about" && <AboutPage setPage={setPage} />}
       {page === "messages" && <MessagesPage setPage={setPage} />}
-      {page === "edit_artwork" && <EditArtworkPage setPage={setPage} />}
+      {page === "edit_artwork" && <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} />}
       {page === "admin_users" && <AdminUsersPage setPage={setPage} />}
       {page === "admin_artworks" && <AdminArtworksPage setPage={setPage} />}
       {page === "admin_export" && (
