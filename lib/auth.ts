@@ -71,7 +71,25 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   ],
   callbacks: {
     async signIn({ user, account }) {
-      if (account?.provider === "google" && user.email?.endsWith("@uef.edu.vn")) {
+      if (account?.provider === "google") {
+        if (!user.email?.endsWith("@uef.edu.vn")) return false;
+        const existing = await prisma.user.findUnique({ where: { email: user.email } });
+        if (existing) {
+          if (user.image && user.image !== existing.avatarUrl) {
+            await prisma.user.update({ where: { email: user.email }, data: { avatarUrl: user.image } });
+          }
+        } else {
+          await prisma.user.create({
+            data: {
+              email: user.email,
+              passwordHash: "",
+              fullName: user.name || "",
+              avatarUrl: user.image,
+              role: "student",
+              isActive: true,
+            },
+          });
+        }
         return true;
       }
       return true;

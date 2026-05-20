@@ -155,3 +155,17 @@ SettingsPage phải fetch session trực tiếp bằng `fetch("/api/auth/session
 **Files affected:**
 - [`.env`](.env):10 — `AUTH_URL`
 - Google Cloud Console settings
+
+## Bug 7: `authUser` từ `useAuth()` bị null khi component mount sau login redirect
+
+- **Mô tả:** Sau login redirect về SPA, `AuthContext.refreshSession()` fetch `/api/auth/session` nhưng có thể chưa kịp hoàn thành trước khi DetailPage mount. `authUser` = null → `currentUserId` = undefined → comment input ẩn, like button optimistic revert. Không có error feedback.
+- **Fix:** Thêm `localSession` state trong DetailPage, fetch trực tiếp `/api/auth/session` với `credentials: "include"` ngay khi component mount. Dùng `activeUser = localSession || authUser`. Thêm `alert()` vào catch block comment/grade.
+- **Ghi chú:** Áp dụng Rule 1 mở rộng cho DetailPage: fetch session trực tiếp thay vì tin vào AuthContext.
+- **File:** `portfolio_system.jsx :: DetailPage`
+
+## Bug 8: Google login button không hoạt động — CSRF endpoint 500 do .next cache cũ
+
+- **Mô tả:** `handleGoogleLogin` gọi `fetch("/api/auth/csrf")` → `[...nextauth]` route trả 500 (Internal Server Error) do `.next/build cache` cũ không tương thích với code mới. Flow: CSRF fetch fail → `.then()` không chạy → form không submit → user thấy button không phản hồi.
+- **Fix:** Xoá `.next/` + restart Next.js server. Cache cũ chứa vendor chunks không khớp với phiên bản hiện tại (sau các lần sửa file route).
+- **Lưu ý:** Nếu server restart >10s, skip và thử access endpoint trực tiếp để trigger recompile.
+- **File:** `.next/` (build cache), `app/api/auth/[...nextauth]/route.ts`
