@@ -33,24 +33,23 @@ export async function PUT(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Score is required' }, { status: 400 });
     }
 
-    const grade = await prisma.grade.upsert({
-      where: {
-        artworkId_lecturerId: {
-          artworkId: params.id,
-          lecturerId: session.user.id,
-        },
-      },
-      update: {
-        score,
-        comment: comment || null,
-      },
-      create: {
-        artworkId: params.id,
-        lecturerId: session.user.id,
-        score,
-        comment: comment || null,
-      },
+    const existing = await prisma.grade.findFirst({
+      where: { artworkId: params.id, lecturerId: session.user.id },
     });
+
+    const grade = existing
+      ? await prisma.grade.update({
+          where: { id: existing.id },
+          data: { score, comment: comment || null },
+        })
+      : await prisma.grade.create({
+          data: {
+            artworkId: params.id,
+            lecturerId: session.user.id,
+            score,
+            comment: comment || null,
+          },
+        });
 
     return NextResponse.json(grade);
   } catch (error) {

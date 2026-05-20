@@ -6,6 +6,30 @@ SettingsPage phải fetch session trực tiếp bằng `fetch("/api/auth/session
 ## Rule 2: `AUTH_URL` LUÔN phải set khi dùng Vite proxy
 `AUTH_URL=http://localhost:5173` là bắt buộc trong `.env`. Không có `AUTH_URL`, NextAuth v5 dùng `localhost:3000` (Next.js server) làm canonical URL → callback URL = `http://localhost:3000/api/auth/callback/google` → không khớp với Google Cloud Console (`localhost:5173`). Bug 2 (PUT 401) không liên quan đến `AUTH_URL`.
 
+## Bug 3: Custom `/api/auth/login` route không set session cookie đúng cách
+
+- **Mô tả:** Login qua form POST `/api/auth/login` gọi `signIn("credentials")` server-side nhưng response không set `authjs.session-token`. NextAuth v5 dùng prefix `authjs.*`, không phải `next-auth.*`.
+- **Fix:** Chuyển form action từ `/api/auth/login` → `/api/auth/callback/credentials` (NextAuth built-in handler). Handler built-in set cookie `authjs.session-token` với `HttpOnly; SameSite=Lax; Path=/`.
+- **File:** `portfolio_system.jsx :: handleEmailLogin`
+
+## Bug 4: `api-client.js` không gửi credentials với fetch
+
+- **Mô tả:** `fetchJSON()` không set `credentials: "include"` → request không gửi session cookie → API trả 401. Spread operator sai thứ tự cũng gây lỗi khi options chứa headers.
+- **Fix:** Thêm `credentials: "include"`, tách `headers` ra khỏi `...options` trước khi spread.
+- **File:** `lib/api-client.js :: fetchJSON`
+
+## Bug 5: Logout route dùng sai cookie names + signOut() không return Response
+
+- **Mô tả:** `signOut()` từ `@/lib/auth` không return Response object → Next.js báo lỗi. Cookie names dùng `next-auth.*` sai (thực tế là `authjs.*`).
+- **Fix:** Bỏ `signOut()`. Clear 6 cookie names: `authjs.session-token`, `authjs.csrf-token`, `authjs.callback-url`, `next-auth.session-token`, `next-auth.csrf-token`, `next-auth.callback-url`.
+- **File:** `app/api/auth/logout/route.ts`
+
+## Bug 6: `.next/` cache cũ gây lỗi compile 500
+
+- **Mô tả:** Cache cũ trong `.next/` khiến route trả 500 dù code đúng. Cần xoá cache + restart.
+- **Fix:** `Remove-Item -Recurse -Force ".next"` + restart server. Lưu ý: nếu restart >10s thì skip, thử request lại.
+- **File:** `.next/` (build cache)
+
 ---
 
 ## Bug 1: AUTOLOGIN loop — logout xong tự động login lại
