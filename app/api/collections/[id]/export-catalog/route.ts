@@ -120,7 +120,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const pdfPath = path.join(pdfDir, pdfFilename);
 
     const page = await browser.newPage();
-    await page.setContent(parts.join('\n'), { waitUntil: 'networkidle0' });
+    await page.setContent(parts.join('\n'), { waitUntil: 'networkidle0' as any });
     await page.pdf({
       path: pdfPath,
       format: 'A4',

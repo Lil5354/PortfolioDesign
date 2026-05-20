@@ -1,13 +1,3 @@
-import { v2 as cloudinary } from "cloudinary";
-
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-export default cloudinary;
-
 export type WatermarkPosition =
   | "north_west"
   | "north"
@@ -34,20 +24,19 @@ export const WATERMARK_POSITIONS: {
   { label: "Góc dưới phải", value: "south_east" },
 ];
 
+const cloudName = () => process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "";
+
 export function buildWatermarkUrl(
   publicId: string,
   text: string,
   position: WatermarkPosition,
   options?: { fontSize?: number; opacity?: number; color?: string }
 ): string {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const fontSize = options?.fontSize ?? 48;
   const opacity = options?.opacity ?? 60;
   const color = options?.color ?? "white";
-
   const encodedText = encodeURIComponent(text);
-
-  return `https://res.cloudinary.com/${cloudName}/image/upload/l_text:Arial_${fontSize}_bold:${encodedText},co_${color},o_${opacity},g_${position}/fl_layer_apply/${publicId}`;
+  return `https://res.cloudinary.com/${cloudName()}/image/upload/l_text:Arial_${fontSize}_bold:${encodedText},co_${color},o_${opacity},g_${position}/fl_layer_apply/${publicId}`;
 }
 
 export function buildWatermarkPreviewUrl(
@@ -56,34 +45,9 @@ export function buildWatermarkPreviewUrl(
   position: WatermarkPosition,
   options?: { fontSize?: number; opacity?: number; color?: string }
 ): string {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const fontSize = options?.fontSize ?? 48;
   const opacity = options?.opacity ?? 60;
   const color = options?.color ?? "white";
-
   const encodedText = encodeURIComponent(text);
-
-  return `https://res.cloudinary.com/${cloudName}/image/upload/l_text:Arial_${fontSize}_bold:${encodedText},co_${color},o_${opacity},g_${position}/fl_layer_apply/${imageUrl}`;
-}
-
-export function generateSignature(
-  folder?: string,
-  publicId?: string
-): { timestamp: number; signature: string } {
-  const timestamp = Math.round(Date.now() / 1000);
-  const params: Record<string, string | number> = {
-    timestamp,
-    source: "uw",
-    folder: folder || "artworks",
-  };
-  if (publicId) {
-    params.public_id = publicId;
-  }
-
-  const signature = cloudinary.utils.api_sign_request(
-    params,
-    process.env.CLOUDINARY_API_SECRET!
-  );
-
-  return { timestamp, signature };
+  return `https://res.cloudinary.com/${cloudName()}/image/upload/l_text:Arial_${fontSize}_bold:${encodedText},co_${color},o_${opacity},g_${position}/fl_layer_apply/${imageUrl}`;
 }
