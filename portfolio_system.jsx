@@ -320,24 +320,29 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   );
 }
 
-function PortfolioPage({ setPage }) {
+function PortfolioPage({ setPage, slug: propSlug }) {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
   const [portfolioData, setPortfolioData] = useState(null);
   const [portfolioArtworks, setPortfolioArtworks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const slug = new URLSearchParams(window.location.search).get("slug") || "demo";
+  const slug = propSlug || new URLSearchParams(window.location.search).get("slug") || "";
 
   useEffect(() => {
     setLoading(true);
+    const fetchFn = slug ? api.portfolios.get(slug) : api.portfolios.me();
+    const artworksFn = slug ? api.portfolios.artworks(slug, { limit: "50" }) : Promise.resolve({ artworks: [] });
+    const statsFn = slug ? api.portfolios.stats(slug) : Promise.resolve({});
+
     Promise.all([
-      api.portfolios.get(slug).catch(() => null),
-      api.portfolios.artworks(slug, { limit: "50" }).catch(() => ({ artworks: [] })),
-      api.portfolios.stats(slug).catch(() => ({ viewCount: 0, likeCount: 0, artworkCount: 0 })),
+      fetchFn.catch(() => null),
+      artworksFn.catch(() => ({ artworks: [] })),
+      statsFn.catch(() => ({})),
     ]).then(([pData, artRes, pStats]) => {
       if (pData) {
         pData.stats = { ...(pData.stats || {}), ...pStats };
+        if (pData.allArtworks) setPortfolioArtworks(pData.allArtworks);
         setPortfolioData(pData);
       }
       if (artRes?.artworks) setPortfolioArtworks(artRes.artworks);
@@ -3594,6 +3599,9 @@ function PortfolioSettingsPage({ setPage }) {
                 <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="text-[#666666] hover:text-[#212121] cursor-pointer"><X size={20} /></button>
               </div>
               <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm (đã chọn {(settings.featuredArtworkIds || []).length}/4)</p>
+              {myArtworks.length === 0 ? (
+                <div className="text-center py-10 text-[#666666] text-sm">Bạn chưa có ấn phẩm công khai nào. <a href="/#/upload" className="text-[#077E9E] hover:underline font-semibold">Đăng ấn phẩm mới</a></div>
+              ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {myArtworks.slice(0, 20).map(a => {
                   const selected = (settings.featuredArtworkIds || []).includes(a.id);
@@ -3608,6 +3616,7 @@ function PortfolioSettingsPage({ setPage }) {
                   );
                 })}
               </div>
+              )}
               <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="mt-4 w-full py-2.5 rounded-lg bg-[#077E9E] text-white font-semibold cursor-pointer">Xác nhận</button>
             </div>
           </div>
@@ -3623,7 +3632,12 @@ function PortfolioSettingsPage({ setPage }) {
             </label>
           </div>
 
-          <button onClick={save} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu cài đặt"}</button>
+            <div className="flex items-center gap-4">
+              <button onClick={save} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu cài đặt"}</button>
+              <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="px-6 py-2 border border-[#077E9E] text-[#077E9E] rounded-lg font-bold hover:bg-[#F0F8FB] transition-colors">
+                <ExternalLink size={16} className="inline mr-1.5" />Xem Portfolio
+              </a>
+            </div>
         </div>
       </div>
     </div>
@@ -4193,7 +4207,7 @@ export default function App() {
           isBookmarked={isBookmarked}
         />
       )}
-      {page === "portfolio" && <PortfolioPage setPage={setPage} />}
+      {page === "portfolio" && <PortfolioPage setPage={setPage} slug={activeArtworkId || ""} />}
       {page === "dashboard" && <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />}
       {page === "upload" && <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />}
       {page === "detail" && (
