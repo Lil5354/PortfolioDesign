@@ -774,6 +774,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
   const [isGroupProject, setIsGroupProject] = useState(false);
   const [friends, setFriends] = useState([]);
   const [friendInput, setFriendInput] = useState("");
+  const [friendResults, setFriendResults] = useState([]);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [notifyOnConfirm, setNotifyOnConfirm] = useState(true);
   const [coverImage, setCoverImage] = useState(null);
@@ -783,6 +784,20 @@ function UploadPage({ setPage, setActiveArtworkId }) {
   const yearToSemester = { "Năm 1": "HK1", "Năm 2": "HK2", "Năm 3": "HK3", "Năm 4": "HK1", "Tốt nghiệp": "HK2" };
   const yearToAcademic = { "Năm 1": "2024-2025", "Năm 2": "2023-2024", "Năm 3": "2022-2023", "Năm 4": "2021-2022", "Tốt nghiệp": "2021-2022" };
   const allSubjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+
+  const handleFriendSearch = (val) => {
+    setFriendInput(val);
+    if (val.length < 2) { setFriendResults([]); return; }
+    api.users.search(val).then(setFriendResults).catch(() => {});
+  };
+
+  const addFriend = (user) => {
+    if (!friends.find(f => f.id === user.id)) {
+      setFriends([...friends, { id: user.id, fullName: user.fullName, email: user.email }]);
+    }
+    setFriendInput("");
+    setFriendResults([]);
+  };
 
   const readFileAsDataURL = (file) => new Promise((resolve) => {
     const reader = new FileReader();
@@ -827,7 +842,8 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         semester: yearToSemester[projectYear] || "HK1",
         academicYear: yearToAcademic[projectYear] || "2024-2025",
         tags: tags.length > 0 ? tags : [subject],
-        collaborators: friends,
+        collaborators: friends.map(f => f.fullName || f),
+        fileUrls: allFileUrls,
         coverImageUrl: coverImage,
         fileUrls: allFileUrls,
         isPublic: false,
@@ -948,7 +964,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
                 {[{ key: false, label: "Cá nhân", desc: "Tự thực hiện", icon: <User size={16} /> }, { key: true, label: "Nhóm", desc: "Làm việc nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#F0F8FB" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
               </div>
             </div>
-            {isGroupProject && (<div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tag bạn cùng nhóm</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => setFriendInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { setFriends([...friends, friendInput.trim()]); setFriendInput(""); } }} placeholder="Nhập tên bạn bè..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 100, color: BLACK }} /></div></div>)}
+            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Thêm thành viên nhóm</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Mô tả</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Mô tả về tác phẩm của bạn..." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Danh mục *</label>
@@ -1161,8 +1177,35 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
             </div>
           </div>
 
+          {art.subject && <div style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>Danh mục</span>
+            <div style={{ marginTop: 4 }}>
+              <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 8, border: `1px solid #B3D9E8` }}>{art.subject}</span>
+            </div>
+          </div>}
+
+          {(art.toolsUsed || []).length > 0 && <div style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>Công cụ sử dụng</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+              {art.toolsUsed.map(tool => (
+                <span key={tool} style={{ background: "#F0F0F0", color: "#333", fontSize: 12, padding: "4px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>{tool}</span>
+              ))}
+            </div>
+          </div>}
+
+          {(art.collaborators || []).length > 0 && <div style={{ marginBottom: 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>Đồng tác giả</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+              {(art.collaborators || []).map(c => (
+                <span key={c} style={{ background: "#F0FDF4", color: "#166534", fontSize: 12, padding: "4px 10px", borderRadius: 8, border: `1px solid #BBF7D0`, display: "flex", alignItems: "center", gap: 4 }}>
+                  <Users size={12} /> @{typeof c === 'object' ? c.fullName || c.email : c}
+                </span>
+              ))}
+            </div>
+          </div>}
+
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-            {[...new Set([...(art.tags || []), ...(art.toolsUsed || [])])].slice(0, 8).map(tag => (
+            {(art.tags || []).map(tag => (
               <span key={tag} style={{ background: GRAY_BG, fontSize: 11, padding: "4px 10px", borderRadius: 12, color: "#555", cursor: "pointer", border: `1px solid ${GRAY_LIGHT}` }}>{tag}</span>
             ))}
           </div>
@@ -1737,9 +1780,12 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
   const [isGroupProject, setIsGroupProject] = useState(false);
   const [friends, setFriends] = useState([]);
   const [friendInput, setFriendInput] = useState("");
+  const [friendResults, setFriendResults] = useState([]);
+  const [friendSearching, setFriendSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [coverImage, setCoverImage] = useState(null);
   const [originalCover, setOriginalCover] = useState("");
+  const [additionalImages, setAdditionalImages] = useState([]);
 
   const allSubjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
   const semesterToYear = { HK1: "Năm 1", HK2: "Năm 2", HK3: "Năm 3" };
@@ -1756,6 +1802,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
       setTools(res.toolsUsed || []);
       setTags(res.tags || []);
       setOriginalCover(res.coverImageUrl || "");
+      setAdditionalImages((res.fileUrls || []).filter(url => url !== res.coverImageUrl));
       if (res.semester) {
         const yr = semesterToYear[res.semester];
         if (yr) setProjectYear(yr);
@@ -1777,11 +1824,11 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         subject: subject || null,
         toolsUsed: tools,
         tags,
-        collaborators: friends,
+        collaborators: friends.map(f => f.fullName || f),
+        fileUrls: [coverImage || originalCover, ...additionalImages].filter(Boolean),
+        coverImageUrl: coverImage || originalCover,
         semester: yearToSemester[projectYear] || "HK1",
         academicYear: yearToAcademic[projectYear] || "2024-2025",
-        coverImageUrl: coverImage || originalCover,
-        isPublic: false,
       };
       await api.artworks.update(activeArtworkId, body);
       setMessage({ type: "success", text: "Đã cập nhật!" });
@@ -1792,14 +1839,19 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     setSaving(false);
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Xóa ấn phẩm này?")) return;
-    try {
-      await api.artworks.delete(activeArtworkId);
-      setPage("dashboard");
-    } catch (e) {
-      setMessage({ type: "error", text: e?.message || "Lỗi xóa" });
+  const handleFriendSearch = (val) => {
+    setFriendInput(val);
+    if (val.length < 2) { setFriendResults([]); return; }
+    setFriendSearching(true);
+    api.users.search(val).then(setFriendResults).catch(() => {}).finally(() => setFriendSearching(false));
+  };
+
+  const addFriend = (user) => {
+    if (!friends.find(f => f.id === user.id)) {
+      setFriends([...friends, { id: user.id, fullName: user.fullName, email: user.email, avatarUrl: user.avatarUrl }]);
     }
+    setFriendInput("");
+    setFriendResults([]);
   };
 
   const readFileAsDataURL = (file) => new Promise((resolve) => {
@@ -1812,6 +1864,27 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setCoverImage(await readFileAsDataURL(file));
+  };
+
+  const handleAddImage = async (e) => {
+    const files = Array.from(e.target.files || []);
+    const max = 9 - additionalImages.length;
+    const urls = await Promise.all(files.slice(0, max).map(readFileAsDataURL));
+    setAdditionalImages(prev => [...prev, ...urls].slice(0, 9));
+  };
+
+  const removeImage = (idx) => {
+    setAdditionalImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Xóa ấn phẩm này?")) return;
+    try {
+      await api.artworks.delete(activeArtworkId);
+      setPage("dashboard");
+    } catch (e) {
+      setMessage({ type: "error", text: e?.message || "Lỗi xóa" });
+    }
   };
 
   if (loading) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
@@ -1831,14 +1904,29 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         )}
         <div className="grid grid-cols-2 gap-8">
           <div>
-            <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh hiện tại</label>
+            <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh bìa</label>
             <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer">
-              <img src={coverImage || originalCover} alt="cover" className="w-full h-[400px] object-cover block" />
+              <img src={coverImage || originalCover} alt="cover" className="w-full h-[360px] object-cover block" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <label className="cursor-pointer">
-                  <span className="px-5 py-2.5 rounded-lg border-2 border-white text-white text-sm font-semibold flex items-center gap-2 hover:bg-white hover:text-[#212121] transition-colors"><Image size={16} /> Đổi ảnh mới</span>
+                  <span className="px-5 py-2.5 rounded-lg border-2 border-white text-white text-sm font-semibold flex items-center gap-2 hover:bg-white hover:text-[#212121] transition-colors"><Image size={16} /> Đổi ảnh bìa</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
                 </label>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh bổ sung ({additionalImages.length}/9)</label>
+              <input type="file" id="editAdditionalInput" accept="image/*" multiple className="hidden" onChange={handleAddImage} />
+              <div className="flex gap-2 flex-wrap">
+                {additionalImages.map((url, idx) => (
+                  <div key={idx} className="relative w-[90px] h-[72px] rounded-lg overflow-hidden border border-[#E0E0E0] group">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button onClick={() => removeImage(idx)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/50 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">×</button>
+                  </div>
+                ))}
+                {additionalImages.length < 9 && (
+                  <button onClick={() => document.getElementById("editAdditionalInput")?.click()} className="w-[90px] h-[72px] rounded-lg border-2 border-dashed border-[#E0E0E0] flex items-center justify-center text-[#666666] hover:border-[#077E9E] hover:text-[#077E9E] transition-colors cursor-pointer"><Plus size={22} /></button>
+                )}
               </div>
             </div>
           </div>
@@ -1846,7 +1934,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tên môn học</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại đồ án</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#F0F8FB] border-[#077E9E] text-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại bài</label><div className="flex gap-3">{[{ key: false, label: "Cá nhân", icon: <User size={16} /> }, { key: true, label: "Nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#F0F8FB] border-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
-            {isGroupProject && (<div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tag bạn cùng nhóm</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f} <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => setFriendInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { setFriends([...friends, friendInput.trim()]); setFriendInput(""); } }} placeholder="Nhập tên..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" /></div></div>)}
+            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Thêm thành viên nhóm</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Mô tả</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Danh mục</label>
               <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
