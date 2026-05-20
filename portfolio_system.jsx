@@ -1550,7 +1550,8 @@ function AdminDashboardPage({ setPage }) {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        {loading ? <div className="text-center py-16 text-[#666666] text-sm">Đang tải dữ liệu...</div> : (
+        <><div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
             <div key={s.label} className="bg-white border border-[#E0E0E0] rounded-xl p-5">
               <div className="flex items-start justify-between gap-3">
@@ -1665,7 +1666,7 @@ function AdminDashboardPage({ setPage }) {
             </div>
           </div>
         </div>
-      </div>
+      </>)}
     </div>
   );
 }
@@ -2123,15 +2124,21 @@ function AdminArtworksPage({ setPage }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, mode: "delete", artId: null });
 
-  const fetchArtworks = () => {
+  const fetchArtworks = (params = {}) => {
     setLoading(true);
-    api.admin.artworks({ q: query || undefined }).then(res => {
+    api.admin.artworks(params).then(res => {
       setItems(res.artworks || []);
       setLoading(false);
     }).catch(() => setLoading(false));
   };
 
-  useEffect(() => { fetchArtworks(); }, []);
+  useEffect(() => { fetchArtworks({}); }, []);
+
+  useEffect(() => {
+    const params = {};
+    if (query.trim()) params.q = query.trim();
+    fetchArtworks(params);
+  }, [query]);
 
   const tabMap = { all: "all", hidden: "hidden", highlight: "highlight" };
   const filtered = items.filter(a => {
@@ -2237,7 +2244,11 @@ function AdminArtworksPage({ setPage }) {
           </div>
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
-            {tabs.map((t) => (
+            {[
+              { key: "all", label: "Tất cả" },
+              { key: "hidden", label: "Đã ẩn" },
+              { key: "highlight", label: "Nổi bật" },
+            ].map((t) => (
               <button
                 key={t.key}
                 onClick={() => { setActiveTab(t.key); setSelectedIds([]); }}
