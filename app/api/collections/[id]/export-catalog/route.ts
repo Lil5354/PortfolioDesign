@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import puppeteer from 'puppeteer';
 import path from 'path';
 import fs from 'fs';
 
@@ -102,7 +101,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     parts.push('</body></html>');
 
-    const browser = await puppeteer.launch({
+    const puppeteerMod = await import('puppeteer').catch(() => null);
+    if (!puppeteerMod) {
+      return NextResponse.json({ error: 'PDF generation unavailable (puppeteer not installed)' }, { status: 500 });
+    }
+    const browser = await puppeteerMod.default.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
