@@ -756,31 +756,95 @@ function DashboardPage({ setPage, setActiveArtworkId, userData }) {
   );
 }
 
-function UploadPage({ setPage }) {
+function UploadPage({ setPage, setActiveArtworkId }) {
   const [showPopup, setShowPopup] = useState(false);
   const [uploadState, setUploadState] = useState("idle");
+  const [createdId, setCreatedId] = useState(null);
   const [checked1, setChecked1] = useState(false);
   const [checked2, setChecked2] = useState(false);
   const [checked3, setChecked3] = useState(false);
-  const [tags, setTags] = useState(["Poster", "Typography"]);
+  const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
+  const [tools, setTools] = useState([]);
+  const [toolInput, setToolInput] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [subject, setSubject] = useState("");
   const [projectYear, setProjectYear] = useState("Năm 3");
   const [isGroupProject, setIsGroupProject] = useState(false);
   const [friends, setFriends] = useState([]);
   const [friendInput, setFriendInput] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [notifyOnConfirm, setNotifyOnConfirm] = useState(true);
+  const [coverImage, setCoverImage] = useState(null);
+  const [additionalImages, setAdditionalImages] = useState([]);
+  const [error, setError] = useState("");
 
-  const handleUploadSubmit = () => {
+  const yearToSemester = { "Năm 1": "HK1", "Năm 2": "HK2", "Năm 3": "HK3", "Năm 4": "HK1", "Tốt nghiệp": "HK2" };
+  const yearToAcademic = { "Năm 1": "2024-2025", "Năm 2": "2023-2024", "Năm 3": "2022-2023", "Năm 4": "2021-2022", "Tốt nghiệp": "2021-2022" };
+  const allSubjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+
+  const readFileAsDataURL = (file) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const dataUrl = await readFileAsDataURL(file);
+    setCoverImage(dataUrl);
+  };
+
+  const handleAdditionalUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    const max = 10 - (coverImage ? 1 : 0) - additionalImages.length;
+    const toAdd = files.slice(0, max);
+    const urls = await Promise.all(toAdd.map(readFileAsDataURL));
+    setAdditionalImages(prev => [...prev, ...urls].slice(0, 9));
+  };
+
+  const removeAdditional = (idx) => {
+    setAdditionalImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const allFileUrls = coverImage ? [coverImage, ...additionalImages] : [...additionalImages];
+
+  const handleUploadSubmit = async () => {
+    if (!coverImage) { setError("Vui lòng chọn ảnh chính"); return; }
+    if (!title.trim()) { setError("Vui lòng nhập tên học phần"); return; }
+    if (!subject) { setError("Vui lòng chọn danh mục"); return; }
+    if (!checked1 || !checked2 || !checked3) { setError("Vui lòng xác nhận đầy đủ cam kết"); return; }
+    setError("");
     setUploadState("loading");
-    setTimeout(() => {
+    try {
+      const newArtwork = await api.artworks.create({
+        title: title.trim(),
+        description: description.trim() || null,
+        subject,
+        toolsUsed: tools,
+        semester: yearToSemester[projectYear] || "HK1",
+        academicYear: yearToAcademic[projectYear] || "2024-2025",
+        tags: tags.length > 0 ? tags : [subject],
+        collaborators: friends,
+        coverImageUrl: coverImage,
+        fileUrls: allFileUrls,
+        isPublic: false,
+        isAiConfirmed: checked1,
+      });
+      setCreatedId(newArtwork.id);
       setUploadState("success");
       setTimeout(() => {
         setUploadState("idle");
         setShowPopup(false);
-        if (setPage) setPage("dashboard");
-      }, 1500);
-    }, 1500);
+        setActiveArtworkId(newArtwork.id);
+        setPage("dashboard");
+      }, 1800);
+    } catch (e) {
+      setError(e?.message || "Lỗi khi đăng tác phẩm");
+      setUploadState("idle");
+    }
   };
 
   return (
@@ -824,9 +888,10 @@ function UploadPage({ setPage }) {
                     </label>
                   ))}
                 </div>
+                {error && <p style={{ color: CRIMSON, fontSize: 12, marginTop: 12 }}>{error}</p>}
                 <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
                   <button onClick={() => setShowPopup(false)} disabled={uploadState === "loading"} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: uploadState === "loading" ? "not-allowed" : "pointer", color: MUTED }}>Hủy</button>
-                  <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3) ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3) ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3) && uploadState !== "loading" ? "pointer" : "not-allowed" }}>
+                  <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3 && !uploadState) ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3 && !uploadState) ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3 && !uploadState) ? "pointer" : "not-allowed" }}>
                     {uploadState === "loading" ? "Đang xử lý..." : "Xác nhận & Đăng bài"}
                   </button>
                 </div>
@@ -841,33 +906,40 @@ function UploadPage({ setPage }) {
         <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>Chia sẻ tác phẩm sáng tạo của bạn với cộng đồng UEF</p>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
           <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Ảnh tác phẩm</label>
-            <div style={{ border: `2px dashed ${GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG }}>
-              <img src="https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&q=80" alt="preview" style={{ width: "100%", height: 400, objectFit: "cover", display: "block" }} />
-              <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                <FileImage size={36} color="#fff" strokeWidth={1.5} />
-                <p style={{ color: "#fff", fontSize: 14, fontWeight: 600, margin: 0 }}>Kéo thả hoặc chọn ảnh</p>
-                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 12, margin: 0 }}>PNG, JPG, SVG • Tối đa 20MB</p>
-                <button style={{ marginTop: 6, padding: "8px 20px", borderRadius: 8, border: "2px solid #fff", background: "transparent", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Chọn file</button>
-              </div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Ảnh chính *</label>
+            <input type="file" id="coverInput" accept="image/*" style={{ display: "none" }} onChange={handleCoverUpload} />
+            <div onClick={() => document.getElementById("coverInput")?.click()} style={{ border: `2px dashed ${coverImage ? CERULEAN : GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG, cursor: "pointer" }}>
+              {coverImage ? (
+                <img src={coverImage} alt="preview" style={{ width: "100%", height: 400, objectFit: "cover", display: "block" }} />
+              ) : (
+                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                  <FileImage size={36} color={MUTED} strokeWidth={1.5} />
+                  <p style={{ color: MUTED, fontSize: 14, fontWeight: 600, margin: 0 }}>Nhấp để chọn ảnh chính</p>
+                  <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>PNG, JPG • Tối đa 20MB</p>
+                </div>
+              )}
             </div>
             <div style={{ marginTop: 16 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Ảnh bổ sung</label>
-              <div style={{ display: "flex", gap: 8 }}>
-                {["1550745165-9bc0b252726f", "1614850523459-c2f4c699c52e", "1572375992501-4b087315dc0f"].map(id => (
-                  <div key={id} style={{ width: 80, height: 64, borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG }}>
-                    <img src={`https://images.unsplash.com/photo-${id}?w=200&q=60`} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Ảnh bổ sung ({additionalImages.length}/9)</label>
+              <input type="file" id="additionalInput" accept="image/*" multiple style={{ display: "none" }} onChange={handleAdditionalUpload} />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {additionalImages.map((url, idx) => (
+                  <div key={idx} style={{ width: 80, height: 64, borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, position: "relative" }}>
+                    <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <div onClick={() => removeAdditional(idx)} style={{ position: "absolute", top: 2, right: 2, width: 18, height: 18, borderRadius: "50%", background: "rgba(0,0,0,0.5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>×</div>
                   </div>
                 ))}
-                <div style={{ width: 80, height: 64, borderRadius: 8, border: `2px dashed ${GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: GRAY_BG }}>
-                  <Plus size={22} color={MUTED} />
-                </div>
+                {additionalImages.length < 9 && (
+                  <div onClick={() => document.getElementById("additionalInput")?.click()} style={{ width: 80, height: 64, borderRadius: 8, border: `2px dashed ${GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: GRAY_BG }}>
+                    <Plus size={22} color={MUTED} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tên học phần *</label><input defaultValue="Design Principles" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tên tác phẩm *</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Nhập tên tác phẩm..." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Loại đồ án</label>
               <div style={{ display: "flex", gap: 6 }}>{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${projectYear === y ? CERULEAN : GRAY_LIGHT}`, background: projectYear === y ? "#F0F8FB" : GRAY_BG, color: projectYear === y ? CERULEAN : MUTED, fontSize: 12, fontWeight: projectYear === y ? 600 : 400, cursor: "pointer" }}>{y}</button>))}</div>
             </div>
@@ -877,8 +949,21 @@ function UploadPage({ setPage }) {
               </div>
             </div>
             {isGroupProject && (<div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tag bạn cùng nhóm</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => setFriendInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && friendInput.trim()) { setFriends([...friends, friendInput.trim()]); setFriendInput(""); } }} placeholder="Nhập tên bạn bè..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 100, color: BLACK }} /></div></div>)}
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Mô tả</label><textarea defaultValue="Bộ poster được lấy cảm hứng từ văn hóa đô thị hiện đại, kết hợp giữa neon light và kiến trúc đương đại. Thực hiện trong khuôn khổ môn Thiết kế Đồ họa 3 năm học 2024." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Danh mục & Công cụ</label><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}><select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}><option>Poster</option><option>Branding</option><option>UI/UX</option><option>3D Art</option></select><select style={{ padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}><option>Illustrator</option><option>Photoshop</option><option>Figma</option><option>Blender</option></select></div></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Mô tả</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Mô tả về tác phẩm của bạn..." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Danh mục *</label>
+                <select value={subject} onChange={e => setSubject(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
+                  <option value="">-- Chọn --</option>
+                  {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Công cụ</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>
+                  {tools.map(t => (<span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTools(tools.filter(x => x !== t))} style={{ cursor: "pointer", marginLeft: 4 }} /></span>))}
+                  <input value={toolInput} onChange={e => setToolInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && toolInput.trim()) { setTools([...tools, toolInput.trim()]); setToolInput(""); } }} placeholder="Add tool..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} />
+                </div>
+              </div>
+            </div>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tags</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{tags.map(t => (<span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== t))} style={{ cursor: "pointer" }} /></span>))}<input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} /></div></div>
             <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
@@ -3751,7 +3836,7 @@ export default function App() {
       )}
       {page === "portfolio" && <PortfolioPage setPage={setPage} />}
       {page === "dashboard" && <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />}
-      {page === "upload" && <UploadPage setPage={setPage} />}
+      {page === "upload" && <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />}
       {page === "detail" && (
         <DetailPage
           setPage={setPage}
