@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import { useAuth } from "./lib/AuthContext";
 import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
+import { api } from "./lib/api-client";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -27,7 +29,7 @@ const artworks = [
   { id: 8, title: "Futuristic UI Concept", student: "Bùi Minh Khải", likes: 214, h: 290, img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80", category: "UI/UX", tool: "Figma", year: "2024", isPublic: true },
 ];
 
-function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout }) {
+function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userData }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -49,6 +51,10 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout }) {
   ];
   if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: "Portfolio" });
 
+  const userName = userData?.name || "Người dùng";
+  const userEmail = userData?.email || "";
+  const userAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+
   return (
     <header className="flex items-center justify-between px-8 py-3 border-b border-gray-100 bg-white sticky top-0 z-50">
       <div className="flex items-center gap-3 cursor-pointer" onClick={() => setPage("home")}>
@@ -67,14 +73,14 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout }) {
         {isLoggedIn ? (
           <div className="relative" ref={dropdownRef}>
             <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-              <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80" alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
+              <img src={userAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
               <ChevronDown size={14} className="text-[#666666]" />
             </div>
             {isDropdownOpen && (
               <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
                 <div className="px-4 py-3 border-b border-[#E0E0E0] bg-[#F8F8F8]">
-                  <p className="text-sm font-bold text-[#212121]">Nguyễn Minh Anh</p>
-                  <p className="text-xs text-[#666666]">minhanh@uef.edu.vn</p>
+                  <p className="text-sm font-bold text-[#212121]">{userName}</p>
+                  <p className="text-xs text-[#666666]">{userEmail}</p>
                 </div>
                 <div className="py-1">
                   {userRole === "student" ? (
@@ -197,10 +203,48 @@ function MasonryGrid({
 }
 
 function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
-  const [activeFilter, setActiveFilter] = useState("Tất cả");
-  const categories = ["Tất cả", "Poster", "Branding", "UI/UX", "3D Art", "Illustration"];
-  const years = ["Tất cả", "2024", "2023", "2022"];
-  const tools = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate"];
+  const [category, setCategory] = useState("Tất cả");
+  const [year, setYear] = useState("Tất cả");
+  const [tool, setTool] = useState("Tất cả");
+  const [sort, setSort] = useState("newest");
+  const [page, setPageNum] = useState(1);
+  const [data, setData] = useState({ artworks: [], total: 0, totalPages: 0 });
+  const [loading, setLoading] = useState(true);
+  const limit = 20;
+
+  const categories = ["Tất cả", "Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+  const years = ["Tất cả", "2022-2023", "2023-2024", "2024-2025"];
+  const tools = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate", "After Effects", "InDesign", "Lightroom", "Cinema 4D"];
+
+  useEffect(() => {
+    setLoading(true);
+    setPageNum(1);
+  }, [category, year, tool, sort]);
+
+  useEffect(() => {
+    setLoading(true);
+    const params = { page: String(page), limit: String(limit), sort };
+    if (category !== "Tất cả") params.category = category;
+    if (year !== "Tất cả") params.year = year;
+    if (tool !== "Tất cả") params.tool = tool;
+    api.artworks.list(params).then(res => {
+      setData(res);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [category, year, tool, sort, page]);
+
+  const mapped = (data.artworks || []).map((a, i) => ({
+    id: a.id,
+    title: a.title,
+    student: a.user?.fullName || "Sinh viên",
+    img: a.coverImageUrl,
+    likes: a.likeCount || 0,
+    h: [240, 300, 350, 270, 320, 380][i % 6],
+    isPublic: a.isPublic,
+    category: a.subject,
+  }));
+
+  const paginate = (p) => setPageNum(Math.max(1, Math.min(p, data.totalPages || 1)));
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
@@ -212,48 +256,65 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
         <div style={{ display: "flex", gap: 24, marginBottom: 28, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
           <div>
             <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Danh mục</span>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {categories.map(c => (
-                <button key={c} onClick={() => setActiveFilter(c)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: activeFilter === c ? "none" : `1px solid ${GRAY_LIGHT}`, background: activeFilter === c ? BLACK : "#fff", color: activeFilter === c ? "#fff" : BLACK, transition: "all .15s" }}>{c}</button>
+                <button key={c} onClick={() => { setCategory(c); }} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: category === c ? "none" : `1px solid ${GRAY_LIGHT}`, background: category === c ? BLACK : "#fff", color: category === c ? "#fff" : BLACK, transition: "all .15s" }}>{c}</button>
               ))}
             </div>
           </div>
           <div>
             <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Năm học</span>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {years.map(y => (
-                <button key={y} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK }}>{y}</button>
+                <button key={y} onClick={() => setYear(y)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: year === y ? "none" : `1px solid ${GRAY_LIGHT}`, background: year === y ? BLACK : "#fff", color: year === y ? "#fff" : BLACK, transition: "all .15s" }}>{y}</button>
               ))}
             </div>
           </div>
           <div>
             <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Công cụ</span>
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {tools.map(t => (
-                <button key={t} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK }}>{t}</button>
+                <button key={t} onClick={() => setTool(t)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: tool === t ? "none" : `1px solid ${GRAY_LIGHT}`, background: tool === t ? BLACK : "#fff", color: tool === t ? "#fff" : BLACK, transition: "all .15s" }}>{t}</button>
               ))}
             </div>
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <span style={{ fontSize: 13, color: MUTED }}>{artworks.length} tác phẩm được tìm thấy</span>
+          <span style={{ fontSize: 13, color: MUTED }}>{data.total} tác phẩm được tìm thấy</span>
           <div style={{ display: "flex", gap: 8 }}>
-            <button style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK }}>Mới nhất</button>
-            <button style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK }}>Nhiều like nhất</button>
+            <button onClick={() => setSort("newest")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "newest" ? CERULEAN : GRAY_LIGHT}`, background: sort === "newest" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "newest" ? CERULEAN : BLACK, fontWeight: sort === "newest" ? 600 : 400 }}>Mới nhất</button>
+            <button onClick={() => setSort("most_likes")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "most_likes" ? CERULEAN : GRAY_LIGHT}`, background: sort === "most_likes" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "most_likes" ? CERULEAN : BLACK, fontWeight: sort === "most_likes" ? 600 : 400 }}>Nhiều like nhất</button>
           </div>
         </div>
       </div>
       <div style={{ padding: "0 48px 64px" }}>
-        <MasonryGrid
-          items={artworks}
-          onArtworkClick={(art) => {
-            setActiveArtworkId && setActiveArtworkId(art.id);
-            setPage("detail");
-          }}
-          showBookmarkAction={true}
-          isBookmarked={isBookmarked}
-          onBookmarkClick={onBookmarkClick}
-        />
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>Đang tải dữ liệu...</div>
+        ) : mapped.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>Không tìm thấy tác phẩm nào</div>
+        ) : (
+          <>
+            <MasonryGrid
+              items={mapped}
+              onArtworkClick={(art) => {
+                setActiveArtworkId && setActiveArtworkId(art.id);
+                setPage("detail");
+              }}
+              showBookmarkAction={true}
+              isBookmarked={isBookmarked}
+              onBookmarkClick={onBookmarkClick}
+            />
+            {data.totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 40 }}>
+                <button onClick={() => paginate(page - 1)} disabled={page <= 1} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page <= 1 ? GRAY_BG : "#fff", color: page <= 1 ? MUTED : BLACK, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer" }}>Trước</button>
+                {Array.from({ length: data.totalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => paginate(p)} style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: p === page ? CERULEAN : GRAY_BG, color: p === page ? "#fff" : MUTED, fontSize: 13, fontWeight: p === page ? 600 : 400, cursor: "pointer" }}>{p}</button>
+                ))}
+                <button onClick={() => paginate(page + 1)} disabled={page >= data.totalPages} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page >= data.totalPages ? GRAY_BG : "#fff", color: page >= data.totalPages ? MUTED : BLACK, fontSize: 13, cursor: page >= data.totalPages ? "not-allowed" : "pointer" }}>Sau</button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -818,24 +879,37 @@ function UploadPage({ setPage }) {
 }
 
 function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked }) {
+  const [art, setArt] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [score, setScore] = useState("");
   const [comment, setComment] = useState("");
-  const art = artworks.find((a) => a.id === activeArtworkId) || artworks[2];
+
+  useEffect(() => {
+    if (!activeArtworkId) { setLoading(false); return; }
+    setLoading(true);
+    api.artworks.get(activeArtworkId).then(res => {
+      setArt(res);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [activeArtworkId]);
+
+  if (loading) return <div style={{ padding: "80px 48px", textAlign: "center", color: MUTED, fontSize: 14 }}>Đang tải...</div>;
+  if (!art) return <div style={{ padding: "80px 48px", textAlign: "center", color: MUTED, fontSize: 14 }}>Không tìm thấy tác phẩm</div>;
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
       <div style={{ padding: "20px 48px", borderBottom: `1px solid ${GRAY_LIGHT}`, display: "flex", gap: 6, alignItems: "center" }}>
         <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("gallery")}>Gallery</span>
         <span style={{ fontSize: 13, color: MUTED }}>/</span>
-        <span style={{ fontSize: 13, color: MUTED }}>3D Art</span>
+        <span style={{ fontSize: 13, color: MUTED }}>{art.subject || "Ấn phẩm"}</span>
         <span style={{ fontSize: 13, color: MUTED }}>/</span>
         <span style={{ fontSize: 13, color: BLACK, fontWeight: 500 }}>{art.title}</span>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "65fr 35fr", minHeight: "calc(100vh - 105px)" }}>
         <div style={{ background: GRAY_BG, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: 32 }}>
-          <img src={art.img} alt={art.title} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
+          <img src={art.coverImageUrl} alt={art.title} style={{ maxWidth: "100%", maxHeight: "80vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
           <div style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
             <p style={{ color: "rgba(0,0,0,0.06)", fontSize: 48, fontWeight: 900, transform: "rotate(-25deg)", userSelect: "none", letterSpacing: 4, textTransform: "uppercase" }}>UEF · PORTFOLIO</p>
           </div>
@@ -849,37 +923,37 @@ function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked })
         <div style={{ borderLeft: `1px solid ${GRAY_LIGHT}`, padding: "32px 28px", overflow: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-              <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.category}</span>
-              <span style={{ fontSize: 12, color: MUTED }}>12 Tháng 3, 2024</span>
+              <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.subject}</span>
+              <span style={{ fontSize: 12, color: MUTED }}>{new Date(art.createdAt).toLocaleDateString("vi-VN")}</span>
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px", color: BLACK, lineHeight: 1.3 }}>{art.title}</h1>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <img src="https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg" alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }} onClick={() => setPage("portfolio")} />
-              <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("portfolio")}>{art.student}</span>
+              <img src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }} onClick={() => setPage("portfolio")} />
+              <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("portfolio")}>{art.user?.fullName}</span>
               <span style={{ fontSize: 12, color: MUTED }}>·</span>
               <span style={{ fontSize: 12, color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("portfolio")}>Xem portfolio</span>
             </div>
           </div>
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-            {["3D Art", "Blender", "Abstract", "Geometry", "2024", "Năm 3"].map(tag => (
+            {[...(art.tags || []), ...(art.toolsUsed || [])].slice(0, 8).map(tag => (
               <span key={tag} style={{ background: GRAY_BG, fontSize: 11, padding: "4px 10px", borderRadius: 12, color: "#555", cursor: "pointer", border: `1px solid ${GRAY_LIGHT}` }}>{tag}</span>
             ))}
           </div>
 
           <p style={{ fontSize: 13, color: "#444", lineHeight: 1.75, marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-            Tác phẩm 3D này được tạo ra bằng Blender 4.0, thể hiện sự kết hợp giữa hình học trừu tượng và ánh sáng động. Lấy cảm hứng từ kiến trúc tối giản Nhật Bản và nghệ thuật số hiện đại.
+            {art.description || "Chưa có mô tả cho tác phẩm này."}
           </p>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
             <div style={{ display: "flex", gap: 14 }}>
               <button onClick={() => setLiked(!liked)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${liked ? "#F5C5C5" : GRAY_LIGHT}`, background: liked ? "#FEF2F2" : "#fff", cursor: "pointer" }}>
                 <Heart size={16} fill={liked ? "#E53E3E" : "none"} color={liked ? "#E53E3E" : MUTED} />
-                <span style={{ fontSize: 13, color: liked ? "#E53E3E" : MUTED, fontWeight: liked ? 600 : 400 }}>{art.likes + (liked ? 1 : 0)}</span>
+                <span style={{ fontSize: 13, color: liked ? "#E53E3E" : MUTED, fontWeight: liked ? 600 : 400 }}>{(art.likeCount || 0) + (liked ? 1 : 0)}</span>
               </button>
               <button style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer" }}>
                 <MessageSquare size={16} color={MUTED} />
-                <span style={{ fontSize: 13, color: MUTED }}>14</span>
+                <span style={{ fontSize: 13, color: MUTED }}>{art.commentCount || 0}</span>
               </button>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
@@ -982,7 +1056,7 @@ function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked })
 
       <div style={{ padding: "40px 48px 64px", borderTop: `1px solid ${GRAY_LIGHT}` }}>
         <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 24 }}>Khám phá thêm</h3>
-        <MasonryGrid items={artworks.slice(3, 6)} showHover={true} onArtworkClick={() => setPage("detail")} />
+        <MasonryGrid items={[]} showHover={true} onArtworkClick={() => setPage("detail")} />
       </div>
 
     </div>
@@ -990,7 +1064,51 @@ function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked })
 }
 
 function AuthPage({ setPage, onLoginSuccess }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [authRole, setAuthRole] = useState("student");
+  const [loginError, setLoginError] = useState("");
+
+  const handleEmailLogin = async () => {
+    if (!email || !password) {
+      setLoginError("Vui lòng nhập email và mật khẩu");
+      return;
+    }
+    setLoginError("");
+    try {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/api/auth/login";
+      const fields = { email, password, redirectTo: window.location.origin };
+      for (const [k, v] of Object.entries(fields)) {
+        const i = document.createElement("input");
+        i.name = k; i.value = v; form.appendChild(i);
+      }
+      document.body.appendChild(form);
+      form.submit();
+    } catch {
+      setLoginError("Lỗi kết nối đến server");
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "/api/auth/signin/google";
+    const cbInput = document.createElement("input");
+    cbInput.name = "callbackUrl";
+    cbInput.value = "http://localhost:5173/";
+    form.appendChild(cbInput);
+    const csrfInput = document.createElement("input");
+    csrfInput.name = "csrfToken";
+    fetch("/api/auth/csrf").then(r => r.json()).then(data => {
+      csrfInput.value = data.csrfToken;
+      form.appendChild(csrfInput);
+      document.body.appendChild(form);
+      form.submit();
+    });
+  };
+
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
@@ -1003,23 +1121,71 @@ function AuthPage({ setPage, onLoginSuccess }) {
       </div>
       <div style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 64px" }}>
         <h2 style={{ fontSize: 28, fontWeight: 700, color: BLACK, marginBottom: 8 }}>Đăng nhập</h2>
-        <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>Chào mừng trở lại với hệ thống Portfolio UEF</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Email</label>
-            <input type="email" placeholder="sv@uef.edu.vn" style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }} />
-          </div>
-          <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mật khẩu</label>
-            <input type="password" placeholder="••••••••" style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }} />
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: 6, marginTop: 20 }}>
+        <p style={{ color: MUTED, fontSize: 14, marginBottom: 24 }}>Chào mừng trở lại với hệ thống Portfolio UEF</p>
+
+        <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
           {[{ key: "student", label: "Sinh viên" }, { key: "lecturer", label: "Giảng viên" }, { key: "admin", label: "Quản trị" }].map((r) => (
             <button key={r.key} onClick={() => setAuthRole(r.key)} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{r.label}</button>
           ))}
         </div>
-        <button onClick={() => onLoginSuccess && onLoginSuccess(authRole)} style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 20, cursor: "pointer" }}>Đăng nhập</button>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setLoginError(""); }}
+              placeholder="sv@uef.edu.vn"
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+            />
+          </div>
+          <div>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mật khẩu</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
+              placeholder="••••••••"
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+            />
+          </div>
+        </div>
+
+        {loginError && (
+          <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 8, textAlign: "center" }}>{loginError}</p>
+        )}
+
+        <button
+          onClick={handleEmailLogin}
+          style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 16, cursor: "pointer" }}
+        >
+          Đăng nhập
+        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
+          <div style={{ flex: 1, height: 1, background: GRAY_LIGHT }} />
+          <span style={{ fontSize: 12, color: MUTED }}>Hoặc</span>
+          <div style={{ flex: 1, height: 1, background: GRAY_LIGHT }} />
+        </div>
+
+        <button
+          onClick={handleGoogleLogin}
+          style={{ width: "100%", padding: "14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Đăng nhập với Google
+        </button>
+
+        <p style={{ color: "#666", fontSize: 11, marginTop: 16, textAlign: "center", lineHeight: 1.5 }}>
+          Đăng nhập bằng email @uef.edu.vn để sử dụng hệ thống.<br />
+          Sinh viên: <strong>sv@uef.edu.vn</strong> / Mật khẩu: <strong>test123</strong>
+        </p>
       </div>
     </div>
   )
@@ -2103,6 +2269,44 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
 }
 
 function RegisterPage({ setPage }) {
+  const [form, setForm] = useState({ lastName: "", firstName: "", email: "", password: "", confirmPassword: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const updateField = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!form.lastName || !form.firstName) { setError("Vui lòng nhập họ và tên"); return; }
+    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError("Email không hợp lệ"); return; }
+    if (form.password.length < 8) { setError("Mật khẩu phải có ít nhất 8 ký tự"); return; }
+    if (form.password !== form.confirmPassword) { setError("Mật khẩu xác nhận không khớp"); return; }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          fullName: `${form.lastName} ${form.firstName}`.trim(),
+          password: form.password,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setSuccess(true);
+      setTimeout(() => setPage("auth"), 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
@@ -2120,17 +2324,47 @@ function RegisterPage({ setPage }) {
         <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}><img src="/logo-uef.png" alt="UEF" style={{ height: 30 }} /><span style={{ fontWeight: 700, fontSize: 16, color: BLACK }}>Design Gallery</span></div>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>Tạo tài khoản mới</h1>
-          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>Sử dụng email <strong style={{ color: CERULEAN }}>@uef.edu.vn</strong> để đăng ký</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Họ</label><input type="text" placeholder="Nguyễn" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-              <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Tên</label><input type="text" placeholder="Minh Anh" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
+          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>Tạo tài khoản để khám phá và kết nối với cộng đồng sáng tạo</p>
+
+          {success ? (
+            <div style={{ padding: 20, background: "#F0FFF0", borderRadius: 8, textAlign: "center" }}>
+              <p style={{ color: "#2F855A", fontWeight: 600, fontSize: 14 }}>✓ Đăng ký thành công! Đang chuyển đến trang đăng nhập...</p>
             </div>
-            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Email @uef.edu.vn</label><input type="email" placeholder="minhanh@uef.edu.vn" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mã số sinh viên</label><input type="text" placeholder="21DGR00042" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mật khẩu</label><input type="password" placeholder="••••••••" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-            <div><label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Xác nhận mật khẩu</label><input type="password" placeholder="••••••••" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} /></div>
-          </div>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Họ</label>
+                    <input type="text" value={form.lastName} onChange={updateField("lastName")} placeholder="Nguyễn" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Tên</label>
+                    <input type="text" value={form.firstName} onChange={updateField("firstName")} placeholder="Minh Anh" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Email</label>
+                  <input type="email" value={form.email} onChange={updateField("email")} placeholder="example@gmail.com" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mật khẩu</label>
+                  <input type="password" value={form.password} onChange={updateField("password")} placeholder="•••••••• (tối thiểu 8 ký tự, gồm chữ và số)" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Xác nhận mật khẩu</label>
+                  <input type="password" value={form.confirmPassword} onChange={updateField("confirmPassword")} placeholder="••••••••" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                </div>
+              </div>
+
+              {error && <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 12, textAlign: "center" }}>{error}</p>}
+
+              <button type="submit" disabled={loading} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, marginTop: 16, cursor: loading ? "not-allowed" : "pointer" }}>
+                {loading ? "Đang xử lý..." : "Đăng ký"}
+              </button>
+            </form>
+          )}
+
           <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>Đã có tài khoản? <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>Đăng nhập</span></p>
         </div>
       </div>
@@ -2670,6 +2904,53 @@ function SaveToCollectionModal({
 }
 
 function PortfolioSettingsPage({ setPage }) {
+  const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", isPortfolioPublic: true, socialLinks: {} });
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/portfolios/mine")
+      .then((r) => r.json())
+      .then((data) => {
+        const p = data.portfolioSettings || data;
+        setSettings({
+          portfolioSlug: p.portfolioSlug || "",
+          profileHeadline: p.profileHeadline || "",
+          isPortfolioPublic: p.isPortfolioPublic !== false,
+          socialLinks: p.socialLinks || {},
+        });
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/portfolios/mine", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          portfolioSlug: settings.portfolioSlug,
+          profileHeadline: settings.profileHeadline,
+          isPortfolioPublic: settings.isPortfolioPublic,
+          socialLinks: settings.socialLinks,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) setMessage({ type: "success", text: "Đã lưu cài đặt portfolio!" });
+      else setMessage({ type: "error", text: data.error || "Lỗi lưu" });
+    } catch {
+      setMessage({ type: "error", text: "Lỗi kết nối" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!loaded) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
       <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
@@ -2687,6 +2968,10 @@ function PortfolioSettingsPage({ setPage }) {
           <h2 className="text-2xl font-bold text-[#212121] mb-2">Cài đặt Portfolio</h2>
           <p className="text-[#666666] text-sm mb-8">Quản lý cách hiển thị hồ sơ năng lực của bạn với nhà tuyển dụng.</p>
 
+          {message.text && (
+            <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>{message.text}</div>
+          )}
+
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <h3 className="font-bold text-[#212121] mb-4">Thông tin cơ bản</h3>
             <div className="space-y-4">
@@ -2694,12 +2979,12 @@ function PortfolioSettingsPage({ setPage }) {
                 <label className="block text-sm font-medium text-[#212121] mb-2">Đường dẫn Portfolio (Slug)</label>
                 <div className="flex items-center">
                   <span className="px-4 py-2 bg-[#F8F8F8] border border-r-0 border-[#E0E0E0] rounded-l-lg text-[#666666] text-sm">portfoliohub.uef.edu.vn/</span>
-                  <input type="text" defaultValue="minhanh" className="flex-1 px-4 py-2 border border-[#E0E0E0] rounded-r-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={settings.portfolioSlug} onChange={(e) => setSettings({ ...settings, portfolioSlug: e.target.value })} className="flex-1 px-4 py-2 border border-[#E0E0E0] rounded-r-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">Tiêu đề nghề nghiệp (Profile Headline)</label>
-                <input type="text" defaultValue="Graphic Designer & Visual Artist" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                <input type="text" value={settings.profileHeadline} onChange={(e) => setSettings({ ...settings, profileHeadline: e.target.value })} placeholder="Graphic Designer & Visual Artist" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
               </div>
             </div>
           </div>
@@ -2711,14 +2996,14 @@ function PortfolioSettingsPage({ setPage }) {
                 <label className="block text-sm font-medium text-[#212121] mb-2">Behance</label>
                 <div className="relative">
                   <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" />
-                  <input type="text" placeholder="https://behance.net/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={settings.socialLinks.behance || ""} onChange={(e) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, behance: e.target.value } })} placeholder="https://behance.net/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">LinkedIn</label>
                 <div className="relative">
                   <Link size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" />
-                  <input type="text" placeholder="https://linkedin.com/in/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={settings.socialLinks.linkedin || ""} onChange={(e) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, linkedin: e.target.value } })} placeholder="https://linkedin.com/in/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
             </div>
@@ -2730,12 +3015,12 @@ function PortfolioSettingsPage({ setPage }) {
               <p className="text-sm text-[#666666]">Chuyển sang "Riêng tư" nếu bạn không muốn ai xem được portfolio này.</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" defaultChecked />
+              <input type="checkbox" className="sr-only peer" checked={settings.isPortfolioPublic} onChange={(e) => setSettings({ ...settings, isPortfolioPublic: e.target.checked })} />
               <div className="w-11 h-6 bg-[#E0E0E0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#077E9E]"></div>
             </label>
           </div>
 
-          <button className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer">Lưu cài đặt</button>
+          <button onClick={save} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu cài đặt"}</button>
         </div>
       </div>
     </div>
@@ -2743,6 +3028,97 @@ function PortfolioSettingsPage({ setPage }) {
 }
 
 function SettingsPage({ setPage }) {
+  const { refreshSession } = useAuth();
+  const [profile, setProfile] = useState({ fullName: "", studentId: "", email: "", avatarUrl: "" });
+  const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
+  const [saving, setSaving] = useState(false);
+  const [changingPass, setChangingPass] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/session")
+      .then((r) => r.json())
+      .then((session) => {
+        if (session?.user) {
+          setProfile({
+            fullName: session.user.name || session.user.fullName || "",
+            studentId: session.user.studentId || "",
+            email: session.user.email || "",
+            avatarUrl: session.user.image || session.user.avatarUrl || "",
+          });
+        }
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, []);
+
+  const saveProfile = async () => {
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ fullName: profile.fullName }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setMessage({ type: "success", text: "Đã cập nhật thông tin!" });
+        refreshSession();
+      } else if (res.status === 401) {
+        setMessage({ type: "error", text: "Phiên đăng nhập hết hạn. " });
+        refreshSession();
+      } else {
+        setMessage({ type: "error", text: data.error || "Lỗi cập nhật" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Lỗi kết nối" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const changePassword = async () => {
+    if (!passwords.current || !passwords.newPass || !passwords.confirm) {
+      setMessage({ type: "error", text: "Vui lòng nhập đầy đủ thông tin" });
+      return;
+    }
+    if (passwords.newPass.length < 8) {
+      setMessage({ type: "error", text: "Mật khẩu mới phải có ít nhất 8 ký tự" });
+      return;
+    }
+    if (passwords.newPass !== passwords.confirm) {
+      setMessage({ type: "error", text: "Mật khẩu xác nhận không khớp" });
+      return;
+    }
+    setChangingPass(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/user/change-password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: passwords.current, newPassword: passwords.newPass }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage({ type: "success", text: "Đổi mật khẩu thành công!" });
+        setPasswords({ current: "", newPass: "", confirm: "" });
+      } else {
+        setMessage({ type: "error", text: data.error || "Đổi mật khẩu thất bại" });
+      }
+    } catch {
+      setMessage({ type: "error", text: "Lỗi kết nối" });
+    } finally {
+      setChangingPass(false);
+    }
+  };
+
+  if (!loaded) {
+    return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải thông tin...</div>;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
       <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
@@ -2760,14 +3136,48 @@ function SettingsPage({ setPage }) {
           <h2 className="text-2xl font-bold text-[#212121] mb-2">Cài đặt Tài khoản</h2>
           <p className="text-[#666666] text-sm mb-8">Quản lý thông tin cá nhân và bảo mật tài khoản.</p>
 
+          {message.text && (
+            <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
+              {message.text}
+            </div>
+          )}
+
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <h3 className="font-bold text-[#212121] mb-4">Ảnh đại diện</h3>
             <div className="flex items-center gap-6">
-              <img src="https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg" className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
+              <img src={profile.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
               <div>
                 <div className="flex gap-3 mb-2">
-                  <button className="px-4 py-2 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Tải ảnh mới</button>
-                  <button className="px-4 py-2 bg-white border border-[#8B1A1A] text-[#8B1A1A] rounded-lg text-sm font-medium hover:bg-[#8B1A1A] hover:text-white transition-colors cursor-pointer">Xóa ảnh</button>
+                  <input type="file" id="avatarInput" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      const sig = await fetch("/api/upload/signature?folder=avatars").then(r => r.json());
+                      const form = new FormData();
+                      form.append("file", file);
+                      form.append("api_key", sig.apiKey);
+                      form.append("timestamp", sig.timestamp);
+                      form.append("signature", sig.signature);
+                      form.append("folder", "avatars");
+                      const up = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: "POST", body: form });
+                      const result = await up.json();
+                      if (result.secure_url) {
+                        setProfile(p => ({ ...p, avatarUrl: result.secure_url }));
+                        await fetch("/api/user/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ avatarUrl: result.secure_url }) });
+                        setMessage({ type: "success", text: "Đã cập nhật ảnh đại diện!" });
+                        refreshSession();
+                      }
+                    } catch { setMessage({ type: "error", text: "Tải ảnh thất bại" }); }
+                  }} />
+                  <button onClick={() => document.getElementById("avatarInput")?.click()} className="px-4 py-2 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Tải ảnh mới</button>
+                  <button onClick={async () => {
+                    try {
+                      await fetch("/api/user/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ avatarUrl: "" }) });
+                      setProfile(p => ({ ...p, avatarUrl: "" }));
+                      setMessage({ type: "success", text: "Đã xóa ảnh đại diện!" });
+                      refreshSession();
+                    } catch { setMessage({ type: "error", text: "Xóa ảnh thất bại" }); }
+                  }} className="px-4 py-2 bg-white border border-[#8B1A1A] text-[#8B1A1A] rounded-lg text-sm font-medium hover:bg-[#8B1A1A] hover:text-white transition-colors cursor-pointer">Xóa ảnh</button>
                 </div>
                 <p className="text-xs text-[#666666]">Định dạng JPG, PNG hoặc GIF. Tối đa 5MB.</p>
               </div>
@@ -2780,16 +3190,16 @@ function SettingsPage({ setPage }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">Họ và Tên</label>
-                  <input type="text" defaultValue="Nguyễn Minh Anh" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={profile.fullName} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">Mã Sinh viên</label>
-                  <input type="text" defaultValue="21DGR00042" disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
+                  <input type="text" value={profile.studentId} disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">Địa chỉ Email</label>
-                <input type="email" defaultValue="minhanh@uef.edu.vn" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                <input type="email" value={profile.email} disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
               </div>
             </div>
           </div>
@@ -2799,22 +3209,29 @@ function SettingsPage({ setPage }) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">Mật khẩu hiện tại</label>
-                <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                <input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">Mật khẩu mới</label>
-                  <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="password" value={passwords.newPass} onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">Xác nhận mật khẩu mới</label>
-                  <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
+              <button onClick={changePassword} disabled={changingPass} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
+                {changingPass ? "Đang xử lý..." : "Đổi mật khẩu"}
+              </button>
             </div>
           </div>
 
-          <button className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer">Lưu thay đổi</button>
+          <div className="flex gap-3">
+            <button onClick={saveProfile} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
+              {saving ? "Đang lưu..." : "Lưu thay đổi"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2974,10 +3391,29 @@ function PortalPage({ setPage }) {
 }
 
 export default function App() {
+  const { user: authUser } = useAuth();
   const [page, setPage] = useState("home");
   const [activeArtworkId, setActiveArtworkId] = useState(artworks[2]?.id ?? 1);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState("student");
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    if (authUser) {
+      setIsLoggedIn(true);
+      setUserRole(authUser.role || "student");
+      setUserData({
+        name: authUser.name || "",
+        email: authUser.email || "",
+        image: authUser.image || "",
+        id: authUser.id || "",
+      });
+    } else {
+      setIsLoggedIn(false);
+      setUserRole("student");
+      setUserData(null);
+    }
+  }, [authUser]);
 
   // ────────────────────────────────────────────────────────────────────────────
   // Mock DB (để demo nghiệp vụ giảng viên)
@@ -3089,13 +3525,22 @@ export default function App() {
     );
   };
 
-  const handleLogin = (role) => { setIsLoggedIn(true); setUserRole(role || "student"); setPage("home"); };
-  const handleLogout = () => { setIsLoggedIn(false); setUserRole("student"); setPage("home"); };
+  const handleLogin = async (role) => {
+    const callbackUrl = "http://localhost:5173/";
+    window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  };
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserRole("student");
+    setUserData(null);
+    setPage("home");
+    fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
+  };
 
   return (
     <div className="font-sans min-h-screen bg-[#F8F8F8] text-[#212121]">
       {page !== "auth" && page !== "register" && page !== "portal" && (
-        <AppHeader activePage={page} setPage={setPage} isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} />
+        <AppHeader activePage={page} setPage={setPage} isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} userData={userData} />
       )}
       {page === "portal" && <PortalPage setPage={setPage} />}
       {page === "home" && <LandingPage setPage={setPage} isLoggedIn={isLoggedIn} />}

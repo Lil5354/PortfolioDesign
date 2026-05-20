@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  student
+  lecturer
+  admin
+}
+
+enum ReactionType {
+  like
+  heart
+  fire
+  clap
+}
+
+enum NotificationType {
+  new_like
+  new_message
+  grade_updated
+  artwork_hidden
+}
+
+enum DisplayOrder {
+  newest
+  oldest
+  by_subject
+}
+
+model User {
+  id                String              @id @default(uuid()) @map("user_id")
+  email             String              @unique @map("email")
+  passwordHash      String              @map("password_hash")
+  fullName          String              @map("full_name")
+  studentId         String?             @map("student_id")
+  role              Role                @default(student)
+  avatarUrl         String?             @map("avatar_url")
+  bio               String?
+  isActive          Boolean             @default(true) @map("is_active")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+
+  artworks           Artwork[]
+  gradesGiven        Grade[]            @relation("LecturerGrades")
+  likes              Like[]
+  comments           Comment[]
+  notifications      Notification[]
+  messages           Message[]
+  portfolioSettings  PortfolioSetting?
+  collections        CollectionItem[]
+
+  @@map("users")
+}
+
+model Artwork {
+  id                 String   @id @default(uuid()) @map("artwork_id")
+  userId             String   @map("user_id")
+  title              String
+  description        String?
+  toolsUsed          String[] @map("tools_used")
+  subject            String?
+  semester           String?
+  academicYear       String?  @map("academic_year")
+  tags               String[]
+  collaborators      String[]
+  coverImageUrl      String   @map("cover_image_url")
+  watermarkImageUrl  String?  @map("watermark_image_url")
+  fileUrls           String[] @map("file_urls")
+  watermarkText      String?  @map("watermark_text")
+  watermarkPosition  String?  @map("watermark_position")
+  isPublic           Boolean  @default(true) @map("is_public")
+  isHighlighted      Boolean  @default(false) @map("is_highlighted")
+  isAiConfirmed      Boolean  @default(false) @map("is_ai_confirmed")
+  viewCount          Int      @default(0) @map("view_count")
+  likeCount          Int      @default(0) @map("like_count")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  grades         Grade[]
+  likes          Like[]
+  comments        Comment[]
+  collectionItems CollectionItem[]
+
+  @@map("artworks")
+}
+
+model Grade {
+  id                  String   @id @default(uuid()) @map("grade_id")
+  artworkId           String   @map("artwork_id")
+  lecturerId          String   @map("lecturer_id")
+  score               Decimal? @db.Decimal(4, 1)
+  comment             String?
+  isVisibleToStudent  Boolean  @default(true) @map("is_visible_to_student")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  artwork  Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  lecturer User    @relation("LecturerGrades", fields: [lecturerId], references: [id])
+
+  @@map("grades")
+}
+
+model Like {
+  id           String       @id @default(uuid()) @map("like_id")
+  artworkId    String       @map("artwork_id")
+  userId       String?      @map("user_id")
+  ipAddress    String?      @map("ip_address")
+  reactionType ReactionType @default(like) @map("reaction_type")
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  artwork  Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  user     User?   @relation(fields: [userId], references: [id])
+
+  @@map("likes")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @map("comment_id")
+  artworkId String   @map("artwork_id")
+  userId    String   @map("user_id")
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  artwork Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("comments")
+}
+
+model Message {
+  id            String   @id @default(uuid()) @map("message_id")
+  recipientId   String   @map("recipient_id")
+  senderName    String   @map("sender_name")
+  senderEmail   String   @map("sender_email")
+  senderCompany String?  @map("sender_company")
+  purpose       String?
+  content       String
+  isRead        Boolean  @default(false) @map("is_read")
+  isEmailed     Boolean  @default(false) @map("is_emailed")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  recipient User @relation(fields: [recipientId], references: [id])
+
+  @@map("messages")
+}
+
+model Notification {
+  id              String           @id @default(uuid()) @map("notification_id")
+  userId          String           @map("user_id")
+  type            NotificationType
+  referenceId     String?          @map("reference_id")
+  referenceType   String?          @map("reference_type")
+  content         String
+  isRead          Boolean          @default(false) @map("is_read")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model PortfolioSetting {
+  id                String       @id @default(uuid()) @map("setting_id")
+  userId            String       @unique @map("user_id")
+  portfolioSlug     String?      @unique @map("portfolio_slug")
+  isPortfolioPublic Boolean      @default(true) @map("is_portfolio_public")
+  showEmail         Boolean      @default(false) @map("show_email")
+  profileHeadline   String?      @map("profile_headline")
+  socialLinks       Json?        @map("social_links") @db.JsonB
+  contactEnabled    Boolean      @default(true) @map("contact_enabled")
+  displayOrder      DisplayOrder @default(newest) @map("display_order")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("portfolio_settings")
+}
+
+model CollectionItem {
+  id              String   @id @default(uuid()) @map("collection_item_id")
+  lecturerId      String   @map("lecturer_id")
+  artworkId       String   @map("artwork_id")
+  collectionName  String?  @map("collection_name")
+  curatorEssay    String?  @map("curator_essay")
+  theme           String?
+  note            String?
+  addedAt         DateTime @default(now()) @map("added_at")
+
+  lecturer User    @relation(fields: [lecturerId], references: [id])
+  artwork  Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@map("collection_items")
+}
