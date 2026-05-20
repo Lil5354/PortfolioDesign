@@ -16,9 +16,7 @@ export async function GET(request: NextRequest) {
     const subject = searchParams.get('subject') || '';
     const year = searchParams.get('year') || '';
     const tool = searchParams.get('tool') || '';
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-    const limit = Math.max(1, Math.min(100, parseInt(searchParams.get('limit') || '20', 10)));
-    const skip = (page - 1) * limit;
+    const skip = 0;
 
     const where: Prisma.ArtworkWhereInput = {};
 
@@ -31,9 +29,13 @@ export async function GET(request: NextRequest) {
 
     if (tab === 'hidden') {
       where.isPublic = false;
+      where.isPending = false;
+    } else if (tab === 'pending') {
+      where.isPending = true;
     } else if (tab === 'highlight') {
       where.isHighlighted = true;
-    } else if (tab === 'all') {
+    } else if (tab === 'reported') {
+      where.reports = { some: { status: 'pending' } };
     }
 
     if (subject) {
@@ -58,12 +60,36 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { createdAt: 'desc' },
         skip,
-        take: limit,
+        take: 200,
       }),
       prisma.artwork.count({ where }),
     ]);
 
-    return NextResponse.json({ artworks, total, page, limit });
+    const artworkIds = artworks.map(a => a.id);
+    const pendingGroups = await prisma.report.groupBy({
+      by: ['artworkId'],
+      where: { artworkId: { in: artworkIds }, status: 'pending' },
+      _count: { artworkId: true },
+    });
+    const pendingMap: Record<string, number> = {};
+    for (const g of pendingGroups) {
+      pendingMap[g.artworkId] = g._count.artworkId;
+    }
+
+    const artworksWithPending = artworks.map(a => ({
+      ...a,
+      _count: { reports: pendingMap[a.id] || 0 },
+    }));
+
+    artworksWithPending.sort((a, b) => {
+      const aP = a._count.reports;
+      const bP = b._count.reports;
+      if (bP !== aP) return bP - aP;
+      if (b.isPending !== a.isPending) return b.isPending ? 1 : -1;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return NextResponse.json({ artworks: artworksWithPending, total, page: 1, limit: 200 });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

@@ -30,7 +30,12 @@ enum NotificationType {
 enum DisplayOrder {
   newest
   oldest
-  by_subject
+}
+
+enum ReportStatus {
+  pending
+  resolved
+  dismissed
 }
 
 model User {
@@ -50,6 +55,7 @@ model User {
   gradesGiven        Grade[]            @relation("LecturerGrades")
   likes              Like[]
   comments           Comment[]
+  reports            Report[]
   notifications      Notification[]
   messages           Message[]
   portfolioSettings  PortfolioSetting?
@@ -74,7 +80,8 @@ model Artwork {
   fileUrls           String[] @map("file_urls")
   watermarkText      String?  @map("watermark_text")
   watermarkPosition  String?  @map("watermark_position")
-  isPublic           Boolean  @default(true) @map("is_public")
+  isPublic           Boolean  @default(false) @map("is_public")
+  isPending          Boolean  @default(true) @map("is_pending")
   isHighlighted      Boolean  @default(false) @map("is_highlighted")
   isAiConfirmed      Boolean  @default(false) @map("is_ai_confirmed")
   viewCount          Int      @default(0) @map("view_count")
@@ -86,6 +93,7 @@ model Artwork {
   grades         Grade[]
   likes          Like[]
   comments        Comment[]
+  reports        Report[]
   collectionItems CollectionItem[]
 
   @@index([userId])
@@ -143,6 +151,24 @@ model Comment {
   user    User    @relation(fields: [userId], references: [id])
 
   @@map("comments")
+}
+
+model Report {
+  id            String       @id @default(uuid()) @map("report_id")
+  artworkId     String       @map("artwork_id")
+  userId        String?      @map("user_id")
+  violationType String       @map("violation_type")
+  detail        String?
+  status        ReportStatus @default(pending) @map("status")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  artwork Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@index([artworkId])
+  @@index([status])
+  @@map("reports")
 }
 
 model Message {

@@ -1044,6 +1044,10 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [relatedArtworks, setRelatedArtworks] = useState([]);
   const [liking, setLiking] = useState(false);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [showReport, setShowReport] = useState(false);
+  const [reportType, setReportType] = useState("");
+  const [reportDetail, setReportDetail] = useState("");
+  const [sendingReport, setSendingReport] = useState(false);
 
   const currentUserId = authUser?.id;
   const currentUserRole = authUser?.role;
@@ -1272,7 +1276,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 />
                 {isBookmarked && isBookmarked(art.id) ? "Đã lưu" : "Lưu"}
               </button>
-              <button style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Liên hệ</button>
+              <button onClick={() => setShowReport(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <ShieldAlert size={16} /> Báo cáo
+              </button>
             </div>
           </div>
 
@@ -1368,6 +1374,43 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
 
         </div>
       </div>
+
+      {showReport && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowReport(false)}>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-[#E0E0E0] flex items-center justify-between">
+              <h3 className="text-lg font-bold text-[#212121]">Báo cáo ấn phẩm</h3>
+              <button onClick={() => setShowReport(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-semibold text-[#666666] mb-3">Loại vi phạm</label>
+              <div className="flex flex-wrap gap-2 mb-5">
+                {["Đạo văn / Sao chép", "Nội dung không phù hợp", "Thông tin sai lệch", "Xâm phạm bản quyền", "Spam / Quảng cáo", "Khác"].map(t => (
+                  <button key={t} onClick={() => setReportType(t)} className={`px-3.5 py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${reportType === t ? "bg-[#077E9E] text-white border-[#077E9E]" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8]"}`}>{t}</button>
+                ))}
+              </div>
+              <label className="block text-sm font-semibold text-[#666666] mb-2">Chi tiết vi phạm</label>
+              <textarea value={reportDetail} onChange={e => setReportDetail(e.target.value)} placeholder="Mô tả chi tiết về vi phạm..." className="w-full p-3 rounded-lg border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] resize-vertical min-h-[120px] font-inherit text-[#212121] box-border" style={{ fontFamily: "inherit" }} />
+              <button onClick={async () => {
+                if (!reportType) return;
+                setSendingReport(true);
+                try {
+                  await api.artworks.report(activeArtworkId, { violationType: reportType, detail: reportDetail });
+                  setShowReport(false);
+                  setReportType("");
+                  setReportDetail("");
+                  alert("Cảm ơn bạn! Báo cáo đã được gửi đến quản trị viên.");
+                } catch (e) {
+                  alert("Lỗi khi gửi báo cáo: " + (e?.message || "Vui lòng thử lại"));
+                }
+                setSendingReport(false);
+              }} disabled={!reportType || sendingReport} className={`w-full mt-4 py-2.5 rounded-lg text-sm font-semibold border-none cursor-pointer ${!reportType || sendingReport ? "bg-[#E0E0E0] text-[#999]" : "bg-[#8B1A1A] text-white hover:bg-opacity-90"}`}>
+                {sendingReport ? "Đang gửi..." : "Gửi báo cáo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {relatedArtworks.length > 0 && (
         <div style={{ padding: "40px 48px 64px", borderTop: `1px solid ${GRAY_LIGHT}` }}>
@@ -2149,12 +2192,13 @@ function AdminArtworksPage({ setPage }) {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, mode: "delete", artId: null });
   const [galleryIdx, setGalleryIdx] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
 
   const fetchArtworks = (params = {}) => {
     setLoading(true);
-    api.admin.artworks(params).then(res => {
+    api.admin.artworks({ limit: 200, ...params }).then(res => {
       const raw = res.artworks || [];
-      raw.sort((a, b) => (b.isHighlighted ? 1 : 0) - (a.isHighlighted ? 1 : 0));
       setItems(raw);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -2168,10 +2212,18 @@ function AdminArtworksPage({ setPage }) {
     fetchArtworks(params);
   }, [query]);
 
-  const tabMap = { all: "all", hidden: "hidden", highlight: "highlight" };
+  useEffect(() => {
+    if (!selectedId) { setReports([]); return; }
+    setReportsLoading(true);
+    api.artworks.reports(selectedId).then(setReports).catch(() => setReports([])).finally(() => setReportsLoading(false));
+  }, [selectedId]);
+
+  const tabMap = { all: "all", reported: "reported", pending: "pending", hidden: "hidden", highlight: "highlight" };
   const filtered = items.filter(a => {
-    if (activeTab === "hidden") return !a.isPublic;
+    if (activeTab === "hidden") return !a.isPublic && !a.isPending;
+    if (activeTab === "pending") return a.isPending;
     if (activeTab === "highlight") return a.isHighlighted;
+    if (activeTab === "reported") return (a._count?.reports || 0) > 0;
     return true;
   }).filter(a => {
     if (!query.trim()) return true;
@@ -2239,8 +2291,10 @@ function AdminArtworksPage({ setPage }) {
 
   const tabCount = (key) => {
     return items.filter(a => {
-      if (key === "hidden") return !a.isPublic;
+      if (key === "hidden") return !a.isPublic && !a.isPending;
+      if (key === "pending") return a.isPending;
       if (key === "highlight") return a.isHighlighted;
+      if (key === "reported") return (a._count?.reports || 0) > 0;
       return true;
     }).length;
   };
@@ -2274,6 +2328,8 @@ function AdminArtworksPage({ setPage }) {
           <div className="mt-6 flex flex-wrap items-center gap-2">
             {[
               { key: "all", label: "Tất cả" },
+              { key: "reported", label: "Báo cáo" },
+              { key: "pending", label: "Chờ duyệt" },
               { key: "hidden", label: "Đã ẩn" },
               { key: "highlight", label: "Nổi bật" },
             ].map((t) => (
@@ -2349,7 +2405,7 @@ function AdminArtworksPage({ setPage }) {
         </div>
 
         <div className="flex-1 overflow-hidden flex">
-          <div className="w-[56%] min-w-[640px] border-r border-[#E0E0E0] overflow-hidden flex flex-col">
+          <div className="w-[65%] border-r border-[#E0E0E0] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-[#E0E0E0]">
               <div className="flex items-center gap-3">
                 <input
@@ -2374,7 +2430,6 @@ function AdminArtworksPage({ setPage }) {
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Môn học</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ngày</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold w-36">Trạng thái</th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold text-right">Điểm</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2382,9 +2437,11 @@ function AdminArtworksPage({ setPage }) {
                     <tr
                       key={a.id}
                       onClick={() => setSelectedId(a.id)}
-                      className={`border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors cursor-pointer ${
-                        selectedId === a.id ? "bg-[#E8F4F8]" : "bg-white"
-                      }`}
+                      className={`border-b transition-colors cursor-pointer ${
+                        selectedId === a.id ? "bg-[#E8F4F8]" : (a._count?.reports || 0) > 0 ? "bg-red-50" : a.isPending ? "bg-amber-50" : "bg-white"
+                      } ${
+                        (a._count?.reports || 0) > 0 ? "border-l-4 border-l-[#8B1A1A]" : "border-[#E0E0E0]"
+                      } hover:bg-[#F8F8F8]`}
                     >
                       <td className="px-4 py-3">
                         <input
@@ -2407,17 +2464,23 @@ function AdminArtworksPage({ setPage }) {
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.subject}</td>
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("vi-VN") : ""}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${a.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
-                          {a.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} className="text-[#666666]" />}
-                          {a.isPublic ? "Công khai" : "Riêng tư"}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${a.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
+                            {a.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} className="text-[#666666]" />}
+                            {a.isPublic ? "Công khai" : "Riêng tư"}
+                          </span>
+                          {(a._count?.reports || 0) > 0 && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#8B1A1A] bg-red-50 px-2 py-0.5 rounded-full border border-[#F5C5C5]">
+                              <ShieldAlert size={11} /> {(a._count?.reports || 0)}
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-semibold text-[#212121]">{a.score ?? "—"}</td>
                     </tr>
                   ))}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="text-center py-12 text-[#666666]">Không có ấn phẩm phù hợp.</td>
+                      <td colSpan={5} className="text-center py-12 text-[#666666]">Không có ấn phẩm phù hợp.</td>
                     </tr>
                   )}
                 </tbody>
@@ -2496,10 +2559,40 @@ function AdminArtworksPage({ setPage }) {
                     </a>
                   </div>
 
-                  <div className="mt-4 bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-4">
-                    <p className="text-sm text-[#666666] leading-relaxed">
-                      Hành động tại đây dành cho xử lý vi phạm / hiển thị. Việc chấm điểm được thực hiện trực tiếp trên trang chi tiết ấn phẩm của sinh viên.
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <ShieldAlert size={14} /> Báo cáo vi phạm {reports.length > 0 && <span className="bg-[#8B1A1A] text-white text-[10px] px-2 py-0.5 rounded-full">{reports.length}</span>}
                     </p>
+                    {reportsLoading ? (
+                      <p className="text-sm text-[#666666]">Đang tải...</p>
+                    ) : reports.length === 0 ? (
+                      <p className="text-sm text-[#666666] bg-[#F8F8F8] rounded-lg p-3 border border-[#E0E0E0]">Chưa có báo cáo nào cho ấn phẩm này.</p>
+                    ) : (
+                      <div className="flex flex-col gap-3 max-h-[320px] overflow-y-auto">
+                        {reports.map(r => (
+                          <div key={r.id} className="bg-[#F8F8F8] rounded-lg p-3 border border-[#E0E0E0]">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-xs font-semibold text-[#8B1A1A] bg-red-50 px-2 py-0.5 rounded border border-[#F5C5C5]">{r.violationType}</span>
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${r.status === "pending" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" : r.status === "resolved" ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}>
+                                {r.status === "pending" ? "Chờ xử lý" : r.status === "resolved" ? "Đã xử lý" : "Đã bỏ qua"}
+                              </span>
+                            </div>
+                            {r.detail && <p className="text-sm text-[#212121] mb-2">{r.detail}</p>}
+                            <div className="flex items-center justify-between">
+                              <p className="text-[10px] text-[#666666]">
+                                Bởi {r.user?.fullName || r.user?.email || "Người dùng"} · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
+                              </p>
+                              {r.status === "pending" && (
+                                <div className="flex gap-1">
+                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "resolved").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "resolved" } : x)))} className="text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200 hover:bg-green-100 transition-colors cursor-pointer">Xử lý xong</button>
+                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "dismissed").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "dismissed" } : x)))} className="text-[10px] font-semibold text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">Bỏ qua</button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-5 grid grid-cols-3 gap-3">

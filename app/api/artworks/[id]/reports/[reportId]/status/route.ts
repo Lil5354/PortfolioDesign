@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string; reportId: string } }) {
   try {
     const session = await auth();
     if (!session || (session.user.role !== 'admin' && session.user.role !== 'lecturer')) {
@@ -10,21 +10,18 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const body = await request.json();
-    const { isPublic } = body;
+    const { status } = body;
 
-    if (typeof isPublic !== 'boolean') {
-      return NextResponse.json({ error: 'isPublic must be a boolean' }, { status: 400 });
+    if (!['pending', 'resolved', 'dismissed'].includes(status)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
     }
 
-    const artwork = await prisma.artwork.update({
-      where: { id: params.id },
-      data: {
-        isPublic,
-        ...(isPublic ? { isPending: false } : {}),
-      },
+    const report = await prisma.report.update({
+      where: { id: params.reportId },
+      data: { status },
     });
 
-    return NextResponse.json(artwork);
+    return NextResponse.json(report);
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
