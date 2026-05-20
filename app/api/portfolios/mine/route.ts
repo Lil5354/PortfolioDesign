@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { portfolioSlug, profileHeadline, socialLinks, isPortfolioPublic, showEmail, contactEnabled, displayOrder, featuredArtworkIds } = body;
+    const { portfolioSlug, profileHeadline, socialLinks, isPortfolioPublic, showEmail, contactEnabled, displayOrder, featuredArtworkIds, major, yearLevel } = body;
 
     const data: Record<string, unknown> = {};
     if (portfolioSlug !== undefined) data.portfolioSlug = portfolioSlug;
@@ -68,6 +68,8 @@ export async function PUT(request: NextRequest) {
     if (contactEnabled !== undefined) data.contactEnabled = contactEnabled;
     if (displayOrder !== undefined) data.displayOrder = displayOrder;
     if (featuredArtworkIds !== undefined) data.featuredArtworkIds = featuredArtworkIds;
+    if (major !== undefined) data.major = major;
+    if (yearLevel !== undefined) data.yearLevel = yearLevel;
 
     if (portfolioSlug) {
       const existing = await prisma.portfolioSetting.findUnique({

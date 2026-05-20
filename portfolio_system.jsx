@@ -325,14 +325,15 @@ function PortfolioPage({ setPage }) {
   const [contactState, setContactState] = useState("idle");
   const [portfolioData, setPortfolioData] = useState(null);
   const [portfolioArtworks, setPortfolioArtworks] = useState([]);
+  const [portfolioSettingsData, setPortfolioSettingsData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentYear, setCurrentYear] = useState("Năm 3");
 
   const slug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
-  const yearLabels = { "Năm 1": "Design Freshman", "Năm 2": "Design Sophomore", "Năm 3": "Design Junior", "Năm 4": "Design Senior", "Tốt nghiệp": "Graduate" };
+  const titleByYear = { "Năm 1": "Nhà thiết kế mầm non", "Năm 2": "Nhà thiết kế tập sự", "Năm 3": "Nhà thiết kế chuyên nghiệp", "Năm 4": "Nhà thiết kế cao cấp", "Tốt nghiệp": "Nhà thiết kế xuất sắc" };
 
   useEffect(() => {
     setLoading(true);
+    setPortfolioSettingsData(null);
     const fetchFn = slug ? api.portfolios.get(slug) : api.portfolios.me();
     const artworksFn = slug ? api.portfolios.artworks(slug, { limit: "50" }) : Promise.resolve({ artworks: [] });
     const statsFn = slug ? api.portfolios.stats(slug) : Promise.resolve({});
@@ -350,12 +351,16 @@ function PortfolioPage({ setPage }) {
       if (artRes?.artworks) setPortfolioArtworks(artRes.artworks);
       setLoading(false);
     }).catch(() => setLoading(false));
+
+    api.portfolios.mine().then(data => {
+      setPortfolioSettingsData(data);
+    }).catch(() => {});
   }, [slug]);
 
   if (loading) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Đang tải portfolio...</div>;
   if (!portfolioData) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Portfolio không tồn tại hoặc đang ở chế độ riêng tư.</div>;
 
-  const { user, portfolioSettings, stats, featuredArtworks } = portfolioData;
+  const { user, portfolioSettings, stats, featuredArtworks, privateGrade } = portfolioData;
   const profile = {
     fullName: user?.fullName || "Sinh viên",
     profileHeadline: portfolioSettings?.profileHeadline || "Design Student",
@@ -370,7 +375,11 @@ function PortfolioPage({ setPage }) {
     profile.email && portfolioSettings?.showEmail && { label: "Email", href: `mailto:${profile.email}`, icon: "mail" },
   ].filter(Boolean);
 
-  const featuredWorks = (featuredArtworks || []).slice(0, 6).map((a, i) => {
+  const highlightWorks = (portfolioArtworks || []).filter(a => a.isHighlighted).slice(0, 2);
+  const topLikedWorks = (portfolioArtworks || []).filter(a => !a.isHighlighted).sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0)).slice(0, 2);
+  const extraWorks = highlightWorks.length >= 2 ? highlightWorks : [...highlightWorks, ...topLikedWorks].slice(0, 2);
+  const allFeatured = [...(featuredArtworks || []), ...extraWorks.filter(ex => !(featuredArtworks || []).some(f => f.id === ex.id))];
+  const featuredWorks = allFeatured.slice(0, 6).map((a, i) => {
     const layouts = ["col-span-12 lg:col-span-7", "col-span-12 sm:col-span-6 lg:col-span-5", "col-span-12 sm:col-span-6 lg:col-span-5", "col-span-12 sm:col-span-4", "col-span-12 sm:col-span-4", "col-span-12 sm:col-span-4"];
     return { id: a.id, title: a.title, img: a.coverImageUrl, tools: a.toolsUsed || [], colClass: layouts[i % layouts.length], rowSpan: [10, 5, 5, 5, 5, 5][i % 6] };
   });
@@ -431,13 +440,8 @@ function PortfolioPage({ setPage }) {
               </div>
 
               <p className="text-base sm:text-lg text-[#666666] font-medium mb-2">
-                {profile.profileHeadline}
+                {titleByYear[portfolioSettingsData?.portfolioSettings?.yearLevel || portfolioSettingsData?.yearLevel || portfolioSettings?.yearLevel || "Năm 3"]} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || portfolioSettings?.major || "Thiết kế Đồ họa"} • UEF
               </p>
-              <div className="flex flex-wrap gap-2 mb-3">
-                {Object.entries(yearLabels).map(([key]) => (
-                  <button key={key} onClick={() => setCurrentYear(key)} className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition-colors cursor-pointer ${currentYear === key ? 'bg-[#077E9E] text-white border-[#077E9E]' : 'bg-white text-[#666666] border-[#E0E0E0] hover:border-[#077E9E]'}`}>{key}</button>
-                ))}
-              </div>
               <p className="text-sm sm:text-[15px] text-[#444444] leading-relaxed max-w-2xl">
                 {profile.bio}
               </p>
@@ -558,7 +562,7 @@ function PortfolioPage({ setPage }) {
           </div>
         </section>
 
-        {/* giữ nguyên các block cũ phía dưới (tạm thời), để không phá layout hiện có */}
+        {privateGrade && (
         <div className="mt-10" style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, borderRadius: 10, padding: "14px 18px", marginBottom: 28, display: "flex", gap: 14, alignItems: "flex-start" }}>
           <div style={{ background: BLACK, borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 4 }}>
             <Lock size={12} color="#fff" />
@@ -576,6 +580,7 @@ function PortfolioPage({ setPage }) {
             <p style={{ fontSize: 13, color: "#555", marginTop: 6, lineHeight: 1.6, marginBottom: 0 }}>{privateGrade.comment}</p>
           </div>
         </div>
+        )}
 
         <div style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 0 }}>
@@ -3458,7 +3463,7 @@ function SaveToCollectionModal({
 }
 
 function PortfolioSettingsPage({ setPage }) {
-  const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", isPortfolioPublic: true, socialLinks: {}, featuredArtworkIds: [] });
+  const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", major: "", yearLevel: "Năm 3", isPortfolioPublic: true, socialLinks: {}, featuredArtworkIds: [] });
   const [myArtworks, setMyArtworks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -3466,13 +3471,15 @@ function PortfolioSettingsPage({ setPage }) {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/portfolios/mine").then(r => r.json()),
+      api.portfolios.mine().catch(() => ({})),
       api.users.myArtworks().catch(() => []),
     ]).then(([data, arts]) => {
       const p = data.portfolioSettings || data;
       setSettings({
         portfolioSlug: p.portfolioSlug || "",
         profileHeadline: p.profileHeadline || "",
+        major: p.major || "",
+        yearLevel: p.yearLevel || "Năm 3",
         isPortfolioPublic: p.isPortfolioPublic !== false,
         socialLinks: p.socialLinks || {},
         featuredArtworkIds: p.featuredArtworkIds || [],
@@ -3495,20 +3502,16 @@ function PortfolioSettingsPage({ setPage }) {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      const res = await fetch("/api/portfolios/mine", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          portfolioSlug: settings.portfolioSlug,
-          profileHeadline: settings.profileHeadline,
-          isPortfolioPublic: settings.isPortfolioPublic,
-          socialLinks: settings.socialLinks,
-          featuredArtworkIds: settings.featuredArtworkIds,
-        }),
+      const data = await api.portfolios.updateMine({
+        portfolioSlug: settings.portfolioSlug,
+        profileHeadline: settings.profileHeadline,
+        major: settings.major,
+        yearLevel: settings.yearLevel,
+        isPortfolioPublic: settings.isPortfolioPublic,
+        socialLinks: settings.socialLinks,
+        featuredArtworkIds: settings.featuredArtworkIds,
       });
-      const data = await res.json();
-      if (res.ok) setMessage({ type: "success", text: "Đã lưu cài đặt portfolio!" });
-      else setMessage({ type: "error", text: data.error || "Lỗi lưu" });
+      setMessage({ type: "success", text: "Đã lưu cài đặt portfolio!" });
     } catch {
       setMessage({ type: "error", text: "Lỗi kết nối" });
     } finally {
@@ -3552,6 +3555,31 @@ function PortfolioSettingsPage({ setPage }) {
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">Tiêu đề nghề nghiệp (Profile Headline)</label>
                 <input type="text" value={settings.profileHeadline} onChange={(e) => setSettings({ ...settings, profileHeadline: e.target.value })} placeholder="Graphic Designer & Visual Artist" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">Chuyên ngành</label>
+                <select value={settings.major || ""} onChange={(e) => setSettings({ ...settings, major: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] bg-white">
+                  <option value="">Chọn chuyên ngành</option>
+                  <option value="Thiết kế Đồ họa">Thiết kế Đồ họa</option>
+                  <option value="Thiết kế Truyền thông">Thiết kế Truyền thông</option>
+                  <option value="Thiết kế Kỹ thuật số & UI/UX">Thiết kế Kỹ thuật số & UI/UX</option>
+                  <option value="Motion Graphics & Video">Motion Graphics & Video</option>
+                  <option value="Minh họa & Nghệ thuật 3D">Minh họa & Nghệ thuật 3D</option>
+                  <option value="Thiết kế Bao bì">Thiết kế Bao bì</option>
+                  <option value="Thiết kế Nhận diện Thương hiệu">Thiết kế Nhận diện Thương hiệu</option>
+                  <option value="Nhiếp ảnh & Xử lý Hình ảnh">Nhiếp ảnh & Xử lý Hình ảnh</option>
+                  <option value="Thiết kế Quảng cáo">Thiết kế Quảng cáo</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#212121] mb-2">Năm học</label>
+                <select value={settings.yearLevel} onChange={(e) => setSettings({ ...settings, yearLevel: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] bg-white">
+                  <option value="Năm 1">Năm 1</option>
+                  <option value="Năm 2">Năm 2</option>
+                  <option value="Năm 3">Năm 3</option>
+                  <option value="Năm 4">Năm 4</option>
+                  <option value="Tốt nghiệp">Tốt nghiệp</option>
+                </select>
               </div>
             </div>
           </div>
