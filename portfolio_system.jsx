@@ -2124,11 +2124,15 @@ function AdminArtworksPage({ setPage }) {
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, mode: "delete", artId: null });
+  const [galleryIdx, setGalleryIdx] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
 
   const fetchArtworks = (params = {}) => {
     setLoading(true);
     api.admin.artworks(params).then(res => {
-      setItems(res.artworks || []);
+      const raw = res.artworks || [];
+      raw.sort((a, b) => (b.isHighlighted ? 1 : 0) - (a.isHighlighted ? 1 : 0));
+      setItems(raw);
       setLoading(false);
     }).catch(() => setLoading(false));
   };
@@ -2417,13 +2421,24 @@ function AdminArtworksPage({ setPage }) {
                 </div>
 
                 <div className="p-5">
-                  <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8]">
+                  <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer" onClick={() => {
+                    const imgs = [selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean);
+                    setGalleryImages(imgs);
+                    setGalleryIdx(0);
+                  }}>
                     <img src={selected.coverImageUrl} className="w-full h-64 object-cover" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-semibold transition-opacity">Nhấp để phóng to</span>
+                    </div>
                   </div>
                   {(selected.fileUrls || []).length > 0 && (
                     <div className="flex gap-2 mt-3 flex-wrap">
                       {[selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean).map((url, idx) => (
-                        <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8]">
+                        <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#077E9E] transition-colors" onClick={() => {
+                          const imgs = [selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean);
+                          setGalleryImages(imgs);
+                          setGalleryIdx(idx);
+                        }}>
                           <img src={url} alt="" className="w-full h-full object-cover" />
                         </div>
                       ))}
@@ -2452,7 +2467,13 @@ function AdminArtworksPage({ setPage }) {
                     </div>
                   </div>
 
-                  <div className="mt-5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-4">
+                  <div className="mt-4">
+                    <a href={`${window.location.origin}/#/detail/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[#077E9E] hover:text-[#055F78] font-semibold flex items-center gap-1.5 transition-colors">
+                      <ExternalLink size={14} /> Xem chi tiết: {selected.title}
+                    </a>
+                  </div>
+
+                  <div className="mt-4 bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-4">
                     <p className="text-sm text-[#666666] leading-relaxed">
                       Hành động tại đây dành cho xử lý vi phạm / hiển thị. Việc chấm điểm được thực hiện trực tiếp trên trang chi tiết ấn phẩm của sinh viên.
                     </p>
@@ -2502,6 +2523,16 @@ function AdminArtworksPage({ setPage }) {
               <button onClick={confirmAction} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">Xác nhận</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {galleryIdx !== null && galleryImages.length > 0 && (
+        <div className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center" onClick={() => setGalleryIdx(null)}>
+          <button onClick={(e) => { e.stopPropagation(); setGalleryIdx(prev => Math.max(0, prev - 1)); }} className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors z-10 cursor-pointer text-xl leading-none">&lsaquo;</button>
+          <img src={galleryImages[galleryIdx]} alt="" className="max-w-[90vw] max-h-[90vh] object-contain" onClick={(e) => e.stopPropagation()} />
+          <button onClick={(e) => { e.stopPropagation(); setGalleryIdx(prev => Math.min(galleryImages.length - 1, prev + 1)); }} className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors z-10 cursor-pointer text-xl leading-none">&rsaquo;</button>
+          <button onClick={() => setGalleryIdx(null)} className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center transition-colors cursor-pointer"><X size={20} /></button>
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm">{galleryIdx + 1} / {galleryImages.length}</div>
         </div>
       )}
     </div>
