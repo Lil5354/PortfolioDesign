@@ -628,21 +628,24 @@ function ToggleSwitch({ isOn, onToggle }) {
   );
 }
 
-function DashboardSidebar({ active, setPage }) {
+function DashboardSidebar({ active, setPage, userData }) {
   const items = [
     { icon: <Image size={18} />, label: "Tác phẩm của tôi", page: "dashboard" },
     { icon: <MessageSquare size={18} />, label: "Hộp thư", page: "messages" },
     { icon: <Settings size={18} />, label: "Cài đặt", page: "settings" },
   ];
+  const profileName = userData?.name || "Sinh viên";
+  const profileAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+  const studentYear = "Sinh viên";
 
   return (
     <div style={{ width: 220, background: "#fff", borderRight: `1px solid ${GRAY_LIGHT}`, padding: "28px 0", flexShrink: 0 }}>
       <div style={{ padding: "0 20px 20px", borderBottom: `1px solid ${GRAY_LIGHT}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80" alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} />
+          <img src={profileAvatar} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} />
           <div>
-            <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: BLACK }}>Minh Anh</p>
-            <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Sinh viên K2021</p>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: BLACK }}>{profileName}</p>
+            <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{studentYear}</p>
           </div>
         </div>
       </div>
@@ -658,22 +661,34 @@ function DashboardSidebar({ active, setPage }) {
   );
 }
 
-function DashboardPage({ setPage }) {
-  const [artworkState, setArtworkState] = useState(artworks.map(a => ({ ...a })));
-  const togglePublic = (id) => setArtworkState(prev => prev.map(a => a.id === id ? { ...a, isPublic: !a.isPublic } : a));
+function DashboardPage({ setPage, userData }) {
+  const [artworksList, setArtworksList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.artworks.myArtworks().then(res => {
+      setArtworksList(Array.isArray(res) ? res : (res.artworks || []));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const totalArtworks = artworksList.length;
+  const totalViews = artworksList.reduce((s, a) => s + (a.viewCount || 0), 0);
+  const totalLikes = artworksList.reduce((s, a) => s + (a.likeCount || 0), 0);
+  const publicCount = artworksList.filter(a => a.isPublic).length;
 
   const stats = [
-    { label: "Tổng tác phẩm", val: "12", icon: <Image size={24} color={BLACK} strokeWidth={1.5} /> },
-    { label: "Lượt xem", val: "2,417", icon: <Eye size={24} color={BLACK} strokeWidth={1.5} /> },
-    { label: "Lượt thích", val: "847", icon: <Heart size={24} color={BLACK} strokeWidth={1.5} /> },
-    { label: "Tác phẩm công khai", val: artworkState.filter(a => a.isPublic).length.toString(), icon: <Globe size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Tổng tác phẩm", val: totalArtworks.toLocaleString(), icon: <Image size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Lượt xem", val: totalViews.toLocaleString(), icon: <Eye size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Lượt thích", val: totalLikes.toLocaleString(), icon: <Heart size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: "Tác phẩm công khai", val: publicCount.toString(), icon: <Globe size={24} color={BLACK} strokeWidth={1.5} /> },
   ];
 
   return (
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
-      <DashboardSidebar active="Tác phẩm của tôi" setPage={setPage} />
+      <DashboardSidebar active="Tác phẩm của tôi" setPage={setPage} userData={userData} />
 
-      <div style={{ flex: 1, padding: "32px 40px" }}>
+      <div style={{ flex: 1, padding: "32px 40px", overflow: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Tác phẩm của tôi</h2>
@@ -685,49 +700,57 @@ function DashboardPage({ setPage }) {
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
-          {stats.map(s => (
-            <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", border: `1px solid ${GRAY_LIGHT}` }}>
-              <div style={{ marginBottom: 8 }}>{s.icon}</div>
-              <p style={{ fontSize: 24, fontWeight: 700, margin: "0 0 2px", color: BLACK }}>{s.val}</p>
-              <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>{s.label}</p>
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>Đang tải dữ liệu...</div>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
+              {stats.map(s => (
+                <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", border: `1px solid ${GRAY_LIGHT}` }}>
+                  <div style={{ marginBottom: 8 }}>{s.icon}</div>
+                  <p style={{ fontSize: 24, fontWeight: 700, margin: "0 0 2px", color: BLACK }}>{s.val}</p>
+                  <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>{s.label}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-          {artworkState.map(art => (
-            <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
-              <div style={{ position: "relative", background: GRAY_BG }}>
-                <img src={art.img} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail")} />
-                <div style={{ position: "absolute", top: 8, left: 8 }}>
-                  <span style={{ background: art.isPublic ? "#E8F4F8" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#B3D9E8" : GRAY_LIGHT}` }}>{art.isPublic ? "Công khai" : "Riêng tư"}</span>
-                </div>
-              </div>
-              <div style={{ padding: "12px 14px" }}>
-                <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
-                <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-                  <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.category}</span>
-                  <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.tool}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px solid ${GRAY_LIGHT}` }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 11, color: MUTED }}>Công khai</span>
-                    <ToggleSwitch isOn={art.isPublic} onToggle={() => togglePublic(art.id)} />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              {artworksList.map(art => (
+                <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                  <div style={{ position: "relative", background: GRAY_BG }}>
+                    <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail")} />
+                    <div style={{ position: "absolute", top: 8, left: 8 }}>
+                      <span style={{ background: art.isPublic ? "#E8F4F8" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#B3D9E8" : GRAY_LIGHT}` }}>{art.isPublic ? "Công khai" : "Riêng tư"}</span>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", gap: 6 }}>
-                    <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
-                    </button>
-                    <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid #F5C5C5`, background: "#FEF2F2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Trash2 size={14} color={CRIMSON} strokeWidth={1.5} />
-                    </button>
+                  <div style={{ padding: "12px 14px" }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                      <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.subject}</span>
+                      {(art.toolsUsed || []).slice(0, 1).map(t => (
+                        <span key={t} style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{t}</span>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px solid ${GRAY_LIGHT}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 11, color: MUTED }}>Công khai</span>
+                        <ToggleSwitch isOn={art.isPublic} onToggle={() => {}} />
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
+                        </button>
+                        <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid #F5C5C5`, background: "#FEF2F2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Trash2 size={14} color={CRIMSON} strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -3740,7 +3763,7 @@ export default function App() {
         />
       )}
       {page === "portfolio" && <PortfolioPage setPage={setPage} />}
-      {page === "dashboard" && <DashboardPage setPage={setPage} />}
+      {page === "dashboard" && <DashboardPage setPage={setPage} userData={userData} />}
       {page === "upload" && <UploadPage setPage={setPage} />}
       {page === "detail" && (
         <DetailPage
