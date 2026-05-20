@@ -880,7 +880,11 @@ function UploadPage({ setPage }) {
 
 function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
   const { user: authUser } = useAuth();
-  const [art, setArt] = useState(null);
+  const [art, setArt] = useState({
+    title: "Đang tải...", subject: "Đang tải...", coverImageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
+    description: "", tags: [], toolsUsed: [], likeCount: 0, commentCount: 0,
+    createdAt: new Date().toISOString(), user: null, userId: null, isPublic: true,
+  });
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState([]);
@@ -892,23 +896,28 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [savingGrade, setSavingGrade] = useState(false);
   const [relatedArtworks, setRelatedArtworks] = useState([]);
   const [liking, setLiking] = useState(false);
-  const [localSession, setLocalSession] = useState(null);
 
-  useEffect(() => {
-    fetch("/api/auth/session", { credentials: "include" }).then(r => r.json()).then(s => {
-      setLocalSession(s?.user || null);
-    }).catch(() => {});
-  }, []);
-
-  const activeUser = localSession || authUser;
-  const currentUserId = activeUser?.id;
-  const currentUserRole = activeUser?.role;
+  const currentUserId = authUser?.id;
+  const currentUserRole = authUser?.role;
   const canGrade = currentUserRole === "lecturer" || currentUserRole === "admin";
+
+  // Debug log
+  useEffect(() => {
+    console.log("👤 DetailPage - authUser:", authUser);
+    console.log("👤 DetailPage - currentUserId:", currentUserId);
+    console.log("👤 DetailPage - currentUserRole:", currentUserRole);
+  }, [authUser, currentUserId, currentUserRole]);
 
   useEffect(() => {
     if (!activeArtworkId) return;
     api.artworks.get(activeArtworkId).then(res => {
-      setArt(res);
+      setArt({
+        ...res,
+        subject: res.subject || "Ấn phẩm",
+        tags: res.tags || [],
+        toolsUsed: res.toolsUsed || [],
+        description: res.description || "",
+      });
       setIsLiked(res.isLiked || false);
       setLikeCount(res.likeCount || 0);
       setComments(res.comments || []);
@@ -920,18 +929,6 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     }).catch(() => {});
     api.artworks.related(activeArtworkId, 6).then(setRelatedArtworks).catch(() => {});
   }, [activeArtworkId]);
-
-  const artDisplay = art || {
-    title: "Đang tải...",
-    subject: "",
-    coverImageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
-    description: "",
-    tags: [], toolsUsed: [], likeCount: 0, commentCount: 0,
-    createdAt: new Date().toISOString(),
-    user: null,
-    userId: null,
-    isPublic: true,
-  };
 
   const handleLike = async () => {
     if (liking) return;
@@ -953,7 +950,11 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   };
 
   const handleSendComment = async () => {
-    if (!commentText.trim() || !currentUserId) return;
+    if (!commentText.trim()) return;
+    if (!currentUserId) {
+      alert("Vui lòng đăng nhập để bình luận");
+      return;
+    }
     setSendingComment(true);
     try {
       const newComment = await api.artworks.comments.create(activeArtworkId, commentText.trim());
@@ -3524,29 +3525,43 @@ function PortalPage({ setPage }) {
 }
 
 export default function App() {
-  const { user: authUser } = useAuth();
+  const { user: authUser, loading, logout, refreshSession } = useAuth();
   const [page, setPage] = useState("home");
   const [activeArtworkId, setActiveArtworkId] = useState(artworks[2]?.id ?? 1);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState("student");
-  const [userData, setUserData] = useState(null);
 
+  const isLoggedIn = !!authUser;
+  const userRole = authUser?.role || "student";
+  const userData = authUser ? {
+    name: authUser.name || "",
+    email: authUser.email || "",
+    image: authUser.image || "",
+    id: authUser.id || "",
+  } : null;
+
+  // Xử lý OAuth callback - force refresh session sau khi redirect từ Google
   useEffect(() => {
-    if (authUser) {
-      setIsLoggedIn(true);
-      setUserRole(authUser.role || "student");
-      setUserData({
-        name: authUser.name || "",
-        email: authUser.email || "",
-        image: authUser.image || "",
-        id: authUser.id || "",
-      });
-    } else {
-      setIsLoggedIn(false);
-      setUserRole("student");
-      setUserData(null);
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasOAuthParams = urlParams.has('code') || urlParams.has('state') || 
+                          window.location.pathname.includes('callback') ||
+                          window.location.hash.includes('access_token');
+    
+    if (hasOAuthParams) {
+      console.log("🔄 OAuth callback detected in App, forcing refresh...");
+      // Retry multiple times để đảm bảo session được set
+      const retryRefresh = () => {
+        refreshSession();
+        setTimeout(() => refreshSession(), 1000);
+        setTimeout(() => refreshSession(), 2000);
+        setTimeout(() => refreshSession(), 3000);
+      };
+      retryRefresh();
+      
+      // Clean URL sau khi xử lý xong
+      setTimeout(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 3500);
     }
-  }, [authUser]);
+  }, [refreshSession]);
 
   // ────────────────────────────────────────────────────────────────────────────
   // Mock DB (để demo nghiệp vụ giảng viên)
@@ -3662,12 +3677,10 @@ export default function App() {
     const callbackUrl = "http://localhost:5173/";
     window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`;
   };
+  
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserRole("student");
-    setUserData(null);
+    logout();
     setPage("home");
-    fetch("/api/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
   };
 
   return (

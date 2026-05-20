@@ -8,27 +8,94 @@ export function AuthProvider({ children }) {
 
   const refreshSession = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/session", { credentials: "include" });
+      const res = await fetch("/api/auth/session", { 
+        credentials: "include",
+        cache: "no-store" // Đảm bảo không dùng cache
+      });
+      
+      if (!res.ok) {
+        console.error("❌ Session API error:", res.status, res.statusText);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      
       const session = await res.json();
+      console.log("🔐 Auth Session Response:", session); // Debug log
+      console.log("🔐 Full session object:", JSON.stringify(session, null, 2)); // Debug full object
+      
+      // Xử lý nhiều format response khác nhau
+      let userObj = null;
+      
       if (session?.user) {
-        setUser({
-          id: session.user.id,
-          name: session.user.name || "",
-          email: session.user.email || "",
-          image: session.user.image || "",
-          role: session.user.role || "student",
-        });
+        userObj = session.user;
+      } else if (session?.data?.user) {
+        userObj = session.data.user;
+      } else if (session?.id && session?.email) {
+        // Trường hợp session trả về trực tiếp user data
+        userObj = session;
+      }
+      
+      if (userObj) {
+        // Xử lý linh hoạt cho cả email login và Google login
+        const userData = {
+          id: userObj.id || userObj._id || userObj.userId || userObj.sub,
+          name: userObj.name || userObj.fullName || userObj.displayName || userObj.given_name || "",
+          email: userObj.email || "",
+          image: userObj.image || userObj.avatarUrl || userObj.picture || userObj.avatar || "",
+          role: userObj.role || "student",
+        };
+        console.log("✅ User logged in:", userData); // Debug log
+        
+        // Kiểm tra xem có đủ thông tin không
+        if (userData.id && userData.email) {
+          setUser(userData);
+        } else {
+          console.warn("⚠️ User data incomplete:", userData);
+          console.warn("⚠️ Original user object:", userObj);
+          setUser(null);
+        }
       } else {
+        console.log("❌ No user in session"); // Debug log
         setUser(null);
       }
-    } catch {
+    } catch (error) {
+      console.error("❌ Auth error:", error); // Debug log
       setUser(null);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { refreshSession(); }, [refreshSession]);
+  useEffect(() => { 
+    refreshSession(); 
+    
+    // Force refresh ngay lập tức khi có query params (sau OAuth redirect)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('code') || urlParams.has('state') || window.location.hash) {
+      console.log("🔄 Detected OAuth redirect, forcing session refresh...");
+      setTimeout(() => refreshSession(), 500);
+      setTimeout(() => refreshSession(), 1500);
+      setTimeout(() => refreshSession(), 3000);
+    }
+    
+    // Refresh session khi window được focus lại (sau khi redirect từ login)
+    const handleFocus = () => {
+      console.log("🔄 Window focused, refreshing session...");
+      refreshSession();
+    };
+    
+    // Refresh session mỗi 30 giây để đảm bảo sync
+    const interval = setInterval(() => {
+      refreshSession();
+    }, 30000);
+    
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
+  }, [refreshSession]);
 
   const login = useCallback((provider = "google") => {
     if (provider === "google") {
