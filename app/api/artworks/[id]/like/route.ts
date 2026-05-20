@@ -6,12 +6,18 @@ interface Params {
   params: { id: string };
 }
 
-export async function POST(_request: NextRequest, { params }: Params) {
+function getClientIp(request: NextRequest): string {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  const realIp = request.headers.get('x-real-ip');
+  if (realIp) return realIp;
+  return '127.0.0.1';
+}
+
+export async function POST(request: NextRequest, { params }: Params) {
   try {
     const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ip = getClientIp(request);
 
     const artwork = await prisma.artwork.findUnique({
       where: { id: params.id },
@@ -22,9 +28,11 @@ export async function POST(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Artwork not found' }, { status: 404 });
     }
 
-    const existingLike = await prisma.like.findFirst({
-      where: { artworkId: params.id, userId: session.user.id },
-    });
+    const where = session
+      ? { artworkId: params.id, userId: session.user.id }
+      : { artworkId: params.id, ipAddress: ip, userId: null };
+
+    const existingLike = await prisma.like.findFirst({ where });
 
     if (existingLike) {
       return NextResponse.json(existingLike);
@@ -33,7 +41,8 @@ export async function POST(_request: NextRequest, { params }: Params) {
     const like = await prisma.like.create({
       data: {
         artworkId: params.id,
-        userId: session.user.id,
+        userId: session?.user?.id || null,
+        ipAddress: session ? null : ip,
         reactionType: 'like',
       },
     });
@@ -49,16 +58,16 @@ export async function POST(_request: NextRequest, { params }: Params) {
   }
 }
 
-export async function DELETE(_request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const ip = getClientIp(request);
 
-    const existingLike = await prisma.like.findFirst({
-      where: { artworkId: params.id, userId: session.user.id },
-    });
+    const where = session
+      ? { artworkId: params.id, userId: session.user.id }
+      : { artworkId: params.id, ipAddress: ip, userId: null };
+
+    const existingLike = await prisma.like.findFirst({ where });
 
     if (!existingLike) {
       return NextResponse.json({ error: 'Like not found' }, { status: 404 });

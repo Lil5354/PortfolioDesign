@@ -8,7 +8,7 @@ export function AuthProvider({ children }) {
 
   const refreshSession = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/session");
+      const res = await fetch("/api/auth/session", { credentials: "include" });
       const session = await res.json();
       if (session?.user) {
         setUser({

@@ -6,22 +6,28 @@ interface Params {
   params: { id: string };
 }
 
-export async function GET(_request: NextRequest, { params }: Params) {
+export async function GET(request: NextRequest, { params }: Params) {
   try {
+    const session = await auth();
+    const forwarded = request.headers.get('x-forwarded-for');
+    const clientIp = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
+
     const artwork = await prisma.artwork.findUnique({
       where: { id: params.id },
       include: {
         user: {
           select: { id: true, fullName: true, studentId: true, avatarUrl: true },
         },
-        likes: {
-          select: { id: true, userId: true, reactionType: true },
-        },
         comments: {
-          select: { id: true },
+          orderBy: { createdAt: 'desc' },
+          include: {
+            user: { select: { id: true, fullName: true, avatarUrl: true } },
+          },
         },
         grades: {
-          select: { id: true, score: true, comment: true, lecturerId: true, isVisibleToStudent: true, createdAt: true },
+          include: {
+            lecturer: { select: { id: true, fullName: true, avatarUrl: true } },
+          },
         },
       },
     });
@@ -30,12 +36,21 @@ export async function GET(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Artwork not found' }, { status: 404 });
     }
 
-    const { likes, comments, grades, ...artworkData } = artwork;
+    const likesCount = await prisma.like.count({ where: { artworkId: params.id } });
+
+    const likeWhere = session
+      ? { artworkId: params.id, userId: session.user.id }
+      : { artworkId: params.id, ipAddress: clientIp, userId: null };
+    const isLiked = await prisma.like.findFirst({ where: likeWhere }).then(Boolean);
+
+    const { comments, grades, ...artworkData } = artwork;
 
     const response = {
       ...artworkData,
-      likeCount: artworkData.likeCount ?? likes.length,
-      commentCount: artworkData.commentCount ?? comments.length,
+      likeCount: artworkData.likeCount ?? likesCount,
+      commentCount: comments.length,
+      isLiked,
+      comments,
       grade: grades.length > 0 ? grades[0] : null,
     };
 

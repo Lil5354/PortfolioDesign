@@ -3,13 +3,17 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const sampleStudents = [
-  { fullName: "Nguyễn Minh Anh", email: "minhanh@uef.edu.vn", studentId: "21DGR00042" },
-  { fullName: "Trần Bảo Long", email: "longtb@uef.edu.vn", studentId: "21DGR00018" },
-  { fullName: "Lê Thị Hương", email: "huonglt@uef.edu.vn", studentId: "21DGR00031" },
-  { fullName: "Phạm Đức Tuân", email: "tuanduc@uef.edu.vn", studentId: "21DGR00055" },
-  { fullName: "Vũ Ngọc Mai", email: "maivn@uef.edu.vn", studentId: "21DGR00009" },
-  { fullName: "Hoàng Anh Kiệt", email: "kietha@uef.edu.vn", studentId: "21DGR00077" },
+const sampleUsers = [
+  { fullName: "Nguyễn Minh Anh", email: "minhanh@uef.edu.vn", studentId: "21DGR00042", role: "student" as const, avatarUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80" },
+  { fullName: "Trần Bảo Long", email: "longtb@uef.edu.vn", studentId: "21DGR00018", role: "student" as const, avatarUrl: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&q=80" },
+  { fullName: "Lê Thị Hương", email: "huonglt@uef.edu.vn", studentId: "21DGR00031", role: "student" as const, avatarUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&q=80" },
+  { fullName: "Phạm Đức Tuân", email: "tuanduc@uef.edu.vn", studentId: "21DGR00055", role: "student" as const, avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80" },
+  { fullName: "Vũ Ngọc Mai", email: "maivn@uef.edu.vn", studentId: "21DGR00009", role: "student" as const, avatarUrl: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80" },
+  { fullName: "Hoàng Anh Kiệt", email: "kietha@uef.edu.vn", studentId: "21DGR00077", role: "student" as const, avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80" },
+  { fullName: "Đặng Thu Hiền", email: "hien@uef.edu.vn", studentId: "21DGR00063", role: "student" as const, avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&q=80" },
+  { fullName: "TS. Nguyễn Văn Tài", email: "tainv@uef.edu.vn", studentId: null, role: "lecturer" as const, avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&q=80" },
+  { fullName: "ThS. Trần Thị Lan", email: "lan.tt@uef.edu.vn", studentId: null, role: "lecturer" as const, avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&q=80" },
+  { fullName: "Admin System", email: "admin@uef.edu.vn", studentId: null, role: "admin" as const, avatarUrl: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&q=80" },
 ];
 
 const coverImages = [
@@ -27,12 +31,12 @@ const coverImages = [
   "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=800&q=80",
   "https://images.unsplash.com/photo-1534972195531-d756b9bfa9f2?w=800&q=80",
   "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=800&q=80",
-  "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80",
   "https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=800&q=80",
   "https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=800&q=80",
   "https://images.unsplash.com/photo-1549490349-8643362247b5?w=800&q=80",
   "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?w=800&q=80",
   "https://images.unsplash.com/photo-1561214115-f2f134cc4912?w=800&q=80",
+  "https://images.unsplash.com/photo-1542282088-fe8426682b8f?w=800&q=80",
 ];
 
 const subjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
@@ -110,16 +114,17 @@ async function main() {
   const passwordHash = await bcrypt.hash("test123", 12);
 
   const createdUsers = await Promise.all(
-    sampleStudents.map(s =>
+    sampleUsers.map(u =>
       prisma.user.upsert({
-        where: { email: s.email },
-        update: {},
+        where: { email: u.email },
+        update: { avatarUrl: u.avatarUrl, role: u.role },
         create: {
-          email: s.email,
+          email: u.email,
           passwordHash,
-          fullName: s.fullName,
-          studentId: s.studentId,
-          role: "student",
+          fullName: u.fullName,
+          studentId: u.studentId,
+          role: u.role,
+          avatarUrl: u.avatarUrl,
           isActive: true,
         },
       })
@@ -128,18 +133,12 @@ async function main() {
 
   console.log(`Created/verified ${createdUsers.length} users`);
 
-  const existingCount = await prisma.artwork.count();
-  if (existingCount >= 50) {
-    console.log(`Database already has ${existingCount} artworks, skipping seed`);
-    await prisma.$disconnect();
-    return;
-  }
-
   await prisma.artwork.deleteMany({});
 
-  const artworks = artworkTemplates.map((art, i) => {
+  for (let i = 0; i < artworkTemplates.length; i++) {
+    const art = artworkTemplates[i];
     const subject = subjects[i % subjects.length];
-    const student = createdUsers[i % createdUsers.length];
+    const student = createdUsers[i % 7];
     const tools = toolsBySubject[subject] || ["Photoshop", "Illustrator"];
     const year = academicYears[i % academicYears.length];
     const semester = semesters[i % semesters.length];
@@ -148,32 +147,45 @@ async function main() {
     const viewCount = Math.floor(Math.random() * 500) + 50;
     const coverImage = coverImages[i % coverImages.length];
 
-    return {
-      userId: student.id,
-      title: art.title,
-      description: art.desc,
-      toolsUsed: tools,
-      subject,
-      semester,
-      academicYear: year,
-      tags,
-      collaborators: [],
-      coverImageUrl: coverImage,
-      fileUrls: [coverImage],
-      isPublic: true,
-      isHighlighted: i < 8,
-      isAiConfirmed: false,
-      likeCount,
-      viewCount,
-    };
-  });
-
-  for (const data of artworks) {
-    await prisma.artwork.create({ data });
+    await prisma.artwork.create({
+      data: {
+        userId: student.id,
+        title: art.title,
+        description: art.desc,
+        toolsUsed: tools,
+        subject,
+        semester,
+        academicYear: year,
+        tags,
+        collaborators: [],
+        coverImageUrl: coverImage,
+        fileUrls: [coverImage],
+        isPublic: true,
+        isHighlighted: i < 8,
+        isAiConfirmed: false,
+        likeCount,
+        viewCount,
+      },
+    });
   }
 
   const finalCount = await prisma.artwork.count();
   console.log(`Created ${finalCount} artworks successfully`);
+
+  const studentUsers = createdUsers.filter(u => u.role === "student");
+  const lecturerUser = createdUsers.find(u => u.role === "lecturer");
+  const adminUser = createdUsers.find(u => u.role === "admin");
+
+  if (lecturerUser) {
+    console.log(`Lecturer: ${lecturerUser.fullName} (${lecturerUser.email}) - password: test123`);
+  }
+  if (adminUser) {
+    console.log(`Admin: ${adminUser.fullName} (${adminUser.email}) - password: test123`);
+  }
+  console.log(`Student count: ${studentUsers.length}`);
+  console.log(`\nLecturers can login with: tainv@uef.edu.vn / test123`);
+  console.log(`Admin can login with: admin@uef.edu.vn / test123`);
+
   await prisma.$disconnect();
 }
 

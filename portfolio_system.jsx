@@ -878,21 +878,101 @@ function UploadPage({ setPage }) {
   );
 }
 
-function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked }) {
+function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
+  const { user: authUser } = useAuth();
   const [art, setArt] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [liked, setLiked] = useState(false);
-  const [score, setScore] = useState("");
-  const [comment, setComment] = useState("");
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const [gradeScore, setGradeScore] = useState("");
+  const [gradeComment, setGradeComment] = useState("");
+  const [existingGrade, setExistingGrade] = useState(null);
+  const [savingGrade, setSavingGrade] = useState(false);
+  const [relatedArtworks, setRelatedArtworks] = useState([]);
+  const [liking, setLiking] = useState(false);
 
-  useEffect(() => {
+  const currentUserId = authUser?.id;
+  const currentUserRole = authUser?.role;
+  const canGrade = currentUserRole === "lecturer" || currentUserRole === "admin";
+
+  const fetchArtwork = () => {
     if (!activeArtworkId) { setLoading(false); return; }
     setLoading(true);
     api.artworks.get(activeArtworkId).then(res => {
       setArt(res);
+      setIsLiked(res.isLiked || false);
+      setLikeCount(res.likeCount || 0);
+      setComments(res.comments || []);
+      setExistingGrade(res.grade || null);
+      if (res.grade) {
+        setGradeScore(String(res.grade.score));
+        setGradeComment(res.grade.comment || "");
+      }
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [activeArtworkId]);
+    api.artworks.related(activeArtworkId, 6).then(setRelatedArtworks).catch(() => {});
+  };
+
+  useEffect(() => { fetchArtwork(); }, [activeArtworkId]);
+
+  const handleLike = async () => {
+    if (liking) return;
+    setLiking(true);
+    const wasLiked = isLiked;
+    setIsLiked(!wasLiked);
+    setLikeCount(prev => wasLiked ? Math.max(0, prev - 1) : prev + 1);
+    try {
+      if (wasLiked) {
+        await api.artworks.unlike(activeArtworkId);
+      } else {
+        await api.artworks.like(activeArtworkId);
+      }
+    } catch {
+      setIsLiked(wasLiked);
+      setLikeCount(prev => wasLiked ? prev + 1 : Math.max(0, prev - 1));
+    }
+    setLiking(false);
+  };
+
+  const handleSendComment = async () => {
+    if (!commentText.trim() || !currentUserId) return;
+    setSendingComment(true);
+    try {
+      const newComment = await api.artworks.comments.create(activeArtworkId, commentText.trim());
+      setComments(prev => [newComment, ...prev]);
+      setCommentText("");
+    } catch {}
+    setSendingComment(false);
+  };
+
+  const handleSaveGrade = async () => {
+    if (!gradeScore || !canGrade) return;
+    setSavingGrade(true);
+    try {
+      const result = await api.artworks.grade(activeArtworkId, {
+        score: parseFloat(gradeScore),
+        comment: gradeComment || null,
+      });
+      setExistingGrade(result);
+      setSavingGrade(false);
+    } catch {}
+    setSavingGrade(false);
+  };
+
+  const timeAgo = (dateStr) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return "Vừa xong";
+    if (mins < 60) return `${mins} phút trước`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `${days} ngày trước`;
+    return new Date(dateStr).toLocaleDateString("vi-VN");
+  };
 
   if (loading) return <div style={{ padding: "80px 48px", textAlign: "center", color: MUTED, fontSize: 14 }}>Đang tải...</div>;
   if (!art) return <div style={{ padding: "80px 48px", textAlign: "center", color: MUTED, fontSize: 14 }}>Không tìm thấy tác phẩm</div>;
@@ -947,13 +1027,13 @@ function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked })
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
             <div style={{ display: "flex", gap: 14 }}>
-              <button onClick={() => setLiked(!liked)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${liked ? "#F5C5C5" : GRAY_LIGHT}`, background: liked ? "#FEF2F2" : "#fff", cursor: "pointer" }}>
-                <Heart size={16} fill={liked ? "#E53E3E" : "none"} color={liked ? "#E53E3E" : MUTED} />
-                <span style={{ fontSize: 13, color: liked ? "#E53E3E" : MUTED, fontWeight: liked ? 600 : 400 }}>{(art.likeCount || 0) + (liked ? 1 : 0)}</span>
+              <button onClick={handleLike} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${isLiked ? "#F5C5C5" : GRAY_LIGHT}`, background: isLiked ? "#FEF2F2" : "#fff", cursor: "pointer", transition: "all .15s" }}>
+                <Heart size={16} fill={isLiked ? "#E53E3E" : "none"} color={isLiked ? "#E53E3E" : MUTED} />
+                <span style={{ fontSize: 13, color: isLiked ? "#E53E3E" : MUTED, fontWeight: isLiked ? 600 : 400 }}>{likeCount}</span>
               </button>
               <button style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer" }}>
                 <MessageSquare size={16} color={MUTED} />
-                <span style={{ fontSize: 13, color: MUTED }}>{art.commentCount || 0}</span>
+                <span style={{ fontSize: 13, color: MUTED }}>{comments.length}</span>
               </button>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
@@ -977,87 +1057,119 @@ function DetailPage({ setPage, activeArtworkId, onBookmarkClick, isBookmarked })
                   size={16}
                   fill={isBookmarked && isBookmarked(art.id) ? CERULEAN : "none"}
                   color={isBookmarked && isBookmarked(art.id) ? CERULEAN : MUTED}
-                />{" "}
+                />
                 {isBookmarked && isBookmarked(art.id) ? "Đã lưu" : "Lưu"}
               </button>
               <button style={{ padding: "8px 14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Liên hệ</button>
             </div>
           </div>
 
-          <div style={{ background: GRAY_BG, borderRadius: 12, padding: "20px", border: `1px solid ${GRAY_LIGHT}` }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <div style={{ width: 28, height: 28, background: "#E8F4F8", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Check size={16} color={CERULEAN} strokeWidth={2} />
-              </div>
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: BLACK }}>Đánh giá của Giảng viên</p>
-                <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Chỉ giảng viên môn học mới có thể chấm điểm</p>
-              </div>
-            </div>
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Điểm số (0–10)</label>
-              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                <input value={score} onChange={e => setScore(e.target.value)} type="number" min="0" max="10" step="0.5" placeholder="8.5" style={{ width: 80, padding: "9px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, color: CERULEAN, background: "#fff", outline: "none", textAlign: "center" }} />
+          {canGrade && (
+            <div style={{ background: GRAY_BG, borderRadius: 12, padding: "20px", border: `1px solid ${GRAY_LIGHT}`, marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                <div style={{ width: 28, height: 28, background: "#E8F4F8", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Check size={16} color={CERULEAN} strokeWidth={2} />
+                </div>
                 <div>
-                  <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Nhập điểm từ 0 đến 10</p>
-                  {score && <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <div key={n} style={{ width: 14, height: 5, borderRadius: 2, background: parseFloat(score) >= n ? CERULEAN : GRAY_LIGHT }} />)}
-                  </div>}
+                  <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: BLACK }}>
+                    {existingGrade ? "Đã chấm điểm" : "Đánh giá của Giảng viên"}
+                  </p>
+                  <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>
+                    {existingGrade ? `Điểm: ${existingGrade.score}/10` : "Nhập điểm và lời nhận xét"}
+                  </p>
+                </div>
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Điểm số (0–10)</label>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input value={gradeScore} onChange={e => setGradeScore(e.target.value)} type="number" min="0" max="10" step="0.5" placeholder="8.5" style={{ width: 80, padding: "9px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, color: CERULEAN, background: "#fff", outline: "none", textAlign: "center" }} />
+                  <div>
+                    <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Nhập điểm từ 0 đến 10</p>
+                    {gradeScore && <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <div key={n} style={{ width: 14, height: 5, borderRadius: 2, background: parseFloat(gradeScore) >= n ? CERULEAN : GRAY_LIGHT }} />)}
+                    </div>}
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Lời phê bình & Nhận xét</label>
+                <textarea value={gradeComment} onChange={e => setGradeComment(e.target.value)} placeholder="Nhận xét về kỹ thuật thực hiện, tư duy thiết kế, điểm mạnh và góp ý cải thiện..." style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 100, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
+              </div>
+              <button onClick={handleSaveGrade} disabled={!gradeScore || savingGrade} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: gradeScore && !savingGrade ? CERULEAN : GRAY_LIGHT, color: gradeScore && !savingGrade ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: gradeScore && !savingGrade ? "pointer" : "not-allowed" }}>
+                {savingGrade ? "Đang lưu..." : existingGrade ? "Cập nhật đánh giá" : "Lưu đánh giá"}
+              </button>
+            </div>
+          )}
+
+          {existingGrade && !canGrade && (
+            <div style={{ background: "#F0FFF0", borderRadius: 12, padding: "20px", border: `1px solid #C6F6C6`, marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ fontSize: 32, fontWeight: 700, color: CERULEAN }}>{existingGrade.score}</div>
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>Điểm đánh giá</p>
+                  {existingGrade.comment && <p style={{ fontSize: 12, color: "#444", margin: 0, lineHeight: 1.5 }}>{existingGrade.comment}</p>}
+                  {existingGrade.lecturer && <p style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>Bởi: {existingGrade.lecturer.fullName}</p>}
                 </div>
               </div>
             </div>
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Lời phê bình & Nhận xét</label>
-              <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Nhận xét về kỹ thuật thực hiện, tư duy thiết kế, điểm mạnh và góp ý cải thiện..." style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 100, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
-            </div>
-            <button style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: score && comment ? CERULEAN : GRAY_LIGHT, color: score && comment ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: score && comment ? "pointer" : "not-allowed" }}>
-              Lưu đánh giá
-            </button>
-          </div>
+          )}
 
           <div style={{ marginTop: 32 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>Bình luận</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>Bình luận ({comments.length})</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
               <div style={{ border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, padding: 12, background: GRAY_BG }}>
-                <textarea placeholder="Để lại bình luận của bạn..." style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
-                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                  <button style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                    <Send size={14} color="#fff" /> Gửi bình luận
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: 12 }}>
-                <img src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=100&q=80" alt="avatar" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-                <div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>Trần Quang Huy</p>
-                    <span style={{ fontSize: 11, color: MUTED }}>2 giờ trước</span>
+                {currentUserId ? (
+                  <>
+                    <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Để lại bình luận của bạn..." style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
+                    <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                      <button onClick={handleSendComment} disabled={!commentText.trim() || sendingComment} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: commentText.trim() && !sendingComment ? CERULEAN : GRAY_LIGHT, color: commentText.trim() && !sendingComment ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: commentText.trim() && !sendingComment ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 6 }}>
+                        <Send size={14} /> {sendingComment ? "Đang gửi..." : "Gửi bình luận"}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "16px 0" }}>
+                    <p style={{ fontSize: 13, color: MUTED, margin: "0 0 10px" }}>Vui lòng <strong style={{ color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("auth")}>đăng nhập</strong> để bình luận</p>
                   </div>
-                  <p style={{ fontSize: 13, color: BLACK, margin: 0, lineHeight: 1.5 }}>Ánh sáng trong render 3D này rất đẹp. Bạn dùng render engine nào vậy?</p>
-                </div>
+                )}
               </div>
-
-              <div style={{ display: "flex", gap: 12 }}>
-                <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&q=80" alt="avatar" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-                <div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>Lê Thị Hương (Tác giả)</p>
-                    <span style={{ fontSize: 11, color: MUTED }}>1 giờ trước</span>
+              {comments.length === 0 && (
+                <p style={{ fontSize: 13, color: MUTED, textAlign: "center", padding: "20px 0" }}>Chưa có bình luận nào.</p>
+              )}
+              {comments.map(cmt => (
+                <div key={cmt.id} style={{ display: "flex", gap: 12 }}>
+                  <img src={cmt.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
+                  <div>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>
+                        {cmt.user?.fullName}
+                        {cmt.user?.id === art.userId && <span style={{ fontSize: 11, color: CERULEAN, fontWeight: 400, marginLeft: 4 }}>(Tác giả)</span>}
+                      </p>
+                      <span style={{ fontSize: 11, color: MUTED }}>{timeAgo(cmt.createdAt)}</span>
+                    </div>
+                    <p style={{ fontSize: 13, color: BLACK, margin: 0, lineHeight: 1.5 }}>{cmt.content}</p>
                   </div>
-                  <p style={{ fontSize: 13, color: BLACK, margin: 0, lineHeight: 1.5 }}>Cảm ơn bạn! Mình sử dụng Cycles trong Blender nhé.</p>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
 
         </div>
       </div>
 
-      <div style={{ padding: "40px 48px 64px", borderTop: `1px solid ${GRAY_LIGHT}` }}>
-        <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 24 }}>Khám phá thêm</h3>
-        <MasonryGrid items={[]} showHover={true} onArtworkClick={() => setPage("detail")} />
-      </div>
+      {relatedArtworks.length > 0 && (
+        <div style={{ padding: "40px 48px 64px", borderTop: `1px solid ${GRAY_LIGHT}` }}>
+          <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 24 }}>Khám phá thêm</h3>
+          <MasonryGrid
+            items={relatedArtworks.map((a, i) => ({
+              id: a.id, title: a.title, student: a.user?.fullName || "", img: a.coverImageUrl,
+              likes: a.likeCount || 0, h: [240, 300, 350, 270, 320][i % 5], isPublic: a.isPublic, category: a.subject,
+            }))}
+            showHover={true}
+            onArtworkClick={(art) => { setPage("detail"); setTimeout(() => setActiveArtworkId(art.id), 50); }}
+          />
+        </div>
+      )}
 
     </div>
   );
@@ -1069,17 +1181,22 @@ function AuthPage({ setPage, onLoginSuccess }) {
   const [authRole, setAuthRole] = useState("student");
   const [loginError, setLoginError] = useState("");
 
+  const [logging, setLogging] = useState(false);
+
   const handleEmailLogin = async () => {
     if (!email || !password) {
       setLoginError("Vui lòng nhập email và mật khẩu");
       return;
     }
     setLoginError("");
+    setLogging(true);
     try {
+      const csrfRes = await fetch("/api/auth/csrf");
+      const csrfData = await csrfRes.json();
       const form = document.createElement("form");
       form.method = "POST";
-      form.action = "/api/auth/login";
-      const fields = { email, password, redirectTo: window.location.origin };
+      form.action = "/api/auth/callback/credentials";
+      const fields = { email, password, csrfToken: csrfData.csrfToken, callbackUrl: window.location.origin + "/" };
       for (const [k, v] of Object.entries(fields)) {
         const i = document.createElement("input");
         i.name = k; i.value = v; form.appendChild(i);
@@ -1088,20 +1205,21 @@ function AuthPage({ setPage, onLoginSuccess }) {
       form.submit();
     } catch {
       setLoginError("Lỗi kết nối đến server");
+      setLogging(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = "/api/auth/signin/google";
-    const cbInput = document.createElement("input");
-    cbInput.name = "callbackUrl";
-    cbInput.value = "http://localhost:5173/";
-    form.appendChild(cbInput);
-    const csrfInput = document.createElement("input");
-    csrfInput.name = "csrfToken";
     fetch("/api/auth/csrf").then(r => r.json()).then(data => {
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/api/auth/signin/google";
+      const cbInput = document.createElement("input");
+      cbInput.name = "callbackUrl";
+      cbInput.value = window.location.origin + "/";
+      form.appendChild(cbInput);
+      const csrfInput = document.createElement("input");
+      csrfInput.name = "csrfToken";
       csrfInput.value = data.csrfToken;
       form.appendChild(csrfInput);
       document.body.appendChild(form);
@@ -3559,6 +3677,7 @@ export default function App() {
       {page === "detail" && (
         <DetailPage
           setPage={setPage}
+          setActiveArtworkId={setActiveArtworkId}
           activeArtworkId={activeArtworkId}
           onBookmarkClick={openSaveFlow}
           isBookmarked={isBookmarked}
