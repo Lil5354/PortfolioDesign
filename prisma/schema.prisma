@@ -88,6 +88,11 @@ model Artwork {
   comments        Comment[]
   collectionItems CollectionItem[]
 
+  @@index([userId])
+  @@index([subject])
+  @@index([academicYear])
+  @@index([isPublic])
+  @@index([userId, isPublic])
   @@map("artworks")
 }
 
@@ -104,6 +109,9 @@ model Grade {
   artwork  Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
   lecturer User    @relation("LecturerGrades", fields: [lecturerId], references: [id])
 
+  @@index([artworkId])
+  @@index([lecturerId])
+  @@index([artworkId, lecturerId])
   @@map("grades")
 }
 
@@ -118,6 +126,8 @@ model Like {
   artwork  Artwork @relation(fields: [artworkId], references: [id], onDelete: Cascade)
   user     User?   @relation(fields: [userId], references: [id])
 
+  @@index([artworkId])
+  @@index([artworkId, userId])
   @@map("likes")
 }
 

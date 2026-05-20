@@ -3213,20 +3213,22 @@ function SettingsPage({ setPage }) {
   const saveProfile = async () => {
     setSaving(true);
     setMessage({ type: "", text: "" });
+    const body = { fullName: profile.fullName };
+    if (profile.avatarUrl && profile.avatarUrl.startsWith("data:")) body.avatarUrl = profile.avatarUrl;
     try {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ fullName: profile.fullName }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         setMessage({ type: "success", text: "Đã cập nhật thông tin!" });
         refreshSession();
+        setTimeout(() => refreshSession(), 300);
       } else if (res.status === 401) {
-        setMessage({ type: "error", text: "Phiên đăng nhập hết hạn. " });
-        refreshSession();
+        setMessage({ type: "error", text: "Phiên đăng nhập hết hạn" });
       } else {
         setMessage({ type: "error", text: data.error || "Lỗi cập nhật" });
       }
@@ -3308,23 +3310,22 @@ function SettingsPage({ setPage }) {
                   <input type="file" id="avatarInput" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    try {
-                      const sig = await fetch("/api/upload/signature?folder=avatars").then(r => r.json());
-                      const form = new FormData();
-                      form.append("file", file);
-                      form.append("api_key", sig.apiKey);
-                      form.append("timestamp", sig.timestamp);
-                      form.append("signature", sig.signature);
-                      form.append("folder", "avatars");
-                      const up = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/image/upload`, { method: "POST", body: form });
-                      const result = await up.json();
-                      if (result.secure_url) {
-                        setProfile(p => ({ ...p, avatarUrl: result.secure_url }));
-                        await fetch("/api/user/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ avatarUrl: result.secure_url }) });
-                        setMessage({ type: "success", text: "Đã cập nhật ảnh đại diện!" });
-                        refreshSession();
-                      }
-                    } catch { setMessage({ type: "error", text: "Tải ảnh thất bại" }); }
+                    const reader = new FileReader();
+                    reader.onload = async (ev) => {
+                      const dataUrl = ev.target?.result;
+                      if (typeof dataUrl !== "string") return;
+                      setProfile(p => ({ ...p, avatarUrl: dataUrl }));
+                      try {
+                        const res = await fetch("/api/user/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ avatarUrl: dataUrl }) });
+                        if (res.ok) {
+                          setMessage({ type: "success", text: "Đã cập nhật ảnh đại diện!" });
+                          refreshSession();
+                        } else {
+                          setMessage({ type: "error", text: "Lỗi lưu ảnh" });
+                        }
+                      } catch { setMessage({ type: "error", text: "Lỗi kết nối" }); }
+                    };
+                    reader.readAsDataURL(file);
                   }} />
                   <button onClick={() => document.getElementById("avatarInput")?.click()} className="px-4 py-2 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Tải ảnh mới</button>
                   <button onClick={async () => {

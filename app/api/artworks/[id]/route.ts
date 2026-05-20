@@ -12,49 +12,42 @@ export async function GET(request: NextRequest, { params }: Params) {
     const forwarded = request.headers.get('x-forwarded-for');
     const clientIp = forwarded ? forwarded.split(',')[0].trim() : '127.0.0.1';
 
-    const artwork = await prisma.artwork.findUnique({
-      where: { id: params.id },
-      include: {
-        user: {
-          select: { id: true, fullName: true, studentId: true, avatarUrl: true },
+    const [artwork, comments, grades, likesCount, isLiked] = await Promise.all([
+      prisma.artwork.findUnique({
+        where: { id: params.id },
+        include: {
+          user: { select: { id: true, fullName: true, studentId: true, avatarUrl: true } },
         },
-        comments: {
-          orderBy: { createdAt: 'desc' },
-          include: {
-            user: { select: { id: true, fullName: true, avatarUrl: true } },
-          },
-        },
-        grades: {
-          include: {
-            lecturer: { select: { id: true, fullName: true, avatarUrl: true } },
-          },
-        },
-      },
-    });
+      }),
+      prisma.comment.findMany({
+        where: { artworkId: params.id },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        include: { user: { select: { id: true, fullName: true, avatarUrl: true } } },
+      }),
+      prisma.grade.findMany({
+        where: { artworkId: params.id },
+        take: 3,
+        include: { lecturer: { select: { id: true, fullName: true, avatarUrl: true } } },
+      }),
+      prisma.like.count({ where: { artworkId: params.id } }),
+      (session
+        ? prisma.like.findFirst({ where: { artworkId: params.id, userId: session.user.id } }).then(Boolean)
+        : prisma.like.findFirst({ where: { artworkId: params.id, ipAddress: clientIp, userId: null } }).then(Boolean)),
+    ]);
 
     if (!artwork) {
       return NextResponse.json({ error: 'Artwork not found' }, { status: 404 });
     }
 
-    const likesCount = await prisma.like.count({ where: { artworkId: params.id } });
-
-    const likeWhere = session
-      ? { artworkId: params.id, userId: session.user.id }
-      : { artworkId: params.id, ipAddress: clientIp, userId: null };
-    const isLiked = await prisma.like.findFirst({ where: likeWhere }).then(Boolean);
-
-    const { comments, grades, ...artworkData } = artwork;
-
-    const response = {
-      ...artworkData,
-      likeCount: artworkData.likeCount ?? likesCount,
+    return NextResponse.json({
+      ...artwork,
+      likeCount: artwork.likeCount ?? likesCount,
       commentCount: comments.length,
       isLiked,
       comments,
       grade: grades.length > 0 ? grades[0] : null,
-    };
-
-    return NextResponse.json(response);
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
