@@ -1501,34 +1501,32 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
 
 function AdminDashboardPage({ setPage }) {
+  const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, totalInteractions: 0 });
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      api.admin.stats(),
+      api.admin.artworks({ limit: "6" }).catch(() => ({ artworks: [] })),
+    ]).then(([stats, artRes]) => {
+      setAdminStats(stats);
+      setRecentActivity((artRes.artworks || []).slice(0, 6));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
   const stats = [
-    { label: "Ấn phẩm đang hiển thị", value: artworks.length, hint: "Tổng ấn phẩm công khai", accent: "#077E9E" },
-    { label: "Bài bị báo cáo", value: 2, hint: "Cần xử lý", accent: "#8B1A1A" },
-    { label: "Tổng tài khoản", value: 1234, hint: "SV + GV + Admin", accent: "#212121" },
-    { label: "Lượt tương tác", value: "8.7K", hint: "+2.4% tuần này", accent: "#055F78" },
+    { label: "Ấn phẩm đang hiển thị", value: adminStats.publishedArtworks || 0, hint: "Tổng ấn phẩm công khai", accent: "#077E9E" },
+    { label: "Bài bị báo cáo", value: adminStats.reportedArtworks || 0, hint: "Cần xử lý", accent: "#8B1A1A" },
+    { label: "Tổng tài khoản", value: adminStats.totalAccounts || 0, hint: "SV + GV + Admin", accent: "#212121" },
+    { label: "Lượt tương tác", value: (adminStats.totalInteractions || 0).toLocaleString(), hint: "Lượt thích + bình luận", accent: "#055F78" },
   ];
 
-  const categoryCounts = [
-    { label: "Thiết kế TH", value: 58, color: "#077E9E" },
-    { label: "Đồ hoạ ứng dụng", value: 47, color: "#0C9DBF" },
-    { label: "Bao bì", value: 38, color: "#8B1A1A" },
-    { label: "Motion", value: 29, color: "#212121" },
-    { label: "UI/UX", value: 24, color: "#055F78" },
-    { label: "Khác", value: 21, color: "#666666" },
-  ];
-
-  const recent = [
-    { color: "#077E9E", text: "GV Trần Văn Phúc vừa chấm điểm 3 ấn phẩm" },
-    { color: "#8B1A1A", text: "Có 2 ấn phẩm được báo cáo vi phạm" },
-    { color: "#212121", text: "Sinh viên Nguyễn Minh Anh đăng ấn phẩm mới" },
-    { color: "#055F78", text: "Xuất Tập san PDF thành công" },
-  ];
-
-  const flagged = artworks.slice(0, 6).map((a, i) => ({
-    ...a,
-    subject: ["Thiết kế TH", "Đồ hoạ ứng dụng", "Motion Design", "UX/UI"][i % 4],
-    createdAt: ["05/05/2026", "04/05/2026", "03/05/2026", "02/05/2026"][i % 4],
-    status: i % 4 === 0 ? "Bị báo cáo" : i % 4 === 1 ? "Đang hiển thị" : i % 4 === 2 ? "Đã ẩn" : "Nổi bật",
+  const categoryCounts = [];
+  const recent = recentActivity.slice(0, 4).map(a => ({
+    color: a.isPublic ? "#077E9E" : "#8B1A1A",
+    text: `${a.user?.fullName || "User"} ${a.isPublic ? "đã được duyệt" : "vừa đăng"} ấn phẩm "${(a.title || "").slice(0, 30)}"`,
   }));
 
   const statusBadge = (s) => {
@@ -1966,24 +1964,34 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
 }
 
 function AdminUsersPage({ setPage }) {
-  const [users, setUsers] = useState([
-    { id: 1, name: "Nguyễn Minh Anh", email: "minhanh@uef.edu.vn", role: "Sinh viên", joined: "12/08/2023", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&q=80", isLocked: false },
-    { id: 2, name: "Trần Bảo Long", email: "longtb@uef.edu.vn", role: "Sinh viên", joined: "15/08/2023", avatar: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&q=80", isLocked: true },
-    { id: 3, name: "GV. Trần Văn Phúc", email: "phuctv@uef.edu.vn", role: "Giảng viên", joined: "01/01/2020", avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&q=80", isLocked: false },
-    { id: 4, name: "Admin System", email: "admin@uef.edu.vn", role: "Admin", joined: "01/01/2020", avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80", isLocked: false },
-  ]);
-
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null });
   const [importFileName, setImportFileName] = useState("");
   const importInputRef = useRef(null);
 
-  const toggleLockUser = (userId) => {
-    setUsers(users.map(u => u.id === userId ? { ...u, isLocked: !u.isLocked } : u));
+  const roleLabel = { student: "Sinh viên", lecturer: "Giảng viên", admin: "Admin" };
+
+  const fetchUsers = () => {
+    setLoading(true);
+    api.admin.users().then(res => { setUsers(res.users || []); setLoading(false); }).catch(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchUsers(); }, []);
+
+  const toggleLockUser = async (user) => {
+    try {
+      await api.admin.lockUser(user.id, !user.isActive);
+      fetchUsers();
+    } catch {}
     setConfirmModal({ isOpen: false, user: null });
   };
 
-  const setRole = (userId, role) => {
-    setUsers(users.map(u => u.id === userId ? { ...u, role } : u));
+  const setRole = async (userId, role) => {
+    try {
+      await api.admin.setUserRole(userId, role);
+      fetchUsers();
+    } catch {}
   };
 
   const handleImportFile = (e) => {
@@ -2027,6 +2035,7 @@ function AdminUsersPage({ setPage }) {
           </div>
         )}
 
+        {loading ? <div className="text-center py-16 text-[#666666] text-sm">Đang tải danh sách...</div> : users.length === 0 ? <div className="text-center py-16 text-[#666666] text-sm">Không có người dùng</div> : (
         <div className="border border-[#E0E0E0] rounded-xl overflow-hidden shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -2039,12 +2048,15 @@ function AdminUsersPage({ setPage }) {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => (
+              {users.map(u => {
+                const roleVal = roleLabel[u.role] || u.role;
+                const locked = !u.isActive;
+                return (
                 <tr key={u.id} className="border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <img src={u.avatar} className="w-8 h-8 rounded-full object-cover bg-[#E0E0E0]" />
-                      <span className="text-sm font-semibold text-[#212121]">{u.name}</span>
+                      <img src={u.avatarUrl || ''} className="w-8 h-8 rounded-full object-cover bg-[#E0E0E0]" />
+                      <span className="text-sm font-semibold text-[#212121]">{u.fullName}</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-[#666666]">{u.email}</td>
@@ -2055,27 +2067,26 @@ function AdminUsersPage({ setPage }) {
                         onChange={(e) => setRole(u.id, e.target.value)}
                         className="w-full appearance-none px-3 py-2 rounded-lg border border-[#E0E0E0] bg-white text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] cursor-pointer pr-9 hover:bg-[#F8F8F8] transition-colors"
                       >
-                        <option value="Sinh viên">Sinh viên</option>
-                        <option value="Giảng viên">Giảng viên</option>
-                        <option value="Admin">Admin</option>
+                        {Object.entries(roleLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
                       <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#666666]" />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-[#666666]">{u.joined}</td>
+                  <td className="px-4 py-3 text-sm text-[#666666]">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "—"}</td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center">
-                      <button onClick={() => u.isLocked ? toggleLockUser(u.id) : setConfirmModal({ isOpen: true, user: u })} className={`px-3 py-1.5 flex items-center gap-2 rounded-md border transition-colors cursor-pointer ${u.isLocked ? 'border-[#077E9E] text-[#077E9E] hover:bg-[#077E9E] hover:text-white' : 'border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white'}`} title={u.isLocked ? "Mở khóa" : "Khóa tài khoản"}>
-                        {u.isLocked ? <Unlock size={14} /> : <Lock size={14} />}
-                        <span className="text-xs font-semibold">{u.isLocked ? "Mở khóa" : "Khóa tài khoản"}</span>
+                      <button onClick={() => locked ? toggleLockUser(u) : setConfirmModal({ isOpen: true, user: u })} className={`px-3 py-1.5 flex items-center gap-2 rounded-md border transition-colors cursor-pointer ${locked ? 'border-[#077E9E] text-[#077E9E] hover:bg-[#077E9E] hover:text-white' : 'border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white'}`} title={locked ? "Mở khóa" : "Khóa tài khoản"}>
+                        {locked ? <Unlock size={14} /> : <Lock size={14} />}
+                        <span className="text-xs font-semibold">{locked ? "Mở khóa" : "Khóa tài khoản"}</span>
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {confirmModal.isOpen && (
@@ -2098,45 +2109,38 @@ function AdminUsersPage({ setPage }) {
 }
 
 function AdminArtworksPage({ setPage }) {
-  const seed = artworks.map((a, i) => ({
-    ...a,
-    subject: ["Thiết kế TH", "Đồ hoạ ứng dụng", "Motion Design", "UX/UI"][i % 4],
-    createdAt: ["05/05", "04/05", "03/05", "02/05", "01/05"][i % 5],
-    status: i % 5 === 0 ? "Bị báo cáo" : i % 5 === 1 ? "Đang hiển thị" : i % 5 === 2 ? "Đã ẩn" : i % 5 === 3 ? "Vi phạm" : "Nổi bật",
-    score: i % 3 === 0 ? 9.2 : i % 3 === 1 ? 8.8 : null,
-    isHighlighted: i % 5 === 4,
-  }));
-
-  const [items, setItems] = useState(seed);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [query, setQuery] = useState("");
   const [filterSubject, setFilterSubject] = useState("Tất cả");
   const [filterYear, setFilterYear] = useState("Tất cả");
   const [filterTool, setFilterTool] = useState("Tất cả");
-  const [selectedId, setSelectedId] = useState(seed[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, mode: "delete", artId: null });
 
-  const tabs = [
-    { key: "all", label: "Tất cả", match: () => true },
-    { key: "reported", label: "Bị báo cáo", match: (a) => a.status === "Bị báo cáo" || a.status === "Vi phạm" },
-    { key: "hidden", label: "Đã ẩn", match: (a) => a.status === "Đã ẩn" },
-    { key: "highlight", label: "Nổi bật", match: (a) => a.isHighlighted || a.status === "Nổi bật" },
-  ];
+  const fetchArtworks = () => {
+    setLoading(true);
+    api.admin.artworks({ q: query || undefined }).then(res => {
+      setItems(res.artworks || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  };
 
-  const filtered = items
-    .filter((a) => {
-      const t = tabs.find((x) => x.key === activeTab);
-      return t ? t.match(a) : true;
-    })
-    .filter((a) => {
-      const q = query.trim().toLowerCase();
-      if (!q) return true;
-      return `${a.title} ${a.student} ${a.category} ${a.tool}`.toLowerCase().includes(q);
-    })
-    .filter((a) => (filterSubject === "Tất cả" ? true : a.subject === filterSubject))
-    .filter((a) => (filterYear === "Tất cả" ? true : a.year === filterYear))
-    .filter((a) => (filterTool === "Tất cả" ? true : a.tool === filterTool));
+  useEffect(() => { fetchArtworks(); }, []);
+
+  const tabMap = { all: "all", hidden: "hidden", highlight: "highlight" };
+  const filtered = items.filter(a => {
+    if (activeTab === "hidden") return !a.isPublic;
+    if (activeTab === "highlight") return a.isHighlighted;
+    return true;
+  }).filter(a => {
+    if (!query.trim()) return true;
+    const q = query.toLowerCase();
+    return (a.title || '').toLowerCase().includes(q) || (a.user?.fullName || '').toLowerCase().includes(q);
+  }).filter(a => filterSubject === "Tất cả" ? true : a.subject === filterSubject)
+    .filter(a => filterYear === "Tất cả" ? true : a.academicYear === filterYear);
 
   const selected = items.find((a) => a.id === selectedId) ?? null;
 
@@ -2148,13 +2152,22 @@ function AdminArtworksPage({ setPage }) {
     setSelectedIds((prev) => (checked ? Array.from(new Set([...prev, id])) : prev.filter((x) => x !== id)));
   };
 
-  const setStatus = (ids, status) => {
-    setItems((prev) => prev.map((a) => (ids.includes(a.id) ? { ...a, status } : a)));
+  const approveArtwork = async (id) => {
+    try { await api.admin.setArtworkStatus(id, true); fetchArtworks(); } catch {}
     setSelectedIds([]);
   };
 
-  const removeItems = (ids) => {
-    setItems((prev) => prev.filter((a) => !ids.includes(a.id)));
+  const hideArtwork = async (id) => {
+    try { await api.admin.setArtworkStatus(id, false); fetchArtworks(); } catch {}
+    setSelectedIds([]);
+  };
+
+  const toggleHighlight = async (id, val) => {
+    try { await api.admin.toggleArtworkHighlight(id, val); fetchArtworks(); } catch {}
+  };
+
+  const removeItems = async (ids) => {
+    try { await Promise.all(ids.map(id => api.admin.deleteArtwork(id))); fetchArtworks(); } catch {}
     setSelectedIds([]);
     if (ids.includes(selectedId)) {
       const next = filtered.find((a) => !ids.includes(a.id));
@@ -2187,14 +2200,16 @@ function AdminArtworksPage({ setPage }) {
   const confirmAction = () => {
     if (!confirmModal.artId) return;
     if (confirmModal.mode === "delete") removeItems([confirmModal.artId]);
-    if (confirmModal.mode === "hide") setStatus([confirmModal.artId], "Đã ẩn");
+    if (confirmModal.mode === "hide") hideArtwork(confirmModal.artId);
     closeConfirm();
   };
 
   const tabCount = (key) => {
-    const t = tabs.find((x) => x.key === key);
-    if (!t) return 0;
-    return items.filter((a) => t.match(a)).length;
+    return items.filter(a => {
+      if (key === "hidden") return !a.isPublic;
+      if (key === "highlight") return a.isHighlighted;
+      return true;
+    }).length;
   };
 
   const FilterSelect = ({ value, onChange, children }) => (
@@ -2266,7 +2281,7 @@ function AdminArtworksPage({ setPage }) {
 
             <div className="flex items-center gap-2 ml-auto">
               <button
-                onClick={() => setStatus(selectedIds, "Đã ẩn")}
+                onClick={() => { selectedIds.forEach(id => hideArtwork(id)); setSelectedIds([]); }}
                 disabled={selectedIds.length === 0}
                 className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
                   selectedIds.length === 0 ? "bg-[#F8F8F8] text-[#999999] border-[#E0E0E0] cursor-not-allowed" : "bg-white text-[#212121] border-[#E0E0E0] hover:bg-[#F8F8F8]"
@@ -2419,12 +2434,15 @@ function AdminArtworksPage({ setPage }) {
                   </div>
 
                   <div className="mt-5 grid grid-cols-3 gap-3">
-                    <button onClick={() => setStatus([selected.id], "Đang hiển thị")} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#212121] hover:bg-[#F8F8F8] transition-colors">
-                      Công khai
-                    </button>
-                    <button onClick={() => openConfirm("hide", selected.id)} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
-                      Ẩn bài
-                    </button>
+                    {!selected.isPublic ? (
+                      <button onClick={() => approveArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#077E9E] bg-white text-[#077E9E] text-sm font-semibold hover:bg-[#F0F8FB] transition-colors">
+                        <Check size={14} className="inline mr-1" /> Duyệt bài
+                      </button>
+                    ) : (
+                      <button onClick={() => hideArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
+                        Ẩn bài
+                      </button>
+                    )}
                     <button onClick={() => openConfirm("delete", selected.id)} className="py-2.5 rounded-lg border border-[#F5C5C5] bg-red-50 text-sm font-bold text-[#8B1A1A] hover:bg-red-100 transition-colors">
                       Xóa vĩnh viễn
                     </button>
