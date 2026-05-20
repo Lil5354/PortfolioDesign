@@ -879,9 +879,8 @@ function UploadPage({ setPage }) {
 }
 
 function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
-  const { user: authUser, refreshSession } = useAuth();
+  const { user: authUser } = useAuth();
   const [art, setArt] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState([]);
@@ -894,13 +893,11 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [relatedArtworks, setRelatedArtworks] = useState([]);
   const [liking, setLiking] = useState(false);
   const [localSession, setLocalSession] = useState(null);
-  const [sessionLoading, setSessionLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/auth/session", { credentials: "include" }).then(r => r.json()).then(s => {
       setLocalSession(s?.user || null);
-      setSessionLoading(false);
-    }).catch(() => setSessionLoading(false));
+    }).catch(() => {});
   }, []);
 
   const activeUser = localSession || authUser;
@@ -908,9 +905,8 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const currentUserRole = activeUser?.role;
   const canGrade = currentUserRole === "lecturer" || currentUserRole === "admin";
 
-  const fetchArtwork = () => {
-    if (!activeArtworkId) { setLoading(false); return; }
-    setLoading(true);
+  useEffect(() => {
+    if (!activeArtworkId) return;
     api.artworks.get(activeArtworkId).then(res => {
       setArt(res);
       setIsLiked(res.isLiked || false);
@@ -921,12 +917,21 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
         setGradeScore(String(res.grade.score));
         setGradeComment(res.grade.comment || "");
       }
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => {});
     api.artworks.related(activeArtworkId, 6).then(setRelatedArtworks).catch(() => {});
-  };
+  }, [activeArtworkId]);
 
-  useEffect(() => { fetchArtwork(); }, [activeArtworkId]);
+  const artDisplay = art || {
+    title: "Đang tải...",
+    subject: "",
+    coverImageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
+    description: "",
+    tags: [], toolsUsed: [], likeCount: 0, commentCount: 0,
+    createdAt: new Date().toISOString(),
+    user: null,
+    userId: null,
+    isPublic: true,
+  };
 
   const handleLike = async () => {
     if (liking) return;
@@ -986,9 +991,6 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     if (days < 7) return `${days} ngày trước`;
     return new Date(dateStr).toLocaleDateString("vi-VN");
   };
-
-  if (loading) return <div style={{ padding: "80px 48px", textAlign: "center", color: MUTED, fontSize: 14 }}>Đang tải...</div>;
-  if (!art) return <div style={{ padding: "80px 48px", textAlign: "center", color: MUTED, fontSize: 14 }}>Không tìm thấy tác phẩm</div>;
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
@@ -3168,7 +3170,7 @@ function SettingsPage({ setPage }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/session")
+    fetch("/api/auth/session", { credentials: "include" })
       .then((r) => r.json())
       .then((session) => {
         if (session?.user) {
@@ -3179,9 +3181,9 @@ function SettingsPage({ setPage }) {
             avatarUrl: session.user.image || session.user.avatarUrl || "",
           });
         }
-        setLoaded(true);
       })
-      .catch(() => setLoaded(true));
+      .catch(() => {})
+      .finally(() => setLoaded(true));
   }, []);
 
   const saveProfile = async () => {

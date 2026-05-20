@@ -6,11 +6,11 @@ import { prisma } from "@/lib/prisma";
 export async function PUT(request: NextRequest) {
   try {
     const cookieStore = cookies();
-    const sessionToken = cookieStore.get("next-auth.session-token")?.value;
+    const sessionToken = cookieStore.get("authjs.session-token")?.value || cookieStore.get("next-auth.session-token")?.value;
     if (!sessionToken) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
 
     const token = await getToken({
-      req: { headers: { cookie: `next-auth.session-token=${sessionToken}` } } as any,
+      req: { headers: { cookie: `authjs.session-token=${sessionToken}` } } as any,
       secret: process.env.AUTH_SECRET,
     });
     if (!token?.id) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
