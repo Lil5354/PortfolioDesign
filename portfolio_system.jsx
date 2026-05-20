@@ -3571,22 +3571,45 @@ function PortfolioSettingsPage({ setPage }) {
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <h3 className="font-bold text-[#212121] mb-1">Ấn phẩm tiêu biểu</h3>
-            <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm để hiển thị ở đầu portfolio. Bấm vào ảnh để chọn/bỏ chọn.</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {myArtworks.slice(0, 20).map(a => {
-                const selected = (settings.featuredArtworkIds || []).includes(a.id);
-                return (
-                  <div key={a.id} onClick={() => toggleFeatured(a.id)} className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-[4/3] ${selected ? 'border-[#077E9E] ring-2 ring-[#077E9E] ring-offset-1' : 'border-[#E0E0E0] hover:border-[#999]'}`}>
+            <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm để hiển thị ở đầu portfolio.</p>
+            {(settings.featuredArtworkIds || []).length > 0 && (
+              <div className="flex gap-3 mb-4 flex-wrap">
+                {myArtworks.filter(a => (settings.featuredArtworkIds || []).includes(a.id)).map(a => (
+                  <div key={a.id} className="relative w-24 h-20 rounded-lg overflow-hidden border border-[#E0E0E0]">
                     <img src={a.coverImageUrl} alt={a.title} className="w-full h-full object-cover" />
-                    {selected && <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-[#077E9E] text-white flex items-center justify-center text-xs font-bold"><Check size={14} /></div>}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                      <p className="text-white text-xs font-semibold truncate">{a.title}</p>
-                    </div>
+                    <button onClick={() => toggleFeatured(a.id)} className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-black/50 text-white text-xs flex items-center justify-center cursor-pointer">×</button>
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            )}
+            <button onClick={() => document.getElementById('featPicker')?.classList.remove('hidden')} className="px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer">
+              {settings.featuredArtworkIds?.length ? "Thay đổi ấn phẩm" : "Chọn ấn phẩm tiêu biểu"} ({(settings.featuredArtworkIds || []).length}/4)
+            </button>
+          </div>
+
+          <div id="featPicker" className="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); }}>
+            <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg text-[#212121]">Chọn ấn phẩm tiêu biểu</h3>
+                <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="text-[#666666] hover:text-[#212121] cursor-pointer"><X size={20} /></button>
+              </div>
+              <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm (đã chọn {(settings.featuredArtworkIds || []).length}/4)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {myArtworks.slice(0, 20).map(a => {
+                  const selected = (settings.featuredArtworkIds || []).includes(a.id);
+                  return (
+                    <div key={a.id} onClick={() => toggleFeatured(a.id)} className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-[4/3] ${selected ? 'border-[#077E9E] ring-2 ring-[#077E9E] ring-offset-1' : 'border-[#E0E0E0] hover:border-[#999]'}`}>
+                      <img src={a.coverImageUrl} alt={a.title} className="w-full h-full object-cover" />
+                      {selected && <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-[#077E9E] text-white flex items-center justify-center text-xs font-bold"><Check size={14} /></div>}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                        <p className="text-white text-xs font-semibold truncate">{a.title}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="mt-4 w-full py-2.5 rounded-lg bg-[#077E9E] text-white font-semibold cursor-pointer">Xác nhận</button>
             </div>
-            <p className="text-xs text-[#666666] mt-3">Đã chọn {(settings.featuredArtworkIds || []).length}/4</p>
           </div>
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-8 flex items-center justify-between">

@@ -57,7 +57,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { portfolioSlug, profileHeadline, socialLinks, isPortfolioPublic, showEmail, contactEnabled, displayOrder } = body;
+    const { portfolioSlug, profileHeadline, socialLinks, isPortfolioPublic, showEmail, contactEnabled, displayOrder, featuredArtworkIds } = body;
 
     const data: Record<string, unknown> = {};
     if (portfolioSlug !== undefined) data.portfolioSlug = portfolioSlug;
