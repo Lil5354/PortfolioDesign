@@ -8,7 +8,7 @@ import {
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
-  MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar
+  MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -2370,17 +2370,20 @@ function AdminArtworksPage({ setPage }) {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <img src={a.img} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
+                          <img src={a.coverImageUrl} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-[#212121] truncate">{a.title}</p>
-                            <p className="text-xs text-[#666666] truncate">{a.student}</p>
+                            <p className="text-xs text-[#666666] truncate">{a.user?.fullName || ""}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.subject}</td>
-                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt}</td>
+                      <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("vi-VN") : ""}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${badge(a.status)}`}>{statusText(a.status)}</span>
+                        <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${a.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
+                          {a.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} className="text-[#666666]" />}
+                          {a.isPublic ? "Công khai" : "Riêng tư"}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-[#212121]">{a.score ?? "—"}</td>
                     </tr>
