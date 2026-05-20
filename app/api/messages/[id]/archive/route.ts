@@ -25,12 +25,11 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const updated = await prisma.message.update({
+    await prisma.message.delete({
       where: { id: params.id },
-      data: { isRead: true },
     });
 
-    return NextResponse.json(updated);
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('PATCH /api/messages/[id]/archive error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

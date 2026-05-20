@@ -8,7 +8,7 @@ import {
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
-  MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff
+  MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -323,6 +323,10 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 function PortfolioPage({ setPage }) {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPurpose, setContactPurpose] = useState("Tuyển dụng / Thực tập");
+  const [contactContent, setContactContent] = useState("");
   const [portfolioData, setPortfolioData] = useState(null);
   const [portfolioArtworks, setPortfolioArtworks] = useState([]);
   const [portfolioSettingsData, setPortfolioSettingsData] = useState(null);
@@ -384,7 +388,23 @@ function PortfolioPage({ setPage }) {
     return { id: a.id, title: a.title, img: a.coverImageUrl, tools: a.toolsUsed || [], colClass: layouts[i % layouts.length], rowSpan: [10, 5, 5, 5, 5, 5][i % 6] };
   });
 
-  const handleContactSubmit = () => { setContactState("loading"); setTimeout(() => setContactState("success"), 1500); };
+  const handleContactSubmit = async () => {
+    if (!contactName || !contactEmail || !contactContent) return;
+    setContactState("loading");
+    try {
+      const targetSlug = slug || (portfolioSettingsData?.portfolioSlug || "");
+      await api.portfolios.sendContact(targetSlug, {
+        senderName: contactName,
+        senderEmail: contactEmail,
+        purpose: contactPurpose,
+        content: contactContent,
+      });
+      setContactState("success");
+    } catch (e) {
+      alert("Lỗi khi gửi: " + (e?.message || "Vui lòng thử lại"));
+      setContactState("idle");
+    }
+  };
 
   const closeContactModal = () => {
     setIsContactModalOpen(false);
@@ -606,30 +626,30 @@ function PortfolioPage({ setPage }) {
                   <Check size={32} className="text-[#077E9E]" />
                 </div>
                 <h4 className="text-xl font-bold text-[#212121] mb-2">Đã gửi thành công!</h4>
-                <p className="text-sm text-[#666666] mb-6">Tin nhắn của bạn đã được chuyển đến sinh viên Nguyễn Minh Anh.</p>
+                <p className="text-sm text-[#666666] mb-6">Tin nhắn của bạn đã được chuyển đến {profile.fullName}.</p>
                 <button onClick={closeContactModal} className="w-full py-2.5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-semibold text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Đóng</button>
               </div>
             ) : (
               <div className="p-6 flex flex-col gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">Họ Tên / Đơn vị</label>
-                  <input type="text" placeholder="Nhập tên của bạn" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  <input value={contactName} onChange={e => setContactName(e.target.value)} type="text" placeholder="Nhập tên của bạn" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">Email liên hệ</label>
-                  <input type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  <input value={contactEmail} onChange={e => setContactEmail(e.target.value)} type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">Mục đích</label>
-                  <select className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white cursor-pointer">
-                    <option>Tuyển dụng / Thực tập</option>
-                    <option>Hợp tác dự án (Freelance)</option>
-                    <option>Khác</option>
+                  <select value={contactPurpose} onChange={e => setContactPurpose(e.target.value)} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white cursor-pointer">
+                    <option value="Tuyển dụng / Thực tập">Tuyển dụng / Thực tập</option>
+                    <option value="Hợp tác dự án (Freelance)">Hợp tác dự án (Freelance)</option>
+                    <option value="Khác">Khác</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">Nội dung</label>
-                  <textarea placeholder="Nhập nội dung tin nhắn..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
+                  <textarea value={contactContent} onChange={e => setContactContent(e.target.value)} placeholder="Nhập nội dung tin nhắn..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
                 </div>
                 <button onClick={handleContactSubmit} disabled={contactState === "loading"} className={`mt-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all flex justify-center items-center gap-2 ${contactState === "loading" ? "bg-[#666666] cursor-wait" : "bg-[#077E9E] hover:opacity-90 cursor-pointer"}`}>
                   {contactState === "loading" ? "Đang gửi..." : <><Send size={16} /> Gửi tin nhắn</>}
@@ -1741,21 +1761,43 @@ function AdminDashboardPage({ setPage }) {
 
 
 function MessagesPage({ setPage }) {
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "Nguyễn Công Tuấn", company: "FPT Software", purpose: "Tuyển dụng", excerpt: "Chào em, công ty hiện đang có vị trí UI/UX Designer thực tập. Portfolio của em rất ấn tượng, hy vọng em có thể sắp xếp thời gian...", isRead: false, time: "10:30 AM", fullText: "Chào em,\n\nCông ty hiện đang có vị trí UI/UX Designer thực tập. Portfolio của em rất ấn tượng, hy vọng em có thể sắp xếp thời gian để tham gia phỏng vấn cùng team Design bên anh vào tuần sau.\n\nThời gian dự kiến: Thứ 4 (15/03) lúc 14:00.\nHình thức: Online qua Google Meet.\n\nPhản hồi lại email này nếu em sắp xếp được nhé.\n\nTrân trọng,\nCông Tuấn" },
-    { id: 2, sender: "Trần Mai Hương", company: "Be Group", purpose: "Hợp tác dự án", excerpt: "Portfolio của bạn rất ấn tượng. Mình muốn trao đổi về một dự án thiết kế cho chiến dịch sắp tới...", isRead: true, time: "Hôm qua", fullText: "Chào bạn,\n\nPortfolio của bạn rất ấn tượng. Mình muốn trao đổi về một dự án thiết kế cho chiến dịch quảng bá sắp tới của Be Group. Dự án kéo dài khoảng 3 tuần, công việc chủ yếu là thiết kế key visual và adaptation cho social media.\n\nNếu bạn đang có thời gian trống và hứng thú, báo mình nhé để mình gửi JD chi tiết.\n\nCảm ơn bạn,\nMai Hương" },
-    { id: 3, sender: "Lê Văn Thành", company: "VNG", purpose: "Phỏng vấn", excerpt: "Xin chúc mừng, bạn đã vượt qua vòng hồ sơ. Mời bạn tham gia buổi phỏng vấn vị trí 3D Artist vào tuần tới...", isRead: true, time: "12/03/2024", fullText: "Chào bạn,\n\nXin chúc mừng, bạn đã vượt qua vòng hồ sơ. Mời bạn tham gia buổi phỏng vấn vị trí 3D Artist vào tuần tới tại văn phòng VNG Campus.\n\nVui lòng chuẩn bị sẵn các file source của dự án 'Neon Cityscape' để present cho hội đồng phỏng vấn.\n\nHẹn gặp bạn sớm!" },
-  ]);
-
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    api.messages.list().then(data => {
+      setMessages(Array.isArray(data) ? data : []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
 
   const toggleMessage = (id) => {
     if (expandedId === id) {
       setExpandedId(null);
     } else {
       setExpandedId(id);
+      api.messages.markRead(id).catch(() => {});
       setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m));
     }
+  };
+
+  const handleArchive = async (id) => {
+    try {
+      await api.messages.archive(id);
+      setMessages(prev => prev.filter(m => m.id !== id));
+    } catch (e) {
+      alert("Lỗi khi lưu trữ: " + (e?.message || "Vui lòng thử lại"));
+    }
+  };
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 86400000 && d.getDate() === now.getDate()) return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    if (diff < 172800000) return "Hôm qua";
+    return d.toLocaleDateString("vi-VN");
   };
 
   return (
@@ -1763,42 +1805,59 @@ function MessagesPage({ setPage }) {
       <DashboardSidebar active="Hộp thư" setPage={setPage} />
       <div style={{ flex: 1, padding: "32px 40px" }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 24px", color: BLACK }}>Hộp thư đến</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {messages.map(msg => (
-            <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#F0F8FB", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#B3D9E8"}`, overflow: "hidden" }}>
-              <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
-                  {msg.sender.charAt(0)}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                    <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.sender}</p>
-                    <span style={{ fontSize: 13, color: MUTED }}>• {msg.company}</span>
+        {loading ? (
+          <p style={{ textAlign: "center", color: MUTED, padding: 40 }}>Đang tải...</p>
+        ) : messages.length === 0 ? (
+          <p style={{ textAlign: "center", color: MUTED, padding: 40, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>Chưa có tin nhắn nào.</p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {messages.map(msg => (
+              <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#F0F8FB", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#B3D9E8"}`, overflow: "hidden" }}>
+                <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
+                    {msg.senderName?.charAt(0) || "?"}
                   </div>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>
-                    <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.excerpt}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                      <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.senderName}</p>
+                      {msg.senderCompany && <span style={{ fontSize: 13, color: MUTED }}>• {msg.senderCompany}</span>}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      {msg.purpose && <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>}
+                      <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                    <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap" }}>{formatDate(msg.createdAt)}</span>
+                    {msg.isRead ? <MailOpen size={14} color={MUTED} /> : <Mail size={14} color={CERULEAN} />}
                   </div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                  <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.time}</span>
-                  {msg.isRead ? <MailOpen size={14} color={MUTED} /> : <Mail size={14} color={CERULEAN} />}
-                </div>
+                {expandedId === msg.id && (
+                  <div style={{ padding: "0 20px 20px 80px" }}>
+                    <div style={{ padding: "16px", background: GRAY_BG, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
+                      <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                      <a
+                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Phản hồi: ${msg.purpose || "Liên hệ từ Portfolio"}`)}&body=${encodeURIComponent(
+                          `--- Tin nhắn gốc từ ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Mục đích: ${msg.purpose}\n` : ""}${msg.content}\n\n--- Phản hồi của tôi ---\n`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                      >
+                        <Mail size={14} /> Phản hồi qua Email
+                      </a>
+                      <button onClick={() => handleArchive(msg.id)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
+                        <Archive size={14} /> Lưu trữ
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-              {expandedId === msg.id && (
-                <div style={{ padding: "0 20px 20px 80px" }}>
-                  <div style={{ padding: "16px", background: GRAY_BG, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
-                    <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.fullText}</p>
-                  </div>
-                  <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                    <button style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Phản hồi qua Email</button>
-                    <button style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK }}>Lưu trữ</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -38,6 +38,16 @@ export async function POST(
       },
     });
 
+    await prisma.notification.create({
+      data: {
+        userId: setting.userId,
+        type: 'new_message',
+        referenceId: message.id,
+        referenceType: 'message',
+        content: `Bạn có tin nhắn mới từ ${senderName}${senderCompany ? ` (${senderCompany})` : ''}`,
+      },
+    });
+
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
