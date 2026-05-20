@@ -3938,13 +3938,11 @@ export default function App() {
   }, []);
 
   // Sync URL hash whenever page or activeArtworkId changes
-  const firstRender = useRef(true);
   useEffect(() => {
-    if (firstRender.current) { firstRender.current = false; return; }
     const path = page === "detail" && activeArtworkId
       ? `#/detail/${activeArtworkId}`
       : (page === "home" ? "#/" : `#/${page}`);
-    window.history.pushState({ page, id: activeArtworkId }, "", path);
+    window.history.replaceState({ page, id: activeArtworkId || null }, "", path);
   }, [page, activeArtworkId]);
 
   // Handle browser back/forward
