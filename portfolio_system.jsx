@@ -72,9 +72,8 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
         ))}
       </nav>
       <div className="flex items-center gap-3 text-sm font-medium">
+        {isLoggedIn && <NotificationBell setPage={setPage} />}
         {isLoggedIn ? (
-          <>
-          <NotificationBell setPage={setPage} />
           <div className="relative" ref={dropdownRef}>
             <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
               <img src={userAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
@@ -107,7 +106,6 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
               </div>
             )}
           </div>
-          </>
         ) : (
           <>
             <button onClick={() => setPage("register")} className="text-gray-500 hover:text-[#212121] px-4 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">Đăng ký</button>
