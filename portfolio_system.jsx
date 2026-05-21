@@ -675,11 +675,12 @@ function ToggleSwitch({ isOn, onToggle }) {
   );
 }
 
-function DashboardSidebar({ active, setPage, userData }) {
+function DashboardSidebar({ activePage, setPage, userData }) {
   const items = [
     { icon: <Image size={18} />, label: "Tác phẩm của tôi", page: "dashboard" },
     { icon: <MessageSquare size={18} />, label: "Hộp thư", page: "messages" },
-    { icon: <Settings size={18} />, label: "Cài đặt", page: "settings" },
+    { icon: <User size={18} />, label: "Cài đặt Tài khoản", page: "settings" },
+    { icon: <Briefcase size={18} />, label: "Cài đặt Portfolio", page: "portfolio_settings" },
   ];
   const profileName = userData?.name || "Sinh viên";
   const profileAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
@@ -697,12 +698,15 @@ function DashboardSidebar({ active, setPage, userData }) {
         </div>
       </div>
       <div style={{ padding: "16px 0" }}>
-        {items.map(item => (
-          <div key={item.label} onClick={() => setPage(item.page)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", cursor: "pointer", background: active === item.label ? "#F0F8FB" : "transparent", borderRight: active === item.label ? `3px solid ${CERULEAN}` : "3px solid transparent" }}>
-            <span style={{ color: active === item.label ? CERULEAN : MUTED, display: "flex" }}>{item.icon}</span>
-            <span style={{ fontSize: 13, fontWeight: active === item.label ? 600 : 400, color: active === item.label ? CERULEAN : BLACK }}>{item.label}</span>
-          </div>
-        ))}
+        {items.map(item => {
+          const isActive = activePage === item.page;
+          return (
+            <div key={item.page} onClick={() => setPage(item.page)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", cursor: "pointer", background: isActive ? "#F0F8FB" : "transparent", borderRight: isActive ? `3px solid ${CERULEAN}` : "3px solid transparent" }}>
+              <span style={{ color: isActive ? CERULEAN : MUTED, display: "flex" }}>{item.icon}</span>
+              <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isActive ? CERULEAN : BLACK }}>{item.label}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -745,7 +749,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
 
   return (
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
-      <DashboardSidebar active="Tác phẩm của tôi" setPage={setPage} userData={userData} />
+      <DashboardSidebar activePage="dashboard" setPage={setPage} userData={userData} />
 
       <div style={{ flex: 1, padding: "32px 40px", overflow: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
@@ -1826,7 +1830,7 @@ function AdminDashboardPage({ setPage }) {
 
 
 
-function MessagesPage({ setPage }) {
+function MessagesPage({ setPage, userData }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -1868,7 +1872,7 @@ function MessagesPage({ setPage }) {
 
   return (
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
-      <DashboardSidebar active="Hộp thư" setPage={setPage} />
+      <DashboardSidebar activePage="messages" setPage={setPage} userData={userData} />
       <div style={{ flex: 1, padding: "32px 40px" }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 24px", color: BLACK }}>Hộp thư đến</h2>
         {loading ? (
@@ -3678,7 +3682,7 @@ function SaveToCollectionModal({
   );
 }
 
-function PortfolioSettingsPage({ setPage }) {
+function PortfolioSettingsPage({ setPage, userData }) {
   const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", major: "", yearLevel: "Năm 3", isPortfolioPublic: true, socialLinks: {}, featuredArtworkIds: [] });
   const [myArtworks, setMyArtworks] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -3738,16 +3742,8 @@ function PortfolioSettingsPage({ setPage }) {
   if (!loaded) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
-      <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
-        <div className="p-6 border-b border-[#E0E0E0]">
-          <h2 className="text-lg font-bold text-[#212121]">Cài đặt</h2>
-        </div>
-        <div className="p-4 flex-1">
-          <div onClick={() => setPage("settings")} className="flex items-center gap-3 px-4 py-2 text-[#666666] hover:bg-[#F8F8F8] rounded-lg cursor-pointer mb-1"><User size={18} /> Tài khoản</div>
-          <div className="flex items-center gap-3 px-4 py-2 bg-[#E8F4F8] text-[#077E9E] rounded-lg cursor-pointer font-medium mb-1"><Briefcase size={18} /> Portfolio</div>
-        </div>
-      </div>
+    <div className="flex min-h-screen bg-[#F8F8F8]">
+      <DashboardSidebar activePage="portfolio_settings" setPage={setPage} userData={userData} />
 
       <div className="flex-1 overflow-y-auto p-10">
         <div className="max-w-3xl mx-auto">
@@ -3890,7 +3886,7 @@ function PortfolioSettingsPage({ setPage }) {
   )
 }
 
-function SettingsPage({ setPage }) {
+function SettingsPage({ setPage, userData }) {
   const { refreshSession } = useAuth();
   const [profile, setProfile] = useState({ fullName: "", studentId: "", email: "", avatarUrl: "" });
   const [pendingAvatar, setPendingAvatar] = useState(null);
@@ -3988,16 +3984,8 @@ function SettingsPage({ setPage }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
-      <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
-        <div className="p-6 border-b border-[#E0E0E0]">
-          <h2 className="text-lg font-bold text-[#212121]">Cài đặt</h2>
-        </div>
-        <div className="p-4 flex-1">
-          <div className="flex items-center gap-3 px-4 py-2 bg-[#E8F4F8] text-[#077E9E] rounded-lg cursor-pointer font-medium mb-1"><User size={18} /> Tài khoản</div>
-          <div onClick={() => setPage("portfolio_settings")} className="flex items-center gap-3 px-4 py-2 text-[#666666] hover:bg-[#F8F8F8] rounded-lg cursor-pointer mb-1"><Briefcase size={18} /> Portfolio</div>
-        </div>
-      </div>
+    <div className="flex min-h-screen bg-[#F8F8F8]">
+      <DashboardSidebar activePage="settings" setPage={setPage} userData={userData} />
 
       <div className="flex-1 overflow-y-auto p-10">
         <div className="max-w-3xl mx-auto">
@@ -4497,11 +4485,11 @@ export default function App() {
       )}
       {page === "auth" && <AuthPage setPage={setPage} onLoginSuccess={handleLogin} />}
       {page === "register" && <RegisterPage setPage={setPage} />}
-      {page === "settings" && <SettingsPage setPage={setPage} />}
-      {page === "portfolio_settings" && <PortfolioSettingsPage setPage={setPage} />}
+      {page === "settings" && <SettingsPage setPage={setPage} userData={userData} />}
+      {page === "portfolio_settings" && <PortfolioSettingsPage setPage={setPage} userData={userData} />}
       {page === "admin" && <AdminDashboardPage setPage={setPage} />}
       {page === "about" && <AboutPage setPage={setPage} />}
-      {page === "messages" && <MessagesPage setPage={setPage} />}
+      {page === "messages" && <MessagesPage setPage={setPage} userData={userData} />}
       {page === "edit_artwork" && <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} />}
       {page === "admin_users" && <AdminUsersPage setPage={setPage} />}
       {page === "admin_artworks" && <AdminArtworksPage setPage={setPage} />}
