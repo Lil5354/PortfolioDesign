@@ -1521,11 +1521,12 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
 }
 
 function AuthPage({ setPage, onLoginSuccess }) {
+  const { loginWithEmail, refreshSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authRole, setAuthRole] = useState("student");
   const [loginError, setLoginError] = useState("");
-
+  const [showPassword, setShowPassword] = useState(false);
   const [logging, setLogging] = useState(false);
 
   const handleEmailLogin = async () => {
@@ -1536,22 +1537,17 @@ function AuthPage({ setPage, onLoginSuccess }) {
     setLoginError("");
     setLogging(true);
     try {
-      const csrfRes = await fetch("/api/auth/csrf");
-      const csrfData = await csrfRes.json();
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = "/api/auth/callback/credentials";
-      const fields = { email, password, csrfToken: csrfData.csrfToken, callbackUrl: window.location.origin + "/" };
-      for (const [k, v] of Object.entries(fields)) {
-        const i = document.createElement("input");
-        i.name = k; i.value = v; form.appendChild(i);
-      }
-      document.body.appendChild(form);
-      form.submit();
-    } catch {
-      setLoginError("Lỗi kết nối đến server");
+      await loginWithEmail(email, password);
+      await refreshSession();
+      setPage("home");
+    } catch (e) {
+      setLoginError(e?.message || "Đăng nhập thất bại");
       setLogging(false);
     }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleEmailLogin();
   };
 
   const handleGoogleLogin = () => {
@@ -1588,7 +1584,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
         <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
           {[{ key: "student", label: "Sinh viên" }, { key: "lecturer", label: "Giảng viên" }, { key: "admin", label: "Quản trị" }].map((r) => (
-            <button key={r.key} onClick={() => setAuthRole(r.key)} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{r.label}</button>
+            <button disabled={logging} key={r.key} onClick={() => setAuthRole(r.key)} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: logging ? "not-allowed" : "pointer" }}>{r.label}</button>
           ))}
         </div>
 
@@ -1599,31 +1595,51 @@ function AuthPage({ setPage, onLoginSuccess }) {
               type="email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); setLoginError(""); }}
+              onKeyDown={handleKeyDown}
+              disabled={logging}
               placeholder="sv@uef.edu.vn"
-              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${loginError ? "#E53E3E" : GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK, opacity: logging ? 0.6 : 1 }}
             />
           </div>
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mật khẩu</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
-              placeholder="••••••••"
-              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
+                onKeyDown={handleKeyDown}
+                disabled={logging}
+                placeholder="••••••••"
+                style={{ width: "100%", padding: "12px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${loginError ? "#E53E3E" : GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK, opacity: logging ? 0.6 : 1 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: logging ? "not-allowed" : "pointer", padding: 6, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED }}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
         </div>
 
         {loginError && (
-          <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 8, textAlign: "center" }}>{loginError}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFF5F5", border: "1px solid #FED7D7", borderRadius: 8, padding: "10px 14px", marginTop: 12 }}>
+            <ShieldAlert size={16} color="#E53E3E" style={{ flexShrink: 0 }} />
+            <p style={{ color: "#C53030", fontSize: 12, margin: 0, lineHeight: 1.4 }}>{loginError}</p>
+          </div>
         )}
 
         <button
           onClick={handleEmailLogin}
-          style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 16, cursor: "pointer" }}
+          disabled={logging || !email || !password}
+          style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: logging ? GRAY_LIGHT : CERULEAN, color: logging ? MUTED : "#fff", fontSize: 15, fontWeight: 600, marginTop: 16, cursor: logging ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         >
-          Đăng nhập
+          {logging ? (
+            <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> Đang đăng nhập...</>
+          ) : "Đăng nhập"}
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
@@ -1634,7 +1650,8 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
         <button
           onClick={handleGoogleLogin}
-          style={{ width: "100%", padding: "14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
+          disabled={logging}
+          style={{ width: "100%", padding: "14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 15, fontWeight: 600, cursor: logging ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: logging ? 0.5 : 1 }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -3049,6 +3066,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
 
 function RegisterPage({ setPage }) {
   const [form, setForm] = useState({ lastName: "", firstName: "", email: "", password: "", confirmPassword: "" });
+  const [showPasswords, setShowPasswords] = useState({ password: false, confirm: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -3128,11 +3146,17 @@ function RegisterPage({ setPage }) {
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mật khẩu</label>
-                  <input type="password" value={form.password} onChange={updateField("password")} placeholder="•••••••• (tối thiểu 8 ký tự, gồm chữ và số)" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                  <div style={{ position: "relative" }}>
+                    <input type={showPasswords.password ? "text" : "password"} value={form.password} onChange={updateField("password")} placeholder="•••••••• (tối thiểu 8 ký tự, gồm chữ và số)" required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <button type="button" onClick={() => setShowPasswords({ ...showPasswords, password: !showPasswords.password })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.password ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                  </div>
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Xác nhận mật khẩu</label>
-                  <input type="password" value={form.confirmPassword} onChange={updateField("confirmPassword")} placeholder="••••••••" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                  <div style={{ position: "relative" }}>
+                    <input type={showPasswords.confirm ? "text" : "password"} value={form.confirmPassword} onChange={updateField("confirmPassword")} placeholder="••••••••" required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <button type="button" onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                  </div>
                 </div>
               </div>
 
@@ -4228,6 +4252,22 @@ function PortalPage({ setPage }) {
   )
 }
 
+function AccessDenied({ setPage }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 16, padding: 40 }}>
+      <ShieldAlert size={64} color={CRIMSON} strokeWidth={1.2} />
+      <h2 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: 0 }}>Truy cập bị từ chối</h2>
+      <p style={{ fontSize: 14, color: MUTED, textAlign: "center", maxWidth: 400, lineHeight: 1.6 }}>
+        Bạn không có quyền truy cập trang này. Vui lòng đăng nhập với tài khoản có quyền phù hợp.
+      </p>
+      <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+        <button onClick={() => setPage("home")} style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Về trang chủ</button>
+        <button onClick={() => setPage("auth")} style={{ padding: "10px 24px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Đăng nhập</button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const { user: authUser, loading, logout, refreshSession } = useAuth();
 
@@ -4472,8 +4512,16 @@ export default function App() {
         />
       )}
       {page === "portfolio" && <PortfolioPage setPage={setPage} pageParams={pageParams} />}
-      {page === "dashboard" && <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />}
-      {page === "upload" && <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />}
+      {page === "dashboard" && (
+        userRole === "student" ? (
+          <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />
+        ) : <AccessDenied setPage={setPage} />
+      )}
+      {page === "upload" && (
+        isLoggedIn ? (userRole === "student" ? (
+          <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />
+        ) : <AccessDenied setPage={setPage} />) : <AccessDenied setPage={setPage} />
+      )}
       {page === "detail" && (
         <DetailPage
           setPage={setPage}
@@ -4485,32 +4533,50 @@ export default function App() {
       )}
       {page === "auth" && <AuthPage setPage={setPage} onLoginSuccess={handleLogin} />}
       {page === "register" && <RegisterPage setPage={setPage} />}
-      {page === "settings" && <SettingsPage setPage={setPage} userData={userData} />}
-      {page === "portfolio_settings" && <PortfolioSettingsPage setPage={setPage} userData={userData} />}
-      {page === "admin" && <AdminDashboardPage setPage={setPage} />}
+      {page === "settings" && (
+        isLoggedIn ? <SettingsPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />
+      )}
+      {page === "portfolio_settings" && (
+        isLoggedIn ? (userRole === "student" ? <PortfolioSettingsPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />) : <AccessDenied setPage={setPage} />
+      )}
+      {page === "admin" && (
+        (userRole === "admin" || userRole === "lecturer") ? <AdminDashboardPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+      )}
       {page === "about" && <AboutPage setPage={setPage} />}
-      {page === "messages" && <MessagesPage setPage={setPage} userData={userData} />}
-      {page === "edit_artwork" && <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} />}
-      {page === "admin_users" && <AdminUsersPage setPage={setPage} />}
-      {page === "admin_artworks" && <AdminArtworksPage setPage={setPage} />}
+      {page === "messages" && (
+        isLoggedIn ? <MessagesPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />
+      )}
+      {page === "edit_artwork" && (
+        isLoggedIn ? <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} /> : <AccessDenied setPage={setPage} />
+      )}
+      {page === "admin_users" && (
+        (userRole === "admin" || userRole === "lecturer") ? <AdminUsersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+      )}
+      {page === "admin_artworks" && (
+        (userRole === "admin" || userRole === "lecturer") ? <AdminArtworksPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+      )}
       {page === "admin_export" && (
-        <AdminExportPage
-          setPage={setPage}
-          collections={collections}
-          onOpenExportConfig={openExportConfig}
-          onQuickCreateCollection={() => {
-            const id = createCollection(`Bộ sưu tập mới`);
-            openExportConfig(id);
-          }}
-          onOpenCatalogBuilder={(c) => setCatalogCollection(c)}
-        />
+        (userRole === "admin" || userRole === "lecturer") ? (
+          <AdminExportPage
+            setPage={setPage}
+            collections={collections}
+            onOpenExportConfig={openExportConfig}
+            onQuickCreateCollection={() => {
+              const id = createCollection(`Bộ sưu tập mới`);
+              openExportConfig(id);
+            }}
+            onOpenCatalogBuilder={(c) => setCatalogCollection(c)}
+          />
+        ) : <AccessDenied setPage={setPage} />
       )}
       {page === "collection_export_config" && (
-        <CollectionExportConfigPage
-          setPage={setPage}
-          collection={activeCollection}
-          onUpdateCollection={updateActiveCollection}
-        />
+        (userRole === "admin" || userRole === "lecturer") ? (
+          <CollectionExportConfigPage
+            setPage={setPage}
+            collection={activeCollection}
+            onUpdateCollection={updateActiveCollection}
+          />
+        ) : <AccessDenied setPage={setPage} />
       )}
 
       {/* Global: Save flow modal + toast */}

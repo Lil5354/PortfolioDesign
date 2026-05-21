@@ -115,19 +115,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loginWithEmail = useCallback(async (email, password) => {
-    const csrfRes = await fetch("/api/auth/csrf");
-    const csrfData = await csrfRes.json();
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = "/api/auth/callback/credentials";
-    const fields = { email, password, csrfToken: csrfData.csrfToken, callbackUrl: "http://localhost:5173/" };
-    for (const [k, v] of Object.entries(fields)) {
-      const i = document.createElement("input");
-      i.name = k; i.value = v; form.appendChild(i);
+    const res = await fetch("/api/auth/email-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), password }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Đăng nhập thất bại");
     }
-    document.body.appendChild(form);
-    form.submit();
-  }, []);
+    await refreshSession();
+    return data;
+  }, [refreshSession]);
 
   const logout = useCallback(async () => {
     try {
