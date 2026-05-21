@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { createNotification } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,10 +11,17 @@ export async function GET(request: NextRequest) {
     const year = searchParams.get('year');
     const sort = searchParams.get('sort') || 'newest';
     const userId = searchParams.get('userId');
+    const collaboratorId = searchParams.get('collaboratorId');
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '12', 10);
 
-    const where: Record<string, unknown> = { isPublic: true };
+    const where: Record<string, unknown> = {};
+
+    if (collaboratorId) {
+      where.collaboratorIds = { has: collaboratorId };
+    } else {
+      where.isPublic = true;
+    }
 
     if (category) {
       where.subject = category;
@@ -79,6 +87,7 @@ export async function POST(request: NextRequest) {
       academicYear,
       tags,
       collaborators,
+      collaboratorIds,
       coverImageUrl,
       watermarkImageUrl,
       fileUrls,
@@ -104,6 +113,7 @@ export async function POST(request: NextRequest) {
         academicYear: academicYear || null,
         tags: tags || [],
         collaborators: collaborators || [],
+        collaboratorIds: collaboratorIds || [],
         coverImageUrl,
         watermarkImageUrl: watermarkImageUrl || null,
         fileUrls: fileUrls || [],
@@ -115,6 +125,25 @@ export async function POST(request: NextRequest) {
         isAiConfirmed: isAiConfirmed || false,
       },
     });
+
+    if (collaboratorIds && collaboratorIds.length > 0) {
+      const collabUsers = await prisma.user.findMany({
+        where: { id: { in: collaboratorIds } },
+        select: { id: true },
+      });
+      const actorName = session.user.name || 'Ai đó';
+      for (const cu of collabUsers) {
+        await createNotification({
+          userId: cu.id,
+          type: 'collaborator_tag',
+          referenceId: artwork.id,
+          referenceType: 'artwork',
+          content: `${actorName} đã thêm bạn làm đồng tác giả của ấn phẩm "${artwork.title}"`,
+          actorId: session.user.id,
+          actorName,
+        });
+      }
+    }
 
     return NextResponse.json(artwork, { status: 201 });
   } catch (error) {

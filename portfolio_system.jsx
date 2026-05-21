@@ -4,6 +4,7 @@ import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
 import { api } from "./lib/api-client";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
+import NotificationBell from "./components/NotificationBell";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -72,6 +73,8 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
       </nav>
       <div className="flex items-center gap-3 text-sm font-medium">
         {isLoggedIn ? (
+          <>
+          <NotificationBell setPage={setPage} />
           <div className="relative" ref={dropdownRef}>
             <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
               <img src={userAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
@@ -104,6 +107,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
               </div>
             )}
           </div>
+          </>
         ) : (
           <>
             <button onClick={() => setPage("register")} className="text-gray-500 hover:text-[#212121] px-4 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">Đăng ký</button>
@@ -321,7 +325,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   );
 }
 
-function PortfolioPage({ setPage }) {
+function PortfolioPage({ setPage, pageParams }) {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
   const [contactName, setContactName] = useState("");
@@ -333,7 +337,8 @@ function PortfolioPage({ setPage }) {
   const [portfolioSettingsData, setPortfolioSettingsData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const slug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
+  const hashSlug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
+  const slug = pageParams?.portfolioSlug || hashSlug;
   const titleByYear = { "Năm 1": "Nhà thiết kế mầm non", "Năm 2": "Nhà thiết kế tập sự", "Năm 3": "Nhà thiết kế chuyên nghiệp", "Năm 4": "Nhà thiết kế cao cấp", "Tốt nghiệp": "Nhà thiết kế xuất sắc" };
 
   useEffect(() => {
@@ -708,6 +713,10 @@ function DashboardSidebar({ active, setPage, userData }) {
 function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userData }) {
   const [artworksList, setArtworksList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [collabArtworks, setCollabArtworks] = useState([]);
+  const [collabLoading, setCollabLoading] = useState(true);
+
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     api.users.myArtworks().then(res => {
@@ -715,6 +724,14 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!authUser?.id) { setCollabLoading(false); return; }
+    api.artworks.list({ collaboratorId: authUser.id, limit: "50" }).then(res => {
+      setCollabArtworks(res.artworks || []);
+      setCollabLoading(false);
+    }).catch(() => setCollabLoading(false));
+  }, [authUser?.id]);
 
   const totalArtworks = artworksList.length;
   const totalViews = artworksList.reduce((s, a) => s + (a.viewCount || 0), 0);
@@ -793,6 +810,34 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                 </div>
               ))}
             </div>
+
+            {collabArtworks.length > 0 && (
+              <>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginTop: 40, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                <Users size={20} color={CERULEAN} /> Đồng tác giả ({collabArtworks.length})
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+                {collabArtworks.map(art => (
+                  <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                    <div style={{ position: "relative", background: GRAY_BG }}>
+                      <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
+                      <div style={{ position: "absolute", top: 8, left: 8 }}>
+                        <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: 3 }}>
+                          <Users size={10} /> {art.user?.fullName || "Đồng tác giả"}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ padding: "12px 14px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.subject}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              </>
+            )}
           </>
         )}
       </div>
@@ -887,9 +932,9 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         academicYear: yearToAcademic[projectYear] || "2024-2025",
         tags: tags.length > 0 ? tags : [subject],
         collaborators: friends.map(f => f.fullName || f),
+        collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: allFileUrls,
         coverImageUrl: coverImage,
-        fileUrls: allFileUrls,
         isPublic: false,
         isAiConfirmed: checked1,
       });
@@ -1218,10 +1263,32 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
               {(art.collaborators || []).length > 0 && <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {(art.collaborators || []).length} thành viên</span>}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <img src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }} onClick={() => setPage("portfolio")} />
-              <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("portfolio")}>{art.user?.fullName}</span>
+              <img
+                src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"}
+                alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }}
+                onClick={() => {
+                  const slug = art.user?.portfolioSettings?.portfolioSlug;
+                  if (slug) setPage("portfolio", { portfolioSlug: slug });
+                  else alert("Tác giả chưa thiết lập portfolio.");
+                }}
+              />
+              <span
+                style={{ fontSize: 13, color: MUTED, cursor: "pointer" }}
+                onClick={() => {
+                  const slug = art.user?.portfolioSettings?.portfolioSlug;
+                  if (slug) setPage("portfolio", { portfolioSlug: slug });
+                  else alert("Tác giả chưa thiết lập portfolio.");
+                }}
+              >{art.user?.fullName}</span>
               <span style={{ fontSize: 12, color: MUTED }}>·</span>
-              <span style={{ fontSize: 12, color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("portfolio")}>Xem portfolio</span>
+              <span
+                style={{ fontSize: 12, color: CERULEAN, cursor: "pointer" }}
+                onClick={() => {
+                  const slug = art.user?.portfolioSettings?.portfolioSlug;
+                  if (slug) setPage("portfolio", { portfolioSlug: slug });
+                  else alert("Tác giả chưa thiết lập portfolio.");
+                }}
+              >Xem portfolio</span>
             </div>
           </div>
 
@@ -1954,6 +2021,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         toolsUsed: tools,
         tags,
         collaborators: friends.map(f => f.fullName || f),
+        collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: [coverImage || originalCover, ...additionalImages].filter(Boolean),
         coverImageUrl: coverImage || originalCover,
         semester: yearToSemester[projectYear] || "HK1",
@@ -4189,29 +4257,50 @@ export default function App() {
     const h = getHashState();
     return h.page === "detail" && h.id ? h.id : (artworks[2]?.id ?? 1);
   });
+  const [pageParams, setPageParams] = useState(() => {
+    const h = getHashState();
+    if (h.page === "portfolio" && h.id) return { portfolioSlug: h.id };
+    return {};
+  });
 
   const setActiveArtworkId = useCallback((id) => {
     setActiveArtworkIdState(id);
   }, []);
 
-  const setPage = useCallback((newPage) => {
+  const setPage = useCallback((newPage, params) => {
     setPageState(newPage);
+    if (newPage === "detail" && params?.artworkId) {
+      setActiveArtworkIdState(params.artworkId);
+    }
+    setPageParams(params || {});
   }, []);
 
   // Sync URL hash whenever page or activeArtworkId changes
   useEffect(() => {
-    const path = page === "detail" && activeArtworkId
-      ? `#/detail/${activeArtworkId}`
-      : (page === "home" ? "#/" : `#/${page}`);
+    let path;
+    if (page === "detail" && activeArtworkId) {
+      path = `#/detail/${activeArtworkId}`;
+    } else if (page === "portfolio" && pageParams.portfolioSlug) {
+      path = `#/portfolio/${pageParams.portfolioSlug}`;
+    } else {
+      path = page === "home" ? "#/" : `#/${page}`;
+    }
     window.history.replaceState({ page, id: activeArtworkId || null }, "", path);
-  }, [page, activeArtworkId]);
+  }, [page, activeArtworkId, pageParams]);
 
   // Handle browser back/forward
   useEffect(() => {
     const onPop = () => {
       const h = getHashState();
       setPageState(h.page);
-      if (h.page === "detail" && h.id) setActiveArtworkIdState(h.id);
+      if (h.page === "detail" && h.id) {
+        setActiveArtworkIdState(h.id);
+        setPageParams({ artworkId: h.id });
+      } else if (h.page === "portfolio" && h.id) {
+        setPageParams({ portfolioSlug: h.id });
+      } else {
+        setPageParams({});
+      }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -4396,7 +4485,7 @@ export default function App() {
           isBookmarked={isBookmarked}
         />
       )}
-      {page === "portfolio" && <PortfolioPage setPage={setPage} />}
+      {page === "portfolio" && <PortfolioPage setPage={setPage} pageParams={pageParams} />}
       {page === "dashboard" && <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />}
       {page === "upload" && <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />}
       {page === "detail" && (

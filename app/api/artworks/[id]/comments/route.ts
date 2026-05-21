@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { createNotification } from '@/lib/notifications';
 
 interface Params {
   params: { id: string };
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     const artwork = await prisma.artwork.findUnique({
       where: { id: params.id },
-      select: { id: true },
+      select: { id: true, title: true, userId: true },
     });
 
     if (!artwork) {
@@ -68,6 +69,18 @@ export async function POST(request: NextRequest, { params }: Params) {
         },
       },
     });
+
+    if (session.user.id !== artwork.userId) {
+      await createNotification({
+        userId: artwork.userId,
+        type: 'new_comment',
+        referenceId: params.id,
+        referenceType: 'artwork',
+        content: `${session.user.name || comment.user.fullName} đã bình luận: "${content.trim().slice(0, 80)}"`,
+        actorId: session.user.id,
+        actorName: session.user.name || comment.user.fullName,
+      });
+    }
 
     return NextResponse.json(comment, { status: 201 });
   } catch (error) {
