@@ -103,7 +103,7 @@ export function AuthProvider({ children }) {
         const form = document.createElement("form");
         form.method = "POST";
         form.action = "/api/auth/signin/google";
-        const inputs = { callbackUrl: "http://localhost:5173/", csrfToken: data.csrfToken };
+        const inputs = { callbackUrl: window.location.origin + "/", csrfToken: data.csrfToken };
         for (const [k, v] of Object.entries(inputs)) {
           const i = document.createElement("input");
           i.name = k; i.value = v; form.appendChild(i);

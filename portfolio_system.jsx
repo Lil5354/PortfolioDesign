@@ -4485,8 +4485,8 @@ export default function App() {
     }
   };
 
-  const handleLogin = async (role) => {
-    const callbackUrl = "http://localhost:5173/";
+  const handleLogin = async () => {
+    const callbackUrl = window.location.origin + "/";
     window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`;
   };
   
