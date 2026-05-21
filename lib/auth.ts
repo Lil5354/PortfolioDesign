@@ -5,6 +5,12 @@ import { authConfig } from "./auth.config";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
+// Dynamically set NEXTAUTH_URL for Vercel preview deployments
+// VERCEL_URL is auto-set by Vercel (e.g. portfolio-design-git-backup-xxx.vercel.app)
+if (process.env.VERCEL_URL) {
+  process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
+}
+
 declare module "next-auth" {
   interface User {
     role?: string;
