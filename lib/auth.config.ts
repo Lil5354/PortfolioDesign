@@ -26,10 +26,18 @@ declare module "next-auth/jwt" {
 export const authConfig = {
   pages: {
     signIn: "/api/auth/signin",
+    error: "/api/auth/error",
   },
   callbacks: {
     authorized() {
       return true;
+    },
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+      }
+      return session;
     },
   },
   providers: [],

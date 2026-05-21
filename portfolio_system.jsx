@@ -1521,7 +1521,6 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
 }
 
 function AuthPage({ setPage, onLoginSuccess }) {
-  const { loginWithEmail, refreshSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authRole, setAuthRole] = useState("student");
@@ -1537,11 +1536,20 @@ function AuthPage({ setPage, onLoginSuccess }) {
     setLoginError("");
     setLogging(true);
     try {
-      await loginWithEmail(email, password);
-      await refreshSession();
-      setPage("home");
-    } catch (e) {
-      setLoginError(e?.message || "Đăng nhập thất bại");
+      const csrfRes = await fetch("/api/auth/csrf");
+      const csrfData = await csrfRes.json();
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "/api/auth/callback/credentials";
+      const fields = { email, password, csrfToken: csrfData.csrfToken, callbackUrl: window.location.origin + "/" };
+      for (const [k, v] of Object.entries(fields)) {
+        const i = document.createElement("input");
+        i.name = k; i.value = v; form.appendChild(i);
+      }
+      document.body.appendChild(form);
+      form.submit();
+    } catch {
+      setLoginError("Lỗi kết nối đến server");
       setLogging(false);
     }
   };
@@ -1584,7 +1592,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
         <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
           {[{ key: "student", label: "Sinh viên" }, { key: "lecturer", label: "Giảng viên" }, { key: "admin", label: "Quản trị" }].map((r) => (
-            <button disabled={logging} key={r.key} onClick={() => setAuthRole(r.key)} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: logging ? "not-allowed" : "pointer" }}>{r.label}</button>
+            <button key={r.key} onClick={() => setAuthRole(r.key)} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>{r.label}</button>
           ))}
         </div>
 
@@ -1596,9 +1604,8 @@ function AuthPage({ setPage, onLoginSuccess }) {
               value={email}
               onChange={(e) => { setEmail(e.target.value); setLoginError(""); }}
               onKeyDown={handleKeyDown}
-              disabled={logging}
               placeholder="sv@uef.edu.vn"
-              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${loginError ? "#E53E3E" : GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK, opacity: logging ? 0.6 : 1 }}
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${loginError ? "#E53E3E" : GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
             />
           </div>
           <div>
@@ -1609,15 +1616,14 @@ function AuthPage({ setPage, onLoginSuccess }) {
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
                 onKeyDown={handleKeyDown}
-                disabled={logging}
                 placeholder="••••••••"
-                style={{ width: "100%", padding: "12px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${loginError ? "#E53E3E" : GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK, opacity: logging ? 0.6 : 1 }}
+                style={{ width: "100%", padding: "12px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${loginError ? "#E53E3E" : GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 tabIndex={-1}
-                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: logging ? "not-allowed" : "pointer", padding: 6, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED }}
+                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED }}
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -1634,12 +1640,9 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
         <button
           onClick={handleEmailLogin}
-          disabled={logging || !email || !password}
-          style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: logging ? GRAY_LIGHT : CERULEAN, color: logging ? MUTED : "#fff", fontSize: 15, fontWeight: 600, marginTop: 16, cursor: logging ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+          style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 15, fontWeight: 600, marginTop: 16, cursor: "pointer" }}
         >
-          {logging ? (
-            <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> Đang đăng nhập...</>
-          ) : "Đăng nhập"}
+          Đăng nhập
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
@@ -1650,8 +1653,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
         <button
           onClick={handleGoogleLogin}
-          disabled={logging}
-          style={{ width: "100%", padding: "14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 15, fontWeight: 600, cursor: logging ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, opacity: logging ? 0.5 : 1 }}
+          style={{ width: "100%", padding: "14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 15, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
