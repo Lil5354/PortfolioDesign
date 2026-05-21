@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { createNotification } from '@/lib/notifications';
 
 interface Params {
   params: { id: string };
@@ -19,7 +20,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     const artwork = await prisma.artwork.findUnique({
       where: { id: params.id },
-      select: { id: true },
+      select: { id: true, title: true, userId: true },
     });
 
     if (!artwork) {
@@ -50,6 +51,16 @@ export async function PUT(request: NextRequest, { params }: Params) {
             comment: comment || null,
           },
         });
+
+    await createNotification({
+      userId: artwork.userId,
+      type: 'grade_updated',
+      referenceId: params.id,
+      referenceType: 'artwork',
+      content: `${session.user.name || 'Giảng viên'} đã chấm điểm ấn phẩm "${artwork.title}" với điểm ${score}/10`,
+      actorId: session.user.id,
+      actorName: session.user.name || undefined,
+    });
 
     return NextResponse.json(grade);
   } catch (error) {

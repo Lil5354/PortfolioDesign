@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { createNotification } from '@/lib/notifications';
 
 interface Params {
   params: { id: string };
@@ -16,7 +17,12 @@ export async function GET(request: NextRequest, { params }: Params) {
       prisma.artwork.findUnique({
         where: { id: params.id },
         include: {
-          user: { select: { id: true, fullName: true, studentId: true, avatarUrl: true } },
+          user: {
+            select: {
+              id: true, fullName: true, studentId: true, avatarUrl: true,
+              portfolioSettings: { select: { portfolioSlug: true } },
+            },
+          },
         },
       }),
       prisma.comment.findMany({
@@ -62,7 +68,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     const existing = await prisma.artwork.findUnique({
       where: { id: params.id },
-      select: { userId: true },
+      select: { userId: true, collaboratorIds: true, title: true },
     });
 
     if (!existing) {
@@ -76,7 +82,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const body = await request.json();
     const allowedFields = [
       'title', 'description', 'toolsUsed', 'subject', 'semester', 'academicYear',
-      'tags', 'collaborators', 'coverImageUrl', 'watermarkImageUrl', 'fileUrls',
+      'tags', 'collaborators', 'collaboratorIds', 'coverImageUrl', 'watermarkImageUrl', 'fileUrls',
       'watermarkText', 'watermarkPosition', 'isPublic', 'isHighlighted', 'isAiConfirmed',
     ];
 
@@ -91,6 +97,29 @@ export async function PUT(request: NextRequest, { params }: Params) {
       where: { id: params.id },
       data,
     });
+
+    const newCollabIds = body.collaboratorIds || [];
+    const oldCollabIds = existing.collaboratorIds || [];
+    const addedIds = newCollabIds.filter((id: string) => !oldCollabIds.includes(id));
+
+    if (addedIds.length > 0) {
+      const collabUsers = await prisma.user.findMany({
+        where: { id: { in: addedIds } },
+        select: { id: true },
+      });
+      const actorName = session.user.name || 'Ai đó';
+      for (const cu of collabUsers) {
+        await createNotification({
+          userId: cu.id,
+          type: 'collaborator_tag',
+          referenceId: params.id,
+          referenceType: 'artwork',
+          content: `${actorName} đã thêm bạn làm đồng tác giả của ấn phẩm "${artwork.title}"`,
+          actorId: session.user.id,
+          actorName,
+        });
+      }
+    }
 
     return NextResponse.json(artwork);
   } catch (error) {

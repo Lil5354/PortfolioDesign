@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { createNotification, notifyAdminsAndLecturers } from '@/lib/notifications';
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -18,6 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     const artwork = await prisma.artwork.findUnique({
       where: { id: params.id },
+      select: { id: true, title: true, userId: true },
     });
     if (!artwork) {
       return NextResponse.json({ error: 'Artwork not found' }, { status: 404 });
@@ -30,6 +32,15 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         violationType,
         detail: detail || null,
       },
+    });
+
+    await notifyAdminsAndLecturers({
+      type: 'new_report',
+      referenceId: params.id,
+      referenceType: 'report',
+      content: `Có báo cáo vi phạm mới cho ấn phẩm "${artwork.title}": ${violationType}`,
+      actorId: session.user.id,
+      actorName: session.user.name || undefined,
     });
 
     return NextResponse.json(report, { status: 201 });

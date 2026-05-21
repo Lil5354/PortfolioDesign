@@ -10,7 +10,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await fetch("/api/auth/session", { 
         credentials: "include",
-        cache: "no-store" // Đảm bảo không dùng cache
+        cache: "no-store"
       });
       
       if (!res.ok) {
@@ -21,10 +21,7 @@ export function AuthProvider({ children }) {
       }
       
       const session = await res.json();
-      console.log("🔐 Auth Session Response:", session); // Debug log
-      console.log("🔐 Full session object:", JSON.stringify(session, null, 2)); // Debug full object
       
-      // Xử lý nhiều format response khác nhau
       let userObj = null;
       
       if (session?.user) {
@@ -32,12 +29,10 @@ export function AuthProvider({ children }) {
       } else if (session?.data?.user) {
         userObj = session.data.user;
       } else if (session?.id && session?.email) {
-        // Trường hợp session trả về trực tiếp user data
         userObj = session;
       }
       
       if (userObj) {
-        // Xử lý linh hoạt cho cả email login và Google login
         const userData = {
           id: userObj.id || userObj._id || userObj.userId || userObj.sub,
           name: userObj.name || userObj.fullName || userObj.displayName || userObj.given_name || "",
@@ -45,22 +40,18 @@ export function AuthProvider({ children }) {
           image: userObj.image || userObj.avatarUrl || userObj.picture || userObj.avatar || "",
           role: userObj.role || "student",
         };
-        console.log("✅ User logged in:", userData); // Debug log
         
-        // Kiểm tra xem có đủ thông tin không
         if (userData.id && userData.email) {
           setUser(userData);
         } else {
           console.warn("⚠️ User data incomplete:", userData);
-          console.warn("⚠️ Original user object:", userObj);
           setUser(null);
         }
       } else {
-        console.log("❌ No user in session"); // Debug log
         setUser(null);
       }
     } catch (error) {
-      console.error("❌ Auth error:", error); // Debug log
+      console.error("❌ Auth error:", error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -70,22 +61,17 @@ export function AuthProvider({ children }) {
   useEffect(() => { 
     refreshSession(); 
     
-    // Force refresh ngay lập tức khi có query params (sau OAuth redirect)
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('code') || urlParams.has('state') || window.location.hash) {
-      console.log("🔄 Detected OAuth redirect, forcing session refresh...");
       setTimeout(() => refreshSession(), 500);
       setTimeout(() => refreshSession(), 1500);
       setTimeout(() => refreshSession(), 3000);
     }
     
-    // Refresh session khi window được focus lại (sau khi redirect từ login)
     const handleFocus = () => {
-      console.log("🔄 Window focused, refreshing session...");
       refreshSession();
     };
     
-    // Refresh session mỗi 30 giây để đảm bảo sync
     const interval = setInterval(() => {
       refreshSession();
     }, 30000);
@@ -103,7 +89,7 @@ export function AuthProvider({ children }) {
         const form = document.createElement("form");
         form.method = "POST";
         form.action = "/api/auth/signin/google";
-        const inputs = { callbackUrl: "http://localhost:5173/", csrfToken: data.csrfToken };
+        const inputs = { callbackUrl: window.location.origin + "/", csrfToken: data.csrfToken };
         for (const [k, v] of Object.entries(inputs)) {
           const i = document.createElement("input");
           i.name = k; i.value = v; form.appendChild(i);
@@ -120,7 +106,7 @@ export function AuthProvider({ children }) {
     const form = document.createElement("form");
     form.method = "POST";
     form.action = "/api/auth/callback/credentials";
-    const fields = { email, password, csrfToken: csrfData.csrfToken, callbackUrl: "http://localhost:5173/" };
+    const fields = { email, password, csrfToken: csrfData.csrfToken, callbackUrl: window.location.origin + "/" };
     for (const [k, v] of Object.entries(fields)) {
       const i = document.createElement("input");
       i.name = k; i.value = v; form.appendChild(i);

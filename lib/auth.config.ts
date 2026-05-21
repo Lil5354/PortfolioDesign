@@ -29,7 +29,7 @@ export const authConfig = {
     error: "/api/auth/error",
   },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
+    authorized() {
       return true;
     },
     session({ session, token }) {
@@ -41,4 +41,5 @@ export const authConfig = {
     },
   },
   providers: [],
+  trustHost: true,
 } satisfies NextAuthConfig;

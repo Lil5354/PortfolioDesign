@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { createNotification } from '@/lib/notifications';
 
 export async function POST(
   request: NextRequest,
@@ -38,14 +39,13 @@ export async function POST(
       },
     });
 
-    await prisma.notification.create({
-      data: {
-        userId: setting.userId,
-        type: 'new_message',
-        referenceId: message.id,
-        referenceType: 'message',
-        content: `Bạn có tin nhắn mới từ ${senderName}${senderCompany ? ` (${senderCompany})` : ''}`,
-      },
+    await createNotification({
+      userId: setting.userId,
+      type: 'new_message',
+      referenceId: message.id,
+      referenceType: 'message',
+      content: `Bạn có tin nhắn mới từ ${senderName}${senderCompany ? ` (${senderCompany})` : ''}`,
+      actorName: senderName,
     });
 
     return NextResponse.json(message, { status: 201 });

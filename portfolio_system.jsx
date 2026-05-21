@@ -4,6 +4,7 @@ import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
 import { api } from "./lib/api-client";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
+import NotificationBell from "./components/NotificationBell";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -71,6 +72,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
         ))}
       </nav>
       <div className="flex items-center gap-3 text-sm font-medium">
+        {isLoggedIn && <NotificationBell setPage={setPage} />}
         {isLoggedIn ? (
           <div className="relative" ref={dropdownRef}>
             <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
@@ -321,7 +323,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   );
 }
 
-function PortfolioPage({ setPage }) {
+function PortfolioPage({ setPage, pageParams }) {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
   const [contactName, setContactName] = useState("");
@@ -333,7 +335,8 @@ function PortfolioPage({ setPage }) {
   const [portfolioSettingsData, setPortfolioSettingsData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const slug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
+  const hashSlug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
+  const slug = pageParams?.portfolioSlug || hashSlug;
   const titleByYear = { "Năm 1": "Nhà thiết kế mầm non", "Năm 2": "Nhà thiết kế tập sự", "Năm 3": "Nhà thiết kế chuyên nghiệp", "Năm 4": "Nhà thiết kế cao cấp", "Tốt nghiệp": "Nhà thiết kế xuất sắc" };
 
   useEffect(() => {
@@ -672,11 +675,12 @@ function ToggleSwitch({ isOn, onToggle }) {
   );
 }
 
-function DashboardSidebar({ active, setPage, userData }) {
+function DashboardSidebar({ activePage, setPage, userData }) {
   const items = [
     { icon: <Image size={18} />, label: "Tác phẩm của tôi", page: "dashboard" },
     { icon: <MessageSquare size={18} />, label: "Hộp thư", page: "messages" },
-    { icon: <Settings size={18} />, label: "Cài đặt", page: "settings" },
+    { icon: <User size={18} />, label: "Cài đặt Tài khoản", page: "settings" },
+    { icon: <Briefcase size={18} />, label: "Cài đặt Portfolio", page: "portfolio_settings" },
   ];
   const profileName = userData?.name || "Sinh viên";
   const profileAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
@@ -694,12 +698,15 @@ function DashboardSidebar({ active, setPage, userData }) {
         </div>
       </div>
       <div style={{ padding: "16px 0" }}>
-        {items.map(item => (
-          <div key={item.label} onClick={() => setPage(item.page)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", cursor: "pointer", background: active === item.label ? "#F0F8FB" : "transparent", borderRight: active === item.label ? `3px solid ${CERULEAN}` : "3px solid transparent" }}>
-            <span style={{ color: active === item.label ? CERULEAN : MUTED, display: "flex" }}>{item.icon}</span>
-            <span style={{ fontSize: 13, fontWeight: active === item.label ? 600 : 400, color: active === item.label ? CERULEAN : BLACK }}>{item.label}</span>
-          </div>
-        ))}
+        {items.map(item => {
+          const isActive = activePage === item.page;
+          return (
+            <div key={item.page} onClick={() => setPage(item.page)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", cursor: "pointer", background: isActive ? "#F0F8FB" : "transparent", borderRight: isActive ? `3px solid ${CERULEAN}` : "3px solid transparent" }}>
+              <span style={{ color: isActive ? CERULEAN : MUTED, display: "flex" }}>{item.icon}</span>
+              <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isActive ? CERULEAN : BLACK }}>{item.label}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -708,6 +715,10 @@ function DashboardSidebar({ active, setPage, userData }) {
 function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userData }) {
   const [artworksList, setArtworksList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [collabArtworks, setCollabArtworks] = useState([]);
+  const [collabLoading, setCollabLoading] = useState(true);
+
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     api.users.myArtworks().then(res => {
@@ -715,6 +726,14 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!authUser?.id) { setCollabLoading(false); return; }
+    api.artworks.list({ collaboratorId: authUser.id, limit: "50" }).then(res => {
+      setCollabArtworks(res.artworks || []);
+      setCollabLoading(false);
+    }).catch(() => setCollabLoading(false));
+  }, [authUser?.id]);
 
   const totalArtworks = artworksList.length;
   const totalViews = artworksList.reduce((s, a) => s + (a.viewCount || 0), 0);
@@ -730,7 +749,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
 
   return (
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
-      <DashboardSidebar active="Tác phẩm của tôi" setPage={setPage} userData={userData} />
+      <DashboardSidebar activePage="dashboard" setPage={setPage} userData={userData} />
 
       <div style={{ flex: 1, padding: "32px 40px", overflow: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
@@ -793,6 +812,34 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                 </div>
               ))}
             </div>
+
+            {collabArtworks.length > 0 && (
+              <>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginTop: 40, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                <Users size={20} color={CERULEAN} /> Đồng tác giả ({collabArtworks.length})
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+                {collabArtworks.map(art => (
+                  <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                    <div style={{ position: "relative", background: GRAY_BG }}>
+                      <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
+                      <div style={{ position: "absolute", top: 8, left: 8 }}>
+                        <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: 3 }}>
+                          <Users size={10} /> {art.user?.fullName || "Đồng tác giả"}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ padding: "12px 14px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.subject}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              </>
+            )}
           </>
         )}
       </div>
@@ -887,9 +934,9 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         academicYear: yearToAcademic[projectYear] || "2024-2025",
         tags: tags.length > 0 ? tags : [subject],
         collaborators: friends.map(f => f.fullName || f),
+        collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: allFileUrls,
         coverImageUrl: coverImage,
-        fileUrls: allFileUrls,
         isPublic: false,
         isAiConfirmed: checked1,
       });
@@ -1218,10 +1265,32 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
               {(art.collaborators || []).length > 0 && <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {(art.collaborators || []).length} thành viên</span>}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <img src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }} onClick={() => setPage("portfolio")} />
-              <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("portfolio")}>{art.user?.fullName}</span>
+              <img
+                src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"}
+                alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }}
+                onClick={() => {
+                  const slug = art.user?.portfolioSettings?.portfolioSlug;
+                  if (slug) setPage("portfolio", { portfolioSlug: slug });
+                  else alert("Tác giả chưa thiết lập portfolio.");
+                }}
+              />
+              <span
+                style={{ fontSize: 13, color: MUTED, cursor: "pointer" }}
+                onClick={() => {
+                  const slug = art.user?.portfolioSettings?.portfolioSlug;
+                  if (slug) setPage("portfolio", { portfolioSlug: slug });
+                  else alert("Tác giả chưa thiết lập portfolio.");
+                }}
+              >{art.user?.fullName}</span>
               <span style={{ fontSize: 12, color: MUTED }}>·</span>
-              <span style={{ fontSize: 12, color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("portfolio")}>Xem portfolio</span>
+              <span
+                style={{ fontSize: 12, color: CERULEAN, cursor: "pointer" }}
+                onClick={() => {
+                  const slug = art.user?.portfolioSettings?.portfolioSlug;
+                  if (slug) setPage("portfolio", { portfolioSlug: slug });
+                  else alert("Tác giả chưa thiết lập portfolio.");
+                }}
+              >Xem portfolio</span>
             </div>
           </div>
 
@@ -1456,7 +1525,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
   const [password, setPassword] = useState("");
   const [authRole, setAuthRole] = useState("student");
   const [loginError, setLoginError] = useState("");
-
+  const [showPassword, setShowPassword] = useState(false);
   const [logging, setLogging] = useState(false);
 
   const handleEmailLogin = async () => {
@@ -1483,6 +1552,10 @@ function AuthPage({ setPage, onLoginSuccess }) {
       setLoginError("Lỗi kết nối đến server");
       setLogging(false);
     }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleEmailLogin();
   };
 
   const handleGoogleLogin = () => {
@@ -1530,24 +1603,39 @@ function AuthPage({ setPage, onLoginSuccess }) {
               type="email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); setLoginError(""); }}
+              onKeyDown={handleKeyDown}
               placeholder="sv@uef.edu.vn"
-              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${loginError ? "#E53E3E" : GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
             />
           </div>
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mật khẩu</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
-              placeholder="••••••••"
-              style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
+                onKeyDown={handleKeyDown}
+                placeholder="••••••••"
+                style={{ width: "100%", padding: "12px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${loginError ? "#E53E3E" : GRAY_LIGHT}`, background: GRAY_BG, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", alignItems: "center", justifyContent: "center", color: MUTED }}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
         </div>
 
         {loginError && (
-          <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 8, textAlign: "center" }}>{loginError}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFF5F5", border: "1px solid #FED7D7", borderRadius: 8, padding: "10px 14px", marginTop: 12 }}>
+            <ShieldAlert size={16} color="#E53E3E" style={{ flexShrink: 0 }} />
+            <p style={{ color: "#C53030", fontSize: 12, margin: 0, lineHeight: 1.4 }}>{loginError}</p>
+          </div>
         )}
 
         <button
@@ -1761,7 +1849,7 @@ function AdminDashboardPage({ setPage }) {
 
 
 
-function MessagesPage({ setPage }) {
+function MessagesPage({ setPage, userData }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -1803,7 +1891,7 @@ function MessagesPage({ setPage }) {
 
   return (
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
-      <DashboardSidebar active="Hộp thư" setPage={setPage} />
+      <DashboardSidebar activePage="messages" setPage={setPage} userData={userData} />
       <div style={{ flex: 1, padding: "32px 40px" }}>
         <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 24px", color: BLACK }}>Hộp thư đến</h2>
         {loading ? (
@@ -1954,6 +2042,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         toolsUsed: tools,
         tags,
         collaborators: friends.map(f => f.fullName || f),
+        collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: [coverImage || originalCover, ...additionalImages].filter(Boolean),
         coverImageUrl: coverImage || originalCover,
         semester: yearToSemester[projectYear] || "HK1",
@@ -2979,6 +3068,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
 
 function RegisterPage({ setPage }) {
   const [form, setForm] = useState({ lastName: "", firstName: "", email: "", password: "", confirmPassword: "" });
+  const [showPasswords, setShowPasswords] = useState({ password: false, confirm: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -3058,11 +3148,17 @@ function RegisterPage({ setPage }) {
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mật khẩu</label>
-                  <input type="password" value={form.password} onChange={updateField("password")} placeholder="•••••••• (tối thiểu 8 ký tự, gồm chữ và số)" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                  <div style={{ position: "relative" }}>
+                    <input type={showPasswords.password ? "text" : "password"} value={form.password} onChange={updateField("password")} placeholder="•••••••• (tối thiểu 8 ký tự, gồm chữ và số)" required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <button type="button" onClick={() => setShowPasswords({ ...showPasswords, password: !showPasswords.password })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.password ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                  </div>
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Xác nhận mật khẩu</label>
-                  <input type="password" value={form.confirmPassword} onChange={updateField("confirmPassword")} placeholder="••••••••" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                  <div style={{ position: "relative" }}>
+                    <input type={showPasswords.confirm ? "text" : "password"} value={form.confirmPassword} onChange={updateField("confirmPassword")} placeholder="••••••••" required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <button type="button" onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                  </div>
                 </div>
               </div>
 
@@ -3612,7 +3708,7 @@ function SaveToCollectionModal({
   );
 }
 
-function PortfolioSettingsPage({ setPage }) {
+function PortfolioSettingsPage({ setPage, userData }) {
   const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", major: "", yearLevel: "Năm 3", isPortfolioPublic: true, socialLinks: {}, featuredArtworkIds: [] });
   const [myArtworks, setMyArtworks] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -3672,16 +3768,8 @@ function PortfolioSettingsPage({ setPage }) {
   if (!loaded) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
-      <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
-        <div className="p-6 border-b border-[#E0E0E0]">
-          <h2 className="text-lg font-bold text-[#212121]">Cài đặt</h2>
-        </div>
-        <div className="p-4 flex-1">
-          <div onClick={() => setPage("settings")} className="flex items-center gap-3 px-4 py-2 text-[#666666] hover:bg-[#F8F8F8] rounded-lg cursor-pointer mb-1"><User size={18} /> Tài khoản</div>
-          <div className="flex items-center gap-3 px-4 py-2 bg-[#E8F4F8] text-[#077E9E] rounded-lg cursor-pointer font-medium mb-1"><Briefcase size={18} /> Portfolio</div>
-        </div>
-      </div>
+    <div className="flex min-h-screen bg-[#F8F8F8]">
+      <DashboardSidebar activePage="portfolio_settings" setPage={setPage} userData={userData} />
 
       <div className="flex-1 overflow-y-auto p-10">
         <div className="max-w-3xl mx-auto">
@@ -3824,7 +3912,7 @@ function PortfolioSettingsPage({ setPage }) {
   )
 }
 
-function SettingsPage({ setPage }) {
+function SettingsPage({ setPage, userData }) {
   const { refreshSession } = useAuth();
   const [profile, setProfile] = useState({ fullName: "", studentId: "", email: "", avatarUrl: "" });
   const [pendingAvatar, setPendingAvatar] = useState(null);
@@ -3922,16 +4010,8 @@ function SettingsPage({ setPage }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F8F8]">
-      <div className="w-64 bg-white border-r border-[#E0E0E0] flex flex-col">
-        <div className="p-6 border-b border-[#E0E0E0]">
-          <h2 className="text-lg font-bold text-[#212121]">Cài đặt</h2>
-        </div>
-        <div className="p-4 flex-1">
-          <div className="flex items-center gap-3 px-4 py-2 bg-[#E8F4F8] text-[#077E9E] rounded-lg cursor-pointer font-medium mb-1"><User size={18} /> Tài khoản</div>
-          <div onClick={() => setPage("portfolio_settings")} className="flex items-center gap-3 px-4 py-2 text-[#666666] hover:bg-[#F8F8F8] rounded-lg cursor-pointer mb-1"><Briefcase size={18} /> Portfolio</div>
-        </div>
-      </div>
+    <div className="flex min-h-screen bg-[#F8F8F8]">
+      <DashboardSidebar activePage="settings" setPage={setPage} userData={userData} />
 
       <div className="flex-1 overflow-y-auto p-10">
         <div className="max-w-3xl mx-auto">
@@ -4174,6 +4254,22 @@ function PortalPage({ setPage }) {
   )
 }
 
+function AccessDenied({ setPage }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 16, padding: 40 }}>
+      <ShieldAlert size={64} color={CRIMSON} strokeWidth={1.2} />
+      <h2 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: 0 }}>Truy cập bị từ chối</h2>
+      <p style={{ fontSize: 14, color: MUTED, textAlign: "center", maxWidth: 400, lineHeight: 1.6 }}>
+        Bạn không có quyền truy cập trang này. Vui lòng đăng nhập với tài khoản có quyền phù hợp.
+      </p>
+      <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+        <button onClick={() => setPage("home")} style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Về trang chủ</button>
+        <button onClick={() => setPage("auth")} style={{ padding: "10px 24px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Đăng nhập</button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const { user: authUser, loading, logout, refreshSession } = useAuth();
 
@@ -4189,29 +4285,50 @@ export default function App() {
     const h = getHashState();
     return h.page === "detail" && h.id ? h.id : (artworks[2]?.id ?? 1);
   });
+  const [pageParams, setPageParams] = useState(() => {
+    const h = getHashState();
+    if (h.page === "portfolio" && h.id) return { portfolioSlug: h.id };
+    return {};
+  });
 
   const setActiveArtworkId = useCallback((id) => {
     setActiveArtworkIdState(id);
   }, []);
 
-  const setPage = useCallback((newPage) => {
+  const setPage = useCallback((newPage, params) => {
     setPageState(newPage);
+    if (newPage === "detail" && params?.artworkId) {
+      setActiveArtworkIdState(params.artworkId);
+    }
+    setPageParams(params || {});
   }, []);
 
   // Sync URL hash whenever page or activeArtworkId changes
   useEffect(() => {
-    const path = page === "detail" && activeArtworkId
-      ? `#/detail/${activeArtworkId}`
-      : (page === "home" ? "#/" : `#/${page}`);
+    let path;
+    if (page === "detail" && activeArtworkId) {
+      path = `#/detail/${activeArtworkId}`;
+    } else if (page === "portfolio" && pageParams.portfolioSlug) {
+      path = `#/portfolio/${pageParams.portfolioSlug}`;
+    } else {
+      path = page === "home" ? "#/" : `#/${page}`;
+    }
     window.history.replaceState({ page, id: activeArtworkId || null }, "", path);
-  }, [page, activeArtworkId]);
+  }, [page, activeArtworkId, pageParams]);
 
   // Handle browser back/forward
   useEffect(() => {
     const onPop = () => {
       const h = getHashState();
       setPageState(h.page);
-      if (h.page === "detail" && h.id) setActiveArtworkIdState(h.id);
+      if (h.page === "detail" && h.id) {
+        setActiveArtworkIdState(h.id);
+        setPageParams({ artworkId: h.id });
+      } else if (h.page === "portfolio" && h.id) {
+        setPageParams({ portfolioSlug: h.id });
+      } else {
+        setPageParams({});
+      }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -4370,8 +4487,8 @@ export default function App() {
     }
   };
 
-  const handleLogin = async (role) => {
-    const callbackUrl = "http://localhost:5173/";
+  const handleLogin = async () => {
+    const callbackUrl = window.location.origin + "/";
     window.location.href = `/api/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`;
   };
   
@@ -4396,9 +4513,17 @@ export default function App() {
           isBookmarked={isBookmarked}
         />
       )}
-      {page === "portfolio" && <PortfolioPage setPage={setPage} />}
-      {page === "dashboard" && <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />}
-      {page === "upload" && <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />}
+      {page === "portfolio" && <PortfolioPage setPage={setPage} pageParams={pageParams} />}
+      {page === "dashboard" && (
+        userRole === "student" ? (
+          <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />
+        ) : <AccessDenied setPage={setPage} />
+      )}
+      {page === "upload" && (
+        isLoggedIn ? (userRole === "student" ? (
+          <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />
+        ) : <AccessDenied setPage={setPage} />) : <AccessDenied setPage={setPage} />
+      )}
       {page === "detail" && (
         <DetailPage
           setPage={setPage}
@@ -4410,32 +4535,50 @@ export default function App() {
       )}
       {page === "auth" && <AuthPage setPage={setPage} onLoginSuccess={handleLogin} />}
       {page === "register" && <RegisterPage setPage={setPage} />}
-      {page === "settings" && <SettingsPage setPage={setPage} />}
-      {page === "portfolio_settings" && <PortfolioSettingsPage setPage={setPage} />}
-      {page === "admin" && <AdminDashboardPage setPage={setPage} />}
+      {page === "settings" && (
+        isLoggedIn ? <SettingsPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />
+      )}
+      {page === "portfolio_settings" && (
+        isLoggedIn ? (userRole === "student" ? <PortfolioSettingsPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />) : <AccessDenied setPage={setPage} />
+      )}
+      {page === "admin" && (
+        (userRole === "admin" || userRole === "lecturer") ? <AdminDashboardPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+      )}
       {page === "about" && <AboutPage setPage={setPage} />}
-      {page === "messages" && <MessagesPage setPage={setPage} />}
-      {page === "edit_artwork" && <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} />}
-      {page === "admin_users" && <AdminUsersPage setPage={setPage} />}
-      {page === "admin_artworks" && <AdminArtworksPage setPage={setPage} />}
+      {page === "messages" && (
+        isLoggedIn ? <MessagesPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />
+      )}
+      {page === "edit_artwork" && (
+        isLoggedIn ? <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} /> : <AccessDenied setPage={setPage} />
+      )}
+      {page === "admin_users" && (
+        (userRole === "admin" || userRole === "lecturer") ? <AdminUsersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+      )}
+      {page === "admin_artworks" && (
+        (userRole === "admin" || userRole === "lecturer") ? <AdminArtworksPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+      )}
       {page === "admin_export" && (
-        <AdminExportPage
-          setPage={setPage}
-          collections={collections}
-          onOpenExportConfig={openExportConfig}
-          onQuickCreateCollection={() => {
-            const id = createCollection(`Bộ sưu tập mới`);
-            openExportConfig(id);
-          }}
-          onOpenCatalogBuilder={(c) => setCatalogCollection(c)}
-        />
+        (userRole === "admin" || userRole === "lecturer") ? (
+          <AdminExportPage
+            setPage={setPage}
+            collections={collections}
+            onOpenExportConfig={openExportConfig}
+            onQuickCreateCollection={() => {
+              const id = createCollection(`Bộ sưu tập mới`);
+              openExportConfig(id);
+            }}
+            onOpenCatalogBuilder={(c) => setCatalogCollection(c)}
+          />
+        ) : <AccessDenied setPage={setPage} />
       )}
       {page === "collection_export_config" && (
-        <CollectionExportConfigPage
-          setPage={setPage}
-          collection={activeCollection}
-          onUpdateCollection={updateActiveCollection}
-        />
+        (userRole === "admin" || userRole === "lecturer") ? (
+          <CollectionExportConfigPage
+            setPage={setPage}
+            collection={activeCollection}
+            onUpdateCollection={updateActiveCollection}
+          />
+        ) : <AccessDenied setPage={setPage} />
       )}
 
       {/* Global: Save flow modal + toast */}
