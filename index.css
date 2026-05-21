@@ -16,3 +16,7 @@ body {
   background-color: var(--color-graybg);
   color: var(--color-black);
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
