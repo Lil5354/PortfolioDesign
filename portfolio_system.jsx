@@ -49,7 +49,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
   const isActive = (id) => activePage === id || (id === "home" && (activePage === "home" || activePage === "landing"));
   const navItems = [
     { id: "home", label: "Trang chủ" },
-    { id: "intro", label: "Giới thiệu" },
+    { id: "intro", label: "Giới thiệu", external: true },
     { id: "gallery", label: "Gallery" },
   ];
   if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: "Portfolio" });
@@ -69,7 +69,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
       </div>
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
         {navItems.map((item) => (
-          <button key={item.id} onClick={() => setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#077E9E] border-b-2 border-[#077E9E]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
+          <button key={item.id} onClick={() => item.external ? window.location.href = '/introduction.html' : setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#077E9E] border-b-2 border-[#077E9E]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
         ))}
       </nav>
       <div className="flex items-center gap-3 text-sm font-medium">
