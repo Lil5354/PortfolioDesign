@@ -5,6 +5,7 @@ import { MajorCard } from "./components/ui/MajorCard";
 import { api } from "./lib/api-client";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import NotificationBell from "./components/NotificationBell";
+import { IntroductionPage } from "./components/IntroductionPage";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -48,7 +49,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
   const isActive = (id) => activePage === id || (id === "home" && (activePage === "home" || activePage === "landing"));
   const navItems = [
     { id: "home", label: "Trang chủ" },
-    { id: "about", label: "Giới thiệu" },
+    { id: "intro", label: "Giới thiệu" },
     { id: "gallery", label: "Gallery" },
   ];
   if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: "Portfolio" });
@@ -4543,6 +4544,7 @@ export default function App() {
       {page === "admin" && (
         (userRole === "admin" || userRole === "lecturer") ? <AdminDashboardPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
+      {page === "intro" && <IntroductionPage setPage={setPage} />}
       {page === "about" && <AboutPage setPage={setPage} />}
       {page === "messages" && (
         isLoggedIn ? <MessagesPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />
