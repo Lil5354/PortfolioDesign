@@ -5,7 +5,7 @@ import { MajorCard } from "./components/ui/MajorCard";
 import { api } from "./lib/api-client";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import NotificationBell from "./components/NotificationBell";
-import { IntroductionPage } from "./components/IntroductionPage";
+
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -4544,7 +4544,6 @@ export default function App() {
       {page === "admin" && (
         (userRole === "admin" || userRole === "lecturer") ? <AdminDashboardPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
-      {page === "intro" && <IntroductionPage setPage={setPage} />}
       {page === "about" && <AboutPage setPage={setPage} />}
       {page === "messages" && (
         isLoggedIn ? <MessagesPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />
