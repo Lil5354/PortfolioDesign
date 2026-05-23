@@ -12,7 +12,7 @@ import {
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive,
-  GraduationCap, Upload
+  GraduationCap, Rocket, Upload
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -941,6 +941,8 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: allFileUrls,
         coverImageUrl: coverImage,
+        watermarkText: "UEF",
+        watermarkPosition: "bottom-right",
         isPublic: false,
         isAiConfirmed: checked1,
       });
@@ -1213,7 +1215,11 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const allImagesDeduped = [...new Set(allImages)];
   const activeImage = allImagesDeduped[activeImageIdx] || allImagesDeduped[0] || art.coverImageUrl;
 
-  const semesterToYear = { HK1: "Năm 1", HK2: "Năm 2", HK3: "Năm 3" };
+  const semesterMeta = {
+    HK1: { label: "Năm 1", icon: <Rocket size={12} /> },
+    HK2: { label: "Năm 2", icon: <BookOpen size={12} /> },
+    HK3: { label: "Năm 3", icon: <GraduationCap size={12} /> },
+  };
 
   const timeAgo = (dateStr) => {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -1248,10 +1254,10 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
               ))}
             </div>
           )}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "32px 32px 0" }}>
-            <img src={activeImage} alt={art.title} style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
-            <div style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
-              <p style={{ color: "rgba(0,0,0,0.06)", fontSize: 48, fontWeight: 900, transform: "rotate(-25deg)", userSelect: "none", letterSpacing: 4, textTransform: "uppercase" }}>UEF · PORTFOLIO</p>
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: 0, overflow: "hidden" }}>
+            <img src={activeImage} alt={art.title} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", position: "absolute", inset: 0, zIndex: 2 }} />
+            <div style={{ position: "absolute", bottom: 16, right: 16, pointerEvents: "none", zIndex: 1 }}>
+              <p style={{ color: "rgba(0,0,0,0.08)", fontSize: 14, fontWeight: 900, userSelect: "none", letterSpacing: 2, textTransform: "uppercase", background: "rgba(255,255,255,0.7)", padding: "4px 10px", borderRadius: 4 }}>{art.watermarkText || "UEF"}</p>
             </div>
             <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
               <button onClick={() => setShowFullscreen(true)} title="Phóng to" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
@@ -1270,7 +1276,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px", color: BLACK, lineHeight: 1.3 }}>{art.title}</h1>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-              {art.semester && <span style={{ background: "#FEF3E2", color: "#92400E", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><BookOpen size={12} /> {semesterToYear[art.semester] || art.semester}</span>}
+              {art.semester && <span style={{ background: "#FEF3E2", color: "#92400E", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}>{(semesterMeta[art.semester]?.icon) || <BookOpen size={12} />} {semesterMeta[art.semester]?.label || art.semester}</span>}
               {art.academicYear && <span style={{ background: "#E8F0FE", color: "#1E40AF", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Calendar size={12} /> {art.academicYear}</span>}
               {(art.collaborators || []).length > 0 && <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {(art.collaborators || []).length} thành viên</span>}
             </div>
@@ -2074,6 +2080,8 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: [coverImage || originalCover, ...additionalImages].filter(Boolean),
         coverImageUrl: coverImage || originalCover,
+        watermarkText: "UEF",
+        watermarkPosition: "bottom-right",
         semester: yearToSemester[projectYear] || "HK1",
         academicYear: yearToAcademic[projectYear] || "2024-2025",
       };
