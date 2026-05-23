@@ -55,6 +55,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       grade: grades.length > 0 ? grades[0] : null,
     });
   } catch (error) {
+    console.error("GET /api/artworks/[id] error:", error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

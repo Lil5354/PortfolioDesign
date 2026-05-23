@@ -1129,6 +1129,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadFormat, setDownloadFormat] = useState("png");
   const [downloading, setDownloading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   useEffect(() => { const h = (e) => { if (e.key === 'Escape') setShowFullscreen(false); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
 
   const currentUserId = authUser?.id;
@@ -1145,7 +1146,8 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   useEffect(() => {
     if (!activeArtworkId) return;
     setActiveImageIdx(0);
-    api.artworks.get(activeArtworkId).then(res => {
+      setLoadError(false);
+      api.artworks.get(activeArtworkId).then(res => {
       setArt({
         ...res,
         subject: res.subject || "Ấn phẩm",
@@ -1161,7 +1163,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
         setGradeScore(String(res.grade.score));
         setGradeComment(res.grade.comment || "");
       }
-    }).catch(() => {});
+    }).catch(() => { setLoadError(true); });
     api.artworks.related(activeArtworkId, 6).then(setRelatedArtworks).catch(() => {});
   }, [activeArtworkId]);
 
@@ -1337,6 +1339,21 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     } catch (e) { console.error("Download error:", e); alert("Lỗi khi tải xuống. Vui lòng thử lại."); }
     setDownloading(false);
   };
+
+  const seasonNames = { HK1: "Mùa 1", HK2: "Mùa 2", HK3: "Mùa 3" };
+
+  if (loadError) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", gap: 16, minHeight: "100vh", background: "#fff" }}>
+        <div style={{ width: 64, height: 64, borderRadius: 16, background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ShieldAlert size={28} color={CRIMSON} />
+        </div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: BLACK, margin: 0 }}>Không thể tải ấn phẩm</h2>
+        <p style={{ fontSize: 14, color: MUTED, margin: 0, maxWidth: 400, textAlign: "center" }}>Ấn phẩm không tồn tại hoặc đã bị gỡ. Vui lòng quay lại Gallery để khám phá các tác phẩm khác.</p>
+        <button onClick={() => setPage("gallery")} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Quay lại Gallery</button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
@@ -1694,11 +1711,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
           />
         </div>
       )}
-
-    </div>
+  </div>
   );
 }
-
 function AuthPage({ setPage, onLoginSuccess }) {
   const { loginWithEmail, refreshSession } = useAuth();
   const [email, setEmail] = useState("");
