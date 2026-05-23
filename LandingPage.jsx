@@ -55,7 +55,7 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
               Đăng nhập sinh viên
             </button>
           </div>
-          <p className="text-xs text-gray-500 mb-16">* Dành cho sinh viên đăng nhập bằng email @uef.edu.vn</p>
+          <p className="text-xs text-gray-500 mb-16">* Dành cho sinh viên đăng nhập bằng email của bạn</p>
           
           <div className="flex flex-wrap items-center gap-8 border-t border-gray-100 pt-8">
             <div>
@@ -227,7 +227,7 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
             <div className="flex-1 flex flex-col items-center text-center z-10">
               <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">1</div>
               <h3 className="font-bold mb-2">Đăng nhập</h3>
-              <p className="text-sm text-gray-500">Dùng email @uef.edu.vn để đăng nhập vào hệ thống</p>
+              <p className="text-sm text-gray-500">Dùng email của bạn để đăng nhập vào hệ thống</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
