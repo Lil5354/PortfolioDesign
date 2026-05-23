@@ -1119,6 +1119,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [reportType, setReportType] = useState("");
   const [reportDetail, setReportDetail] = useState("");
   const [sendingReport, setSendingReport] = useState(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
+  useEffect(() => { const h = (e) => { if (e.key === 'Escape') setShowFullscreen(false); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
 
   const currentUserId = authUser?.id;
   const currentUserRole = authUser?.role;
@@ -1249,10 +1252,11 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
             <p style={{ color: "rgba(0,0,0,0.06)", fontSize: 48, fontWeight: 900, transform: "rotate(-25deg)", userSelect: "none", letterSpacing: 4, textTransform: "uppercase" }}>UEF · PORTFOLIO</p>
           </div>
           <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
-            {[<Maximize2 size={16} />, <ArrowDownCircle size={16} />, <ExternalLink size={16} />].map((icon, i) => (
-              <button key={i} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>{icon}</button>
-            ))}
+            <button onClick={() => setShowFullscreen(true)} title="Phóng to" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
+            <button onClick={() => { const a = document.createElement('a'); a.href = activeImage; a.download = art.title || 'artwork'; a.click(); }} title="Tải xuống" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><ArrowDownCircle size={16} /></button>
+            <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt('Sao chép link:', window.location.href); } }} title="Chia sẻ link" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><ExternalLink size={16} /></button>
           </div>
+          {shareToast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: BLACK, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>Đã sao chép link ấn phẩm!</div>}
         </div>
 
         <div style={{ borderLeft: `1px solid ${GRAY_LIGHT}`, padding: "32px 28px", overflow: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
@@ -1467,6 +1471,26 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
 
         </div>
       </div>
+
+      {showFullscreen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.92)' }} onClick={() => setShowFullscreen(false)}>
+          <button onClick={() => setShowFullscreen(false)} style={{ position: "absolute", top: 20, right: 24, width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 22, zIndex: 10 }}>✕</button>
+          <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.5)", fontSize: 12, zIndex: 10 }}>Bấm ESC hoặc click nền để đóng</div>
+          <div className="flex items-center justify-center p-8 w-full h-full" onClick={e => e.stopPropagation()}>
+            {allImagesDeduped.length > 1 && (
+              <button onClick={() => setActiveImageIdx(prev => prev > 0 ? prev - 1 : allImagesDeduped.length - 1)} style={{ position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 20, zIndex: 10 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+            )}
+            <img src={activeImage} alt={art.title} style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain", borderRadius: 4 }} />
+            {allImagesDeduped.length > 1 && (
+              <button onClick={() => setActiveImageIdx(prev => prev < allImagesDeduped.length - 1 ? prev + 1 : 0)} style={{ position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 20, zIndex: 10 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {showReport && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowReport(false)}>
