@@ -607,6 +607,8 @@ function PortfolioPage({ setPage, pageParams }) {
         </div>
         )}
 
+        <TimelineSection slug={slug || ''} />
+
         <div style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 0 }}>
             {["Tất cả tác phẩm", "Poster", "Branding", "UI/UX"].map((t, i) => (
@@ -3765,6 +3767,70 @@ function PortfolioSettingsPage({ setPage, userData }) {
     }
   };
 
+  const [timelineEntries, setTimelineEntries] = useState([]);
+  const [timelineForm, setTimelineForm] = useState({ month: '', year: '', title: '', description: '', tags: '', linkUrl: '', linkLabel: '', imageUrl: '' });
+  const [showTimelineForm, setShowTimelineForm] = useState(false);
+  const [editingTimelineId, setEditingTimelineId] = useState(null);
+  const [savingTimeline, setSavingTimeline] = useState(false);
+
+  useEffect(() => {
+    api.timeline.list().then(setTimelineEntries).catch(() => {});
+  }, [loaded]);
+
+  const openAddTimeline = () => {
+    setEditingTimelineId(null);
+    setTimelineForm({ month: '', year: '', title: '', description: '', tags: '', linkUrl: '', linkLabel: '', imageUrl: '' });
+    setShowTimelineForm(true);
+  };
+
+  const openEditTimeline = (entry) => {
+    setEditingTimelineId(entry.id);
+    setTimelineForm({
+      month: entry.month || '',
+      year: entry.year || '',
+      title: entry.title || '',
+      description: entry.description || '',
+      tags: entry.tags ? entry.tags.join(', ') : '',
+      linkUrl: entry.linkUrl || '',
+      linkLabel: entry.linkLabel || '',
+      imageUrl: entry.imageUrl || '',
+    });
+    setShowTimelineForm(true);
+  };
+
+  const saveTimelineEntry = async () => {
+    if (!timelineForm.month || !timelineForm.year || !timelineForm.title) return;
+    setSavingTimeline(true);
+    try {
+      const body = { ...timelineForm, tags: timelineForm.tags.split(',').map(t => t.trim()).filter(Boolean) };
+      if (editingTimelineId) {
+        const updated = await api.timeline.update(editingTimelineId, body);
+        setTimelineEntries(prev => prev.map(e => e.id === editingTimelineId ? updated : e));
+      } else {
+        const created = await api.timeline.create(body);
+        setTimelineEntries(prev => [...prev, created]);
+      }
+      setShowTimelineForm(false);
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+    } finally {
+      setSavingTimeline(false);
+    }
+  };
+
+  const deleteTimelineEntry = async (id) => {
+    if (!confirm('Xóa mốc timeline này?')) return;
+    try {
+      await api.timeline.delete(id);
+      setTimelineEntries(prev => prev.filter(e => e.id !== id));
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+    }
+  };
+
+  const monthOptions = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  const yearOptions = ['2023','2024','2025','2026','2027'];
+
   if (!loaded) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
 
   return (
@@ -3888,6 +3954,129 @@ function PortfolioSettingsPage({ setPage, userData }) {
               <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="mt-4 w-full py-2.5 rounded-lg bg-[#077E9E] text-white font-semibold cursor-pointer">Xác nhận</button>
             </div>
           </div>
+
+          {/* TIMELINE ACHIEVEMENTS */}
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-[#212121]">Timeline thành tích</h3>
+              <button onClick={openAddTimeline} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#077E9E] text-white text-sm font-semibold hover:bg-opacity-90 transition-opacity cursor-pointer"><Plus size={15} />Thêm</button>
+            </div>
+            <p className="text-sm text-[#666666] mb-4">Quản lý các cột mốc thành tích trên dòng thời gian portfolio.</p>
+
+            {timelineEntries.length === 0 ? (
+              <div className="text-center py-8 text-sm text-[#666666]">Chưa có mốc thành tích nào. Bấm "Thêm" để tạo mốc đầu tiên.</div>
+            ) : (
+              <div className="space-y-2">
+                {timelineEntries.map(entry => (
+                  <div key={entry.id} className="flex items-center justify-between px-4 py-3 rounded-lg bg-[#F8F8F8] border border-[#E0E0E0]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden bg-gray-200">
+                        {entry.imageUrl ? <img src={entry.imageUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs text-[#999]"><Clock size={16} /></div>}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#212121] truncate">{entry.title}</p>
+                        <p className="text-xs text-[#666666]">{entry.month} {entry.year}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => openEditTimeline(entry)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer text-[#666666] hover:text-[#212121]"><Edit2 size={15} /></button>
+                      <button onClick={() => deleteTimelineEntry(entry.id)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer text-[#666666] hover:text-red-600"><Trash2 size={15} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* TIMELINE FORM MODAL */}
+          {showTimelineForm && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowTimelineForm(false); }}>
+              <div className="bg-white rounded-xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-lg text-[#212121]">{editingTimelineId ? 'Sửa mốc timeline' : 'Thêm mốc timeline'}</h3>
+                  <button onClick={() => setShowTimelineForm(false)} className="text-[#666666] hover:text-[#212121] cursor-pointer"><X size={20} /></button>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs font-medium text-[#212121] mb-1.5">Tháng</label>
+                      <select value={timelineForm.month} onChange={e => setTimelineForm({...timelineForm, month: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white">
+                        <option value="">Chọn tháng</option>
+                        {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-medium text-[#212121] mb-1.5">Năm</label>
+                      <select value={timelineForm.year} onChange={e => setTimelineForm({...timelineForm, year: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white">
+                        <option value="">Chọn năm</option>
+                        {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Tiêu đề</label>
+                    <input type="text" value={timelineForm.title} onChange={e => setTimelineForm({...timelineForm, title: e.target.value})} placeholder="VD: Giải Nhất NCKH cấp Trường" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Mô tả</label>
+                    <textarea value={timelineForm.description} onChange={e => setTimelineForm({...timelineForm, description: e.target.value})} rows={3} placeholder="Mô tả ngắn về thành tích..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] resize-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Tags (phân cách bằng dấu phẩy)</label>
+                    <input type="text" value={timelineForm.tags} onChange={e => setTimelineForm({...timelineForm, tags: e.target.value})} placeholder="VD: Nghiên cứu, AI/NLP, Giải Nhất" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Link bài báo / chứng nhận</label>
+                    <div className="flex gap-2">
+                      <input type="text" value={timelineForm.linkUrl} onChange={e => setTimelineForm({...timelineForm, linkUrl: e.target.value})} placeholder="https://..." className="flex-1 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                      <input type="text" value={timelineForm.linkLabel} onChange={e => setTimelineForm({...timelineForm, linkLabel: e.target.value})} placeholder="Nhãn (VD: Xem bài báo)" className="w-1/3 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">URL ảnh nền</label>
+                    <input type="text" value={timelineForm.imageUrl} onChange={e => setTimelineForm({...timelineForm, imageUrl: e.target.value})} placeholder="https://images.unsplash.com/..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <button onClick={saveTimelineEntry} disabled={savingTimeline || !timelineForm.title || !timelineForm.month || !timelineForm.year} className="flex-1 py-2.5 rounded-lg bg-[#077E9E] text-white text-sm font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{savingTimeline ? 'Đang lưu...' : editingTimelineId ? 'Cập nhật' : 'Thêm mới'}</button>
+                  <button onClick={() => setShowTimelineForm(false)} className="px-6 py-2.5 rounded-lg border border-[#E0E0E0] text-sm font-medium text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Hủy</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TIMELINE PREVIEW */}
+          {timelineEntries.length > 0 && (
+            <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6 overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-[#212121]">Xem trước Timeline</h3>
+                <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#077E9E] font-semibold hover:underline">Xem trên portfolio →</a>
+              </div>
+              <div className="relative">
+                <div className="relative overflow-hidden rounded-xl" style={{ minHeight: 260, backgroundImage: `url(${timelineEntries[0]?.imageUrl || ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                  <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)' }} />
+                  <div className="relative z-10 p-5 flex items-center" style={{ minHeight: 260 }}>
+                    <div className="w-full" style={{ background: BLACK, color: '#fff', padding: '20px 24px', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+                      <div className="mb-2">
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: '#dbeafe', color: '#1e40af' }}>{timelineEntries[0]?.month} {timelineEntries[0]?.year}</span>
+                      </div>
+                      <h4 className="text-base font-bold mb-1.5">{timelineEntries[0]?.title}</h4>
+                      <p className="text-xs leading-relaxed" style={{ color: '#9ca3af' }}>{timelineEntries[0]?.description}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  {timelineEntries.slice(0, 6).map((e, i) => (
+                    <div key={e.id} className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-[#077E9E]' : 'bg-[#E0E0E0]'}`} />
+                  ))}
+                  {timelineEntries.length > 6 && <span className="text-[10px] text-[#666666]">+{timelineEntries.length - 6}</span>}
+                </div>
+                <p className="text-center text-[10px] text-[#999] mt-2 flex items-center justify-center gap-1">
+                  <Calendar size={11} />{timelineEntries.length} mốc thành tích
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-8 flex items-center justify-between">
             <div>
@@ -4267,6 +4456,295 @@ function AccessDenied({ setPage }) {
         <button onClick={() => setPage("auth")} style={{ padding: "10px 24px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Đăng nhập</button>
       </div>
     </div>
+  );
+}
+
+function TimelineSection({ entries: propEntries, slug }) {
+  const [fetchedEntries, setFetchedEntries] = useState(null);
+  const [fetchDone, setFetchDone] = useState(false);
+
+  const mockData = [
+    { id: 'mock-1', year: "2023", monthLabel: "T9", month: "Tháng 9", title: "Đồ án nhập môn lập trình", description: "Hoàn thành đồ án Quản lý Thư viện bằng C++ với kiến trúc OOP. Đạt 9.5/10.", tags: ["C++", "OOP", "Xuất sắc"], linkUrl: "#", linkLabel: "Xem đồ án →", monthColor: "#dbeafe", monthText: "#1e40af", imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80" },
+    { id: 'mock-2', year: "2024", monthLabel: "T3", month: "Tháng 3", title: "Giải Nhất NCKH cấp Trường", description: "Nghiên cứu ứng dụng AI trong phân tích cảm xúc văn bản tiếng Việt. Đạt giải Nhất.", tags: ["Nghiên cứu", "AI/NLP", "Giải Nhất"], linkUrl: "#", linkLabel: "Xem báo cáo →", monthColor: "#dcfce7", monthText: "#166534", imageUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80" },
+    { id: 'mock-3', year: "2024", monthLabel: "T8", month: "Tháng 8", title: "Công bố bài báo IEEE", description: "Đồng tác giả bài báo đăng trên hội nghị IEEE RIVF 2024.", tags: ["IEEE", "Công bố QT", "NLP"], linkUrl: "#", linkLabel: "Xem bài báo →", monthColor: "#f3e8ff", monthText: "#6b21a8", imageUrl: "https://images.unsplash.com/photo-1559223607-a43c990c692c?w=800&q=80" },
+    { id: 'mock-4', year: "2025", monthLabel: "T2", month: "Tháng 2", title: "Thực tập tại FPT Software", description: "Tham gia team Frontend. Đánh giá: Xuất sắc (9.0/10).", tags: ["Thực tập", "React", "FPT"], linkUrl: "#", linkLabel: "Xem chứng nhận →", monthColor: "#fef3c7", monthText: "#92400e", imageUrl: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80" },
+    { id: 'mock-5', year: "2025", monthLabel: "T6", month: "Tháng 6", title: "Học bổng Toàn phần kỳ 6", description: "Đạt học bổng toàn phần nhờ GPA 3.8/4.0.", tags: ["Học bổng", "GPA 3.8", "Toàn phần"], linkUrl: "#", linkLabel: "Xem quyết định →", monthColor: "#fce7f3", monthText: "#9d174d", imageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c7f1?w=800&q=80" },
+    { id: 'mock-6', year: "2026", monthLabel: "T5", month: "Tháng 5", title: "Tốt nghiệp Thủ khoa", description: "Tốt nghiệp Xuất sắc. Điểm bảo vệ: 9.8/10.", tags: ["Thủ khoa", "Xuất sắc", "Đồ án"], linkUrl: "#", linkLabel: "Xem đồ án →", monthColor: "#ccfbf1", monthText: "#0f766e", imageUrl: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&q=80" },
+  ];
+
+  const monthColors = { "Tháng 1": ["#dbeafe","#1e40af"], "Tháng 2": ["#fef3c7","#92400e"], "Tháng 3": ["#dcfce7","#166534"], "Tháng 4": ["#fce7f3","#9d174d"], "Tháng 5": ["#ccfbf1","#0f766e"], "Tháng 6": ["#f3e8ff","#6b21a8"], "Tháng 7": ["#e0f2fe","#0369a1"], "Tháng 8": ["#fef9c3","#a16207"], "Tháng 9": ["#dbeafe","#1e40af"], "Tháng 10": ["#ffedd5","#9a3412"], "Tháng 11": ["#fce7f3","#9d174d"], "Tháng 12": ["#e0e7ff","#4338ca"] };
+
+  useEffect(() => {
+    if (propEntries) { setFetchedEntries(propEntries); setFetchDone(true); return; }
+    const fetchFn = slug
+      ? fetch(`/api/portfolios/${slug}/timeline`).then(r => r.json())
+      : api.timeline.list();
+    fetchFn.then(data => {
+      if (data.error) throw new Error(data.error);
+      setFetchedEntries(Array.isArray(data) && data.length > 0 ? data : mockData);
+      setFetchDone(true);
+    }).catch(() => { setFetchedEntries(mockData); setFetchDone(true); });
+  }, [slug]);
+
+  const rawEntries = fetchedEntries || mockData;
+  const timelineData = rawEntries.map(e => ({
+    id: e.id,
+    year: e.year || '',
+    monthLabel: e.month ? 'T' + e.month.replace('Tháng ', '') : '',
+    month: e.month || '',
+    title: e.title || '',
+    description: e.description || '',
+    tags: e.tags || [],
+    link: e.linkUrl || '#',
+    linkLabel: e.linkLabel || 'Xem chi tiết →',
+    img: e.imageUrl || '',
+    monthColor: monthColors[e.month] ? monthColors[e.month][0] : '#dbeafe',
+    monthText: monthColors[e.month] ? monthColors[e.month][1] : '#1e40af',
+  }));
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  const isTransitioning = useRef(false);
+  const stripRef = useRef(null);
+  const cardsRef = useRef(null);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartScroll = useRef(0);
+  const autoCenterTimer = useRef(null);
+  const cardDragStart = useRef(0);
+
+  function goTo(newIdx) {
+    if (isTransitioning.current || newIdx === activeIndex) return;
+    if (newIdx < 0 || newIdx >= timelineData.length) return;
+    isTransitioning.current = true;
+    setActiveIndex(newIdx);
+    setTimeout(() => { isTransitioning.current = false; }, 520);
+  }
+
+  function goNext() { goTo(Math.min(activeIndex + 1, timelineData.length - 1)); }
+  function goPrev() { goTo(Math.max(activeIndex - 1, 0)); }
+
+  function centerActiveDot() {
+    requestAnimationFrame(() => {
+      const strip = stripRef.current;
+      const dots = strip?.querySelectorAll('[data-dot-idx]');
+      if (!dots || !dots[activeIndex]) return;
+      const containerRect = strip.getBoundingClientRect();
+      const dotRect = dots[activeIndex].getBoundingClientRect();
+      const offset = (dotRect.left + dotRect.right) / 2 - (containerRect.left + containerRect.right) / 2;
+      strip.scrollLeft += offset;
+    });
+  }
+
+  function snapToNearest() {
+    if (autoCenterTimer.current) clearTimeout(autoCenterTimer.current);
+    autoCenterTimer.current = setTimeout(() => {
+      const strip = stripRef.current;
+      if (!strip) return;
+      const dots = strip.querySelectorAll('[data-dot-idx]');
+      const containerRect = strip.getBoundingClientRect();
+      const center = (containerRect.left + containerRect.right) / 2;
+      let nearestIdx = activeIndex;
+      let minDist = Infinity;
+      dots.forEach((dot) => {
+        const rect = dot.getBoundingClientRect();
+        const dotCenter = (rect.left + rect.right) / 2;
+        const dist = Math.abs(dotCenter - center);
+        if (dist < minDist) { minDist = dist; nearestIdx = parseInt(dot.dataset.dotIdx); }
+      });
+      if (nearestIdx !== activeIndex) goTo(nearestIdx);
+      else centerActiveDot();
+    }, 150);
+  }
+
+  useEffect(() => {
+    centerActiveDot();
+  }, [activeIndex]);
+
+  useEffect(() => {
+    const strip = stripRef.current;
+    if (!strip) return;
+
+    const onMouseDown = (e) => {
+      isDragging.current = true;
+      dragStartX.current = e.pageX;
+      dragStartScroll.current = strip.scrollLeft;
+    };
+    const onMouseMove = (e) => {
+      if (!isDragging.current) return;
+      const dx = e.pageX - dragStartX.current;
+      strip.scrollLeft = dragStartScroll.current - dx;
+    };
+    const onMouseUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      snapToNearest();
+    };
+    const onTouchStart = (e) => {
+      isDragging.current = true;
+      dragStartX.current = e.touches[0].pageX;
+      dragStartScroll.current = strip.scrollLeft;
+    };
+    const onTouchMove = (e) => {
+      if (!isDragging.current) return;
+      const dx = e.touches[0].pageX - dragStartX.current;
+      strip.scrollLeft = dragStartScroll.current - dx;
+    };
+    const onTouchEnd = () => {
+      isDragging.current = false;
+      snapToNearest();
+    };
+    const onScroll = () => {
+      if (isDragging.current) return;
+      if (autoCenterTimer.current) clearTimeout(autoCenterTimer.current);
+      autoCenterTimer.current = setTimeout(snapToNearest, 300);
+    };
+
+    strip.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    strip.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    strip.addEventListener('scroll', onScroll, { passive: true });
+
+    return () => {
+      strip.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      strip.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      strip.removeEventListener('scroll', onScroll);
+    };
+  }, [activeIndex]);
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'ArrowRight') goNext();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeIndex]);
+
+  function getCardClass(i) {
+    if (i === activeIndex) return { transform: 'scale(1) translateY(0)', opacity: 1, pointerEvents: 'auto', zIndex: 10 };
+    if (i < activeIndex) return { transform: 'scale(0.3) translateY(20px)', opacity: 0, pointerEvents: 'none', zIndex: 1 };
+    return { transform: 'scale(0.3) translateY(-20px)', opacity: 0, pointerEvents: 'none', zIndex: 1 };
+  }
+
+  return (
+    <section className="pt-12 pb-6">
+      <div className="flex items-end justify-between gap-6 mb-8">
+        <div>
+          <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-2">Academic Journey</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-black tracking-tight">Hành trình thành tích</h2>
+          <p className="text-sm text-muted mt-2 max-w-lg">
+            Những cột mốc đáng nhớ trên chặng đường học tập và nghiên cứu.
+          </p>
+        </div>
+      </div>
+
+      <div className="relative">
+        <div className="relative flex items-center justify-center mb-6 py-4 overflow-hidden" style={{ backgroundImage: `url(${timelineData[activeIndex].img})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: 24, border: `1px solid ${GRAY_LIGHT}`, minHeight: 400, transition: 'background-image 0.5s cubic-bezier(0.4,0,0.2,1)' }}>
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)', borderRadius: 24 }} />
+          <div ref={cardsRef} className="relative w-full max-w-[420px] z-10" style={{ minHeight: 380 }}>
+            {timelineData.map((item, i) => {
+              const cardStyle = getCardClass(i);
+              return (
+                <div key={item.id} className="absolute inset-0 flex items-center justify-center px-4"
+                  style={{ transition: 'transform 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)', ...cardStyle }}>
+                  <div className="w-full max-w-[400px]" style={{ background: BLACK, color: '#fff', padding: '32px 36px', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+                    <div className="mb-5">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{ background: item.monthColor, color: item.monthText }}>
+                        {item.month} {item.year}
+                      </span>
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold mb-3 leading-snug">{item.title}</h3>
+                    <p className="text-sm leading-relaxed mb-5" style={{ color: '#9ca3af' }}>
+                      {item.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      {item.tags.map(t => (
+                        <span key={t} className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.8)' }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <a href={item.link} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
+                      style={{ color: CERULEAN }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#065d75'}
+                      onMouseLeave={e => e.currentTarget.style.color = CERULEAN}>
+                      {item.linkLabel}
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex justify-center items-center gap-4 mb-6">
+          <button onClick={goPrev}
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            style={{ background: '#fff', border: `1px solid ${GRAY_LIGHT}`, color: MUTED }}
+            onMouseEnter={e => e.currentTarget.style.background = GRAY_BG}
+            onMouseLeave={e => e.currentTarget.style.background = '#fff'}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span className="text-sm" style={{ color: MUTED }}>
+            <span className="font-semibold" style={{ color: BLACK }}>{activeIndex + 1}</span>
+            <span className="mx-1">/</span>
+            <span>{timelineData.length}</span>
+          </span>
+          <button onClick={goNext}
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            style={{ background: CERULEAN, border: 'none', color: '#fff', boxShadow: '0 4px 12px rgba(7,126,158,0.3)' }}
+            onMouseEnter={e => e.currentTarget.style.background = '#065d75'}
+            onMouseLeave={e => e.currentTarget.style.background = CERULEAN}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
+        <div className="relative px-4">
+          <div className="absolute h-[2px] left-0 right-0 top-1/2 -translate-y-1/2 z-0" style={{ background: GRAY_LIGHT }}></div>
+          <div ref={stripRef} className="overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing relative z-10">
+            <div className="flex items-center justify-center gap-16 md:gap-24 py-3 px-8 min-w-max">
+              {timelineData.map((item, i) => (
+                <div key={item.id} data-dot-idx={i}
+                  className="shrink-0 flex flex-col items-center gap-2 cursor-pointer select-none"
+                  onClick={() => { if (!isTransitioning.current && i !== activeIndex) goTo(i); }}>
+                  <span className="text-xs font-medium transition-colors" style={{ color: i === activeIndex ? CERULEAN : MUTED, fontWeight: i === activeIndex ? 700 : 500 }}>
+                    {item.monthLabel}
+                  </span>
+                  <div className="w-3 h-3 rounded-full transition-all duration-[400ms]" style={{
+                    background: i === activeIndex ? CERULEAN : GRAY_LIGHT,
+                    transform: i === activeIndex ? 'scale(1.6)' : 'scale(1)',
+                    boxShadow: i === activeIndex ? `0 0 0 4px rgba(7,126,158,0.2)` : 'none',
+                  }}></div>
+                  <span className="text-xs transition-colors" style={{ color: i === activeIndex ? CERULEAN : '#999', fontWeight: i === activeIndex ? 700 : 400 }}>
+                    {item.year}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <p className="text-center text-xs mt-4 flex items-center justify-center gap-1.5" style={{ color: '#aaa' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          Kéo timeline hoặc dùng nút để xem chi tiết
+        </p>
+      </div>
+
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+    </section>
   );
 }
 

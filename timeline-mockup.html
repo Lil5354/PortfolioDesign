@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline Thành Tích Sinh Viên</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#077E9E',
+                        brandDark: '#065d75',
+                        brandLight: '#e8f4f8',
+                        black: '#212121',
+                        muted: '#666666',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .timeline-card {
+            will-change: transform, opacity;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .timeline-card.prev {
+            transform: scale(0.3) translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+        }
+        .timeline-card.active {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .timeline-card.next {
+            transform: scale(0.3) translateY(-20px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .year-dot {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .year-dot.active .dot {
+            transform: scale(1.6);
+            box-shadow: 0 0 0 4px rgba(7, 126, 158, 0.2);
+        }
+        .year-dot.active .year-label {
+            color: #077E9E;
+            font-weight: 700;
+        }
+
+        .dot {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .year-label {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-white text-gray-900 font-sans select-none">
+
+    <div class="min-h-screen flex items-center justify-center p-6">
+        <div class="w-full max-w-5xl">
+
+            <!-- Header -->
+            <div class="mb-10 text-center md:text-left">
+                <p class="text-brand font-semibold text-xs tracking-widest uppercase mb-2">Academic Journey</p>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-black tracking-tight font-sans">Hành trình thành tích</h2>
+                <p class="text-muted text-sm mt-2 max-w-lg">
+                    Những cột mốc đáng nhớ trên chặng đường học tập và nghiên cứu.
+                </p>
+            </div>
+
+            <!-- Timeline Container -->
+            <div class="relative">
+
+                <!-- Card Viewport -->
+                <div class="relative h-[420px] md:h-[460px] flex items-center justify-center mb-6">
+                    <!-- Cards stack -->
+                    <div id="cards-container" class="relative w-full max-w-[440px] h-full flex items-center justify-center">
+                        <!-- Cards will be rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Navigation buttons -->
+                <div class="flex justify-center gap-4 mb-8">
+                    <button id="btn-prev" class="w-11 h-11 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors shadow-sm border border-gray-200 cursor-pointer">
+                        <i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i>
+                    </button>
+                    <div class="flex items-center gap-2 text-sm text-muted">
+                        <span id="index-display" class="font-semibold text-black">1</span>
+                        <span>/</span>
+                        <span id="total-display">6</span>
+                    </div>
+                    <button id="btn-next" class="w-11 h-11 rounded-full bg-brand flex items-center justify-center hover:bg-brandDark transition-colors shadow-lg shadow-brand/30 cursor-pointer">
+                        <i data-lucide="chevron-right" class="w-5 h-5 text-white"></i>
+                    </button>
+                </div>
+
+                <!-- Year Timeline Strip -->
+                <div class="relative">
+                    <!-- The line -->
+                    <div class="absolute h-[2px] bg-gray-200 left-0 right-0 top-1/2 -translate-y-1/2 z-0"></div>
+
+                    <!-- Scrollable strip -->
+                    <div id="timeline-strip" class="overflow-x-auto no-scrollbar cursor-grab active:cursor-grabbing relative z-10">
+                        <div id="dots-container" class="flex items-center justify-center gap-16 md:gap-24 py-4 px-8 min-w-max">
+                            <!-- Dots rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hint text -->
+                <p class="text-center text-xs text-gray-400 mt-4 flex items-center justify-center gap-1.5">
+                    <i data-lucide="move-horizontal" class="w-3.5 h-3.5"></i>
+                    Kéo timeline hoặc dùng nút để xem chi tiết
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // ─── MOCK DATA ───
+        const timelineData = [
+            {
+                id: 1,
+                year: "2023",
+                month: "Tháng 9",
+                title: "Đồ án nhập môn lập trình",
+                description: "Hoàn thành đồ án Quản lý Thư viện bằng C++ với kiến trúc OOP. Đạt 9.5/10 và được giảng viên chọn làm mẫu cho khoá sau.",
+                tags: ["C++", "OOP", "Xuất sắc"],
+                link: "https://example.com/doi-an-2023",
+                linkLabel: "Xem đồ án →"
+            },
+            {
+                id: 2,
+                year: "2024",
+                month: "Tháng 3",
+                title: "Giải Nhất NCKH cấp Trường",
+                description: "Nghiên cứu ứng dụng AI trong phân tích cảm xúc văn bản tiếng Việt. Đạt giải Nhất và được chọn tham dự cấp Bộ.",
+                tags: ["Nghiên cứu", "AI/NLP", "Giải Nhất"],
+                link: "https://example.com/nckh-2024",
+                linkLabel: "Xem báo cáo →"
+            },
+            {
+                id: 3,
+                year: "2024",
+                month: "Tháng 8",
+                title: "Công bố bài báo IEEE",
+                description: "Đồng tác giả bài báo 'Sentiment Analysis for Vietnamese E-commerce Reviews' đăng trên hội nghị IEEE RIVF 2024.",
+                tags: ["IEEE", "Công bố QT", "NLP"],
+                link: "https://example.com/ieee-paper",
+                linkLabel: "Xem bài báo →"
+            },
+            {
+                id: 4,
+                year: "2025",
+                month: "Tháng 2",
+                title: "Thực tập tại FPT Software",
+                description: "Tham gia team Frontend phát triển hệ thống quản lý nội bộ. Đánh giá thực tập: Xuất sắc (9.0/10).",
+                tags: ["Thực tập", "React", "FPT"],
+                link: "https://example.com/fpt-intern",
+                linkLabel: "Xem chứng nhận →"
+            },
+            {
+                id: 5,
+                year: "2025",
+                month: "Tháng 6",
+                title: "Học bổng Toàn phần kỳ 6",
+                description: "Đạt học bổng toàn phần học kỳ 6 nhờ duy trì GPA 3.8/4.0 và thành tích nghiên cứu xuất sắc.",
+                tags: ["Học bổng", "GPA 3.8", "Toàn phần"],
+                link: "https://example.com/scholarship",
+                linkLabel: "Xem quyết định →"
+            },
+            {
+                id: 6,
+                year: "2026",
+                month: "Tháng 5",
+                title: "Tốt nghiệp Thủ khoa",
+                description: "Tốt nghiệp loại Xuất sắc với đồ án 'Hệ thống gợi ý học tập thích ứng'. Điểm bảo vệ: 9.8/10.",
+                tags: ["Thủ khoa", "Xuất sắc", "Đồ án"],
+                link: "https://example.com/thesis",
+                linkLabel: "Xem đồ án tốt nghiệp →"
+            }
+        ];
+
+        // ─── STATE ───
+        let activeIndex = 0;
+        let isTransitioning = false;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartScroll = 0;
+        let autoCenterTimeout = null;
+
+        const cardsContainer = document.getElementById('cards-container');
+        const dotsContainer = document.getElementById('dots-container');
+        const timelineStrip = document.getElementById('timeline-strip');
+        const indexDisplay = document.getElementById('index-display');
+        const totalDisplay = document.getElementById('total-display');
+
+        totalDisplay.textContent = timelineData.length;
+
+        // ─── RENDER CARDS ───
+        function renderCards() {
+            cardsContainer.innerHTML = '';
+            timelineData.forEach((item, i) => {
+                const card = document.createElement('div');
+                card.className = `timeline-card absolute inset-0 flex items-center justify-center ${i === 0 ? 'active' : i < activeIndex ? 'prev' : 'next'}`;
+                card.dataset.index = i;
+
+                const monthColors = {
+                    "Tháng 9": "bg-blue-50 text-blue-700",
+                    "Tháng 3": "bg-green-50 text-green-700",
+                    "Tháng 8": "bg-purple-50 text-purple-700",
+                    "Tháng 2": "bg-amber-50 text-amber-700",
+                    "Tháng 6": "bg-rose-50 text-rose-700",
+                    "Tháng 5": "bg-teal-50 text-teal-700"
+                };
+
+                card.innerHTML = `
+                    <div class="bg-black text-white p-8 md:p-10 rounded-[1.5rem] shadow-2xl w-full mx-4 max-w-[440px]">
+                        <div class="flex items-start justify-between mb-6">
+                            <div>
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${monthColors[item.month] || 'bg-gray-100 text-gray-700'}">
+                                    ${item.month} ${item.year}
+                                </span>
+                            </div>
+                        </div>
+
+                        <h3 class="text-xl md:text-2xl font-bold mb-3 leading-snug">${item.title}</h3>
+                        <p class="text-gray-400 text-sm leading-relaxed mb-6">
+                            ${item.description}
+                        </p>
+
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            ${item.tags.map(t => `
+                                <span class="text-xs font-medium px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-white/80">
+                                    ${t}
+                                </span>
+                            `).join('')}
+                        </div>
+
+                        <a href="${item.link}" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:text-brandDark transition-colors group">
+                            <span>${item.linkLabel}</span>
+                            <i data-lucide="external-link" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform"></i>
+                        </a>
+                    </div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // ─── RENDER DOTS ───
+        function renderDots() {
+            dotsContainer.innerHTML = '';
+            timelineData.forEach((item, i) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = `year-dot shrink-0 flex flex-col items-center gap-2 ${i === activeIndex ? 'active' : ''}`;
+                wrapper.dataset.index = i;
+
+                wrapper.innerHTML = `
+                    <span class="year-label text-sm font-medium text-gray-500">${item.month.split(' ')[1] || item.month}</span>
+                    <div class="dot w-3 h-3 rounded-full ${i === activeIndex ? 'bg-brand' : 'bg-gray-300'}"></div>
+                `;
+
+                wrapper.addEventListener('click', () => {
+                    if (!isTransitioning && i !== activeIndex) {
+                        goTo(i);
+                    }
+                });
+
+                dotsContainer.appendChild(wrapper);
+            });
+
+            // Scroll active dot into center
+            centerActiveDot();
+        }
+
+        function centerActiveDot() {
+            requestAnimationFrame(() => {
+                const dots = dotsContainer.querySelectorAll('.year-dot');
+                const activeDot = dots[activeIndex];
+                if (!activeDot) return;
+
+                const containerRect = timelineStrip.getBoundingClientRect();
+                const dotRect = activeDot.getBoundingClientRect();
+                const offset = (dotRect.left + dotRect.right) / 2 - (containerRect.left + containerRect.right) / 2;
+
+                timelineStrip.scrollLeft += offset;
+            });
+        }
+
+        // ─── NAVIGATION ───
+        function goTo(newIndex) {
+            if (isTransitioning || newIndex === activeIndex) return;
+            if (newIndex < 0 || newIndex >= timelineData.length) return;
+
+            isTransitioning = true;
+            const direction = newIndex > activeIndex ? 1 : -1;
+            const prevIndex = activeIndex;
+            activeIndex = newIndex;
+
+            // Update cards with animation
+            const cards = cardsContainer.querySelectorAll('.timeline-card');
+            cards.forEach((card, i) => {
+                card.classList.remove('prev', 'active', 'next');
+                if (i === activeIndex) {
+                    card.classList.add('active');
+                } else if (i < activeIndex) {
+                    card.classList.add('prev');
+                } else {
+                    card.classList.add('next');
+                }
+            });
+
+            // Update dots
+            const dots = dotsContainer.querySelectorAll('.year-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === activeIndex);
+                const yearLabel = dot.querySelector('.year-label');
+                const dotEl = dot.querySelector('.dot');
+                if (i === activeIndex) {
+                    dotEl.classList.add('bg-brand');
+                    dotEl.classList.remove('bg-gray-300');
+                } else {
+                    dotEl.classList.remove('bg-brand');
+                    dotEl.classList.add('bg-gray-300');
+                }
+            });
+
+            // Update index display
+            indexDisplay.textContent = activeIndex + 1;
+
+            // Center active dot
+            centerActiveDot();
+
+            setTimeout(() => {
+                isTransitioning = false;
+            }, 520);
+        }
+
+        function goNext() { goTo(Math.min(activeIndex + 1, timelineData.length - 1)); }
+        function goPrev() { goTo(Math.max(activeIndex - 1, 0)); }
+
+        // ─── DRAG ON TIMELINE STRIP ───
+        timelineStrip.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            dragStartX = e.pageX;
+            dragStartScroll = timelineStrip.scrollLeft;
+            timelineStrip.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const dx = e.pageX - dragStartX;
+            timelineStrip.scrollLeft = dragStartScroll - dx;
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            timelineStrip.style.cursor = 'grab';
+            snapToNearest();
+        });
+
+        // Touch
+        timelineStrip.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            dragStartX = e.touches[0].pageX;
+            dragStartScroll = timelineStrip.scrollLeft;
+        }, { passive: true });
+
+        timelineStrip.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const dx = e.touches[0].pageX - dragStartX;
+            timelineStrip.scrollLeft = dragStartScroll - dx;
+        }, { passive: true });
+
+        timelineStrip.addEventListener('touchend', () => {
+            isDragging = false;
+            snapToNearest();
+        }, { passive: true });
+
+        function snapToNearest() {
+            if (autoCenterTimeout) clearTimeout(autoCenterTimeout);
+            autoCenterTimeout = setTimeout(() => {
+                const containerRect = timelineStrip.getBoundingClientRect();
+                const center = (containerRect.left + containerRect.right) / 2;
+                let nearestIdx = activeIndex;
+                let minDist = Infinity;
+
+                const dots = dotsContainer.querySelectorAll('.year-dot');
+                dots.forEach((dot, i) => {
+                    const rect = dot.getBoundingClientRect();
+                    const dotCenter = (rect.left + rect.right) / 2;
+                    const dist = Math.abs(dotCenter - center);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearestIdx = i;
+                    }
+                });
+
+                if (nearestIdx !== activeIndex) {
+                    goTo(nearestIdx);
+                } else {
+                    centerActiveDot();
+                }
+            }, 150);
+        }
+
+        // ─── SCROLL AUTO-DETECT ───
+        timelineStrip.addEventListener('scroll', () => {
+            if (isDragging) return;
+            if (autoCenterTimeout) clearTimeout(autoCenterTimeout);
+            autoCenterTimeout = setTimeout(() => {
+                snapToNearest();
+            }, 300);
+        });
+
+        // ─── BUTTONS ───
+        document.getElementById('btn-prev').addEventListener('click', goPrev);
+        document.getElementById('btn-next').addEventListener('click', goNext);
+
+        // ─── KEYBOARD ───
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') goPrev();
+            if (e.key === 'ArrowRight') goNext();
+        });
+
+        // ─── INIT ───
+        renderCards();
+        renderDots();
+        lucide.createIcons();
+
+        // ─── CARD DRAG ───
+        // Allow dragging on cards too (delegated to timeline strip)
+        const cardArea = document.getElementById('cards-container');
+        let cardDragStart = 0;
+
+        cardArea.addEventListener('mousedown', (e) => {
+            cardDragStart = e.pageX;
+        });
+
+        cardArea.addEventListener('mouseup', (e) => {
+            const diff = e.pageX - cardDragStart;
+            if (Math.abs(diff) > 50) {
+                if (diff < 0) goNext();
+                else goPrev();
+            }
+        });
+
+        // Touch swipe on card
+        cardArea.addEventListener('touchstart', (e) => {
+            cardDragStart = e.touches[0].pageX;
+        }, { passive: true });
+
+        cardArea.addEventListener('touchend', (e) => {
+            const diff = e.changedTouches[0].pageX - cardDragStart;
+            if (Math.abs(diff) > 50) {
+                if (diff < 0) goNext();
+                else goPrev();
+            }
+        }, { passive: true });
+
+    </script>
+
+</body>
+</html>
