@@ -11,7 +11,8 @@ import {
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
-  MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive
+  MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive,
+  GraduationCap, Upload
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -49,7 +50,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
   const isActive = (id) => activePage === id || (id === "home" && (activePage === "home" || activePage === "landing"));
   const navItems = [
     { id: "home", label: "Trang chủ" },
-    { id: "intro", label: "Giới thiệu", external: true },
+    { id: "about", label: "Giới thiệu" },
     { id: "gallery", label: "Gallery" },
   ];
   if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: "Portfolio" });
@@ -69,7 +70,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
       </div>
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
         {navItems.map((item) => (
-          <button key={item.id} onClick={() => item.external ? window.location.href = '/introduction.html' : setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#077E9E] border-b-2 border-[#077E9E]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
+          <button key={item.id} onClick={() => setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#077E9E] border-b-2 border-[#077E9E]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
         ))}
       </nav>
       <div className="flex items-center gap-3 text-sm font-medium">
@@ -3490,6 +3491,33 @@ const ABOUT_TABS = [
   { label: "Liên hệ", id: "lien-he" },
 ];
 
+const studentFeatures = [
+  { icon: Upload, title: "Đăng tải ấn phẩm", desc: "Upload ảnh/PDF tác phẩm thiết kế kèm thông tin môn học, công cụ và mô tả chi tiết." },
+  { icon: Briefcase, title: "Portfolio cá nhân", desc: "Tạo hồ sơ năng lực trực tuyến chuyên nghiệp, dễ dàng chia sẻ với nhà tuyển dụng." },
+  { icon: MessageSquare, title: "Kết nối & Phản hồi", desc: "Nhận nhận xét từ giảng viên, kết nối với nhà tuyển dụng qua hệ thống tin nhắn." },
+  { icon: BarChart2, title: "Theo dõi tiến độ", desc: "Dashboard cá nhân quản lý bài đăng, lượt tương tác và điểm đánh giá." },
+  { icon: BookOpen, title: "Học tập & Phát triển", desc: "Tham khảo tác phẩm của bạn học, học hỏi kỹ thuật thiết kế đa dạng." },
+  { icon: Star, title: "Cơ hội nghề nghiệp", desc: "Tiếp cận nhà tuyển dụng tiềm năng thông qua bộ sưu tập ấn phẩm tốt nghiệp." },
+];
+
+const employerFeatures = [
+  { icon: Search, title: "Tìm kiếm tài năng", desc: "Duyệt portfolio sinh viên theo kỹ năng, công cụ, môn học và năm tốt nghiệp." },
+  { icon: Eye, title: "Đánh giá năng lực", desc: "Xem điểm đánh giá từ giảng viên, nhận xét chuyên môn trên từng tác phẩm." },
+  { icon: Send, title: "Liên hệ trực tiếp", desc: "Gửi tin nhắn tuyển dụng qua hệ thống — kết nối nhanh chóng với ứng viên tiềm năng." },
+  { icon: Heart, title: "Lưu & Theo dõi", desc: "Đánh dấu ứng viên triển vọng, theo dõi cập nhật tác phẩm mới nhất." },
+  { icon: FileDown, title: "Xuất báo cáo", desc: "Tổng hợp bộ sưu tập ứng viên nổi bật, xuất PDF phục vụ tuyển dụng." },
+  { icon: Globe, title: "Tiếp cận rộng", desc: "Hơn 500 ấn phẩm đồ án từ sinh viên ngành Thiết kế Đồ họa UEF." },
+];
+
+const schoolFeatures = [
+  { icon: LayoutDashboard, title: "Quản lý đào tạo", desc: "Theo dõi toàn bộ đồ án sinh viên theo môn học, semester và năm học." },
+  { icon: Check, title: "Đánh giá chất lượng", desc: "Giảng viên chấm điểm, nhận xét trực tiếp; thống kê điểm số theo lớp và môn." },
+  { icon: Folder, title: "Bộ sưu tập triển lãm", desc: "Tạo tuyển tập ấn phẩm xuất sắc, sắp xếp kéo thả và xuất tập san PDF." },
+  { icon: Bookmark, title: "Lưu trữ học thuật", desc: "Lưu giữ toàn bộ đồ án qua các năm phục vụ kiểm định và đối sánh." },
+  { icon: Users, title: "Quản lý người dùng", desc: "Quản lý tài khoản sinh viên, giảng viên; phân quyền và khóa/mở tài khoản." },
+  { icon: ShieldAlert, title: "Kiểm duyệt nội dung", desc: "Giám sát nội dung đăng tải, xử lý báo cáo vi phạm và cảnh cáo." },
+];
+
 const facilitiesList = [
   {
     title: "Studio Thiết kế",
@@ -3522,47 +3550,294 @@ const softwareStack = [
 
 function AboutPage({ setPage }) {
   const [audience, setAudience] = useState("student");
-  const audienceData = [
-    { key: "student", label: "Sinh viên", icon: <Users size={20} />, color: "#077E9E", bg: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&q=80", headline: "Nơi Sáng Tạo Của Bạn Được Tỏa Sáng", desc: "Khoa Thiết kế Đồ họa UEF trang bị cho bạn tư duy thiết kế, kỹ năng công cụ và portfolio chuyên nghiệp để tự tin bước vào ngành công nghiệp sáng tạo." },
-    { key: "employer", label: "Nhà tuyển dụng", icon: <Briefcase size={20} />, color: "#055F78", bg: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1400&q=80", headline: "Săn Lùng Tài Năng Thiết Kế Trẻ", desc: "Khám phá những ấn phẩm xuất sắc nhất từ sinh viên Thiết kế Đồ họa UEF — nguồn nhân lực thiết kế chất lượng cao cho doanh nghiệp của bạn." },
-    { key: "lecturer", label: "Giảng viên", icon: <PenTool size={20} />, color: "#8B1A1A", bg: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1400&q=80", headline: "Đồng Hành Cùng Thế Hệ Nhà Thiết Kế", desc: "Tham gia đội ngũ giảng viên Khoa Thiết kế Đồ họa UEF — nơi bạn có thể truyền cảm hứng và định hướng cho những tài năng trẻ." },
+
+  const audienceTabs = [
+    { key: "student", label: "Sinh viên", icon: <GraduationCap size={18} />, color: CERULEAN },
+    { key: "employer", label: "Nhà tuyển dụng", icon: <Briefcase size={18} />, color: "#055F78" },
+    { key: "school", label: "Nhà trường", icon: <BookOpen size={18} />, color: CRIMSON },
   ];
-  const current = audienceData.find((a) => a.key === audience) || audienceData[0];
+
+  const headlines = {
+    student: { title: "Nơi Tỏa Sáng Tài Năng Thiết Kế", desc: "Xây dựng portfolio chuyên nghiệp, kết nối với giảng viên và nhà tuyển dụng — tất cả trong một hệ thống." },
+    employer: { title: "Săn Tìm Nhà Thiết Kế Tương Lai", desc: "Khám phá hồ sơ năng lực và bộ sưu tập ấn phẩm chất lượng từ sinh viên Thiết kế Đồ họa UEF." },
+    school: { title: "Quản Lý & Kiến Tạo Giá Trị Đào Tạo", desc: "Theo dõi chất lượng đồ án, lưu trữ học thuật và xuất bộ sưu tập triển lãm chuyên nghiệp." },
+  };
+
+  const currentAudience = audienceTabs.find(a => a.key === audience) || audienceTabs[0];
+  const currentHeadline = headlines[audience];
 
   return (
-    <div className="bg-white min-h-screen font-sans w-full">
-      <section className="relative pt-16 pb-20 overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={current.bg} alt="" className="w-full h-full object-cover" />
-          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${current.color}dd 0%, rgba(0,0,0,0.7) 100%)` }} />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 z-10">
-          <div className="flex mb-8 gap-2">{audienceData.map((a) => (<button key={a.key} onClick={() => setAudience(a.key)} className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${audience === a.key ? "bg-white text-[#212121] shadow-lg" : "bg-white/15 text-white hover:bg-white/25"}`}>{a.icon} {a.label}</button>))}</div>
-          <p className="text-white/80 font-semibold text-xs tracking-wider uppercase mb-3">Khoa Thiết Kế Đồ Họa</p>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-5 leading-tight">{current.headline}</h1>
-          <p className="text-white/85 max-w-2xl leading-relaxed text-[15px] md:text-base mb-10">{current.desc}</p>
-          <div className="flex flex-wrap items-center gap-8 md:gap-16 border-t border-white/20 pt-8">
-            <div><p className="text-4xl font-bold tracking-tight text-white mb-1">500+</p><p className="text-sm text-white/70">Ấn phẩm trưng bày</p></div>
-            <div><p className="text-4xl font-bold tracking-tight text-white mb-1">12</p><p className="text-sm text-white/70">Giảng viên chuyên môn</p></div>
-            <div><p className="text-4xl font-bold tracking-tight text-white mb-1">1,200+</p><p className="text-sm text-white/70">Sinh viên theo học</p></div>
+    <div className="bg-white min-h-screen">
+      <section style={{ background: `linear-gradient(135deg, ${currentAudience.color} 0%, #033a47 100%)` }}>
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-20 md:py-28">
+          <div className="flex flex-wrap gap-2 mb-10 border-b border-white/20 pb-6">
+            {audienceTabs.map(tab => (
+              <button key={tab.key} onClick={() => setAudience(tab.key)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                  audience === tab.key
+                    ? "bg-white text-[#212121] shadow-md"
+                    : "text-white/80 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-white/70 font-semibold text-xs tracking-widest uppercase mb-4">Khoa Thiết Kế Đồ Họa — UEF</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-5 leading-tight">{currentHeadline.title}</h1>
+          <p className="text-white/80 max-w-2xl leading-relaxed text-base md:text-lg mb-10">{currentHeadline.desc}</p>
+          <div className="flex flex-wrap gap-8 md:gap-16 pt-8 border-t border-white/20">
+            <div className="flex items-center gap-3">
+              <p className="text-3xl md:text-4xl font-bold text-white">500+</p>
+              <p className="text-sm text-white/70">Ấn phẩm<br/>trưng bày</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <p className="text-3xl md:text-4xl font-bold text-white">12</p>
+              <p className="text-sm text-white/70">Giảng viên<br/>chuyên môn</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <p className="text-3xl md:text-4xl font-bold text-white">1,200+</p>
+              <p className="text-sm text-white/70">Sinh viên<br/>theo học</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16">
-        {audience === "student" && (<>
-          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Chương trình đào tạo</p><h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Hành Trình Trở Thành Nhà Thiết Kế Chuyên Nghiệp</h2><p className="text-gray-600 mb-10 max-w-3xl leading-relaxed text-[15px]">Từ năm nhất đến tốt nghiệp, bạn sẽ được trang bị toàn diện: tư duy thẩm mỹ, kỹ năng công cụ chuẩn ngành, và portfolio đủ mạnh để ứng tuyển.</p><div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"><MajorCard title="Thiết kế đồ họa Truyền thông" desc="Brand identity, print design, packaging, typography và visual communication." /><MajorCard title="Thiết kế Kỹ thuật số & UI/UX" desc="Web design, mobile app, user experience và interactive design." /><MajorCard title="Motion Graphics & Video" desc="Animation, motion design, video editing và visual effects." /><MajorCard title="Minh họa & Nghệ thuật 3D" desc="Digital illustration, concept art, character design và 3D modeling." /></div><button onClick={() => setPage("gallery")} className="w-full py-4 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-xl font-semibold transition-colors">Khám phá Gallery ấn phẩm sinh viên →</button></section>
-          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Đội ngũ giảng viên</p><h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Những Người Thầy Dẫn Đường</h2><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">{lecturers.map((lec) => (<div key={lec.email} className="bg-white border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-[#077E9E] transition-all"><div className="flex items-center gap-4"><img src={lec.img} alt={lec.name} className="w-14 h-14 rounded-full object-cover border border-gray-200" /><div><p className="text-gray-900 font-bold text-sm">{lec.name}</p><p className="text-[#077E9E] text-xs font-semibold">{lec.title}</p></div></div></div>))}</div><div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{lecturersList.slice(0, 3).map((lec) => (<LecturerCard key={lec.name} {...lec} avatar={lec.img} />))}</div></section>
-          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Cơ sở vật chất</p><div className="grid grid-cols-1 lg:grid-cols-3 gap-6">{facilitiesList.map((f) => { const I = f.icon; return (<div key={f.title} className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg hover:border-[#077E9E] transition-all"><div className="h-44 bg-gray-100 overflow-hidden"><img src={f.img} alt={f.title} className="w-full h-full object-cover" /></div><div className="p-6"><div className="flex items-start gap-4 mb-3"><div className="w-12 h-12 rounded-xl bg-[#077E9E]/10 flex items-center justify-center flex-shrink-0"><I className="w-6 h-6 text-[#077E9E]" /></div><div><h3 className="text-gray-900 font-bold">{f.title}</h3><p className="text-gray-500 text-sm leading-relaxed mt-1">{f.desc}</p></div></div></div></div>); })}</div></section>
-        </>)}
-        {audience === "employer" && (<>
-          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Dành cho Nhà tuyển dụng</p><h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Tìm Kiếm Tài Năng Thiết Kế Trẻ?</h2><p className="text-gray-600 mb-10 max-w-3xl leading-relaxed text-[15px]">Hơn 500 ấn phẩm đồ án từ sinh viên Thiết kế Đồ họa UEF — chất lượng đã qua đánh giá của giảng viên. Dễ dàng tìm kiếm ứng viên theo kỹ năng, môn học và năm tốt nghiệp.</p><div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">{[{ icon: <Search size={24} />, title: "Duyệt Portfolio", desc: "Xem hồ sơ năng lực và bộ sưu tập tác phẩm của từng sinh viên." }, { icon: <MessageSquare size={24} />, title: "Liên hệ trực tiếp", desc: "Gửi tin nhắn tuyển dụng qua hệ thống." }, { icon: <Star size={24} />, title: "Gợi ý thông minh", desc: "Bộ lọc theo kỹ năng, công cụ, môn học." }].map((item) => (<div key={item.title} className="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg hover:border-[#077E9E] transition-all"><div className="w-12 h-12 bg-[#E8F4F8] rounded-xl flex items-center justify-center mb-5 text-[#077E9E]">{item.icon}</div><h3 className="text-lg font-bold text-gray-900 mb-3">{item.title}</h3><p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p></div>))}</div><button onClick={() => setPage("gallery")} className="w-full py-4 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-xl font-semibold transition-colors">Khám phá Gallery ấn phẩm →</button></section>
-        </>)}
-        {audience === "lecturer" && (<>
-          <section className="mb-20"><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Dành cho Giảng viên</p><h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Công Cụ Giảng Dạy & Quản Lý Đồ Án</h2><p className="text-gray-600 mb-10 max-w-3xl leading-relaxed text-[15px]">Hệ thống Portfolio UEF giúp giảng viên chấm điểm, nhận xét trực tiếp trên tác phẩm, quản lý lớp học và xuất bộ sưu tập triển lãm.</p><div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">{[{ icon: <Check size={24} />, title: "Chấm điểm & Nhận xét", desc: "Đánh giá trực tiếp trên từng ấn phẩm." }, { icon: <Folder size={24} />, title: "Quản lý lớp học", desc: "Xem danh sách lớp, theo dõi tiến độ nộp bài." }, { icon: <FileDown size={24} />, title: "Xuất PDF Triển lãm", desc: "Tạo bộ sưu tập, kéo thả sắp xếp và xuất tập san." }].map((item) => (<div key={item.title} className="bg-white border border-gray-200 rounded-2xl p-8 hover:shadow-lg hover:border-[#077E9E] transition-all"><div className="w-12 h-12 bg-[#E8F4F8] rounded-xl flex items-center justify-center mb-5 text-[#077E9E]">{item.icon}</div><h3 className="text-lg font-bold text-gray-900 mb-3">{item.title}</h3><p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p></div>))}</div><button onClick={() => setPage("gallery")} className="w-full py-4 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-xl font-semibold transition-colors">Xem Gallery ấn phẩm sinh viên →</button></section>
-        </>)}
-        <section className="pt-8 border-t border-gray-200"><div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24"><div><p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Liên hệ</p><h2 className="text-3xl font-bold text-gray-900 mb-8">Kết nối với Khoa Thiết kế Đồ họa</h2><div className="space-y-6"><div className="flex items-start gap-4"><div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0"><MapPin className="w-5 h-5 text-[#077E9E]" /></div><div><p className="text-sm font-bold text-gray-900 mb-1">Địa chỉ</p><p className="text-sm text-gray-600">141-145 Điện Biên Phủ, Phường 15, Q. Bình Thạnh, TP.HCM</p></div></div><div className="flex items-start gap-4"><div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0"><Mail className="w-5 h-5 text-[#077E9E]" /></div><div><p className="text-sm font-bold text-gray-900 mb-1">Email</p><a href="mailto:khoathietke@uef.edu.vn" className="text-sm text-gray-600 hover:text-[#077E9E]">khoathietke@uef.edu.vn</a></div></div><div className="flex items-start gap-4"><div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0"><Phone className="w-5 h-5 text-[#077E9E]" /></div><div><p className="text-sm font-bold text-gray-900 mb-1">Điện thoại</p><p className="text-sm text-gray-600">(028) 5422 5555</p></div></div></div></div><div className="bg-white border border-gray-200 rounded-2xl p-8 md:p-10"><h3 className="text-xl font-bold text-gray-900 mb-6">Gửi tin nhắn cho chúng tôi</h3><form className="space-y-4"><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label className="block text-sm font-medium text-gray-900 mb-2">Họ tên</label><input placeholder="Nguyễn Văn A" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E]" /></div><div><label className="block text-sm font-medium text-gray-900 mb-2">Email</label><input type="email" placeholder="email@company.com" className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E]" /></div></div><div><label className="block text-sm font-medium text-gray-900 mb-2">Nội dung</label><textarea rows={4} placeholder="Mô tả nhu cầu..." className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm outline-none focus:border-[#077E9E] resize-none" /></div><button className="w-full py-3 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-[#055F78] transition-colors">Gửi tin nhắn</button></form></div></div></section>
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16 md:py-20">
+        {audience === "student" && (
+          <>
+            <section className="mb-20">
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Tính năng</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">Dành Cho Sinh Viên</h2>
+              <p className="text-[#666666] max-w-3xl leading-relaxed text-[15px] mb-10">
+                Từ đồ án trên lớp đến portfolio ứng tuyển — hệ thống giúp bạn quản lý, trưng bày và kết nối cơ hội nghề nghiệp ngay từ khi còn ngồi trên ghế giảng đường.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+                {studentFeatures.map(f => {
+                  const I = f.icon;
+                  return (
+                    <div key={f.title} className="bg-white border border-[#E0E0E0] rounded-xl p-6 hover:shadow-md hover:border-[#077E9E] transition-all">
+                      <div className="w-10 h-10 bg-[#E8F4F8] rounded-lg flex items-center justify-center mb-4 text-[#077E9E]"><I size={20} /></div>
+                      <h3 className="font-bold text-[#212121] text-sm mb-2">{f.title}</h3>
+                      <p className="text-[#666666] text-sm leading-relaxed">{f.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button onClick={() => setPage("auth")} className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors cursor-pointer">Bắt đầu ngay</button>
+                <button onClick={() => setPage("gallery")} className="px-6 py-3 border border-[#E0E0E0] text-[#212121] rounded-lg font-semibold text-sm hover:bg-[#F8F8F8] transition-colors cursor-pointer">Khám phá Gallery</button>
+              </div>
+            </section>
+
+            <section className="mb-20">
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Chương trình đào tạo</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Hành Trình Trở Thành Nhà Thiết Kế Chuyên Nghiệp</h2>
+              <p className="text-[#666666] mb-10 max-w-3xl leading-relaxed text-[15px]">Từ năm nhất đến tốt nghiệp, bạn sẽ được trang bị toàn diện: tư duy thẩm mỹ, kỹ năng công cụ chuẩn ngành, và portfolio đủ mạnh để ứng tuyển.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-12">
+                <MajorCard title="Thiết kế đồ họa Truyền thông" desc="Brand identity, print design, packaging, typography và visual communication." />
+                <MajorCard title="Thiết kế Kỹ thuật số & UI/UX" desc="Web design, mobile app, user experience và interactive design." />
+                <MajorCard title="Motion Graphics & Video" desc="Animation, motion design, video editing và visual effects." />
+                <MajorCard title="Minh họa & Nghệ thuật 3D" desc="Digital illustration, concept art, character design và 3D modeling." />
+              </div>
+            </section>
+
+            <section className="mb-20">
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Đội ngũ giảng viên</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Những Người Thầy Dẫn Đường</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+                {lecturers.map(lec => (
+                  <div key={lec.email} className="bg-white border border-[#E0E0E0] rounded-xl p-5 hover:shadow-md hover:border-[#077E9E] transition-all">
+                    <div className="flex items-center gap-4">
+                      <img src={lec.img} alt={lec.name} className="w-12 h-12 rounded-full object-cover border border-[#E0E0E0]" />
+                      <div>
+                        <p className="font-bold text-sm text-[#212121]">{lec.name}</p>
+                        <p className="text-[#077E9E] text-xs font-semibold">{lec.title}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {lecturersList.slice(0, 3).map(lec => <LecturerCard key={lec.name} {...lec} avatar={lec.img} />)}
+              </div>
+            </section>
+
+            <section className="mb-20">
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Cơ sở vật chất</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Không Gian Sáng Tạo</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                {facilitiesList.map(f => {
+                  const I = f.icon;
+                  return (
+                    <div key={f.title} className="bg-white border border-[#E0E0E0] rounded-xl overflow-hidden hover:shadow-md hover:border-[#077E9E] transition-all">
+                      <div className="h-44 bg-[#F8F8F8] overflow-hidden">
+                        <img src={f.img} alt={f.title} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="p-5">
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 rounded-lg bg-[#E8F4F8] flex items-center justify-center flex-shrink-0"><I className="w-5 h-5 text-[#077E9E]" /></div>
+                          <div>
+                            <h3 className="font-bold text-[#212121] text-sm">{f.title}</h3>
+                            <p className="text-[#666666] text-sm leading-relaxed mt-1">{f.desc}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          </>
+        )}
+
+        {audience === "employer" && (
+          <>
+            <section className="mb-20">
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: "#055F78" }}>Tính năng</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">Dành Cho Nhà Tuyển Dụng</h2>
+              <p className="text-[#666666] max-w-3xl leading-relaxed text-[15px] mb-10">
+                Tìm kiếm và kết nối với những tài năng thiết kế trẻ ngay từ khi họ còn ngồi trên ghế giảng đường. Đánh giá năng lực qua đồ án thực tế đã qua chấm điểm của giảng viên.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+                {employerFeatures.map(f => {
+                  const I = f.icon;
+                  return (
+                    <div key={f.title} className="bg-white border border-[#E0E0E0] rounded-xl p-6 hover:shadow-md hover:border-[#055F78] transition-all">
+                      <div className="w-10 h-10 bg-[#E8F4F8] rounded-lg flex items-center justify-center mb-4" style={{ color: "#055F78" }}><I size={20} /></div>
+                      <h3 className="font-bold text-[#212121] text-sm mb-2">{f.title}</h3>
+                      <p className="text-[#666666] text-sm leading-relaxed">{f.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <button onClick={() => setPage("gallery")} className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors cursor-pointer">Duyệt Gallery ấn phẩm</button>
+            </section>
+
+            <section className="mb-20">
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: "#055F78" }}>Quy trình</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Cách Tìm Ứng Viên Phù Hợp</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {[
+                  { step: "1", title: "Duyệt Gallery", desc: "Xem bộ sưu tập ấn phẩm theo môn học, kỹ năng và năm tốt nghiệp." },
+                  { step: "2", title: "Đánh giá hồ sơ", desc: "Xem điểm đánh giá, nhận xét từ giảng viên và lịch sử tương tác." },
+                  { step: "3", title: "Kết nối ứng viên", desc: "Gửi tin nhắn tuyển dụng trực tiếp qua hệ thống." },
+                ].map(item => (
+                  <div key={item.step} className="bg-white border border-[#E0E0E0] rounded-xl p-6">
+                    <div className="w-9 h-9 rounded-lg bg-[#055F78] text-white flex items-center justify-center font-bold text-sm mb-4">{item.step}</div>
+                    <h3 className="font-bold text-[#212121] text-sm mb-2">{item.title}</h3>
+                    <p className="text-[#666666] text-sm leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
+
+        {audience === "school" && (
+          <>
+            <section className="mb-20">
+              <p className="font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: CRIMSON }}>Tính năng</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">Dành Cho Nhà Trường</h2>
+              <p className="text-[#666666] max-w-3xl leading-relaxed text-[15px] mb-10">
+                Hệ thống quản lý đồ án tập trung, lưu trữ học thuật và công cụ xuất bộ sưu tập triển lãm phục vụ kiểm định chất lượng đào tạo.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+                {schoolFeatures.map(f => {
+                  const I = f.icon;
+                  return (
+                    <div key={f.title} className="bg-white border border-[#E0E0E0] rounded-xl p-6 hover:shadow-md transition-all" style={{ hoverBorderColor: CRIMSON }}>
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style={{ background: "#FEF2F2", color: CRIMSON }}><I size={20} /></div>
+                      <h3 className="font-bold text-[#212121] text-sm mb-2">{f.title}</h3>
+                      <p className="text-[#666666] text-sm leading-relaxed">{f.desc}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="mb-20">
+              <p className="font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: CRIMSON }}>Lợi ích</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Giá Trị Cho Nhà Trường</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {[
+                  { title: "Học liệu số hóa", desc: "Toàn bộ đồ án được lưu trữ tập trung, phục vụ tham khảo và kiểm định chất lượng." },
+                  { title: "Triển lãm trực tuyến", desc: "Xuất bộ sưu tập ấn phẩm đẹp nhất thành tập san PDF — kéo thả sắp xếp dễ dàng." },
+                  { title: "Thống kê đào tạo", desc: "Dashboard quản trị tổng quan: số lượng ấn phẩm, tương tác, điểm số theo môn học." },
+                ].map(item => (
+                  <div key={item.title} className="bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-6">
+                    <h3 className="font-bold text-[#212121] text-sm mb-2">{item.title}</h3>
+                    <p className="text-[#666666] text-sm leading-relaxed">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-10 bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-8">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  <div>
+                    <h3 className="font-bold text-[#212121] text-lg mb-2">Quan tâm đến hệ thống?</h3>
+                    <p className="text-[#666666] text-sm">Liên hệ với chúng tôi để được tư vấn triển khai cho khoa/trường của bạn.</p>
+                  </div>
+                  <a href="mailto:khoathietke@uef.edu.vn" className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors flex-shrink-0 cursor-pointer inline-block text-center">Liên hệ tư vấn</a>
+                </div>
+              </div>
+            </section>
+          </>
+        )}
       </div>
+
+      <section className="bg-[#F8F8F8] border-t border-[#E0E0E0]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16 md:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+            <div>
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Liên hệ</p>
+              <h2 className="text-3xl font-bold text-[#212121] mb-8">Kết nối với Khoa Thiết kế Đồ họa</h2>
+              <div className="space-y-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#E8F4F8] flex items-center justify-center flex-shrink-0"><MapPin className="w-5 h-5 text-cerulean" /></div>
+                  <div>
+                    <p className="text-sm font-bold text-[#212121] mb-1">Địa chỉ</p>
+                    <p className="text-sm text-[#666666]">141-145 Điện Biên Phủ, Phường 15, Q. Bình Thạnh, TP.HCM</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#E8F4F8] flex items-center justify-center flex-shrink-0"><Mail className="w-5 h-5 text-cerulean" /></div>
+                  <div>
+                    <p className="text-sm font-bold text-[#212121] mb-1">Email</p>
+                    <a href="mailto:khoathietke@uef.edu.vn" className="text-sm text-cerulean hover:underline">khoathietke@uef.edu.vn</a>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#E8F4F8] flex items-center justify-center flex-shrink-0"><Phone className="w-5 h-5 text-cerulean" /></div>
+                  <div>
+                    <p className="text-sm font-bold text-[#212121] mb-1">Điện thoại</p>
+                    <p className="text-sm text-[#666666]">(028) 5422 5555</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white border border-[#E0E0E0] rounded-xl p-8 md:p-10">
+              <h3 className="text-xl font-bold text-[#212121] mb-6">Gửi tin nhắn cho chúng tôi</h3>
+              <form className="space-y-4" onSubmit={e => e.preventDefault()}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-[#212121] mb-2">Họ tên</label>
+                    <input placeholder="Nguyễn Văn A" className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean box-border" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#212121] mb-2">Email</label>
+                    <input type="email" placeholder="email@example.com" className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean box-border" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">Tin nhắn</label>
+                  <textarea placeholder="Viết tin nhắn của bạn..." className="w-full px-4 py-3 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean min-h-[140px] resize-y box-border" />
+                </div>
+                <button type="submit" className="w-full py-3 bg-cerulean hover:bg-[#055F78] text-white rounded-lg font-bold text-sm transition-colors cursor-pointer">Gửi tin nhắn</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
