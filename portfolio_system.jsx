@@ -4426,45 +4426,40 @@ function TimelineSection() {
       </div>
 
       <div className="relative">
-        <div className="relative flex items-center justify-center mb-6 py-4" style={{ background: GRAY_BG, borderRadius: 24, border: `1px solid ${GRAY_LIGHT}`, minHeight: 400 }}>
-          <div ref={cardsRef} className="relative w-full max-w-[420px]" style={{ minHeight: 380 }}>
+        <div className="relative flex items-center justify-center mb-6 py-4 overflow-hidden" style={{ backgroundImage: `url(${timelineData[activeIndex].img})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: 24, border: `1px solid ${GRAY_LIGHT}`, minHeight: 400, transition: 'background-image 0.5s cubic-bezier(0.4,0,0.2,1)' }}>
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)', borderRadius: 24 }} />
+          <div ref={cardsRef} className="relative w-full max-w-[420px] z-10" style={{ minHeight: 380 }}>
             {timelineData.map((item, i) => {
               const cardStyle = getCardClass(i);
               return (
                 <div key={item.id} className="absolute inset-0 flex items-center justify-center px-4"
                   style={{ transition: 'transform 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)', ...cardStyle }}>
-                  <div className="w-full max-w-[400px] relative overflow-hidden" style={{ borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', minHeight: 360 }}>
-                    <div className="absolute inset-0" style={{ backgroundImage: `url(${item.img})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.25) 0%, transparent 50%)' }} />
-                    <div className="relative z-10 flex items-center p-4 md:p-5" style={{ minHeight: 360 }}>
-                      <div className="w-full" style={{ background: BLACK, color: '#fff', padding: '24px 28px', borderRadius: 20, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
-                        <div className="mb-4">
-                          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
-                            style={{ background: item.monthColor, color: item.monthText }}>
-                            {item.month} {item.year}
-                          </span>
-                        </div>
-                        <h3 className="text-lg md:text-xl font-bold mb-3 leading-snug">{item.title}</h3>
-                        <p className="text-sm leading-relaxed mb-4" style={{ color: '#9ca3af' }}>
-                          {item.description}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {item.tags.map(t => (
-                            <span key={t} className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.8)' }}>
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                        <a href={item.link} target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
-                          style={{ color: CERULEAN }}
-                          onMouseEnter={e => e.currentTarget.style.color = '#065d75'}
-                          onMouseLeave={e => e.currentTarget.style.color = CERULEAN}>
-                          {item.linkLabel}
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                        </a>
-                      </div>
+                  <div className="w-full max-w-[400px]" style={{ background: BLACK, color: '#fff', padding: '32px 36px', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+                    <div className="mb-5">
+                      <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                        style={{ background: item.monthColor, color: item.monthText }}>
+                        {item.month} {item.year}
+                      </span>
                     </div>
+                    <h3 className="text-xl md:text-2xl font-bold mb-3 leading-snug">{item.title}</h3>
+                    <p className="text-sm leading-relaxed mb-5" style={{ color: '#9ca3af' }}>
+                      {item.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-5">
+                      {item.tags.map(t => (
+                        <span key={t} className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.8)' }}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                    <a href={item.link} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
+                      style={{ color: CERULEAN }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#065d75'}
+                      onMouseLeave={e => e.currentTarget.style.color = CERULEAN}>
+                      {item.linkLabel}
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
                   </div>
                 </div>
               );
