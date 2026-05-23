@@ -1290,10 +1290,28 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     return new Date(dateStr).toLocaleDateString("vi-VN");
   };
 
+  const loadImage = (url) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      let loaded = false;
+      img.onload = () => { loaded = true; resolve(img); };
+      img.onerror = () => reject(new Error("Failed to load: " + url));
+      img.src = url;
+      setTimeout(() => {
+        if (!loaded) reject(new Error("Timeout loading: " + url));
+      }, 15000);
+    });
+  };
+
   const drawWatermarkedImage = async (imgUrl, fmt = "png") => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imgUrl; });
+    let img;
+    try {
+      img = await loadImage(imgUrl);
+    } catch {
+      img = await loadImage(imgUrl.replace("w=800&q=80", "w=800&q=80&fm=png"));
+    }
+    if (!img) throw new Error("Cannot load image");
     const pad = 20;
     const canvas = document.createElement("canvas");
     canvas.width = img.naturalWidth;
@@ -1752,8 +1770,8 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       )}
 
       {showOrderModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowOrderModal(false)}>
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 pt-8 overflow-y-auto" onClick={() => setShowOrderModal(false)}>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col my-auto" onClick={e => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-[#E0E0E0] flex justify-between items-center bg-[#F8F8FB]">
               <h3 className="font-bold text-lg text-[#212121]">🛒 Đặt hàng ấn phẩm</h3>
               <button onClick={() => setShowOrderModal(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>

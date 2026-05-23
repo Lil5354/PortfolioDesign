@@ -26,12 +26,13 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    role: string;
-    isActive: boolean;
-  }
+interface CustomJWT {
+  id: string;
+  role: string;
+  isActive: boolean;
+  email?: string | null;
+  name?: string | null;
+  picture?: string | null;
 }
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
@@ -101,23 +102,25 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return true;
     },
     async jwt({ token }) {
-      if (token.email) {
+      const t = token as unknown as CustomJWT;
+      if (t.email) {
         const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
+          where: { email: t.email },
           select: { id: true, role: true, isActive: true },
         });
         if (dbUser) {
-          token.id = dbUser.id;
-          token.role = dbUser.role;
-          token.isActive = dbUser.isActive;
+          t.id = dbUser.id;
+          t.role = dbUser.role;
+          t.isActive = dbUser.isActive;
         }
       }
       return token;
     },
     async session({ session, token }) {
+      const t = token as unknown as CustomJWT;
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
+        session.user.id = t.id;
+        session.user.role = t.role;
         session.user.name = token.name || session.user.name;
         session.user.image = token.picture || session.user.image;
         if (token.email) {
