@@ -1763,6 +1763,21 @@ function AuthPage({ setPage, onLoginSuccess }) {
     });
   };
 
+  const demoAccounts = {
+    student: { email: "sv@uef.edu.vn", password: "test123" },
+    lecturer: { email: "tainv@uef.edu.vn", password: "test123" },
+    admin: { email: "admin@uef.edu.vn", password: "test123" },
+  };
+
+  const autoFillLogin = (role) => {
+    const account = demoAccounts[role];
+    if (account) {
+      setEmail(account.email);
+      setPassword(account.password);
+      setLoginError("");
+    }
+  };
+
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
@@ -1779,7 +1794,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
         <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
           {[{ key: "student", label: "Sinh viên" }, { key: "lecturer", label: "Giảng viên" }, { key: "admin", label: "Quản trị" }].map((r) => (
-            <button disabled={logging} key={r.key} onClick={() => setAuthRole(r.key)} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: logging ? "not-allowed" : "pointer", opacity: logging ? 0.6 : 1 }}>{r.label}</button>
+            <button disabled={logging} key={r.key} onClick={() => { setAuthRole(r.key); autoFillLogin(r.key); }} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: logging ? "not-allowed" : "pointer", opacity: logging ? 0.6 : 1 }}>{r.label}</button>
           ))}
         </div>
 
