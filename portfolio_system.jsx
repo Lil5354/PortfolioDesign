@@ -4274,12 +4274,12 @@ function AccessDenied({ setPage }) {
 
 function TimelineSection() {
   const timelineData = [
-    { id: 1, year: "2023", monthLabel: "T9", month: "Tháng 9", title: "Đồ án nhập môn lập trình", description: "Hoàn thành đồ án Quản lý Thư viện bằng C++ với kiến trúc OOP. Đạt 9.5/10 và được giảng viên chọn làm mẫu cho khoá sau.", tags: ["C++", "OOP", "Xuất sắc"], link: "https://example.com/do-an-2023", linkLabel: "Xem đồ án →", monthColor: "#dbeafe", monthText: "#1e40af" },
-    { id: 2, year: "2024", monthLabel: "T3", month: "Tháng 3", title: "Giải Nhất NCKH cấp Trường", description: "Nghiên cứu ứng dụng AI trong phân tích cảm xúc văn bản tiếng Việt. Đạt giải Nhất và được chọn tham dự cấp Bộ.", tags: ["Nghiên cứu", "AI/NLP", "Giải Nhất"], link: "https://example.com/nckh-2024", linkLabel: "Xem báo cáo →", monthColor: "#dcfce7", monthText: "#166534" },
-    { id: 3, year: "2024", monthLabel: "T8", month: "Tháng 8", title: "Công bố bài báo IEEE", description: "Đồng tác giả bài báo 'Sentiment Analysis for Vietnamese E-commerce Reviews' đăng trên hội nghị IEEE RIVF 2024.", tags: ["IEEE", "Công bố QT", "NLP"], link: "https://example.com/ieee-paper", linkLabel: "Xem bài báo →", monthColor: "#f3e8ff", monthText: "#6b21a8" },
-    { id: 4, year: "2025", monthLabel: "T2", month: "Tháng 2", title: "Thực tập tại FPT Software", description: "Tham gia team Frontend phát triển hệ thống quản lý nội bộ. Đánh giá thực tập: Xuất sắc (9.0/10).", tags: ["Thực tập", "React", "FPT"], link: "https://example.com/fpt-intern", linkLabel: "Xem chứng nhận →", monthColor: "#fef3c7", monthText: "#92400e" },
-    { id: 5, year: "2025", monthLabel: "T6", month: "Tháng 6", title: "Học bổng Toàn phần kỳ 6", description: "Đạt học bổng toàn phần học kỳ 6 nhờ duy trì GPA 3.8/4.0 và thành tích nghiên cứu xuất sắc.", tags: ["Học bổng", "GPA 3.8", "Toàn phần"], link: "https://example.com/scholarship", linkLabel: "Xem quyết định →", monthColor: "#fce7f3", monthText: "#9d174d" },
-    { id: 6, year: "2026", monthLabel: "T5", month: "Tháng 5", title: "Tốt nghiệp Thủ khoa", description: "Tốt nghiệp loại Xuất sắc với đồ án 'Hệ thống gợi ý học tập thích ứng'. Điểm bảo vệ: 9.8/10.", tags: ["Thủ khoa", "Xuất sắc", "Đồ án"], link: "https://example.com/thesis", linkLabel: "Xem đồ án tốt nghiệp →", monthColor: "#ccfbf1", monthText: "#0f766e" },
+    { id: 1, year: "2023", monthLabel: "T9", month: "Tháng 9", title: "Đồ án nhập môn lập trình", description: "Hoàn thành đồ án Quản lý Thư viện bằng C++ với kiến trúc OOP. Đạt 9.5/10 và được giảng viên chọn làm mẫu cho khoá sau.", tags: ["C++", "OOP", "Xuất sắc"], link: "https://example.com/do-an-2023", linkLabel: "Xem đồ án →", monthColor: "#dbeafe", monthText: "#1e40af", img: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80" },
+    { id: 2, year: "2024", monthLabel: "T3", month: "Tháng 3", title: "Giải Nhất NCKH cấp Trường", description: "Nghiên cứu ứng dụng AI trong phân tích cảm xúc văn bản tiếng Việt. Đạt giải Nhất và được chọn tham dự cấp Bộ.", tags: ["Nghiên cứu", "AI/NLP", "Giải Nhất"], link: "https://example.com/nckh-2024", linkLabel: "Xem báo cáo →", monthColor: "#dcfce7", monthText: "#166534", img: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80" },
+    { id: 3, year: "2024", monthLabel: "T8", month: "Tháng 8", title: "Công bố bài báo IEEE", description: "Đồng tác giả bài báo 'Sentiment Analysis for Vietnamese E-commerce Reviews' đăng trên hội nghị IEEE RIVF 2024.", tags: ["IEEE", "Công bố QT", "NLP"], link: "https://example.com/ieee-paper", linkLabel: "Xem bài báo →", monthColor: "#f3e8ff", monthText: "#6b21a8", img: "https://images.unsplash.com/photo-1559223607-a43c990c692c?w=800&q=80" },
+    { id: 4, year: "2025", monthLabel: "T2", month: "Tháng 2", title: "Thực tập tại FPT Software", description: "Tham gia team Frontend phát triển hệ thống quản lý nội bộ. Đánh giá thực tập: Xuất sắc (9.0/10).", tags: ["Thực tập", "React", "FPT"], link: "https://example.com/fpt-intern", linkLabel: "Xem chứng nhận →", monthColor: "#fef3c7", monthText: "#92400e", img: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80" },
+    { id: 5, year: "2025", monthLabel: "T6", month: "Tháng 6", title: "Học bổng Toàn phần kỳ 6", description: "Đạt học bổng toàn phần học kỳ 6 nhờ duy trì GPA 3.8/4.0 và thành tích nghiên cứu xuất sắc.", tags: ["Học bổng", "GPA 3.8", "Toàn phần"], link: "https://example.com/scholarship", linkLabel: "Xem quyết định →", monthColor: "#fce7f3", monthText: "#9d174d", img: "https://images.unsplash.com/photo-1523050854058-8df90110c7f1?w=800&q=80" },
+    { id: 6, year: "2026", monthLabel: "T5", month: "Tháng 5", title: "Tốt nghiệp Thủ khoa", description: "Tốt nghiệp loại Xuất sắc với đồ án 'Hệ thống gợi ý học tập thích ứng'. Điểm bảo vệ: 9.8/10.", tags: ["Thủ khoa", "Xuất sắc", "Đồ án"], link: "https://example.com/thesis", linkLabel: "Xem đồ án tốt nghiệp →", monthColor: "#ccfbf1", monthText: "#0f766e", img: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&q=80" },
   ];
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -4426,39 +4426,43 @@ function TimelineSection() {
       </div>
 
       <div className="relative">
-        <div className="relative h-[400px] md:h-[440px] flex items-center justify-center mb-6" style={{ background: GRAY_BG, borderRadius: 24, border: `1px solid ${GRAY_LIGHT}` }}>
-          <div ref={cardsRef} className="relative w-full max-w-[420px] h-full flex items-center justify-center">
+        <div className="relative flex items-center justify-center mb-6 py-4" style={{ background: GRAY_BG, borderRadius: 24, border: `1px solid ${GRAY_LIGHT}`, minHeight: 400 }}>
+          <div ref={cardsRef} className="relative w-full max-w-[420px]" style={{ minHeight: 380 }}>
             {timelineData.map((item, i) => {
               const cardStyle = getCardClass(i);
               return (
                 <div key={item.id} className="absolute inset-0 flex items-center justify-center px-4"
                   style={{ transition: 'transform 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)', ...cardStyle }}>
-                  <div className="w-full max-w-[400px]" style={{ background: BLACK, color: '#fff', padding: '32px 36px', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
-                    <div className="flex items-start justify-between mb-6">
-                      <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
-                        style={{ background: item.monthColor, color: item.monthText }}>
-                        {item.month} {item.year}
-                      </span>
-                    </div>
-                    <h3 className="text-xl md:text-2xl font-bold mb-3 leading-snug">{item.title}</h3>
-                    <p className="text-sm leading-relaxed mb-6" style={{ color: '#9ca3af' }}>
-                      {item.description}
-                    </p>
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {item.tags.map(t => (
-                        <span key={t} className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.8)' }}>
-                          {t}
+                  <div className="w-full max-w-[400px] relative overflow-hidden" style={{ borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', minHeight: 360 }}>
+                    <div className="absolute inset-0" style={{ backgroundImage: `url(${item.img})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                    <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.5) 45%, rgba(0,0,0,0.15) 80%, rgba(0,0,0,0.02) 100%)' }} />
+                    <div className="relative z-10 p-8 md:p-10 flex flex-col justify-end" style={{ minHeight: 360 }}>
+                      <div className="mb-3">
+                        <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                          style={{ background: item.monthColor, color: item.monthText }}>
+                          {item.month} {item.year}
                         </span>
-                      ))}
+                      </div>
+                      <h3 className="text-xl md:text-2xl font-bold mb-3 leading-snug text-white">{item.title}</h3>
+                      <p className="text-sm leading-relaxed mb-5" style={{ color: '#d1d5db' }}>
+                        {item.description}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mb-5">
+                        {item.tags.map(t => (
+                          <span key={t} className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.9)' }}>
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                      <a href={item.link} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
+                        style={{ color: '#4dd0e1' }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#80deea'}
+                        onMouseLeave={e => e.currentTarget.style.color = '#4dd0e1'}>
+                        {item.linkLabel}
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                      </a>
                     </div>
-                    <a href={item.link} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold transition-colors"
-                      style={{ color: CERULEAN }}
-                      onMouseEnter={e => e.currentTarget.style.color = '#065d75'}
-                      onMouseLeave={e => e.currentTarget.style.color = CERULEAN}>
-                      {item.linkLabel}
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                    </a>
                   </div>
                 </div>
               );
