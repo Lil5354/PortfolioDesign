@@ -26,15 +26,6 @@ declare module "next-auth" {
   }
 }
 
-interface CustomJWT {
-  id: string;
-  role: string;
-  isActive: boolean;
-  email?: string | null;
-  name?: string | null;
-  picture?: string | null;
-}
-
 export const { auth, handlers, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -102,31 +93,30 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return true;
     },
     async jwt({ token }) {
-      const t = token as unknown as CustomJWT;
-      if (t.email) {
+      if (token && typeof token === 'object' && 'email' in token && token.email) {
+        const email = token.email as string;
         const dbUser = await prisma.user.findUnique({
-          where: { email: t.email },
+          where: { email },
           select: { id: true, role: true, isActive: true },
         });
         if (dbUser) {
-          t.id = dbUser.id;
-          t.role = dbUser.role;
-          t.isActive = dbUser.isActive;
+          (token as any).id = dbUser.id;
+          (token as any).role = dbUser.role;
+          (token as any).isActive = dbUser.isActive;
         }
       }
       return token;
     },
     async session({ session, token }) {
-      const t = token as unknown as CustomJWT;
       if (session.user) {
-        session.user.id = t.id;
-        session.user.role = t.role;
-        session.user.name = token.name || session.user.name;
-        session.user.image = token.picture || session.user.image;
-        if (token.email) {
+        session.user.id = (token as any).id;
+        session.user.role = (token as any).role;
+        session.user.name = (token as any).name || session.user.name;
+        session.user.image = (token as any).picture || session.user.image;
+        if ((token as any).email) {
           try {
             const dbUser = await prisma.user.findUnique({
-              where: { email: token.email },
+              where: { email: (token as any).email },
               select: { fullName: true, avatarUrl: true },
             });
             if (dbUser) {
