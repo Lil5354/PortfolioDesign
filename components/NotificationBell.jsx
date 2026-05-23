@@ -99,6 +99,15 @@ export default function NotificationBell({ setPage }) {
     setUnreadCount(prev => Math.max(0, prev - 1));
     setOpen(false);
 
+    if (n.type === "new_order") {
+      if (n.referenceType === "message") {
+        setPage("messages");
+      } else if (n.referenceId) {
+        setPage("detail", { artworkId: n.referenceId });
+      }
+      return;
+    }
+
     switch (n.referenceType) {
       case "artwork":
         if (n.referenceId) {
@@ -110,9 +119,6 @@ export default function NotificationBell({ setPage }) {
         break;
       case "report":
         setPage("admin_artworks");
-        break;
-      case "new_order":
-        setPage("messages");
         break;
       default:
         if (n.type === "artwork_pending" || n.type === "new_report") {

@@ -7,7 +7,6 @@ import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import NotificationBell from "./components/NotificationBell";
 
 import { saveAs } from "file-saver";
-import JSZip from "jszip";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -1290,34 +1289,17 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     return new Date(dateStr).toLocaleDateString("vi-VN");
   };
 
-  const loadImage = (url) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      let loaded = false;
-      img.onload = () => { loaded = true; resolve(img); };
-      img.onerror = () => reject(new Error("Failed to load: " + url));
-      img.src = url;
-      setTimeout(() => {
-        if (!loaded) reject(new Error("Timeout loading: " + url));
-      }, 15000);
-    });
-  };
-
   const drawWatermarkedImage = async (imgUrl, fmt = "png") => {
-    let img;
-    try {
-      img = await loadImage(imgUrl);
-    } catch {
-      img = await loadImage(imgUrl.replace("w=800&q=80", "w=800&q=80&fm=png"));
-    }
-    if (!img) throw new Error("Cannot load image");
+    const response = await fetch(imgUrl, { mode: "cors" });
+    const blob = await response.blob();
+    const img = await createImageBitmap(blob);
     const pad = 20;
     const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
+    canvas.width = img.width;
+    canvas.height = img.height;
     const ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0);
+    img.close();
     const wmSize = Math.max(Math.min(canvas.width, canvas.height) * 0.04, 14);
     ctx.font = `bold ${wmSize}px Inter, -apple-system, sans-serif`;
     ctx.textAlign = "right";
@@ -1345,8 +1327,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     ctx.fillText(wm, bx, by - bh / 2 + wmSize * 0.35);
     const mime = fmt === "jpg" ? "image/jpeg" : "image/png";
     const quality = fmt === "jpg" ? 0.92 : undefined;
-    const blob = await new Promise(res => canvas.toBlob(b => res(b), mime, quality));
-    return { blob, width: canvas.width, height: canvas.height };
+    const outBlob = await new Promise(res => canvas.toBlob(b => res(b), mime, quality));
+    if (!outBlob) throw new Error("Canvas toBlob failed");
+    return { blob: outBlob, width: canvas.width, height: canvas.height };
   };
 
   const generateMinimalPDF = async ({ blob, width, height }) => {
@@ -1383,26 +1366,15 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     setShowDownloadModal(false);
     try {
       const images = allImagesDeduped.length > 0 ? allImagesDeduped : [art.coverImageUrl];
-      const results = await Promise.all(images.map(url => drawWatermarkedImage(url, fmt === "pdf" ? "jpg" : fmt)));
-      if (results.length === 1) {
+      for (const url of images) {
+        const result = await drawWatermarkedImage(url, fmt === "pdf" ? "jpg" : fmt);
+        const fileName = `${art.title || "artwork"}${images.length > 1 ? `_${images.indexOf(url) + 1}` : ""}`;
         if (fmt === "pdf") {
-          const pdfBlob = await generateMinimalPDF(results[0]);
-          saveAs(pdfBlob, `${art.title || "artwork"}.pdf`);
+          const pdfBlob = await generateMinimalPDF(result);
+          saveAs(pdfBlob, `${fileName}.pdf`);
         } else {
-          saveAs(results[0].blob, `${art.title || "artwork"}.${fmt}`);
+          saveAs(result.blob, `${fileName}.${fmt}`);
         }
-      } else {
-        const zip = new JSZip();
-        for (let i = 0; i < results.length; i++) {
-          if (fmt === "pdf") {
-            const pdfBlob = await generateMinimalPDF(results[i]);
-            zip.file(`${art.title || "artwork"}_${i + 1}.pdf`, pdfBlob);
-          } else {
-            zip.file(`${art.title || "artwork"}_${i + 1}.${fmt}`, results[i].blob);
-          }
-        }
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-        saveAs(zipBlob, `${art.title || "artwork"}.zip`);
       }
     } catch (e) { console.error("Download error:", e); alert("Lỗi khi tải xuống. Vui lòng thử lại."); }
     setDownloading(false);
@@ -1770,8 +1742,8 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       )}
 
       {showOrderModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 pt-8 overflow-y-auto" onClick={() => setShowOrderModal(false)}>
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col my-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-4 pb-8 overflow-y-auto" onClick={() => setShowOrderModal(false)}>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-lg overflow-hidden flex flex-col my-4" onClick={e => e.stopPropagation()}>
             <div className="px-6 py-4 border-b border-[#E0E0E0] flex justify-between items-center bg-[#F8F8FB]">
               <h3 className="font-bold text-lg text-[#212121]">🛒 Đặt hàng ấn phẩm</h3>
               <button onClick={() => setShowOrderModal(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>

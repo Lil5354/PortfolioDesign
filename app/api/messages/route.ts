@@ -24,6 +24,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth();
     const body = await request.json();
     const { recipientSlug, senderName, senderEmail, senderCompany, purpose, content, artworkId, artworkTitle, artworkImage, phone } = body;
 
@@ -42,6 +43,11 @@ export async function POST(request: NextRequest) {
     if (!portfolio) {
       return NextResponse.json({ error: 'Recipient not found' }, { status: 404 });
     }
+
+    const authorUser = await prisma.user.findUnique({
+      where: { id: portfolio.userId },
+      select: { id: true, fullName: true },
+    });
 
     let messageContent = content;
     if (purpose === 'order') {
@@ -66,43 +72,56 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create notification for the student (recipient)
-    const recipientUser = await prisma.user.findUnique({
-      where: { id: portfolio.userId },
-      select: { fullName: true },
-    });
-
-    let studentNotifContent = '';
     if (purpose === 'order') {
-      studentNotifContent = `📦 Đơn đặt hàng mới từ ${senderName} cho ấn phẩm "${artworkTitle || ''}". Hãy kiểm tra hộp thư để xem thông tin khách hàng và liên hệ lại.`;
+      // 1. Notification for the buyer (sender) - confirmation
+      if (session?.user?.id) {
+        await createNotification({
+          userId: session.user.id,
+          type: 'new_order',
+          referenceId: artworkId || message.id,
+          referenceType: 'artwork',
+          content: `Yêu cầu đặt ấn phẩm "${artworkTitle || ''}" đã được gửi đến tác giả ${authorUser?.fullName || 'sinh viên'}. Vui lòng chờ phản hồi qua email hoặc số điện thoại bạn đã cung cấp.`,
+          actorName: senderName,
+        });
+      }
+
+      // 2. Notification for the author (recipient)
+      await createNotification({
+        userId: portfolio.userId,
+        type: 'new_order',
+        referenceId: artworkId || message.id,
+        referenceType: 'message',
+        content: `Đơn đặt hàng ấn phẩm "${artworkTitle || ''}" từ ${senderName}${senderCompany ? ` (${senderCompany})` : ''}. Vui lòng kiểm tra hộp thư và liên hệ với khách hàng qua email: ${senderEmail}${phone ? `, SĐT: ${phone}` : ''}.`,
+        actorName: senderName,
+      });
+
+      // 3. Notification for admins
+      await notifyAdminsAndLecturers({
+        type: 'new_order',
+        referenceId: artworkId || message.id,
+        referenceType: 'artwork',
+        content: `Đơn đặt hàng mới: ${senderName} đã đặt ấn phẩm "${artworkTitle || ''}" của ${authorUser?.fullName || 'sinh viên'} (${senderEmail}).`,
+        actorName: senderName,
+      });
     } else {
-      studentNotifContent = `Tin nhắn mới từ ${senderName}: ${content.substring(0, 100)}`;
+      // Regular message notifications
+      await createNotification({
+        userId: portfolio.userId,
+        type: 'new_message',
+        referenceId: message.id,
+        referenceType: 'message',
+        content: `Tin nhắn mới từ ${senderName}: ${content.substring(0, 100)}`,
+        actorName: senderName,
+      });
+
+      await notifyAdminsAndLecturers({
+        type: 'new_message',
+        referenceId: message.id,
+        referenceType: 'message',
+        content: `Tin nhắn mới từ ${senderName} gửi đến ${authorUser?.fullName || 'sinh viên'}.`,
+        actorName: senderName,
+      });
     }
-
-    await createNotification({
-      userId: portfolio.userId,
-      type: purpose === 'order' ? 'new_order' : 'new_message',
-      referenceId: artworkId || message.id,
-      referenceType: purpose === 'order' ? 'artwork' : 'message',
-      content: studentNotifContent,
-      actorName: senderName,
-    });
-
-    // Notify admins
-    let adminNotifContent = '';
-    if (purpose === 'order') {
-      adminNotifContent = `📦 Đơn đặt hàng mới: ${senderName} muốn đặt ấn phẩm "${artworkTitle || ''}" của ${recipientUser?.fullName || 'sinh viên'}.`;
-    } else {
-      adminNotifContent = `Tin nhắn mới từ ${senderName} gửi đến ${recipientUser?.fullName || 'sinh viên'}.`;
-    }
-
-    await notifyAdminsAndLecturers({
-      type: purpose === 'order' ? 'new_order' : 'new_message',
-      referenceId: artworkId || message.id,
-      referenceType: purpose === 'order' ? 'artwork' : 'message',
-      content: adminNotifContent,
-      actorName: senderName,
-    });
 
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
