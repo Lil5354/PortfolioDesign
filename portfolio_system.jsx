@@ -3552,9 +3552,9 @@ function AboutPage({ setPage }) {
   const [audience, setAudience] = useState("student");
 
   const audienceTabs = [
-    { key: "student", label: "Sinh viên", icon: <GraduationCap size={18} />, color: CERULEAN },
-    { key: "employer", label: "Nhà tuyển dụng", icon: <Briefcase size={18} />, color: "#055F78" },
-    { key: "school", label: "Nhà trường", icon: <BookOpen size={18} />, color: CRIMSON },
+    { key: "student", label: "Sinh viên", icon: <GraduationCap size={18} />, color: CERULEAN, bg: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&q=80" },
+    { key: "employer", label: "Nhà tuyển dụng", icon: <Briefcase size={18} />, color: "#055F78", bg: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1400&q=80" },
+    { key: "school", label: "Nhà trường", icon: <BookOpen size={18} />, color: CRIMSON, bg: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1400&q=80" },
   ];
 
   const headlines = {
@@ -3568,8 +3568,12 @@ function AboutPage({ setPage }) {
 
   return (
     <div className="bg-white min-h-screen">
-      <section style={{ background: `linear-gradient(135deg, ${currentAudience.color} 0%, #033a47 100%)` }}>
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-20 md:py-28">
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={currentAudience.bg} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${currentAudience.color}dd 0%, #033a47fa 100%)` }} />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-20 md:py-28 z-10">
           <div className="flex flex-wrap gap-2 mb-10 border-b border-white/20 pb-6">
             {audienceTabs.map(tab => (
               <button key={tab.key} onClick={() => setAudience(tab.key)}
@@ -3838,6 +3842,24 @@ function AboutPage({ setPage }) {
           </div>
         </div>
       </section>
+
+      <footer className="bg-[#111111] text-gray-400 py-10 px-8 text-sm">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-3">
+            <div className="bg-gray-800 text-white font-serif font-bold w-8 h-8 flex items-center justify-center rounded">UEF</div>
+            <div>
+              <p className="font-bold text-white">UEF Design Gallery - Khoa Thiết kế Đồ họa</p>
+              <p className="text-xs mt-1">© 2024 Trương Vĩnh Ký - Khóa 21 - Tài chính TP.HCM</p>
+            </div>
+          </div>
+          <div className="flex gap-6">
+            <button onClick={() => setPage("gallery")} className="hover:text-white cursor-pointer">Gallery</button>
+            <button onClick={() => setPage("about")} className="hover:text-white cursor-pointer">Giới thiệu Khoa</button>
+            <a href="#" className="hover:text-white">Liên hệ</a>
+            <a href="#" className="hover:text-white">Chính sách</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
