@@ -31,7 +31,6 @@ enum NotificationType {
   new_report
   report_resolved
   collaborator_tag
-  new_order
 }
 
 enum DisplayOrder {

@@ -13,6 +13,9 @@ declare module "next-auth" {
       role: string;
     };
   }
+}
+
+declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: string;
@@ -28,6 +31,13 @@ export const authConfig = {
   callbacks: {
     authorized() {
       return true;
+    },
+    session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+      }
+      return session;
     },
   },
   providers: [],

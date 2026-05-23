@@ -26,6 +26,14 @@ declare module "next-auth" {
   }
 }
 
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role: string;
+    isActive: boolean;
+  }
+}
+
 export const { auth, handlers, signIn, signOut } = NextAuth({
   ...authConfig,
   providers: [
@@ -93,30 +101,29 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return true;
     },
     async jwt({ token }) {
-      if (token && typeof token === 'object' && 'email' in token && token.email) {
-        const email = token.email as string;
+      if (token.email) {
         const dbUser = await prisma.user.findUnique({
-          where: { email },
+          where: { email: token.email },
           select: { id: true, role: true, isActive: true },
         });
         if (dbUser) {
-          (token as any).id = dbUser.id;
-          (token as any).role = dbUser.role;
-          (token as any).isActive = dbUser.isActive;
+          token.id = dbUser.id;
+          token.role = dbUser.role;
+          token.isActive = dbUser.isActive;
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = (token as any).id;
-        session.user.role = (token as any).role;
-        session.user.name = (token as any).name || session.user.name;
-        session.user.image = (token as any).picture || session.user.image;
-        if ((token as any).email) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.name = token.name || session.user.name;
+        session.user.image = token.picture || session.user.image;
+        if (token.email) {
           try {
             const dbUser = await prisma.user.findUnique({
-              where: { email: (token as any).email },
+              where: { email: token.email },
               select: { fullName: true, avatarUrl: true },
             });
             if (dbUser) {
