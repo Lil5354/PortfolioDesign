@@ -6,6 +6,7 @@ import { api } from "./lib/api-client";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import NotificationBell from "./components/NotificationBell";
 
+import { saveAs } from "file-saver";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -1124,6 +1125,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [sendingReport, setSendingReport] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [shareToast, setShareToast] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState("png");
+  const [downloading, setDownloading] = useState(false);
   useEffect(() => { const h = (e) => { if (e.key === 'Escape') setShowFullscreen(false); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
 
   const currentUserId = authUser?.id;
@@ -1233,6 +1237,107 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     return new Date(dateStr).toLocaleDateString("vi-VN");
   };
 
+  const drawWatermarkedImage = async (imgUrl, fmt = "png") => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imgUrl; });
+    const pad = 20;
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const wmSize = Math.max(Math.min(canvas.width, canvas.height) * 0.04, 14);
+    ctx.font = `bold ${wmSize}px Inter, -apple-system, sans-serif`;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    const wm = art.watermarkText || "UEF";
+    const tw = ctx.measureText(wm).width;
+    const bx = canvas.width - pad;
+    const by = canvas.height - pad;
+    const bh = wmSize * 1.8;
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    const r = 6;
+    ctx.beginPath();
+    ctx.moveTo(bx - tw - pad + r, by - bh);
+    ctx.lineTo(bx + r, by - bh);
+    ctx.arcTo(bx + r, by - bh, bx + r, by - bh + r, r);
+    ctx.lineTo(bx + r, by);
+    ctx.arcTo(bx + r, by, bx + r - r, by, r);
+    ctx.lineTo(bx - tw - pad, by);
+    ctx.arcTo(bx - tw - pad, by, bx - tw - pad, by - r, r);
+    ctx.lineTo(bx - tw - pad, by - bh + r);
+    ctx.arcTo(bx - tw - pad, by - bh, bx - tw - pad + r, by - bh, r);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.fillText(wm, bx, by - bh / 2 + wmSize * 0.35);
+    const mime = fmt === "jpg" ? "image/jpeg" : "image/png";
+    const quality = fmt === "jpg" ? 0.92 : undefined;
+    const blob = await new Promise(res => canvas.toBlob(b => res(b), mime, quality));
+    return { blob, width: canvas.width, height: canvas.height };
+  };
+
+  const generateMinimalPDF = async ({ blob, width, height }) => {
+    const imgBytes = await blob.arrayBuffer();
+    const pw = 595; const ph = 842;
+    const scale = Math.min(pw / width, ph / height) * 0.95;
+    const iw = Math.round(width * scale);
+    const ih = Math.round(height * scale);
+    const enc = new TextEncoder();
+    const chunks = [];
+    let offset = 0;
+    const wr = (s) => { const b = enc.encode(s); chunks.push(b); const o = offset; offset += b.byteLength; return o; };
+    const wrB = (b) => { chunks.push(new Uint8Array(b)); const o = offset; offset += b.byteLength; return o; };
+    const o = [];
+    o.push(wr("%PDF-1.4\n"));
+    o.push(wr("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"));
+    o.push(wr("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"));
+    o.push(wr(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Contents 4 0 R /Resources << /XObject << /Im0 5 0 R >> >> >>\nendobj\n`));
+    const stream = `q ${iw} 0 0 ${ih} ${(pw - iw) / 2} ${(ph - ih) / 2} cm /Im0 Do Q\n`;
+    o.push(wr(`4 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`));
+    o.push(wr(`5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgBytes.byteLength} >>\nstream\n`));
+    o.push(wrB(imgBytes));
+    o.push(wr("\nendstream\nendobj\n"));
+    const xrefOffset = offset;
+    let xref = `xref\n0 7\n0000000000 65535 f \n`;
+    for (let i = 0; i < 6; i++) xref += `${String(o[i]).padStart(10, "0")} 00000 n \n`;
+    xref += "trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n" + xrefOffset + "\n%%EOF\n";
+    wr(xref);
+    return new Blob(chunks, { type: "application/pdf" });
+  };
+
+  const handleDownload = async (fmt) => {
+    setDownloading(true);
+    setShowDownloadModal(false);
+    try {
+      const images = allImagesDeduped.length > 0 ? allImagesDeduped : [art.coverImageUrl];
+      const results = await Promise.all(images.map(url => drawWatermarkedImage(url, fmt === "pdf" ? "jpg" : fmt)));
+      if (results.length === 1) {
+        if (fmt === "pdf") {
+          const pdfBlob = await generateMinimalPDF(results[0]);
+          saveAs(pdfBlob, `${art.title || "artwork"}.pdf`);
+        } else {
+          saveAs(results[0].blob, `${art.title || "artwork"}.${fmt}`);
+        }
+      } else {
+        const JSZip = (await import("jszip")).default;
+        const zip = new JSZip();
+        for (let i = 0; i < results.length; i++) {
+          if (fmt === "pdf") {
+            const pdfBlob = await generateMinimalPDF(results[i]);
+            zip.file(`${art.title || "artwork"}_${i + 1}.pdf`, pdfBlob);
+          } else {
+            zip.file(`${art.title || "artwork"}_${i + 1}.${fmt}`, results[i].blob);
+          }
+        }
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        saveAs(zipBlob, `${art.title || "artwork"}.zip`);
+      }
+    } catch (e) { console.error("Download error:", e); alert("Lỗi khi tải xuống. Vui lòng thử lại."); }
+    setDownloading(false);
+  };
+
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
       <div style={{ padding: "20px 48px", borderBottom: `1px solid ${GRAY_LIGHT}`, display: "flex", gap: 6, alignItems: "center" }}>
@@ -1263,11 +1368,47 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
             </span>
             <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
               <button onClick={() => setShowFullscreen(true)} title="Phóng to" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
-              <button onClick={() => { const a = document.createElement('a'); a.href = activeImage; a.download = art.title || 'artwork'; a.click(); }} title="Tải xuống" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><ArrowDownCircle size={16} /></button>
+              <button onClick={() => setShowDownloadModal(true)} title="Tải xuống" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><FileDown size={16} /></button>
               <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt('Sao chép link:', window.location.href); } }} title="Sao chép link" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Link size={16} /></button>
             </div>
           </div>
           {shareToast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: BLACK, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>Đã sao chép link ấn phẩm!</div>}
+          {showDownloadModal && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDownloadModal(false)}>
+              <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+                <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
+                  <h3 className="text-base font-bold text-[#212121]">Tải xuống ấn phẩm</h3>
+                  <button onClick={() => setShowDownloadModal(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={18} /></button>
+                </div>
+                <div className="p-5">
+                  <p className="text-xs text-[#666666] mb-4">Chọn định dạng để tải{allImagesDeduped.length > 1 ? ` (${allImagesDeduped.length} ảnh)` : ""}:</p>
+                  <div className="flex flex-col gap-3">
+                    {[
+                      { key: "png", label: "PNG", desc: "Chất lượng cao, trong suốt" },
+                      { key: "jpg", label: "JPG", desc: "Dung lượng nhỏ, phổ biến" },
+                      { key: "pdf", label: "PDF", desc: "Một trang, giữ nguyên watermark" },
+                    ].map(opt => (
+                      <button key={opt.key} onClick={() => { setDownloadFormat(opt.key); handleDownload(opt.key); }}
+                        className="flex items-center justify-between w-full px-4 py-3 rounded-lg border border-[#E0E0E0] hover:border-[#077E9E] hover:bg-[#F0F8FB] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={downloading}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-[#E8F4F8] flex items-center justify-center text-[#077E9E] font-bold text-xs uppercase">{opt.key}</div>
+                          <div className="text-left">
+                            <p className="text-sm font-semibold text-[#212121]">{opt.label}</p>
+                            <p className="text-xs text-[#666666]">{opt.desc}</p>
+                          </div>
+                        </div>
+                        {downloading && downloadFormat === opt.key ? (
+                          <span className="inline-block w-4 h-4 border-2 border-[#077E9E] border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span>
+                        ) : <FileDown size={16} className="text-[#077E9E]" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{ borderLeft: `1px solid ${GRAY_LIGHT}`, padding: "32px 28px", overflow: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
