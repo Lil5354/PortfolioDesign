@@ -7,6 +7,7 @@ import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import NotificationBell from "./components/NotificationBell";
 
 import { saveAs } from "file-saver";
+import JSZip from "jszip";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -1321,7 +1322,6 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
           saveAs(results[0].blob, `${art.title || "artwork"}.${fmt}`);
         }
       } else {
-        const JSZip = (await import("jszip")).default;
         const zip = new JSZip();
         for (let i = 0; i < results.length; i++) {
           if (fmt === "pdf") {
