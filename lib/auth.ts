@@ -78,7 +78,6 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        if (!user.email?.endsWith("@uef.edu.vn")) return false;
         const existing = await prisma.user.findUnique({ where: { email: user.email } });
         if (existing) {
           if (user.image && user.image !== existing.avatarUrl) {

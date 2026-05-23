@@ -11,7 +11,7 @@ const ERROR_MESSAGES: Record<string, { title: string; message: string }> = {
   AccessDenied: {
     title: 'Truy cập bị từ chối',
     message:
-      'Bạn không có quyền truy cập. Chỉ tài khoản email @uef.edu.vn mới được phép đăng nhập.',
+      'Bạn không có quyền truy cập. Vui lòng thử lại hoặc liên hệ quản trị viên.',
   },
   Verification: {
     title: 'Xác thực thất bại',

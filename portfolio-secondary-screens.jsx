@@ -194,7 +194,7 @@ function AuthPage() {
               <span style={{ fontWeight: 700, fontSize: 16, color: C.text }}>PortfolioHub</span>
             </div>
             <h1 style={{ fontSize: 26, fontWeight: 700, color: C.text, margin: "0 0 8px", letterSpacing: "-0.6px" }}>Đăng nhập hệ thống</h1>
-            <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Sử dụng email <strong style={{ color: C.cta }}>@uef.edu.vn</strong> của bạn</p>
+            <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Sử dụng email của bạn để đăng nhập</p>
           </div>
 
           {/* email */}

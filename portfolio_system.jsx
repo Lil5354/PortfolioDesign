@@ -1237,24 +1237,26 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "65fr 35fr", minHeight: "calc(100vh - 105px)" }}>
-        <div style={{ background: GRAY_BG, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "32px 32px 0" }}>
-          <img src={activeImage} alt={art.title} style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
+        <div style={{ background: GRAY_BG, display: "flex", flexDirection: "row", alignItems: "stretch", position: "relative", padding: 0 }}>
           {allImagesDeduped.length > 1 && (
-            <div style={{ display: "flex", gap: 8, marginTop: 16, paddingBottom: 24, flexWrap: "wrap", justifyContent: "center", zIndex: 3 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 12px", overflowY: "auto", flexShrink: 0, zIndex: 3, justifyContent: "center" }}>
               {allImagesDeduped.map((url, idx) => (
-                <div key={idx} onClick={() => setActiveImageIdx(idx)} style={{ width: 56, height: 48, borderRadius: 6, overflow: "hidden", border: `2px solid ${idx === activeImageIdx ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", opacity: idx === activeImageIdx ? 1 : 0.55, transition: "all .15s" }}>
+                <div key={idx} onClick={() => setActiveImageIdx(idx)} style={{ width: 56, height: 48, borderRadius: 6, overflow: "hidden", border: `2px solid ${idx === activeImageIdx ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", opacity: idx === activeImageIdx ? 1 : 0.55, transition: "all .15s", flexShrink: 0 }}>
                   <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 </div>
               ))}
             </div>
           )}
-          <div style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
-            <p style={{ color: "rgba(0,0,0,0.06)", fontSize: 48, fontWeight: 900, transform: "rotate(-25deg)", userSelect: "none", letterSpacing: 4, textTransform: "uppercase" }}>UEF · PORTFOLIO</p>
-          </div>
-          <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
-            <button onClick={() => setShowFullscreen(true)} title="Phóng to" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
-            <button onClick={() => { const a = document.createElement('a'); a.href = activeImage; a.download = art.title || 'artwork'; a.click(); }} title="Tải xuống" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><ArrowDownCircle size={16} /></button>
-            <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt('Sao chép link:', window.location.href); } }} title="Chia sẻ link" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><ExternalLink size={16} /></button>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", padding: "32px 32px 0" }}>
+            <img src={activeImage} alt={art.title} style={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: 4, display: "block", position: "relative", zIndex: 2 }} />
+            <div style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1 }}>
+              <p style={{ color: "rgba(0,0,0,0.06)", fontSize: 48, fontWeight: 900, transform: "rotate(-25deg)", userSelect: "none", letterSpacing: 4, textTransform: "uppercase" }}>UEF · PORTFOLIO</p>
+            </div>
+            <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
+              <button onClick={() => setShowFullscreen(true)} title="Phóng to" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
+              <button onClick={() => { const a = document.createElement('a'); a.href = activeImage; a.download = art.title || 'artwork'; a.click(); }} title="Tải xuống" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><ArrowDownCircle size={16} /></button>
+              <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt('Sao chép link:', window.location.href); } }} title="Sao chép link" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Link size={16} /></button>
+            </div>
           </div>
           {shareToast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: BLACK, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>Đã sao chép link ấn phẩm!</div>}
         </div>
@@ -1690,8 +1692,8 @@ function AuthPage({ setPage, onLoginSuccess }) {
           Đăng nhập với Google
         </button>
 
-        <p style={{ color: "#666", fontSize: 11, marginTop: 16, textAlign: "center", lineHeight: 1.5 }}>
-          Đăng nhập bằng email @uef.edu.vn để sử dụng hệ thống.<br />
+          <p style={{ color: "#666", fontSize: 11, marginTop: 16, textAlign: "center", lineHeight: 1.5 }}>
+          Đăng nhập bằng email của bạn để sử dụng hệ thống.<br />
           Sinh viên: <strong>sv@uef.edu.vn</strong> / Mật khẩu: <strong>test123</strong>
         </p>
       </div>
@@ -3238,7 +3240,7 @@ function LandingPage({ setPage, isLoggedIn }) {
               Đăng nhập sinh viên
             </button>
           </div>
-          <p className="text-xs text-gray-500 mb-16">* Dành cho sinh viên đăng nhập bằng email @uef.edu.vn</p>
+          <p className="text-xs text-gray-500 mb-16">* Dành cho sinh viên đăng nhập bằng email của bạn</p>
           
           <div className="flex flex-wrap items-center gap-8 border-t border-gray-100 pt-8">
             <div>
@@ -3410,7 +3412,7 @@ function LandingPage({ setPage, isLoggedIn }) {
             <div className="flex-1 flex flex-col items-center text-center z-10">
               <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">1</div>
               <h3 className="font-bold mb-2">Đăng nhập</h3>
-              <p className="text-sm text-gray-500">Dùng email @uef.edu.vn để đăng nhập vào hệ thống</p>
+              <p className="text-sm text-gray-500">Dùng email của bạn để đăng nhập vào hệ thống</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
@@ -4801,22 +4803,21 @@ export default function App() {
     setPageState(newPage);
     if (newPage === "detail" && params?.artworkId) {
       setActiveArtworkIdState(params.artworkId);
+    } else if (newPage !== "detail") {
+      setActiveArtworkIdState(null);
     }
     setPageParams(params || {});
-  }, []);
 
-  // Sync URL hash whenever page or activeArtworkId changes
-  useEffect(() => {
     let path;
-    if (page === "detail" && activeArtworkId) {
-      path = `#/detail/${activeArtworkId}`;
-    } else if (page === "portfolio" && pageParams.portfolioSlug) {
-      path = `#/portfolio/${pageParams.portfolioSlug}`;
+    if (newPage === "detail" && params?.artworkId) {
+      path = `#/detail/${params.artworkId}`;
+    } else if (newPage === "portfolio" && params?.portfolioSlug) {
+      path = `#/portfolio/${params.portfolioSlug}`;
     } else {
-      path = page === "home" ? "#/" : `#/${page}`;
+      path = newPage === "home" ? "#/" : `#/${newPage}`;
     }
-    window.history.replaceState({ page, id: activeArtworkId || null }, "", path);
-  }, [page, activeArtworkId, pageParams]);
+    window.history.pushState({ page: newPage, id: params?.artworkId || null }, "", path);
+  }, []);
 
   // Handle browser back/forward
   useEffect(() => {
@@ -4829,6 +4830,7 @@ export default function App() {
       } else if (h.page === "portfolio" && h.id) {
         setPageParams({ portfolioSlug: h.id });
       } else {
+        setActiveArtworkIdState(null);
         setPageParams({});
       }
     };
