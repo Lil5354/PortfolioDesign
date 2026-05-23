@@ -14,7 +14,7 @@ import {
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive,
-  GraduationCap, Rocket, Upload
+  GraduationCap, Rocket, Upload, Menu
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -37,12 +37,17 @@ const artworks = [
 
 function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userData }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const mobileMenuRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setIsMobileMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -52,8 +57,8 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
   const isActive = (id) => activePage === id || (id === "home" && (activePage === "home" || activePage === "landing"));
   const navItems = [
     { id: "home", label: "Trang chủ" },
-    { id: "about", label: "Giới thiệu" },
     { id: "gallery", label: "Gallery" },
+    { id: "about", label: "Giới thiệu" },
   ];
   if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: "Portfolio" });
 
@@ -75,6 +80,9 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
           <button key={item.id} onClick={() => setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#077E9E] border-b-2 border-[#077E9E]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
         ))}
       </nav>
+      <button className="md:hidden flex items-center cursor-pointer text-[#666666] hover:text-[#212121]" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+        {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+      </button>
       <div className="flex items-center gap-3 text-sm font-medium">
         {isLoggedIn && <NotificationBell setPage={setPage} />}
         {isLoggedIn ? (
@@ -117,6 +125,41 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
           </>
         )}
       </div>
+      {isMobileMenuOpen && (
+        <div ref={mobileMenuRef} className="fixed top-14 left-0 right-0 bg-white border-b border-[#E0E0E0] shadow-lg z-40 md:hidden">
+          <div className="flex flex-col py-2">
+            {navItems.map((item) => (
+              <button key={item.id} onClick={() => { setPage(item.id); setIsMobileMenuOpen(false); }} className={`px-6 py-3 text-sm font-medium text-left transition-colors ${isActive(item.id) ? "text-[#077E9E] bg-[#F0F8FB]" : "text-gray-600 hover:bg-[#F8F8F8]"}`}>{item.label}</button>
+            ))}
+            {isLoggedIn && (
+              <>
+                {userRole === "student" ? (
+                  <>
+                    <div className="border-t border-[#E0E0E0] my-1" />
+                    <button onClick={() => { setPage("dashboard"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />Dashboard</button>
+                    <button onClick={() => { setPage("messages"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Mail size={16} className="inline mr-2" />Hộp thư</button>
+                    <button onClick={() => { setPage("settings"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Settings size={16} className="inline mr-2" />Cài đặt</button>
+                  </>
+                ) : (
+                  <>
+                    <div className="border-t border-[#E0E0E0] my-1" />
+                    <button onClick={() => { setPage("admin"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />Admin</button>
+                  </>
+                )}
+                <div className="border-t border-[#E0E0E0] my-1" />
+                <button onClick={() => { onLogout && onLogout(); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#8B1A1A] hover:bg-[#FEF2F2]"><LogOut size={16} className="inline mr-2" />Đăng xuất</button>
+              </>
+            )}
+            {!isLoggedIn && (
+              <>
+                <div className="border-t border-[#E0E0E0] my-1" />
+                <button onClick={() => { setPage("auth"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#077E9E] hover:bg-[#F0F8FB]">Đăng nhập</button>
+                <button onClick={() => { setPage("register"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]">Đăng ký</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
@@ -824,7 +867,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
               <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginTop: 40, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
                 <Users size={20} color={CERULEAN} /> Đồng tác giả ({collabArtworks.length})
               </h3>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+    <div className="masonry-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
                 {collabArtworks.map(art => (
                   <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
                     <div style={{ position: "relative", background: GRAY_BG }}>
@@ -1019,7 +1062,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6, color: BLACK }}>Đăng ấn phẩm mới</h2>
         <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>Chia sẻ tác phẩm sáng tạo của bạn với cộng đồng UEF</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+        <div className="upload-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
           <div>
             <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Ảnh chính *</label>
             <input type="file" id="coverInput" accept="image/*" style={{ display: "none" }} onChange={handleCoverUpload} />
@@ -1365,8 +1408,8 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
         <span style={{ fontSize: 13, color: BLACK, fontWeight: 500 }}>{art.title}</span>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "65fr 35fr", minHeight: "calc(100vh - 105px)" }}>
-        <div style={{ background: GRAY_BG, display: "flex", flexDirection: "row", alignItems: "stretch", position: "relative", padding: 0 }}>
+      <div className="detail-grid" style={{ display: "grid", gridTemplateColumns: "65fr 35fr", minHeight: "calc(100vh - 105px)" }}>
+        <div className="detail-image-panel" style={{ background: GRAY_BG, display: "flex", flexDirection: "row", alignItems: "stretch", position: "relative", padding: 0 }}>
           {allImagesDeduped.length > 1 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 12px", overflowY: "auto", flexShrink: 0, zIndex: 3, justifyContent: "center" }}>
               {allImagesDeduped.map((url, idx) => (
@@ -1428,7 +1471,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
           )}
         </div>
 
-        <div style={{ borderLeft: `1px solid ${GRAY_LIGHT}`, padding: "32px 28px", overflow: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
+        <div className="detail-info-panel" style={{ borderLeft: `1px solid ${GRAY_LIGHT}`, padding: "32px 28px", overflow: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
               <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.subject}</span>
@@ -1779,8 +1822,8 @@ function AuthPage({ setPage, onLoginSuccess }) {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%" }}>
-      <div style={{ flex: 1, position: "relative" }}>
+    <div className="auth-page" style={{ display: "flex", height: "100vh", width: "100%" }}>
+      <div className="auth-image-panel" style={{ flex: 1, position: "relative" }}>
         <img src="https://cdn-media.sforum.vn/storage/app/media/wp-content/uploads/2023/08/hoc-phi-uef-.jpg" alt="auth-bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
         <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
@@ -1788,7 +1831,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
           <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
         </div>
       </div>
-      <div style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 64px" }}>
+      <div className="auth-form-panel" style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 64px" }}>
         <h2 style={{ fontSize: 28, fontWeight: 700, color: BLACK, marginBottom: 8 }}>Đăng nhập</h2>
         <p style={{ color: MUTED, fontSize: 14, marginBottom: 24 }}>Chào mừng trở lại với hệ thống Portfolio UEF</p>
 
@@ -3329,7 +3372,7 @@ function RegisterPage({ setPage }) {
           <p style={{ color: "rgba(255,255,255,0.95)", fontSize: 22, fontWeight: 300, lineHeight: 1.55, letterSpacing: "-0.3px", margin: "0 0 14px" }}>"Sáng tạo là kết nối mọi thứ với nhau." <br /><span style={{ fontSize: 16, opacity: 0.8 }}>Tham gia cộng đồng sáng tạo UEF</span></p>
         </div>
       </div>
-      <div style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 56px", overflow: "auto" }}>
+      <div className="auth-form-panel" style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 56px", overflow: "auto" }}>
         <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}><img src="/logo-uef.png" alt="UEF" style={{ height: 30 }} /><span style={{ fontWeight: 700, fontSize: 16, color: BLACK }}>Design Gallery</span></div>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>Tạo tài khoản mới</h1>
@@ -5480,7 +5523,7 @@ export default function App() {
   };
 
   return (
-    <div className="font-sans min-h-screen bg-[#F8F8F8] text-[#212121]">
+    <div className="font-sans min-h-screen bg-[#F8F8F8] text-[#212121] overflow-x-hidden">
       {page !== "auth" && page !== "register" && page !== "portal" && (
         <AppHeader activePage={page} setPage={setPage} isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} userData={userData} />
       )}
