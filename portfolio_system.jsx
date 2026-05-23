@@ -1255,10 +1255,12 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
             </div>
           )}
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: 0, overflow: "hidden" }}>
-            <img src={activeImage} alt={art.title} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", position: "absolute", inset: 0, zIndex: 1 }} />
-            <div style={{ position: "absolute", bottom: 12, right: 12, pointerEvents: "none", zIndex: 2 }}>
-              <p style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 900, userSelect: "none", letterSpacing: 3, textTransform: "uppercase", background: "rgba(0,0,0,0.55)", padding: "4px 12px", borderRadius: 4, backdropFilter: "blur(2px)" }}>{art.watermarkText || "UEF"}</p>
-            </div>
+            <span style={{ position: "relative", display: "inline-block", maxWidth: "100%", maxHeight: "100%" }}>
+              <img src={activeImage} alt={art.title} style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", display: "block" }} />
+              <span style={{ position: "absolute", bottom: 12, right: 12, pointerEvents: "none", zIndex: 2 }}>
+                <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 900, userSelect: "none", letterSpacing: 3, textTransform: "uppercase", background: "rgba(0,0,0,0.55)", padding: "4px 12px", borderRadius: 4, backdropFilter: "blur(2px)" }}>{art.watermarkText || "UEF"}</span>
+              </span>
+            </span>
             <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
               <button onClick={() => setShowFullscreen(true)} title="Phóng to" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
               <button onClick={() => { const a = document.createElement('a'); a.href = activeImage; a.download = art.title || 'artwork'; a.click(); }} title="Tải xuống" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><ArrowDownCircle size={16} /></button>
