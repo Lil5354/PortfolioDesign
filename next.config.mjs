@@ -3,7 +3,7 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: "/:path((?!api/).*)",
+        source: "/:path((?!api/|_next/|.*\\..*$).*)",
         destination: "/index.html",
       },
     ];
