@@ -65,6 +65,7 @@ model User {
   notifications      Notification[]
   messages           Message[]
   portfolioSettings  PortfolioSetting?
+  timelineEntries    TimelineEntry[]
   collections        CollectionItem[]
 
   @@map("users")
@@ -232,6 +233,28 @@ model PortfolioSetting {
   user User @relation(fields: [userId], references: [id])
 
   @@map("portfolio_settings")
+}
+
+model TimelineEntry {
+  id          String   @id @default(uuid()) @map("entry_id")
+  userId      String   @map("user_id")
+  month       String   @map("month")
+  year        String   @map("year")
+  title       String
+  description String?
+  tags        String[]
+  linkUrl     String?  @map("link_url")
+  linkLabel   String?  @map("link_label")
+  imageUrl    String?  @map("image_url")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, sortOrder])
+  @@map("timeline_entries")
 }
 
 model CollectionItem {

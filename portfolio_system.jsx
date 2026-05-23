@@ -607,7 +607,7 @@ function PortfolioPage({ setPage, pageParams }) {
         </div>
         )}
 
-        <TimelineSection />
+        <TimelineSection slug={slug || ''} />
 
         <div style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 0 }}>
@@ -3767,6 +3767,70 @@ function PortfolioSettingsPage({ setPage, userData }) {
     }
   };
 
+  const [timelineEntries, setTimelineEntries] = useState([]);
+  const [timelineForm, setTimelineForm] = useState({ month: '', year: '', title: '', description: '', tags: '', linkUrl: '', linkLabel: '', imageUrl: '' });
+  const [showTimelineForm, setShowTimelineForm] = useState(false);
+  const [editingTimelineId, setEditingTimelineId] = useState(null);
+  const [savingTimeline, setSavingTimeline] = useState(false);
+
+  useEffect(() => {
+    api.timeline.list().then(setTimelineEntries).catch(() => {});
+  }, [loaded]);
+
+  const openAddTimeline = () => {
+    setEditingTimelineId(null);
+    setTimelineForm({ month: '', year: '', title: '', description: '', tags: '', linkUrl: '', linkLabel: '', imageUrl: '' });
+    setShowTimelineForm(true);
+  };
+
+  const openEditTimeline = (entry) => {
+    setEditingTimelineId(entry.id);
+    setTimelineForm({
+      month: entry.month || '',
+      year: entry.year || '',
+      title: entry.title || '',
+      description: entry.description || '',
+      tags: entry.tags ? entry.tags.join(', ') : '',
+      linkUrl: entry.linkUrl || '',
+      linkLabel: entry.linkLabel || '',
+      imageUrl: entry.imageUrl || '',
+    });
+    setShowTimelineForm(true);
+  };
+
+  const saveTimelineEntry = async () => {
+    if (!timelineForm.month || !timelineForm.year || !timelineForm.title) return;
+    setSavingTimeline(true);
+    try {
+      const body = { ...timelineForm, tags: timelineForm.tags.split(',').map(t => t.trim()).filter(Boolean) };
+      if (editingTimelineId) {
+        const updated = await api.timeline.update(editingTimelineId, body);
+        setTimelineEntries(prev => prev.map(e => e.id === editingTimelineId ? updated : e));
+      } else {
+        const created = await api.timeline.create(body);
+        setTimelineEntries(prev => [...prev, created]);
+      }
+      setShowTimelineForm(false);
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+    } finally {
+      setSavingTimeline(false);
+    }
+  };
+
+  const deleteTimelineEntry = async (id) => {
+    if (!confirm('Xóa mốc timeline này?')) return;
+    try {
+      await api.timeline.delete(id);
+      setTimelineEntries(prev => prev.filter(e => e.id !== id));
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+    }
+  };
+
+  const monthOptions = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+  const yearOptions = ['2023','2024','2025','2026','2027'];
+
   if (!loaded) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
 
   return (
@@ -3890,6 +3954,129 @@ function PortfolioSettingsPage({ setPage, userData }) {
               <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="mt-4 w-full py-2.5 rounded-lg bg-[#077E9E] text-white font-semibold cursor-pointer">Xác nhận</button>
             </div>
           </div>
+
+          {/* TIMELINE ACHIEVEMENTS */}
+          <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-bold text-[#212121]">Timeline thành tích</h3>
+              <button onClick={openAddTimeline} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#077E9E] text-white text-sm font-semibold hover:bg-opacity-90 transition-opacity cursor-pointer"><Plus size={15} />Thêm</button>
+            </div>
+            <p className="text-sm text-[#666666] mb-4">Quản lý các cột mốc thành tích trên dòng thời gian portfolio.</p>
+
+            {timelineEntries.length === 0 ? (
+              <div className="text-center py-8 text-sm text-[#666666]">Chưa có mốc thành tích nào. Bấm "Thêm" để tạo mốc đầu tiên.</div>
+            ) : (
+              <div className="space-y-2">
+                {timelineEntries.map(entry => (
+                  <div key={entry.id} className="flex items-center justify-between px-4 py-3 rounded-lg bg-[#F8F8F8] border border-[#E0E0E0]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="shrink-0 w-10 h-10 rounded-lg overflow-hidden bg-gray-200">
+                        {entry.imageUrl ? <img src={entry.imageUrl} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs text-[#999]"><Clock size={16} /></div>}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-[#212121] truncate">{entry.title}</p>
+                        <p className="text-xs text-[#666666]">{entry.month} {entry.year}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => openEditTimeline(entry)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer text-[#666666] hover:text-[#212121]"><Edit2 size={15} /></button>
+                      <button onClick={() => deleteTimelineEntry(entry.id)} className="p-1.5 rounded-lg hover:bg-white transition-colors cursor-pointer text-[#666666] hover:text-red-600"><Trash2 size={15} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* TIMELINE FORM MODAL */}
+          {showTimelineForm && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowTimelineForm(false); }}>
+              <div className="bg-white rounded-xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-lg text-[#212121]">{editingTimelineId ? 'Sửa mốc timeline' : 'Thêm mốc timeline'}</h3>
+                  <button onClick={() => setShowTimelineForm(false)} className="text-[#666666] hover:text-[#212121] cursor-pointer"><X size={20} /></button>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs font-medium text-[#212121] mb-1.5">Tháng</label>
+                      <select value={timelineForm.month} onChange={e => setTimelineForm({...timelineForm, month: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white">
+                        <option value="">Chọn tháng</option>
+                        {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-medium text-[#212121] mb-1.5">Năm</label>
+                      <select value={timelineForm.year} onChange={e => setTimelineForm({...timelineForm, year: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white">
+                        <option value="">Chọn năm</option>
+                        {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Tiêu đề</label>
+                    <input type="text" value={timelineForm.title} onChange={e => setTimelineForm({...timelineForm, title: e.target.value})} placeholder="VD: Giải Nhất NCKH cấp Trường" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Mô tả</label>
+                    <textarea value={timelineForm.description} onChange={e => setTimelineForm({...timelineForm, description: e.target.value})} rows={3} placeholder="Mô tả ngắn về thành tích..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] resize-none" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Tags (phân cách bằng dấu phẩy)</label>
+                    <input type="text" value={timelineForm.tags} onChange={e => setTimelineForm({...timelineForm, tags: e.target.value})} placeholder="VD: Nghiên cứu, AI/NLP, Giải Nhất" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Link bài báo / chứng nhận</label>
+                    <div className="flex gap-2">
+                      <input type="text" value={timelineForm.linkUrl} onChange={e => setTimelineForm({...timelineForm, linkUrl: e.target.value})} placeholder="https://..." className="flex-1 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                      <input type="text" value={timelineForm.linkLabel} onChange={e => setTimelineForm({...timelineForm, linkLabel: e.target.value})} placeholder="Nhãn (VD: Xem bài báo)" className="w-1/3 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">URL ảnh nền</label>
+                    <input type="text" value={timelineForm.imageUrl} onChange={e => setTimelineForm({...timelineForm, imageUrl: e.target.value})} placeholder="https://images.unsplash.com/..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <button onClick={saveTimelineEntry} disabled={savingTimeline || !timelineForm.title || !timelineForm.month || !timelineForm.year} className="flex-1 py-2.5 rounded-lg bg-[#077E9E] text-white text-sm font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{savingTimeline ? 'Đang lưu...' : editingTimelineId ? 'Cập nhật' : 'Thêm mới'}</button>
+                  <button onClick={() => setShowTimelineForm(false)} className="px-6 py-2.5 rounded-lg border border-[#E0E0E0] text-sm font-medium text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Hủy</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TIMELINE PREVIEW */}
+          {timelineEntries.length > 0 && (
+            <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6 overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-[#212121]">Xem trước Timeline</h3>
+                <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#077E9E] font-semibold hover:underline">Xem trên portfolio →</a>
+              </div>
+              <div className="relative">
+                <div className="relative overflow-hidden rounded-xl" style={{ minHeight: 260, backgroundImage: `url(${timelineEntries[0]?.imageUrl || ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                  <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)' }} />
+                  <div className="relative z-10 p-5 flex items-center" style={{ minHeight: 260 }}>
+                    <div className="w-full" style={{ background: BLACK, color: '#fff', padding: '20px 24px', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+                      <div className="mb-2">
+                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: '#dbeafe', color: '#1e40af' }}>{timelineEntries[0]?.month} {timelineEntries[0]?.year}</span>
+                      </div>
+                      <h4 className="text-base font-bold mb-1.5">{timelineEntries[0]?.title}</h4>
+                      <p className="text-xs leading-relaxed" style={{ color: '#9ca3af' }}>{timelineEntries[0]?.description}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  {timelineEntries.slice(0, 6).map((e, i) => (
+                    <div key={e.id} className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-[#077E9E]' : 'bg-[#E0E0E0]'}`} />
+                  ))}
+                  {timelineEntries.length > 6 && <span className="text-[10px] text-[#666666]">+{timelineEntries.length - 6}</span>}
+                </div>
+                <p className="text-center text-[10px] text-[#999] mt-2 flex items-center justify-center gap-1">
+                  <Calendar size={11} />{timelineEntries.length} mốc thành tích
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-8 flex items-center justify-between">
             <div>
@@ -4272,15 +4459,48 @@ function AccessDenied({ setPage }) {
   );
 }
 
-function TimelineSection() {
-  const timelineData = [
-    { id: 1, year: "2023", monthLabel: "T9", month: "Tháng 9", title: "Đồ án nhập môn lập trình", description: "Hoàn thành đồ án Quản lý Thư viện bằng C++ với kiến trúc OOP. Đạt 9.5/10 và được giảng viên chọn làm mẫu cho khoá sau.", tags: ["C++", "OOP", "Xuất sắc"], link: "https://example.com/do-an-2023", linkLabel: "Xem đồ án →", monthColor: "#dbeafe", monthText: "#1e40af", img: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80" },
-    { id: 2, year: "2024", monthLabel: "T3", month: "Tháng 3", title: "Giải Nhất NCKH cấp Trường", description: "Nghiên cứu ứng dụng AI trong phân tích cảm xúc văn bản tiếng Việt. Đạt giải Nhất và được chọn tham dự cấp Bộ.", tags: ["Nghiên cứu", "AI/NLP", "Giải Nhất"], link: "https://example.com/nckh-2024", linkLabel: "Xem báo cáo →", monthColor: "#dcfce7", monthText: "#166534", img: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80" },
-    { id: 3, year: "2024", monthLabel: "T8", month: "Tháng 8", title: "Công bố bài báo IEEE", description: "Đồng tác giả bài báo 'Sentiment Analysis for Vietnamese E-commerce Reviews' đăng trên hội nghị IEEE RIVF 2024.", tags: ["IEEE", "Công bố QT", "NLP"], link: "https://example.com/ieee-paper", linkLabel: "Xem bài báo →", monthColor: "#f3e8ff", monthText: "#6b21a8", img: "https://images.unsplash.com/photo-1559223607-a43c990c692c?w=800&q=80" },
-    { id: 4, year: "2025", monthLabel: "T2", month: "Tháng 2", title: "Thực tập tại FPT Software", description: "Tham gia team Frontend phát triển hệ thống quản lý nội bộ. Đánh giá thực tập: Xuất sắc (9.0/10).", tags: ["Thực tập", "React", "FPT"], link: "https://example.com/fpt-intern", linkLabel: "Xem chứng nhận →", monthColor: "#fef3c7", monthText: "#92400e", img: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80" },
-    { id: 5, year: "2025", monthLabel: "T6", month: "Tháng 6", title: "Học bổng Toàn phần kỳ 6", description: "Đạt học bổng toàn phần học kỳ 6 nhờ duy trì GPA 3.8/4.0 và thành tích nghiên cứu xuất sắc.", tags: ["Học bổng", "GPA 3.8", "Toàn phần"], link: "https://example.com/scholarship", linkLabel: "Xem quyết định →", monthColor: "#fce7f3", monthText: "#9d174d", img: "https://images.unsplash.com/photo-1523050854058-8df90110c7f1?w=800&q=80" },
-    { id: 6, year: "2026", monthLabel: "T5", month: "Tháng 5", title: "Tốt nghiệp Thủ khoa", description: "Tốt nghiệp loại Xuất sắc với đồ án 'Hệ thống gợi ý học tập thích ứng'. Điểm bảo vệ: 9.8/10.", tags: ["Thủ khoa", "Xuất sắc", "Đồ án"], link: "https://example.com/thesis", linkLabel: "Xem đồ án tốt nghiệp →", monthColor: "#ccfbf1", monthText: "#0f766e", img: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&q=80" },
+function TimelineSection({ entries: propEntries, slug }) {
+  const [fetchedEntries, setFetchedEntries] = useState(null);
+  const [fetchDone, setFetchDone] = useState(false);
+
+  const mockData = [
+    { id: 'mock-1', year: "2023", monthLabel: "T9", month: "Tháng 9", title: "Đồ án nhập môn lập trình", description: "Hoàn thành đồ án Quản lý Thư viện bằng C++ với kiến trúc OOP. Đạt 9.5/10.", tags: ["C++", "OOP", "Xuất sắc"], linkUrl: "#", linkLabel: "Xem đồ án →", monthColor: "#dbeafe", monthText: "#1e40af", imageUrl: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&q=80" },
+    { id: 'mock-2', year: "2024", monthLabel: "T3", month: "Tháng 3", title: "Giải Nhất NCKH cấp Trường", description: "Nghiên cứu ứng dụng AI trong phân tích cảm xúc văn bản tiếng Việt. Đạt giải Nhất.", tags: ["Nghiên cứu", "AI/NLP", "Giải Nhất"], linkUrl: "#", linkLabel: "Xem báo cáo →", monthColor: "#dcfce7", monthText: "#166534", imageUrl: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80" },
+    { id: 'mock-3', year: "2024", monthLabel: "T8", month: "Tháng 8", title: "Công bố bài báo IEEE", description: "Đồng tác giả bài báo đăng trên hội nghị IEEE RIVF 2024.", tags: ["IEEE", "Công bố QT", "NLP"], linkUrl: "#", linkLabel: "Xem bài báo →", monthColor: "#f3e8ff", monthText: "#6b21a8", imageUrl: "https://images.unsplash.com/photo-1559223607-a43c990c692c?w=800&q=80" },
+    { id: 'mock-4', year: "2025", monthLabel: "T2", month: "Tháng 2", title: "Thực tập tại FPT Software", description: "Tham gia team Frontend. Đánh giá: Xuất sắc (9.0/10).", tags: ["Thực tập", "React", "FPT"], linkUrl: "#", linkLabel: "Xem chứng nhận →", monthColor: "#fef3c7", monthText: "#92400e", imageUrl: "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=800&q=80" },
+    { id: 'mock-5', year: "2025", monthLabel: "T6", month: "Tháng 6", title: "Học bổng Toàn phần kỳ 6", description: "Đạt học bổng toàn phần nhờ GPA 3.8/4.0.", tags: ["Học bổng", "GPA 3.8", "Toàn phần"], linkUrl: "#", linkLabel: "Xem quyết định →", monthColor: "#fce7f3", monthText: "#9d174d", imageUrl: "https://images.unsplash.com/photo-1523050854058-8df90110c7f1?w=800&q=80" },
+    { id: 'mock-6', year: "2026", monthLabel: "T5", month: "Tháng 5", title: "Tốt nghiệp Thủ khoa", description: "Tốt nghiệp Xuất sắc. Điểm bảo vệ: 9.8/10.", tags: ["Thủ khoa", "Xuất sắc", "Đồ án"], linkUrl: "#", linkLabel: "Xem đồ án →", monthColor: "#ccfbf1", monthText: "#0f766e", imageUrl: "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=800&q=80" },
   ];
+
+  const monthColors = { "Tháng 1": ["#dbeafe","#1e40af"], "Tháng 2": ["#fef3c7","#92400e"], "Tháng 3": ["#dcfce7","#166534"], "Tháng 4": ["#fce7f3","#9d174d"], "Tháng 5": ["#ccfbf1","#0f766e"], "Tháng 6": ["#f3e8ff","#6b21a8"], "Tháng 7": ["#e0f2fe","#0369a1"], "Tháng 8": ["#fef9c3","#a16207"], "Tháng 9": ["#dbeafe","#1e40af"], "Tháng 10": ["#ffedd5","#9a3412"], "Tháng 11": ["#fce7f3","#9d174d"], "Tháng 12": ["#e0e7ff","#4338ca"] };
+
+  useEffect(() => {
+    if (propEntries) { setFetchedEntries(propEntries); setFetchDone(true); return; }
+    const fetchFn = slug
+      ? fetch(`/api/portfolios/${slug}/timeline`).then(r => r.json())
+      : api.timeline.list();
+    fetchFn.then(data => {
+      if (data.error) throw new Error(data.error);
+      setFetchedEntries(Array.isArray(data) && data.length > 0 ? data : mockData);
+      setFetchDone(true);
+    }).catch(() => { setFetchedEntries(mockData); setFetchDone(true); });
+  }, [slug]);
+
+  const rawEntries = fetchedEntries || mockData;
+  const timelineData = rawEntries.map(e => ({
+    id: e.id,
+    year: e.year || '',
+    monthLabel: e.month ? 'T' + e.month.replace('Tháng ', '') : '',
+    month: e.month || '',
+    title: e.title || '',
+    description: e.description || '',
+    tags: e.tags || [],
+    link: e.linkUrl || '#',
+    linkLabel: e.linkLabel || 'Xem chi tiết →',
+    img: e.imageUrl || '',
+    monthColor: monthColors[e.month] ? monthColors[e.month][0] : '#dbeafe',
+    monthText: monthColors[e.month] ? monthColors[e.month][1] : '#1e40af',
+  }));
 
   const [activeIndex, setActiveIndex] = useState(0);
   const isTransitioning = useRef(false);
