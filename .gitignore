@@ -1,6 +1,7 @@
 .next/
 dist/
 public/assets/
+public/index.html
 node_modules/
 .env
 .env.local
