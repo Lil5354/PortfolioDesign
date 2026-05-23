@@ -19,6 +19,7 @@ async function main() {
       studentId: "21DGR00042",
       role: "student",
       isActive: true,
+      avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=sv",
       bio: "Thiết kế đồ họa sinh viên UEF",
     },
   });
