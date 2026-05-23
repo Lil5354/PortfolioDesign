@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bell, X, Check, Heart, MessageSquare, Star, ShieldAlert, Eye, EyeOff, Users, Mail, FileText } from "lucide-react";
+import { Bell, X, Check, Heart, MessageSquare, Star, ShieldAlert, Eye, EyeOff, Users, Mail, FileText, ShoppingCart } from "lucide-react";
 import { api } from "../lib/api-client";
 
 const CERULEAN = "#077E9E";
@@ -8,6 +8,7 @@ const TYPE_ICONS = {
   new_like: Heart,
   new_comment: MessageSquare,
   new_message: Mail,
+  new_order: ShoppingCart,
   grade_updated: Star,
   artwork_approved: Check,
   artwork_hidden: EyeOff,
@@ -21,6 +22,7 @@ const TYPE_COLORS = {
   new_like: "#E53E3E",
   new_comment: "#077E9E",
   new_message: "#077E9E",
+  new_order: "#077E9E",
   grade_updated: "#D69E2E",
   artwork_approved: "#38A169",
   artwork_hidden: "#A0AEC0",
@@ -108,6 +110,9 @@ export default function NotificationBell({ setPage }) {
         break;
       case "report":
         setPage("admin_artworks");
+        break;
+      case "new_order":
+        setPage("messages");
         break;
       default:
         if (n.type === "artwork_pending" || n.type === "new_report") {

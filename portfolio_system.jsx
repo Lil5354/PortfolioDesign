@@ -14,7 +14,7 @@ import {
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive,
-  GraduationCap, Rocket, Upload, Menu
+  GraduationCap, Rocket, Upload, Menu, ShoppingCart
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -1173,6 +1173,13 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [downloadFormat, setDownloadFormat] = useState("png");
   const [downloading, setDownloading] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderName, setOrderName] = useState("");
+  const [orderEmail, setOrderEmail] = useState("");
+  const [orderPhone, setOrderPhone] = useState("");
+  const [orderCompany, setOrderCompany] = useState("");
+  const [orderDescription, setOrderDescription] = useState("");
+  const [orderState, setOrderState] = useState("idle");
   useEffect(() => { const h = (e) => { if (e.key === 'Escape') setShowFullscreen(false); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
 
   const currentUserId = authUser?.id;
@@ -1585,6 +1592,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 />
                 {isBookmarked && isBookmarked(art.id) ? "Đã lưu" : "Lưu"}
               </button>
+              <button onClick={() => setShowOrderModal(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <ShoppingCart size={16} /> Đặt hàng
+              </button>
               <button onClick={() => setShowReport(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                 <ShieldAlert size={16} /> Báo cáo
               </button>
@@ -1735,6 +1745,83 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 setSendingReport(false);
               }} disabled={!reportType || sendingReport} className={`w-full mt-4 py-2.5 rounded-lg text-sm font-semibold border-none cursor-pointer ${!reportType || sendingReport ? "bg-[#E0E0E0] text-[#999]" : "bg-[#8B1A1A] text-white hover:bg-opacity-90"}`}>
                 {sendingReport ? "Đang gửi..." : "Gửi báo cáo"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOrderModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowOrderModal(false)}>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 border-b border-[#E0E0E0] flex justify-between items-center bg-[#F8F8FB]">
+              <h3 className="font-bold text-lg text-[#212121]">🛒 Đặt hàng ấn phẩm</h3>
+              <button onClick={() => setShowOrderModal(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
+            </div>
+            <div className="p-6 flex flex-col gap-4">
+              <div className="p-3 bg-[#F0F8FB] rounded-lg border border-[#B3D9E8]">
+                <p className="text-xs text-[#666666] mb-1">Ảnh bìa:</p>
+                <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 6 }} />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#666666] mb-1.5">Họ Tên *</label>
+                <input value={orderName} onChange={e => setOrderName(e.target.value)} type="text" placeholder="Nhập tên của bạn" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#666666] mb-1.5">Email *</label>
+                <input value={orderEmail} onChange={e => setOrderEmail(e.target.value)} type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">SĐT</label>
+                  <input value={orderPhone} onChange={e => setOrderPhone(e.target.value)} type="tel" placeholder="0909123456" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">Công ty</label>
+                  <input value={orderCompany} onChange={e => setOrderCompany(e.target.value)} type="text" placeholder="Công ty ABC" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#666666] mb-1.5">Mô tả yêu cầu *</label>
+                <textarea value={orderDescription} onChange={e => setOrderDescription(e.target.value)} placeholder="Tôi muốn mua bản quyền ấn phẩm này..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
+              </div>
+              <div className="p-3 bg-[#F8F8F8] rounded-lg border border-[#E0E0E0]">
+                <p className="text-xs text-[#666666] mb-1">ℹ️ Hệ thống chỉ đóng vai trò trung gian kết nối giữa tác giả và bạn. Tác giả sẽ liên hệ với bạn qua email hoặc SĐT để trao đổi chi tiết. Đây không phải giao dịch mua bán trực tiếp trên hệ thống.</p>
+              </div>
+              <button onClick={async () => {
+                if (!orderName || !orderEmail || !orderDescription) {
+                  alert("Vui lòng điền đầy đủ thông tin bắt buộc");
+                  return;
+                }
+                setOrderState("loading");
+                try {
+                  await api.messages.sendOrder({
+                    recipientSlug: art.user?.portfolioSettings?.portfolioSlug || "",
+                    senderName: orderName,
+                    senderEmail: orderEmail,
+                    senderCompany: orderCompany || undefined,
+                    phone: orderPhone || undefined,
+                    artworkId: art.id,
+                    artworkTitle: art.title,
+                    artworkImage: art.coverImageUrl,
+                    content: orderDescription,
+                  });
+                  setOrderState("success");
+                  setTimeout(() => {
+                    setOrderState("idle");
+                    setShowOrderModal(false);
+                    setOrderName("");
+                    setOrderEmail("");
+                    setOrderPhone("");
+                    setOrderCompany("");
+                    setOrderDescription("");
+                  }, 2000);
+                } catch (e) {
+                  alert("Lỗi khi gửi đơn hàng: " + (e?.message || "Vui lòng thử lại"));
+                  setOrderState("idle");
+                }
+              }} disabled={orderState === "loading"} className={`mt-2 w-full py-2.5 rounded-lg text-sm font-semibold border-none cursor-pointer flex justify-center items-center gap-2 ${orderState === "loading" ? "bg-[#666666] cursor-wait" : "bg-[#077E9E] hover:bg-[#055F78]"}`}>
+                {orderState === "loading" ? "Đang gửi..." : <><Send size={16} /> Gửi yêu cầu</>}
               </button>
             </div>
           </div>
@@ -2107,7 +2194,14 @@ function MessagesPage({ setPage, userData }) {
 
   useEffect(() => {
     api.messages.list().then(data => {
-      setMessages(Array.isArray(data) ? data : []);
+      const parsedMessages = Array.isArray(data) ? data.map(msg => {
+        let parsedContent = {};
+        try {
+          parsedContent = JSON.parse(msg.content || msg.purpose === 'order' ? '{}' : msg.content);
+        } catch {}
+        return { ...msg, parsedContent };
+      }) : [];
+      setMessages(parsedMessages);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -2155,16 +2249,22 @@ function MessagesPage({ setPage, userData }) {
               <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#F0F8FB", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#B3D9E8"}`, overflow: "hidden" }}>
                 <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
                   <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
-                    {msg.senderName?.charAt(0) || "?"}
+                    {msg.purpose === 'order' ? '📦' : msg.senderName?.charAt(0) || "?"}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
                       <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.senderName}</p>
                       {msg.senderCompany && <span style={{ fontSize: 13, color: MUTED }}>• {msg.senderCompany}</span>}
                     </div>
+                    {msg.purpose === 'order' && msg.parsedContent?.artworkTitle && (
+                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
+                        <span style={{ background: "#E8F4F8", color: "#077E9E", fontSize: 10, padding: "2px 8px", borderRadius: 8, fontWeight: 600 }}>📦 Đơn đặt hàng</span>
+                        <a href={`#/detail/${msg.parsedContent?.artworkId}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: "#077E9E", fontWeight: 500, cursor: "pointer", textDecoration: "none" }}>Ấn phẩm: {msg.parsedContent.artworkTitle}</a>
+                      </div>
+                    )}
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       {msg.purpose && <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>}
-                      <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
+                      <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.parsedContent?.description?.substring(0, 100) || msg.content?.substring(0, 100) || ""}</p>
                     </div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
@@ -2174,13 +2274,24 @@ function MessagesPage({ setPage, userData }) {
                 </div>
                 {expandedId === msg.id && (
                   <div style={{ padding: "0 20px 20px 80px" }}>
+                    {msg.purpose === 'order' && msg.parsedContent?.artworkTitle && (
+                      <div style={{ padding: "16px", background: "#E8F4F8", borderRadius: 8, border: `1px solid #B3D9E8`, marginBottom: 16 }}>
+                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                          <img src={msg.parsedContent.artworkImage} alt={msg.parsedContent.artworkTitle} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 6 }} />
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: "#212121", margin: "0 0 4px" }}>{msg.parsedContent.artworkTitle}</p>
+                            <a href={`#/detail/${msg.parsedContent.artworkId}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#077E9E", fontWeight: 600, cursor: "pointer", textDecoration: "none" }}>Xem ấn phẩm ↗</a>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     <div style={{ padding: "16px", background: GRAY_BG, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
-                      <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>
+                      <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.parsedContent?.description || msg.content}</p>
                     </div>
-                    <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                    <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
                       <a
-                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Phản hồi: ${msg.purpose || "Liên hệ từ Portfolio"}`)}&body=${encodeURIComponent(
-                          `--- Tin nhắn gốc từ ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Mục đích: ${msg.purpose}\n` : ""}${msg.content}\n\n--- Phản hồi của tôi ---\n`
+                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Phản hồi: ${msg.purpose === 'order' ? 'Đơn đặt hàng' : 'Liên hệ từ Portfolio'}`)}&body=${encodeURIComponent(
+                          `--- Tin nhắn gốc từ ${msg.senderName} (${msg.senderEmail}) ---\n${msg.parsedContent?.description || msg.content}\n\n--- Phản hồi của tôi ---\n`
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -2208,6 +2319,7 @@ function AdminSidebar({ active, setPage }) {
     { icon: <LayoutDashboard size={18} />, label: "Tổng quan", page: "admin" },
     { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users" },
     { icon: <ShieldAlert size={18} />, label: "Cảnh cáo ấn phẩm", page: "admin_artworks" },
+    { icon: <ShoppingCart size={18} />, label: "Đơn đặt hàng", page: "admin_orders" },
     { icon: <Folder size={18} />, label: "Quản lý bộ sưu tập", page: "admin_export" },
   ];
 
@@ -2229,6 +2341,116 @@ function AdminSidebar({ active, setPage }) {
         <button onClick={() => setPage("portal")} className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm font-medium hover:bg-white transition-colors text-[#212121]">
           <Globe size={16} /> Về trang Portal
         </button>
+      </div>
+    </div>
+  );
+}
+
+function AdminOrdersPage({ setPage }) {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState(null);
+
+  useEffect(() => {
+    api.orders.list().then(data => {
+      setOrders(Array.isArray(data.orders) ? data.orders : []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 86400000 && d.getDate() === now.getDate()) return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    if (diff < 172800000) return "Hôm qua";
+    return d.toLocaleDateString("vi-VN");
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-white relative">
+      <AdminSidebar active="admin_orders" setPage={setPage} />
+      <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-[#212121]">Đơn đặt hàng</h2>
+            <p className="text-sm text-[#666666] mt-1">Quản lý các đơn đặt hàng từ khách hàng</p>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-16 text-[#666666] text-sm">Đang tải...</div>
+        ) : orders.length === 0 ? (
+          <div className="text-center py-16 text-[#666666] text-sm">Chưa có đơn đặt hàng nào.</div>
+        ) : (
+          <div className="bg-white border border-[#E0E0E0] rounded-xl overflow-hidden">
+            {orders.map(order => (
+              <div key={order.id} className="border-b border-[#E0E0E0]">
+                <div 
+                  onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
+                  className="flex items-center gap-4 p-5 hover:bg-[#F8F8F8] transition-colors cursor-pointer"
+                >
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#E8F4F8", display: "flex", alignItems: "center", justifyContent: "center", color: "#077E9E", fontWeight: 700, fontSize: 18 }}>
+                    📦
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                      <p style={{ fontSize: 15, fontWeight: 600, color: "#212121", margin: "0 0 4px" }}>{order.senderName}</p>
+                      {order.senderCompany && <span style={{ fontSize: 13, color: "#666666" }}>• {order.senderCompany}</span>}
+                    </div>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <span style={{ background: "#E8F4F8", color: "#077E9E", fontSize: 10, padding: "2px 8px", borderRadius: 8, fontWeight: 600 }}>📦 Đơn đặt hàng</span>
+                      {order.orderData?.artworkTitle && (
+                        <a href={`#/detail/${order.orderData.artworkId}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: "#077E9E", fontWeight: 500, cursor: "pointer", textDecoration: "none" }}>Ấn phẩm: {order.orderData.artworkTitle}</a>
+                      )}
+                      <p style={{ fontSize: 13, color: "#666666", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{order.orderData?.description?.substring(0, 80) || "Chưa có mô tả"}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                    <span style={{ fontSize: 12, color: "#666666", whiteSpace: "nowrap" }}>{formatDate(order.createdAt)}</span>
+                    {expandedId === order.id ? <ChevronDown size={16} color="#077E9E" /> : <ChevronDown size={16} color="#666666" />}
+                  </div>
+                </div>
+                {expandedId === order.id && (
+                  <div style={{ padding: "0 20px 20px 20px" }}>
+                    {order.orderData?.artworkTitle && (
+                      <div style={{ padding: "16px", background: "#E8F4F8", borderRadius: 8, border: `1px solid #B3D9E8`, marginBottom: 16 }}>
+                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                          <img src={order.orderData.artworkImage} alt={order.orderData.artworkTitle} style={{ width: 80, height: 80, objectFit: "cover", borderRadius: 6 }} />
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: 14, fontWeight: 700, color: "#212121", margin: "0 0 4px" }}>{order.orderData.artworkTitle}</p>
+                            <a href={`#/detail/${order.orderData.artworkId}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#077E9E", fontWeight: 600, cursor: "pointer", textDecoration: "none" }}>Xem ấn phẩm ↗</a>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    <div style={{ padding: "16px", background: "#F8F8F8", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
+                      <p style={{ fontSize: 13, color: "#212121", lineHeight: 1.6, margin: 0 }}>
+                        <strong style={{ display: "block", marginBottom: 8 }}>Mô tả yêu cầu:</strong>
+                        {order.orderData?.description || "Chưa có mô tả"}
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                      <a
+                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(order.senderEmail)}&su=${encodeURIComponent(`Phản hồi: Đơn đặt hàng`)}&body=${encodeURIComponent(
+                          `--- Đơn đặt hàng từ ${order.senderName} (${order.senderEmail}) ---\n` +
+                          `Công ty: ${order.senderCompany || "Không có"}\n` +
+                          `SĐT: ${order.orderData?.phone || "Không có"}\n` +
+                          `Mô tả: ${order.orderData?.description || "Chưa có"}\n\n--- Phản hồi của tôi ---\n`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: "#077E9E", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                      >
+                        <Mail size={14} /> Phản hồi qua Email
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -5595,6 +5817,9 @@ export default function App() {
             onOpenCatalogBuilder={(c) => setCatalogCollection(c)}
           />
         ) : <AccessDenied setPage={setPage} />
+      )}
+      {page === "admin_orders" && (
+        (userRole === "admin" || userRole === "lecturer") ? <AdminOrdersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "collection_export_config" && (
         (userRole === "admin" || userRole === "lecturer") ? (
