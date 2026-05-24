@@ -15,14 +15,6 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    role: string;
-    isActive: boolean;
-  }
-}
-
 export const authConfig = {
   pages: {
     signIn: "/api/auth/signin",
@@ -34,8 +26,8 @@ export const authConfig = {
     },
     session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
+        session.user.id = (token as any)?.id || session.user.id;
+        session.user.role = (token as any)?.role || session.user.role;
       }
       return session;
     },

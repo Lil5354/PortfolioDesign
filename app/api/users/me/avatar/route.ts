@@ -2,6 +2,38 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+async function validateAvatarUrl(url: string): Promise<string | null> {
+  try {
+    // Reject data URIs (base64 images)
+    if (url.startsWith('data:')) {
+      return null;
+    }
+    
+    const urlObj = new URL(url);
+    
+    // Only allow HTTPS and HTTP URLs
+    if (urlObj.protocol !== 'https:' && urlObj.protocol !== 'http:') {
+      return null;
+    }
+    
+    // Reject known abusive patterns
+    const dangerousPatterns = [
+      /\/\/(54KB|base64|data:image|data:application)/i,
+      /base64/gi,
+      /^data:/i,
+    ];
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(url)) {
+        return null;
+      }
+    }
+    
+    return url;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -16,9 +48,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'avatarUrl is required' }, { status: 400 });
     }
 
+    const validatedUrl = await validateAvatarUrl(avatarUrl);
+    if (!validatedUrl) {
+      return NextResponse.json({ error: 'Invalid avatar URL: only HTTPS URLs allowed, base64 not accepted' }, { status: 400 });
+    }
+
     const user = await prisma.user.update({
       where: { id: session.user.id },
-      data: { avatarUrl },
+      data: { avatarUrl: validatedUrl },
       select: { id: true, avatarUrl: true },
     });
 

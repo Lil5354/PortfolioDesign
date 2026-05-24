@@ -5,32 +5,31 @@ import { authConfig } from "./auth.config";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 
-// Dynamically set NEXTAUTH_URL for Vercel preview deployments
-// VERCEL_URL is auto-set by Vercel (e.g. portfolio-design-git-backup-xxx.vercel.app)
-if (process.env.VERCEL_URL) {
-  process.env.NEXTAUTH_URL = `https://${process.env.VERCEL_URL}`;
-}
-
-declare module "next-auth" {
-  interface User {
-    role?: string;
-  }
-  interface Session {
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      image?: string | null;
-      role: string;
-    };
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    id: string;
-    role: string;
-    isActive: boolean;
+async function validateAvatarUrl(url: string): Promise<string | null> {
+  try {
+    if (url.startsWith('data:')) {
+      return null;
+    }
+    
+    const urlObj = new URL(url);
+    if (urlObj.protocol !== 'https:' && urlObj.protocol !== 'http:') {
+      return null;
+    }
+    
+    const dangerousPatterns = [
+      /\/\/(54KB|base64|data:image|data:application)/i,
+      /base64/gi,
+      /^data:/i,
+    ];
+    for (const pattern of dangerousPatterns) {
+      if (pattern.test(url)) {
+        return null;
+      }
+    }
+    
+    return url;
+  } catch {
+    return null;
   }
 }
 
@@ -82,15 +81,21 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         const existing = await prisma.user.findUnique({ where: { email: user.email } });
         if (existing) {
           if (user.image && user.image !== existing.avatarUrl) {
-            await prisma.user.update({ where: { email: user.email }, data: { avatarUrl: user.image } });
+            const validatedUrl = await validateAvatarUrl(user.image);
+            if (!validatedUrl) {
+              console.warn("Invalid avatar URL for Google OAuth:", user.image);
+              return false;
+            }
+            await prisma.user.update({ where: { email: user.email }, data: { avatarUrl: validatedUrl } });
           }
         } else {
+          const validatedUrl = await validateAvatarUrl(user.image || "");
           await prisma.user.create({
             data: {
               email: user.email,
               passwordHash: "",
               fullName: user.name || "",
-              avatarUrl: user.image,
+              avatarUrl: validatedUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=" + user.name?.toLowerCase(),
               role: "student",
               isActive: true,
             },
@@ -101,6 +106,18 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       return true;
     },
     async jwt({ token }) {
+      // Validate JWT payload size to prevent 494 REQUEST_HEADER_TOO_LARGE
+      const jwtPayload = {
+        id: token.id,
+        role: token.role,
+        isActive: token.isActive,
+      };
+      const jwtString = btoa(JSON.stringify(jwtPayload));
+      if (jwtString.length > 4096) {
+        console.error("JWT payload too large:", jwtString.length);
+        return { id: "", role: "", isActive: false };
+      }
+
       if (token.email) {
         const dbUser = await prisma.user.findUnique({
           where: { email: token.email },
@@ -116,8 +133,8 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role;
+        session.user.id = (token as any)?.id || session.user.id;
+        session.user.role = (token as any)?.role || session.user.role;
         session.user.name = token.name || session.user.name;
         session.user.image = token.picture || session.user.image;
         if (token.email) {
