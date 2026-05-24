@@ -29,13 +29,6 @@ export async function GET(request: NextRequest) {
             },
           },
           sender: true,
-          _count: {
-            select: {
-              _where: {
-                recipientId: prisma.message.getSelectWhere().recipientId,
-              },
-            },
-          },
         },
       }),
       prisma.message.count({ where: { purpose: 'order' } }),
