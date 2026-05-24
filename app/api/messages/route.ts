@@ -42,15 +42,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Recipient not found' }, { status: 404 });
     }
 
+    const messageData = {
+      recipientId: portfolio.userId,
+      senderName,
+      senderEmail,
+      senderCompany: senderCompany ?? null,
+      purpose: purpose ?? null,
+      content,
+    };
+
+    if (purpose === 'order' && typeof content === 'string') {
+      try {
+        const orderData = JSON.parse(content);
+        if (orderData.artworkId) {
+          const artwork = await prisma.artwork.findFirst({
+            where: { id: orderData.artworkId },
+            select: {
+              title: true,
+              coverImageUrl: true,
+              portfolioSlug: true,
+            },
+          });
+
+          if (artwork) {
+            messageData.content = JSON.stringify({
+              artworkId: orderData.artworkId,
+              artworkTitle: artwork.title,
+              artworkImage: artwork.coverImageUrl,
+              phone: orderData.phone ?? null,
+              company: orderData.company ?? null,
+              description: orderData.description ?? null,
+            });
+          }
+        }
+      } catch {}
+    }
+
     const message = await prisma.message.create({
-      data: {
-        recipientId: portfolio.userId,
-        senderName,
-        senderEmail,
-        senderCompany: senderCompany ?? null,
-        purpose: purpose ?? null,
-        content,
-      },
+      data: messageData,
     });
 
     return NextResponse.json(message, { status: 201 });

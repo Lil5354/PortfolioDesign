@@ -31,6 +31,7 @@ enum NotificationType {
   new_report
   report_resolved
   collaborator_tag
+  new_order
 }
 
 enum DisplayOrder {
@@ -94,6 +95,7 @@ model Artwork {
   isAiConfirmed      Boolean  @default(false) @map("is_ai_confirmed")
   viewCount          Int      @default(0) @map("view_count")
   likeCount          Int      @default(0) @map("like_count")
+  portfolioSlug      String?  @map("portfolio_slug")
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 

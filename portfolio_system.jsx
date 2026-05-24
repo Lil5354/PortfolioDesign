@@ -14,7 +14,7 @@ import {
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive,
-  GraduationCap, Rocket, Upload, Menu
+  GraduationCap, Rocket, Upload, Menu, ShoppingCart
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -1144,6 +1144,160 @@ function UploadPage({ setPage, setActiveArtworkId }) {
   );
 }
 
+function OrderModal({ setPage, activeArtworkId, onClose }) {
+  const [orderData, setOrderData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    description: "",
+  });
+  const [sendingOrder, setSendingOrder] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()) {
+      alert("Vui lòng điền đầy đủ thông tin bắt buộc (*)");
+      return;
+    }
+
+    setSendingOrder(true);
+    try {
+      await api.messages.send({
+        recipientSlug: "uef-design-gallery",
+        senderName: orderData.name.trim(),
+        senderEmail: orderData.email.trim(),
+        senderCompany: orderData.company.trim() || null,
+        purpose: "order",
+        content: JSON.stringify({
+          artworkId: activeArtworkId,
+          artworkTitle: "Ấn phẩm được đặt hàng",
+          artworkImage: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
+          phone: orderData.phone.trim() || null,
+          company: orderData.company.trim() || null,
+          description: orderData.description.trim(),
+        }),
+      });
+
+      alert("Đã gửi đơn đặt hàng thành công!");
+      onClose();
+      setPage("messages");
+    } catch (e) {
+      alert("Lỗi khi gửi đơn đặt hàng: " + (e?.message || "Vui lòng thử lại"));
+    } finally {
+      setSendingOrder(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-[#E0E0E0] flex items-center justify-between">
+          <h3 className="text-lg font-bold text-[#212121]">Đặt hàng ấn phẩm</h3>
+          <button onClick={onClose} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
+        </div>
+        <div className="p-6">
+          <div style={{ marginBottom: 20 }}>
+            <p className="text-sm text-[#666666] mb-3">Khi đặt hàng ấn phẩm, bạn sẽ nhận được thông báo từ quản trị viên sau khi được phê duyệt. Vui lòng cung cấp đầy đủ thông tin liên hệ.</p>
+            <div style={{ background: "#FEF3C7", border: "1px solid #FCD34D", borderRadius: 8, padding: "12px 14px" }}>
+              <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                <ShieldAlert size={16} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <p className="text-xs text-[#92400E]">
+                  <strong>Chú ý:</strong> Đơn đặt hàng sẽ được xem xét và phê duyệt bởi quản trị viên trước khi in ấn. Vui lòng kiểm tra lại thông tin trước khi xác nhận.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Họ và tên *</label>
+              <input
+                type="text"
+                value={orderData.name}
+                onChange={e => setOrderData({ ...orderData, name: e.target.value })}
+                placeholder="Nguyễn Văn A"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Email *</label>
+              <input
+                type="email"
+                value={orderData.email}
+                onChange={e => setOrderData({ ...orderData, email: e.target.value })}
+                placeholder="nguyenvana@example.com"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Số điện thoại</label>
+              <input
+                type="tel"
+                value={orderData.phone}
+                onChange={e => setOrderData({ ...orderData, phone: e.target.value })}
+                placeholder="090xxx xxx xx"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Công ty/Tổ chức</label>
+              <input
+                type="text"
+                value={orderData.company}
+                onChange={e => setOrderData({ ...orderData, company: e.target.value })}
+                placeholder="Công ty TNHH ABC"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mô tả yêu cầu *</label>
+              <textarea
+                value={orderData.description}
+                onChange={e => setOrderData({ ...orderData, description: e.target.value })}
+                placeholder="Mô tả chi tiết về ấn phẩm bạn muốn đặt (kích thước, số lượng, màu sắc, deadline...)"
+                rows={4}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", resize: "vertical", minHeight: 100, boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="p-6 border-t border-[#E0E0E0] flex gap-3">
+          <button onClick={onClose} disabled={sendingOrder} style={{ flex: 1, padding: "12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", color: BLACK, opacity: sendingOrder ? 0.6 : 1 }}>
+            Hủy
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={sendingOrder || !orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()}
+            style={{
+              flex: 1,
+              padding: "12px",
+              borderRadius: 8,
+              border: "none",
+              background: (sendingOrder || !orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()) ? GRAY_LIGHT : "#059669",
+              color: (sendingOrder || !orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()) ? MUTED : "#fff",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: (sendingOrder || !orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()) ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            {sendingOrder ? (
+              <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> Đang gửi...</>
+            ) : (
+              <>
+                <ShoppingCart size={16} /> Xác nhận đơn hàng
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
   const { user: authUser } = useAuth();
   const [art, setArt] = useState({
@@ -1173,6 +1327,15 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [downloadFormat, setDownloadFormat] = useState("png");
   const [downloading, setDownloading] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderData, setOrderData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    description: "",
+  });
+  const [sendingOrder, setSendingOrder] = useState(false);
   useEffect(() => { const h = (e) => { if (e.key === 'Escape') setShowFullscreen(false); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
 
   const currentUserId = authUser?.id;
@@ -1561,34 +1724,37 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 <span style={{ fontSize: 13, color: MUTED }}>{comments.length}</span>
               </button>
             </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() => onBookmarkClick && onBookmarkClick(art)}
-                style={{
-                  padding: "8px 14px",
-                  borderRadius: 8,
-                  border: `1px solid ${isBookmarked && isBookmarked(art.id) ? "#B3D9E8" : GRAY_LIGHT}`,
-                  background: isBookmarked && isBookmarked(art.id) ? "#F0F8FB" : "#fff",
-                  fontSize: 13,
-                  cursor: "pointer",
-                  color: isBookmarked && isBookmarked(art.id) ? CERULEAN : BLACK,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                  fontWeight: isBookmarked && isBookmarked(art.id) ? 600 : 400,
-                }}
-              >
-                <Bookmark
-                  size={16}
-                  fill={isBookmarked && isBookmarked(art.id) ? CERULEAN : "none"}
-                  color={isBookmarked && isBookmarked(art.id) ? CERULEAN : MUTED}
-                />
-                {isBookmarked && isBookmarked(art.id) ? "Đã lưu" : "Lưu"}
-              </button>
-              <button onClick={() => setShowReport(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                <ShieldAlert size={16} /> Báo cáo
-              </button>
-            </div>
+             <div style={{ display: "flex", gap: 8 }}>
+               <button
+                 onClick={() => onBookmarkClick && onBookmarkClick(art)}
+                 style={{
+                   padding: "8px 14px",
+                   borderRadius: 8,
+                   border: `1px solid ${isBookmarked && isBookmarked(art.id) ? "#B3D9E8" : GRAY_LIGHT}`,
+                   background: isBookmarked && isBookmarked(art.id) ? "#F0F8FB" : "#fff",
+                   fontSize: 13,
+                   cursor: "pointer",
+                   color: isBookmarked && isBookmarked(art.id) ? CERULEAN : BLACK,
+                   display: "flex",
+                   alignItems: "center",
+                   gap: 6,
+                   fontWeight: isBookmarked && isBookmarked(art.id) ? 600 : 400,
+                 }}
+               >
+                 <Bookmark
+                   size={16}
+                   fill={isBookmarked && isBookmarked(art.id) ? CERULEAN : "none"}
+                   color={isBookmarked && isBookmarked(art.id) ? CERULEAN : MUTED}
+                 />
+                 {isBookmarked && isBookmarked(art.id) ? "Đã lưu" : "Lưu"}
+               </button>
+               <button onClick={() => setShowReport(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                 <ShieldAlert size={16} /> Báo cáo
+               </button>
+               <button onClick={() => setShowOrderModal(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid #10B981`, background: "#ECFDF5", color: "#059669", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                 <ShoppingCart size={16} /> Đặt hàng
+               </button>
+             </div>
           </div>
 
           {canGrade && (
@@ -1753,6 +1919,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
             onArtworkClick={(art) => { setPage("detail"); setTimeout(() => setActiveArtworkId(art.id), 50); }}
           />
         </div>
+      )}
+      {showOrderModal && activeArtworkId && (
+        <OrderModal setPage={setPage} activeArtworkId={activeArtworkId} onClose={() => setShowOrderModal(false)} />
       )}
   </div>
   );
@@ -2163,8 +2332,16 @@ function MessagesPage({ setPage, userData }) {
                       {msg.senderCompany && <span style={{ fontSize: 13, color: MUTED }}>• {msg.senderCompany}</span>}
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      {msg.purpose && <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>}
-                      <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
+                      {msg.purpose === 'order' && (
+                        <span style={{ background: "#ECFDF5", border: `1px solid #10B981`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: "#059669", whiteSpace: "nowrap" }}>Đặt hàng</span>
+                      )}
+                      {msg.purpose && msg.purpose !== 'order' && <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>}
+                      {msg.purpose === 'order' && (
+                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>Đặt hàng ấn phẩm</p>
+                      )}
+                      {msg.purpose !== 'order' && msg.content && (
+                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
+                      )}
                     </div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
@@ -2175,19 +2352,61 @@ function MessagesPage({ setPage, userData }) {
                 {expandedId === msg.id && (
                   <div style={{ padding: "0 20px 20px 80px" }}>
                     <div style={{ padding: "16px", background: GRAY_BG, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
-                      <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>
+                      {msg.purpose === 'order' ? (
+                        <div style={{ display: "flex", gap: 16, alignItems: "start" }}>
+                          {(() => {
+                            try {
+                              const data = JSON.parse(msg.content);
+                              return (
+                                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                                  <div style={{ flex: "0 0 120px", borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                                    <img src={data.artworkImage} alt={data.artworkTitle} style={{ width: "100%", height: 120, objectFit: "cover" }} />
+                                  </div>
+                                  <div>
+                                    <p style={{ fontSize: 14, fontWeight: 600, color: BLACK, margin: "0 0 8px" }}>{data.artworkTitle}</p>
+                                    <p style={{ fontSize: 13, color: "#444", margin: "0 0 8px", lineHeight: 1.5 }}>{data.description || "Chưa có mô tả"}</p>
+                                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                                      {data.phone && (
+                                        <a href={`tel:${data.phone}`} style={{ fontSize: 13, color: CERULEAN, textDecoration: "underline" }}>📞 {data.phone}</a>
+                                      )}
+                                      {data.company && <p style={{ fontSize: 13, color: "#666" }}>🏢 {data.company}</p>}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            } catch {
+                              return <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>;
+                            }
+                          })()}
+                        </div>
+                      ) : (
+                        <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>
+                      )}
                     </div>
                     <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                      <a
-                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Phản hồi: ${msg.purpose || "Liên hệ từ Portfolio"}`)}&body=${encodeURIComponent(
-                          `--- Tin nhắn gốc từ ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Mục đích: ${msg.purpose}\n` : ""}${msg.content}\n\n--- Phản hồi của tôi ---\n`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
-                      >
-                        <Mail size={14} /> Phản hồi qua Email
-                      </a>
+                      {msg.purpose === 'order' ? (
+                        <button onClick={() => {
+                          const data = JSON.parse(msg.content);
+                          if (data.artworkId) {
+                            setPage("detail", { artworkId: data.artworkId });
+                          } else {
+                            setPage("messages");
+                          }
+                        }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <Mail size={14} /> Xem ấn phẩm
+                        </button>
+                      ) : (
+                        <a
+                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Phản hồi: ${msg.purpose || "Liên hệ từ Portfolio"}`)}&body=${encodeURIComponent(
+                            `--- Tin nhắn gốc từ ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Mục đích: ${msg.purpose}\n` : ""}${msg.content}\n\n--- Phản hồi của tôi ---\n`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                        >
+                          <Mail size={14} /> Phản hồi qua Email
+                        </a>
+                      )}
                       <button onClick={() => handleArchive(msg.id)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
                         <Archive size={14} /> Lưu trữ
                       </button>
@@ -2207,6 +2426,7 @@ function AdminSidebar({ active, setPage }) {
   const items = [
     { icon: <LayoutDashboard size={18} />, label: "Tổng quan", page: "admin" },
     { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users" },
+    { icon: <ShoppingCart size={18} />, label: "Đơn đặt hàng", page: "admin_orders" },
     { icon: <ShieldAlert size={18} />, label: "Cảnh cáo ấn phẩm", page: "admin_artworks" },
     { icon: <Folder size={18} />, label: "Quản lý bộ sưu tập", page: "admin_export" },
   ];

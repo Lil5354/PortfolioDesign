@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Bell, X, Check, Heart, MessageSquare, Star, ShieldAlert, Eye, EyeOff, Users, Mail, FileText } from "lucide-react";
+import { Bell, X, Check, Heart, MessageSquare, Star, ShieldAlert, Eye, EyeOff, Users, Mail, FileText, ShoppingCart } from "lucide-react";
 import { api } from "../lib/api-client";
 
 const CERULEAN = "#077E9E";
@@ -15,6 +15,7 @@ const TYPE_ICONS = {
   new_report: ShieldAlert,
   report_resolved: Check,
   collaborator_tag: Users,
+  new_order: ShoppingCart,
 };
 
 const TYPE_COLORS = {
@@ -28,6 +29,7 @@ const TYPE_COLORS = {
   new_report: "#E53E3E",
   report_resolved: "#38A169",
   collaborator_tag: "#805AD5",
+  new_order: "#059669",
 };
 
 function timeAgo(dateStr) {
@@ -97,20 +99,25 @@ export default function NotificationBell({ setPage }) {
     setUnreadCount(prev => Math.max(0, prev - 1));
     setOpen(false);
 
-    switch (n.referenceType) {
-      case "artwork":
+    switch (n.type) {
+      case 'new_order':
+        if (n.referenceId) {
+          setPage("messages");
+        }
+        break;
+      case 'artwork':
         if (n.referenceId) {
           setPage("detail", { artworkId: n.referenceId });
         }
         break;
-      case "message":
+      case 'message':
         setPage("messages");
         break;
-      case "report":
+      case 'report':
         setPage("admin_artworks");
         break;
       default:
-        if (n.type === "artwork_pending" || n.type === "new_report") {
+        if (n.type === 'artwork_pending' || n.type === 'new_report') {
           setPage("admin_artworks");
         } else if (n.referenceId) {
           setPage("detail", { artworkId: n.referenceId });
