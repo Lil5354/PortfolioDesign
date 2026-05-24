@@ -6,7 +6,8 @@
     "dev:api": "next dev -p 3000",
     "dev:ui": "vite",
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:ui\"",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "preview": "vite preview"
   },
   "dependencies": {
