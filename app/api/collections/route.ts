@@ -5,8 +5,10 @@ import { auth } from '@/lib/auth';
 export async function GET(_request: NextRequest) {
   try {
     const session = await auth();
+    
+    // Nếu không có session, trả về mảng rỗng thay vì lỗi 401
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json([]);
     }
 
     const items = await prisma.collectionItem.findMany({
@@ -55,6 +57,7 @@ export async function GET(_request: NextRequest) {
 
     return NextResponse.json(collections);
   } catch (error) {
+    console.error('GET /api/collections error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
+    console.error('GET /api/artworks error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
