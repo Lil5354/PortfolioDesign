@@ -2814,6 +2814,12 @@ function AdminArtworksPage({ setPage }) {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, mode: "delete", artId: null });
   const [galleryIdx, setGalleryIdx] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
+
+  const handleOpenGallery = (idx) => {
+    const imgs = [selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean);
+    setGalleryImages(imgs);
+    setGalleryIdx(idx);
+  };
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
 
@@ -3129,11 +3135,7 @@ function AdminArtworksPage({ setPage }) {
                 </div>
 
                 <div className="p-5">
-                  <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer" onClick={() => {
-                    const imgs = [selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean);
-                    setGalleryImages(imgs);
-                    setGalleryIdx(0);
-                  }}>
+                  <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer" onClick={() => handleOpenGallery(0)}>
                     <img src={selected.coverImageUrl} className="w-full h-64 object-cover" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                       <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-semibold transition-opacity">Nhấp để phóng to</span>
@@ -3142,11 +3144,7 @@ function AdminArtworksPage({ setPage }) {
                   {(selected.fileUrls || []).length > 0 && (
                     <div className="flex gap-2 mt-3 flex-wrap">
                       {[selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean).map((url, idx) => (
-                        <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#077E9E] transition-colors" onClick={() => {
-                          const imgs = [selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean);
-                          setGalleryImages(imgs);
-                          setGalleryIdx(idx);
-                        }}>
+                        <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#077E9E] transition-colors" onClick={() => handleOpenGallery(idx)}>
                           <img src={url} alt="" className="w-full h-full object-cover" />
                         </div>
                       ))}
