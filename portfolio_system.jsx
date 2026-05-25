@@ -5,6 +5,7 @@ import { MajorCard } from "./components/ui/MajorCard";
 import { api } from "./lib/api-client";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import NotificationBell from "./components/NotificationBell";
+import { TranslationProvider, useI18n } from "./lib/i18n.jsx";
 
 import { saveAs } from "file-saver";
 import {
@@ -13,7 +14,7 @@ import {
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive,
-  GraduationCap, Rocket, Upload, Menu, ShoppingCart
+  GraduationCap, Rocket, Upload, Menu, ShoppingCart, Languages
 } from "lucide-react";
 
 const CERULEAN = "#077E9E";
@@ -35,10 +36,13 @@ const artworks = [
 ];
 
 function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userData }) {
+  const { t, lang, toggleLang } = useI18n();
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
+  const langRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -48,6 +52,9 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
         setIsMobileMenuOpen(false);
       }
+      if (langRef.current && !langRef.current.contains(event.target)) {
+        setIsLangOpen(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -55,13 +62,13 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
 
   const isActive = (id) => activePage === id || (id === "home" && (activePage === "home" || activePage === "landing"));
   const navItems = [
-    { id: "home", label: "Trang chủ" },
-    { id: "gallery", label: "Gallery" },
-    { id: "about", label: "Giới thiệu" },
+    { id: "home", label: t("home") },
+    { id: "gallery", label: t("gallery") },
+    { id: "about", label: t("about") },
   ];
-  if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: "Portfolio" });
+  if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: t("portfolio") });
 
-  const userName = userData?.name || "Người dùng";
+  const userName = userData?.name || t("defaultUser");
   const userEmail = userData?.email || "";
   const userAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
 
@@ -71,7 +78,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
         <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
         <div>
           <h1 className="font-bold text-sm leading-tight">Design Gallery</h1>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wide">Khoa Thiết kế Đồ họa</p>
+          <p className="text-[10px] text-gray-500 uppercase tracking-wide">{t("facultyName")}</p>
         </div>
       </div>
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
@@ -84,6 +91,26 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
       </button>
       <div className="flex items-center gap-3 text-sm font-medium">
         {isLoggedIn && <NotificationBell setPage={setPage} />}
+        <div className="relative" ref={langRef}>
+          <button onClick={() => setIsLangOpen(!isLangOpen)}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[#E0E0E0] bg-white text-[#666666] hover:text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer"
+            title={lang === 'vi' ? 'English' : 'Tiếng Việt'}>
+            <Languages size={16} />
+            <span className="text-[11px] font-semibold uppercase">{lang === 'vi' ? 'VI' : 'EN'}</span>
+          </button>
+          {isLangOpen && (
+            <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
+              <button onClick={() => { if (lang !== 'vi') toggleLang(); setIsLangOpen(false); }}
+                className={`w-full text-left px-4 py-2 text-sm ${lang === 'vi' ? 'text-[#077E9E] font-bold bg-[#F0F8FB]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
+                t("tiengViet")
+              </button>
+              <button onClick={() => { if (lang !== 'en') toggleLang(); setIsLangOpen(false); }}
+                className={`w-full text-left px-4 py-2 text-sm ${lang === 'en' ? 'text-[#077E9E] font-bold bg-[#F0F8FB]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
+                t("tiengAnh")
+              </button>
+            </div>
+          )}
+        </div>
         {isLoggedIn ? (
           <div className="relative" ref={dropdownRef}>
             <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
@@ -99,28 +126,28 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                 <div className="py-1">
                   {userRole === "student" ? (
                     <>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> Dashboard Sinh viên</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> Cài đặt Tài khoản</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> Cài đặt Portfolio</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("messages"); setIsDropdownOpen(false); }}><Mail size={16} className="text-[#666666]" /> Hộp thư</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> t("studentDashboard")</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> t("accountSettings")</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> t("portfolioSettings")</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("messages"); setIsDropdownOpen(false); }}><Mail size={16} className="text-[#666666]" /> t("inbox")</div>
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("admin"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> Dashboard Admin</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> Cài đặt Tài khoản</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("admin"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> t("adminDashboard")</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> t("accountSettings")</div>
                     </>
                   )}
                 </div>
                 <div className="border-t border-[#E0E0E0] py-1">
-                  <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#FEF2F2] hover:text-[#8B1A1A] cursor-pointer text-[#8B1A1A] text-sm font-medium transition-colors" onClick={() => { onLogout && onLogout(); setIsDropdownOpen(false); }}><LogOut size={16} /> Đăng xuất</div>
+                  <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#FEF2F2] hover:text-[#8B1A1A] cursor-pointer text-[#8B1A1A] text-sm font-medium transition-colors" onClick={() => { onLogout && onLogout(); setIsDropdownOpen(false); }}><LogOut size={16} /> t("logout")</div>
                 </div>
               </div>
             )}
           </div>
         ) : (
           <>
-            <button onClick={() => setPage("register")} className="text-gray-500 hover:text-[#212121] px-4 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">Đăng ký</button>
-            <button onClick={() => setPage("auth")} className="bg-[#077E9E] text-white px-5 py-1.5 rounded-lg hover:bg-[#066a85] transition-colors">Đăng nhập</button>
+            <button onClick={() => setPage("register")} className="text-gray-500 hover:text-[#212121] px-4 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">{t("register")}</button>
+            <button onClick={() => setPage("auth")} className="bg-[#077E9E] text-white px-5 py-1.5 rounded-lg hover:bg-[#066a85] transition-colors">{t("login")}</button>
           </>
         )}
       </div>
@@ -135,25 +162,25 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                 {userRole === "student" ? (
                   <>
                     <div className="border-t border-[#E0E0E0] my-1" />
-                    <button onClick={() => { setPage("dashboard"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />Dashboard</button>
-                    <button onClick={() => { setPage("messages"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Mail size={16} className="inline mr-2" />Hộp thư</button>
-                    <button onClick={() => { setPage("settings"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Settings size={16} className="inline mr-2" />Cài đặt</button>
+                    <button onClick={() => { setPage("dashboard"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />{t("studentDashboard")}</button>
+                    <button onClick={() => { setPage("messages"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Mail size={16} className="inline mr-2" />{t("inbox")}</button>
+                    <button onClick={() => { setPage("settings"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Settings size={16} className="inline mr-2" />{t("settings")}</button>
                   </>
                 ) : (
                   <>
                     <div className="border-t border-[#E0E0E0] my-1" />
-                    <button onClick={() => { setPage("admin"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />Admin</button>
+                    <button onClick={() => { setPage("admin"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />{t("admin")}</button>
                   </>
                 )}
                 <div className="border-t border-[#E0E0E0] my-1" />
-                <button onClick={() => { onLogout && onLogout(); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#8B1A1A] hover:bg-[#FEF2F2]"><LogOut size={16} className="inline mr-2" />Đăng xuất</button>
+                <button onClick={() => { onLogout && onLogout(); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#8B1A1A] hover:bg-[#FEF2F2]"><LogOut size={16} className="inline mr-2" />{t("logout")}</button>
               </>
             )}
             {!isLoggedIn && (
               <>
                 <div className="border-t border-[#E0E0E0] my-1" />
-                <button onClick={() => { setPage("auth"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#077E9E] hover:bg-[#F0F8FB]">Đăng nhập</button>
-                <button onClick={() => { setPage("register"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]">Đăng ký</button>
+                <button onClick={() => { setPage("auth"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#077E9E] hover:bg-[#F0F8FB]">{t("login")}</button>
+                <button onClick={() => { setPage("register"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]">{t("register")}</button>
               </>
             )}
           </div>
@@ -171,6 +198,7 @@ function MasonryGrid({
   isBookmarked,
   onBookmarkClick,
 }) {
+  const { t } = useI18n();
   const [hovered, setHovered] = useState(null);
   const cols = [[], [], []];
   items.forEach((item, i) => cols[i % 3].push(item));
@@ -201,7 +229,7 @@ function MasonryGrid({
                         e.stopPropagation();
                         onBookmarkClick && onBookmarkClick(art);
                       }}
-                      title="Lưu vào bộ sưu tập"
+                      title={t("saveToCollectionFlow")}
                       style={{
                         position: "absolute",
                         top: 10,
@@ -240,7 +268,7 @@ function MasonryGrid({
               {!art.isPublic && (
                 <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(255,255,255,0.9)", borderRadius: 6, padding: "4px 8px", border: `1px solid ${GRAY_LIGHT}`, display: "flex", alignItems: "center", gap: 4 }}>
                   <Lock size={10} color={BLACK} />
-                  <span style={{ color: BLACK, fontSize: 11, fontWeight: 500 }}>Riêng tư</span>
+                  <span style={{ color: BLACK, fontSize: 11, fontWeight: 500 }}>{t("private")}</span>
                 </div>
               )}
             </div>
@@ -252,6 +280,7 @@ function MasonryGrid({
 }
 
 function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
+  const { t } = useI18n();
   const [category, setCategory] = useState("Tất cả");
   const [year, setYear] = useState("Tất cả");
   const [tool, setTool] = useState("Tất cả");
@@ -299,12 +328,12 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
     <div style={{ background: "#fff", minHeight: "100vh" }}>
       <div style={{ padding: "32px 48px 0" }}>
         <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-1px" }}>Thư viện tác phẩm</h1>
+          <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-1px" }}>{t("artworkLibrary")}</h1>
           <p style={{ color: MUTED, fontSize: 15, marginTop: 6 }}>Khám phá hàng trăm ấn phẩm sáng tạo từ sinh viên Thiết kế Đồ họa UEF</p>
         </div>
         <div style={{ display: "flex", gap: 24, marginBottom: 28, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
           <div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Danh mục</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("category")}</span>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {categories.map(c => (
                 <button key={c} onClick={() => { setCategory(c); }} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: category === c ? "none" : `1px solid ${GRAY_LIGHT}`, background: category === c ? BLACK : "#fff", color: category === c ? "#fff" : BLACK, transition: "all .15s" }}>{c}</button>
@@ -312,7 +341,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             </div>
           </div>
           <div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Năm học</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("schoolYear")}</span>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {years.map(y => (
                 <button key={y} onClick={() => setYear(y)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: year === y ? "none" : `1px solid ${GRAY_LIGHT}`, background: year === y ? BLACK : "#fff", color: year === y ? "#fff" : BLACK, transition: "all .15s" }}>{y}</button>
@@ -320,7 +349,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             </div>
           </div>
           <div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Công cụ</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("tools")}</span>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
               {tools.map(t => (
                 <button key={t} onClick={() => setTool(t)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: tool === t ? "none" : `1px solid ${GRAY_LIGHT}`, background: tool === t ? BLACK : "#fff", color: tool === t ? "#fff" : BLACK, transition: "all .15s" }}>{t}</button>
@@ -331,16 +360,16 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <span style={{ fontSize: 13, color: MUTED }}>{data.total} tác phẩm được tìm thấy</span>
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => setSort("newest")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "newest" ? CERULEAN : GRAY_LIGHT}`, background: sort === "newest" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "newest" ? CERULEAN : BLACK, fontWeight: sort === "newest" ? 600 : 400 }}>Mới nhất</button>
-            <button onClick={() => setSort("most_likes")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "most_likes" ? CERULEAN : GRAY_LIGHT}`, background: sort === "most_likes" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "most_likes" ? CERULEAN : BLACK, fontWeight: sort === "most_likes" ? 600 : 400 }}>Nhiều like nhất</button>
+            <button onClick={() => setSort("newest")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "newest" ? CERULEAN : GRAY_LIGHT}`, background: sort === "newest" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "newest" ? CERULEAN : BLACK, fontWeight: sort === "newest" ? 600 : 400 }}>{t("newest")}</button>
+            <button onClick={() => setSort("most_likes")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "most_likes" ? CERULEAN : GRAY_LIGHT}`, background: sort === "most_likes" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "most_likes" ? CERULEAN : BLACK, fontWeight: sort === "most_likes" ? 600 : 400 }}>{t("mostLiked")}</button>
           </div>
         </div>
       </div>
       <div style={{ padding: "0 48px 64px" }}>
         {loading ? (
-          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>Đang tải dữ liệu...</div>
+          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>{t("loadingData")}</div>
         ) : mapped.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>Không tìm thấy tác phẩm nào</div>
+          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>{t("noArtworksFound")}</div>
         ) : (
           <>
             <MasonryGrid
@@ -370,11 +399,12 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 }
 
 function PortfolioPage({ setPage, pageParams }) {
+  const { t } = useI18n();
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
-  const [contactPurpose, setContactPurpose] = useState("Tuyển dụng / Thực tập");
+  const [contactPurpose, setContactPurpose] = useState(t("recruitmentInternship"));
   const [contactContent, setContactContent] = useState("");
   const [portfolioData, setPortfolioData] = useState(null);
   const [portfolioArtworks, setPortfolioArtworks] = useState([]);
@@ -411,8 +441,8 @@ function PortfolioPage({ setPage, pageParams }) {
     }).catch(() => {});
   }, [slug]);
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Đang tải portfolio...</div>;
-  if (!portfolioData) return <div className="flex min-h-screen items-center justify-center text-[#666666]">Portfolio không tồn tại hoặc đang ở chế độ riêng tư.</div>;
+  if (loading) return <div className="flex min-h-screen items-center justify-center text-[#666666]">{t("loadingPortfolio")}</div>;
+  if (!portfolioData) return <div className="flex min-h-screen items-center justify-center text-[#666666]">{t("portfolioNotFound")}</div>;
 
   const { user, portfolioSettings, stats, featuredArtworks, privateGrade } = portfolioData;
   const profile = {
@@ -426,7 +456,7 @@ function PortfolioPage({ setPage, pageParams }) {
   const socialLinks = [
     socialLinksRaw.behance && { label: "Behance", href: socialLinksRaw.behance, icon: "globe" },
     socialLinksRaw.linkedin && { label: "LinkedIn", href: socialLinksRaw.linkedin, icon: "link" },
-    profile.email && portfolioSettings?.showEmail && { label: "Email", href: `mailto:${profile.email}`, icon: "mail" },
+    profile.email && portfolioSettings?.showEmail && { label: t("email"), href: `mailto:${profile.email}`, icon: "mail" },
   ].filter(Boolean);
 
   const highlightWorks = (portfolioArtworks || []).filter(a => a.isHighlighted).slice(0, 2);
@@ -451,7 +481,7 @@ function PortfolioPage({ setPage, pageParams }) {
       });
       setContactState("success");
     } catch (e) {
-      alert("Lỗi khi gửi: " + (e?.message || "Vui lòng thử lại"));
+      alert(t("sendError") + (e?.message || t("pleaseTryAgain")));
       setContactState("idle");
     }
   };
@@ -510,7 +540,7 @@ function PortfolioPage({ setPage, pageParams }) {
               </div>
 
               <p className="text-base sm:text-lg text-[#666666] font-medium mb-2">
-                {titleByYear[portfolioSettingsData?.portfolioSettings?.yearLevel || portfolioSettingsData?.yearLevel || portfolioSettings?.yearLevel || "Năm 3"]} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || portfolioSettings?.major || "Thiết kế Đồ họa"} • UEF
+                {titleByYear[portfolioSettingsData?.portfolioSettings?.yearLevel || portfolioSettingsData?.yearLevel || portfolioSettings?.yearLevel || "Năm 3"]} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || portfolioSettings?.major || t("graphicDesign")} • UEF
               </p>
               <p className="text-sm sm:text-[15px] text-[#444444] leading-relaxed max-w-2xl">
                 {profile.bio}
@@ -555,7 +585,7 @@ function PortfolioPage({ setPage, pageParams }) {
 
               {/* quick stats (giữ tinh thần thiết kế cũ) */}
               <div className="mt-10 flex flex-wrap gap-8 border-t border-[#E0E0E0] pt-6">
-                {[{ label: "Tác phẩm", val: stats?.artworkCount || 0 }, { label: "Lượt xem", val: stats?.viewCount?.toLocaleString() || "0" }, { label: "Lượt thích", val: stats?.likeCount?.toLocaleString() || "0" }].map((s) => (
+                {[{ label: t("artworks"), val: stats?.artworkCount || 0 }, { label: t("views"), val: stats?.viewCount?.toLocaleString() || "0" }, { label: t("likes"), val: stats?.likeCount?.toLocaleString() || "0" }].map((s) => (
                   <div key={s.label} className="flex items-end gap-2">
                     <span className="text-2xl font-extrabold text-[#212121] tracking-tight">{s.val}</span>
                     <span className="text-sm text-[#666666] pb-0.5">{s.label}</span>
@@ -590,7 +620,7 @@ function PortfolioPage({ setPage, pageParams }) {
           <div className="flex items-end justify-between gap-6 mb-6">
             <div>
               <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2">Featured Case Studies</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#212121] tracking-tight">Những đồ án xuất sắc</h2>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#212121] tracking-tight">{t("featuredProjects")}</h2>
               <p className="text-sm text-[#666666] mt-2 max-w-2xl">
                 Bento grid giúp nhấn mạnh 4–6 đồ án tốt nhất (không “đổ” tất cả ảnh ra cùng lúc), hover để xem tên đồ án & công cụ.
               </p>
@@ -636,13 +666,13 @@ function PortfolioPage({ setPage, pageParams }) {
         <div className="mt-10" style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, borderRadius: 10, padding: "14px 18px", marginBottom: 28, display: "flex", gap: 14, alignItems: "flex-start" }}>
           <div style={{ background: BLACK, borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 4 }}>
             <Lock size={12} color="#fff" />
-            <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>RIÊNG TƯ</span>
+            <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>{t("privateUppercase")}</span>
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 14, fontWeight: 600, color: BLACK }}>Nhận xét từ Giảng viên · GV. Trần Văn Phúc</span>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 12, color: MUTED }}>Điểm tổng kết:</span>
+                <span style={{ fontSize: 12, color: MUTED }}>{t("totalScore")}</span>
                 <span style={{ fontSize: 22, fontWeight: 700, color: CERULEAN }}>{privateGrade.score}</span>
                 <span style={{ fontSize: 13, color: MUTED }}>/10</span>
               </div>
@@ -656,8 +686,8 @@ function PortfolioPage({ setPage, pageParams }) {
 
         <div style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 0 }}>
-            {["Tất cả tác phẩm", "Poster", "Branding", "UI/UX"].map((t, i) => (
-              <button key={t} style={{ padding: "10px 20px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: i === 0 ? 600 : 400, color: i === 0 ? BLACK : MUTED, borderBottom: i === 0 ? `2px solid ${BLACK}` : "2px solid transparent", marginBottom: -1 }}>{t}</button>
+{[t("allArtworks"), "Poster", "Branding", "UI/UX"].map((tab, i) => (
+                <button key={tab} style={{ padding: "10px 20px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: i === 0 ? 600 : 400, color: i === 0 ? BLACK : MUTED, borderBottom: i === 0 ? `2px solid ${BLACK}` : "2px solid transparent", marginBottom: -1 }}>{tab}</button>
             ))}
           </div>
         </div>
@@ -669,7 +699,7 @@ function PortfolioPage({ setPage, pageParams }) {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-[#E0E0E0] flex justify-between items-center bg-[#F8F8F8]">
-              <h3 className="font-bold text-lg text-[#212121]">Gửi tin nhắn liên hệ</h3>
+              <h3 className="font-bold text-lg text-[#212121]">{t("sendContactMessage")}</h3>
               <button onClick={closeContactModal} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
             </div>
             {contactState === "success" ? (
@@ -677,34 +707,34 @@ function PortfolioPage({ setPage, pageParams }) {
                 <div className="w-16 h-16 bg-[#E8F4F8] rounded-full flex items-center justify-center mb-4">
                   <Check size={32} className="text-[#077E9E]" />
                 </div>
-                <h4 className="text-xl font-bold text-[#212121] mb-2">Đã gửi thành công!</h4>
+                <h4 className="text-xl font-bold text-[#212121] mb-2">{t("sentSuccessfully")}</h4>
                 <p className="text-sm text-[#666666] mb-6">Tin nhắn của bạn đã được chuyển đến {profile.fullName}.</p>
-                <button onClick={closeContactModal} className="w-full py-2.5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-semibold text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">Đóng</button>
+                <button onClick={closeContactModal} className="w-full py-2.5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-semibold text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">{t("close")}</button>
               </div>
             ) : (
               <div className="p-6 flex flex-col gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">Họ Tên / Đơn vị</label>
-                  <input value={contactName} onChange={e => setContactName(e.target.value)} type="text" placeholder="Nhập tên của bạn" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("fullNameOrOrg")}</label>
+                  <input value={contactName} onChange={e => setContactName(e.target.value)} type="text" placeholder={t("enterYourName")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">Email liên hệ</label>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("contactEmail")}</label>
                   <input value={contactEmail} onChange={e => setContactEmail(e.target.value)} type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">Mục đích</label>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("purpose")}</label>
                   <select value={contactPurpose} onChange={e => setContactPurpose(e.target.value)} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white cursor-pointer">
-                    <option value="Tuyển dụng / Thực tập">Tuyển dụng / Thực tập</option>
-                    <option value="Hợp tác dự án (Freelance)">Hợp tác dự án (Freelance)</option>
-                    <option value="Khác">Khác</option>
+                    <option value={t("recruitmentInternship")}>{t("recruitmentInternship")}</option>
+                    <option value={t("freelanceCollaboration")}>{t("freelanceCollaboration")}</option>
+                    <option value={t("other")}>{t("other")}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">Nội dung</label>
-                  <textarea value={contactContent} onChange={e => setContactContent(e.target.value)} placeholder="Nhập nội dung tin nhắn..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("content")}</label>
+                  <textarea value={contactContent} onChange={e => setContactContent(e.target.value)} placeholder={t("enterMessageContent")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
                 </div>
                 <button onClick={handleContactSubmit} disabled={contactState === "loading"} className={`mt-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all flex justify-center items-center gap-2 ${contactState === "loading" ? "bg-[#666666] cursor-wait" : "bg-[#077E9E] hover:opacity-90 cursor-pointer"}`}>
-                  {contactState === "loading" ? "Đang gửi..." : <><Send size={16} /> Gửi tin nhắn</>}
+                  {contactState === "loading" ? t("sending") : <><Send size={16} /> Gửi tin nhắn</>}
                 </button>
               </div>
             )}
@@ -724,11 +754,12 @@ function ToggleSwitch({ isOn, onToggle }) {
 }
 
 function DashboardSidebar({ activePage, setPage, userData }) {
+  const { t } = useI18n();
   const items = [
-    { icon: <Image size={18} />, label: "Tác phẩm của tôi", page: "dashboard" },
-    { icon: <MessageSquare size={18} />, label: "Hộp thư", page: "messages" },
-    { icon: <User size={18} />, label: "Cài đặt Tài khoản", page: "settings" },
-    { icon: <Briefcase size={18} />, label: "Cài đặt Portfolio", page: "portfolio_settings" },
+    { icon: <Image size={18} />, label: t("myArtworks"), page: "dashboard" },
+    { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
+    { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
+    { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
   ];
   const profileName = userData?.name || "Sinh viên";
   const profileAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
@@ -761,6 +792,7 @@ function DashboardSidebar({ activePage, setPage, userData }) {
 }
 
 function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userData }) {
+  const { t } = useI18n();
   const [artworksList, setArtworksList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [collabArtworks, setCollabArtworks] = useState([]);
@@ -789,10 +821,10 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
   const publicCount = artworksList.filter(a => a.isPublic).length;
 
   const stats = [
-    { label: "Tổng tác phẩm", val: totalArtworks.toLocaleString(), icon: <Image size={24} color={BLACK} strokeWidth={1.5} /> },
-    { label: "Lượt xem", val: totalViews.toLocaleString(), icon: <Eye size={24} color={BLACK} strokeWidth={1.5} /> },
-    { label: "Lượt thích", val: totalLikes.toLocaleString(), icon: <Heart size={24} color={BLACK} strokeWidth={1.5} /> },
-    { label: "Tác phẩm công khai", val: publicCount.toString(), icon: <Globe size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: t("totalArtworks"), val: totalArtworks.toLocaleString(), icon: <Image size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: t("views"), val: totalViews.toLocaleString(), icon: <Eye size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: t("likes"), val: totalLikes.toLocaleString(), icon: <Heart size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: t("publicArtworks"), val: publicCount.toString(), icon: <Globe size={24} color={BLACK} strokeWidth={1.5} /> },
   ];
 
   return (
@@ -802,8 +834,8 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
       <div style={{ flex: 1, padding: "32px 40px", overflow: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
           <div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Tác phẩm của tôi</h2>
-            <p style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>Quản lý và kiểm soát quyền hiển thị tác phẩm</p>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>{t("myArtworks")}</h2>
+            <p style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>{t("manageVisibility")}</p>
           </div>
           <button onClick={() => setPage("upload")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 22px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             <Plus size={18} color="#fff" />
@@ -812,7 +844,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>Đang tải dữ liệu...</div>
+          <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>{t("loadingData")}</div>
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
@@ -831,7 +863,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                   <div style={{ position: "relative", background: GRAY_BG }}>
                     <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
                     <div style={{ position: "absolute", top: 8, left: 8 }}>
-                      <span style={{ background: art.isPublic ? "#E8F4F8" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#B3D9E8" : GRAY_LIGHT}` }}>{art.isPublic ? "Công khai" : "Riêng tư"}</span>
+                      <span style={{ background: art.isPublic ? "#E8F4F8" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#B3D9E8" : GRAY_LIGHT}` }}>{art.isPublic ? t("public") : t("private")}</span>
                     </div>
                   </div>
                   <div style={{ padding: "12px 14px" }}>
@@ -844,7 +876,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                     </div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px solid ${GRAY_LIGHT}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 11, color: MUTED }}>Công khai</span>
+                        <span style={{ fontSize: 11, color: MUTED }}>{t("public")}</span>
                         <ToggleSwitch isOn={art.isPublic} onToggle={() => {}} />
                       </div>
                       <div style={{ display: "flex", gap: 6 }}>
@@ -873,7 +905,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                       <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
                       <div style={{ position: "absolute", top: 8, left: 8 }}>
                         <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: 3 }}>
-                          <Users size={10} /> {art.user?.fullName || "Đồng tác giả"}
+                          <Users size={10} /> {art.user?.fullName || t("coAuthor") }
                         </span>
                       </div>
                     </div>
@@ -896,6 +928,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
 }
 
 function UploadPage({ setPage, setActiveArtworkId }) {
+  const { t } = useI18n();
   const [showPopup, setShowPopup] = useState(false);
   const [uploadState, setUploadState] = useState("idle");
   const [createdId, setCreatedId] = useState(null);
@@ -1014,8 +1047,8 @@ function UploadPage({ setPage, setActiveArtworkId }) {
                 <div className="w-16 h-16 bg-[#E8F4F8] rounded-full flex items-center justify-center mb-4">
                   <Check size={32} className="text-[#077E9E]" />
                 </div>
-                <h4 className="text-xl font-bold text-[#212121] mb-2">Đăng tải thành công!</h4>
-                <p className="text-sm text-[#666666]">Tác phẩm của bạn đã được gửi lên hệ thống.</p>
+                <h4 className="text-xl font-bold text-[#212121] mb-2">{t("uploadSuccess")}</h4>
+                <p className="text-sm text-[#666666]">{t("artworkSubmitted")}</p>
               </div>
             ) : (
               <>
@@ -1024,8 +1057,8 @@ function UploadPage({ setPage, setActiveArtworkId }) {
                     <ShieldAlert size={20} color={CRIMSON} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: BLACK }}>Cam kết Học thuật</h3>
-                    <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>Bắt buộc trước khi đăng bài</p>
+                    <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: BLACK }}>{t("academicCommitment")}</h3>
+                    <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>{t("requiredBeforePosting")}</p>
                   </div>
                 </div>
                 <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, marginBottom: 20, background: GRAY_BG, padding: "12px 14px", borderRadius: 8, borderLeft: `3px solid ${CRIMSON}` }}>
@@ -1047,7 +1080,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
                 </div>
                 {error && <p style={{ color: CRIMSON, fontSize: 12, marginTop: 12 }}>{error}</p>}
                 <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
-                  <button onClick={() => setShowPopup(false)} disabled={uploadState === "loading"} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: uploadState === "loading" ? "not-allowed" : "pointer", color: MUTED }}>Hủy</button>
+                  <button onClick={() => setShowPopup(false)} disabled={uploadState === "loading"} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: uploadState === "loading" ? "not-allowed" : "pointer", color: MUTED }}>{t("cancel")}</button>
                   <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3 && !uploadState) ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3 && !uploadState) ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3 && !uploadState) ? "pointer" : "not-allowed" }}>
                     {uploadState === "loading" ? "Đang xử lý..." : "Xác nhận & Đăng bài"}
                   </button>
@@ -1059,11 +1092,11 @@ function UploadPage({ setPage, setActiveArtworkId }) {
       )}
 
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6, color: BLACK }}>Đăng ấn phẩm mới</h2>
-        <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>Chia sẻ tác phẩm sáng tạo của bạn với cộng đồng UEF</p>
+        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6, color: BLACK }}>{t("uploadNewArtwork")}</h2>
+        <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>{t("shareWithCommunity")}</p>
         <div className="upload-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
           <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Ảnh chính *</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{t("mainImage")}</label>
             <input type="file" id="coverInput" accept="image/*" style={{ display: "none" }} onChange={handleCoverUpload} />
             <div onClick={() => document.getElementById("coverInput")?.click()} style={{ border: `2px dashed ${coverImage ? CERULEAN : GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG, cursor: "pointer" }}>
               {coverImage ? (
@@ -1071,8 +1104,8 @@ function UploadPage({ setPage, setActiveArtworkId }) {
               ) : (
                 <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <FileImage size={36} color={MUTED} strokeWidth={1.5} />
-                  <p style={{ color: MUTED, fontSize: 14, fontWeight: 600, margin: 0 }}>Nhấp để chọn ảnh chính</p>
-                  <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>PNG, JPG • Tối đa 20MB</p>
+                  <p style={{ color: MUTED, fontSize: 14, fontWeight: 600, margin: 0 }}>{t("clickToSelectImage")}</p>
+                  <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>{t("imageFormatHint")}</p>
                 </div>
               )}
             </div>
@@ -1096,32 +1129,32 @@ function UploadPage({ setPage, setActiveArtworkId }) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tên môn học *</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Design Graphic - Flowers Garden" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Loại đồ án</label>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("subjectName")}</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Design Graphic - Flowers Garden" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("projectType")}</label>
               <div style={{ display: "flex", gap: 6 }}>{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${projectYear === y ? CERULEAN : GRAY_LIGHT}`, background: projectYear === y ? "#F0F8FB" : GRAY_BG, color: projectYear === y ? CERULEAN : MUTED, fontSize: 12, fontWeight: projectYear === y ? 600 : 400, cursor: "pointer" }}>{y}</button>))}</div>
             </div>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Loại bài</label>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("assignmentType")}</label>
               <div style={{ display: "flex", gap: 10 }}>
                 {[{ key: false, label: "Cá nhân", desc: "Tự thực hiện", icon: <User size={16} /> }, { key: true, label: "Nhóm", desc: "Làm việc nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#F0F8FB" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
               </div>
             </div>
-            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Thêm thành viên nhóm</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Mô tả</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Mô tả về tác phẩm của bạn..." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
+            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("addTeamMembers")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Mô tả về tác phẩm của bạn..." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Danh mục *</label>
+              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("categoryAsterisk")}</label>
                 <select value={subject} onChange={e => setSubject(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
                   <option value="">-- Chọn --</option>
                   {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
-              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Công cụ</label>
+              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("tools")}</label>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>
                   {tools.map(t => (<span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTools(tools.filter(x => x !== t))} style={{ cursor: "pointer", marginLeft: 4 }} /></span>))}
                   <input value={toolInput} onChange={e => setToolInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && toolInput.trim()) { setTools([...tools, toolInput.trim()]); setToolInput(""); } }} placeholder="Add tool..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} />
                 </div>
               </div>
             </div>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Tags</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{tags.map(t => (<span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== t))} style={{ cursor: "pointer" }} /></span>))}<input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} /></div></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("tags")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{tags.map(tag => (<span key={tag} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>{tag}<X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== tag))} style={{ cursor: "pointer" }} /></span>))}<input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder={t("addTagPlaceholder")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} /></div></div>
             <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
                 <div onClick={() => setAgreedToTerms(!agreedToTerms)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${agreedToTerms ? CERULEAN : GRAY_LIGHT}`, background: agreedToTerms ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>{agreedToTerms && <Check size={12} color="#fff" strokeWidth={3} />}</div>
@@ -1129,12 +1162,12 @@ function UploadPage({ setPage, setActiveArtworkId }) {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div onClick={() => setNotifyOnConfirm(!notifyOnConfirm)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${notifyOnConfirm ? CERULEAN : GRAY_LIGHT}`, background: notifyOnConfirm ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>{notifyOnConfirm && <Check size={12} color="#fff" strokeWidth={3} />}</div>
-                <span style={{ fontSize: 12, color: "#666" }}>Nhận thông báo khi tác phẩm được xác nhận</span>
+                <span style={{ fontSize: 12, color: "#666" }}>{t("notifyOnConfirm")}</span>
               </div>
             </div>
             <div style={{ paddingTop: 4 }}>
-              <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>Đăng tác phẩm</button>
-              <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>Sau khi đăng, GV/Admin sẽ xác nhận trước khi công khai</p>
+              <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{t("publishArtwork")}</button>
+              <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("pendingApprovalNote")}</p>
             </div>
           </div>
         </div>
@@ -1144,6 +1177,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
 }
 
 function OrderModal({ setPage, activeArtworkId, onClose }) {
+  const { t } = useI18n();
   const [orderData, setOrderData] = useState({
     name: "",
     email: "",
@@ -1155,7 +1189,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
 
   const handleSubmit = async () => {
     if (!orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc (*)");
+      alert(t("fillRequiredFields"));
       return;
     }
 
@@ -1176,7 +1210,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
         purpose: "order",
         content: JSON.stringify({
           artworkId: activeArtworkId,
-          artworkTitle: "Ấn phẩm được đặt hàng",
+          artworkTitle: t("orderedArtwork"),
           artworkImage: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
           phone: orderData.phone.trim() || null,
           company: orderData.company.trim() || null,
@@ -1184,11 +1218,11 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
         }),
       });
 
-      alert("Đã gửi đơn đặt hàng thành công!");
+      alert(t("orderSentSuccess"));
       onClose();
       setPage("messages");
     } catch (e) {
-      alert("Lỗi khi gửi đơn đặt hàng: " + (e?.message || "Vui lòng thử lại"));
+      alert(t("orderSendError") + (e?.message || t("pleaseTryAgain")));
     } finally {
       setSendingOrder(false);
     }
@@ -1198,7 +1232,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-lg w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="p-6 border-b border-[#E0E0E0] flex items-center justify-between">
-          <h3 className="text-lg font-bold text-[#212121]">Đặt hàng ấn phẩm</h3>
+          <h3 className="text-lg font-bold text-[#212121]">{t("orderArtwork")}</h3>
           <button onClick={onClose} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
         </div>
         <div className="p-6">
@@ -1208,7 +1242,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
               <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
                 <ShieldAlert size={16} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
                 <p className="text-xs text-[#92400E]">
-                  <strong>Chú ý:</strong> Đơn đặt hàng sẽ được xem xét và phê duyệt bởi quản trị viên trước khi in ấn. Vui lòng kiểm tra lại thông tin trước khi xác nhận.
+                  <strong>{t("orderAttention")}</strong> Đơn đặt hàng sẽ được xem xét và phê duyệt bởi quản trị viên trước khi in ấn. Vui lòng kiểm tra lại thông tin trước khi xác nhận.
                 </p>
               </div>
             </div>
@@ -1216,7 +1250,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Họ và tên *</label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("fullName")}</label>
               <input
                 type="text"
                 value={orderData.name}
@@ -1226,7 +1260,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Email *</label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("emailStar")}</label>
               <input
                 type="email"
                 value={orderData.email}
@@ -1236,7 +1270,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Số điện thoại</label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("phoneNumber")}</label>
               <input
                 type="tel"
                 value={orderData.phone}
@@ -1246,7 +1280,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Công ty/Tổ chức</label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("company")}</label>
               <input
                 type="text"
                 value={orderData.company}
@@ -1256,7 +1290,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mô tả yêu cầu *</label>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("requirementsDescription")}</label>
               <textarea
                 value={orderData.description}
                 onChange={e => setOrderData({ ...orderData, description: e.target.value })}
@@ -1291,7 +1325,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
             }}
           >
             {sendingOrder ? (
-              <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> Đang gửi...</>
+              <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> t("sending")</>
             ) : (
               <>
                 <ShoppingCart size={16} /> Xác nhận đơn hàng
@@ -1305,9 +1339,10 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
 }
 
 function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
+  const { t } = useI18n();
   const { user: authUser } = useAuth();
   const [art, setArt] = useState({
-    title: "Đang tải...", subject: "Đang tải...", coverImageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
+    title: t("loading"), subject: t("loading"), coverImageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
     description: "", tags: [], toolsUsed: [], likeCount: 0, commentCount: 0,
     createdAt: new Date().toISOString(), user: null, userId: null, isPublic: true,
   });
@@ -1362,7 +1397,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       api.artworks.get(activeArtworkId).then(res => {
       setArt({
         ...res,
-        subject: res.subject || "Ấn phẩm",
+        subject: res.subject || t("artwork"),
         tags: res.tags || [],
         toolsUsed: res.toolsUsed || [],
         description: res.description || "",
@@ -1401,7 +1436,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const handleSendComment = async () => {
     if (!commentText.trim()) return;
     if (!currentUserId) {
-      alert("Vui lòng đăng nhập để bình luận");
+      alert(t("loginToComment"));
       return;
     }
     setSendingComment(true);
@@ -1410,7 +1445,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       setComments(prev => [newComment, ...prev]);
       setCommentText("");
     } catch (e) {
-      alert("Lỗi khi gửi bình luận: " + (e?.message || "Vui lòng thử lại"));
+      alert(t("commentError") + (e?.message || t("pleaseTryAgain")));
     }
     setSendingComment(false);
   };
@@ -1425,7 +1460,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       });
       setExistingGrade(result);
     } catch (e) {
-      alert("Lỗi khi lưu đánh giá: " + (e?.message || "Vui lòng thử lại"));
+      alert(t("gradeError") + (e?.message || t("pleaseTryAgain")));
     }
     setSavingGrade(false);
   };
@@ -1443,12 +1478,12 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const timeAgo = (dateStr) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "Vừa xong";
-    if (mins < 60) return `${mins} phút trước`;
+if (mins < 1) return t("justNow");
+      if (mins < 60) return t("minutesAgo").replace("{mins}", mins);
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours} giờ trước`;
+    if (hours < 24) return t("hoursAgo").replace("{hours}", hours);
     const days = Math.floor(hours / 24);
-    if (days < 7) return `${days} ngày trước`;
+    if (days < 7) return t("daysAgo").replace("{days}", days);
     return new Date(dateStr).toLocaleDateString("vi-VN");
   };
 
@@ -1526,7 +1561,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
           saveAs(result.blob, `${baseName}.${fmt}`);
         }
       }
-    } catch (e) { console.error("Download error:", e); alert("Lỗi khi tải xuống. Vui lòng thử lại."); }
+    } catch (e) { console.error("Download error:", e); alert(t("downloadError")); }
     setDownloading(false);
   };
 
@@ -1538,9 +1573,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
         <div style={{ width: 64, height: 64, borderRadius: 16, background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <ShieldAlert size={28} color={CRIMSON} />
         </div>
-        <h2 style={{ fontSize: 18, fontWeight: 700, color: BLACK, margin: 0 }}>Không thể tải ấn phẩm</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: BLACK, margin: 0 }}>{t("cannotLoadArtwork")}</h2>
         <p style={{ fontSize: 14, color: MUTED, margin: 0, maxWidth: 400, textAlign: "center" }}>Ấn phẩm không tồn tại hoặc đã bị gỡ. Vui lòng quay lại Gallery để khám phá các tác phẩm khác.</p>
-        <button onClick={() => setPage("gallery")} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Quay lại Gallery</button>
+        <button onClick={() => setPage("gallery")} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{t("backToGallery")}</button>
       </div>
     );
   }
@@ -1550,7 +1585,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       <div style={{ padding: "20px 48px", borderBottom: `1px solid ${GRAY_LIGHT}`, display: "flex", gap: 6, alignItems: "center" }}>
         <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("gallery")}>Gallery</span>
         <span style={{ fontSize: 13, color: MUTED }}>/</span>
-        <span style={{ fontSize: 13, color: MUTED }}>{art.subject || "Ấn phẩm"}</span>
+        <span style={{ fontSize: 13, color: MUTED }}>{art.subject || t("artwork") }</span>
         <span style={{ fontSize: 13, color: MUTED }}>/</span>
         <span style={{ fontSize: 13, color: BLACK, fontWeight: 500 }}>{art.title}</span>
       </div>
@@ -1574,26 +1609,26 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
               </span>
             </span>
             <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
-              <button onClick={() => setShowFullscreen(true)} title="Phóng to" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
-              <button onClick={() => setShowDownloadModal(true)} title="Tải xuống" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><FileDown size={16} /></button>
-              <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt('Sao chép link:', window.location.href); } }} title="Sao chép link" style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Link size={16} /></button>
+              <button onClick={() => setShowFullscreen(true)} title={t("zoomIn")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
+              <button onClick={() => setShowDownloadModal(true)} title={t("download")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><FileDown size={16} /></button>
+              <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt('Sao chép link:', window.location.href); } }} title={t("copyLink")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Link size={16} /></button>
             </div>
           </div>
-          {shareToast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: BLACK, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>Đã sao chép link ấn phẩm!</div>}
+          {shareToast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: BLACK, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>{t("linkCopied")}</div>}
           {showDownloadModal && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDownloadModal(false)}>
               <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
                 <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
-                  <h3 className="text-base font-bold text-[#212121]">Tải xuống ấn phẩm</h3>
+                  <h3 className="text-base font-bold text-[#212121]">{t("downloadArtwork")}</h3>
                   <button onClick={() => setShowDownloadModal(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={18} /></button>
                 </div>
                 <div className="p-5">
                   <p className="text-xs text-[#666666] mb-4">Chọn định dạng để tải{allImagesDeduped.length > 1 ? ` (${allImagesDeduped.length} ảnh)` : ""}:</p>
                   <div className="flex flex-col gap-3">
                     {[
-                      { key: "png", label: "PNG", desc: "Chất lượng cao, trong suốt" },
-                      { key: "jpg", label: "JPG", desc: "Dung lượng nhỏ, phổ biến" },
-                      { key: "pdf", label: "PDF", desc: "Một trang, giữ nguyên watermark" },
+                      { key: "png", label: "PNG", desc: t("pngDescription") },
+                      { key: "jpg", label: "JPG", desc: t("jpgDescription") },
+                      { key: "pdf", label: "PDF", desc: t("pdfDescription") },
                     ].map(opt => (
                       <button key={opt.key} onClick={() => { setDownloadFormat(opt.key); handleDownload(opt.key); }}
                         className="flex items-center justify-between w-full px-4 py-3 rounded-lg border border-[#E0E0E0] hover:border-[#077E9E] hover:bg-[#F0F8FB] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1637,7 +1672,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 onClick={() => {
                   const slug = art.user?.portfolioSettings?.portfolioSlug;
                   if (slug) setPage("portfolio", { portfolioSlug: slug });
-                  else alert("Tác giả chưa thiết lập portfolio.");
+                  else alert(t("portfolioNotSetup"));
                 }}
               />
               <span
@@ -1645,7 +1680,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 onClick={() => {
                   const slug = art.user?.portfolioSettings?.portfolioSlug;
                   if (slug) setPage("portfolio", { portfolioSlug: slug });
-                  else alert("Tác giả chưa thiết lập portfolio.");
+                  else alert(t("portfolioNotSetup"));
                 }}
               >{art.user?.fullName}</span>
               <span style={{ fontSize: 12, color: MUTED }}>·</span>
@@ -1654,21 +1689,21 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 onClick={() => {
                   const slug = art.user?.portfolioSettings?.portfolioSlug;
                   if (slug) setPage("portfolio", { portfolioSlug: slug });
-                  else alert("Tác giả chưa thiết lập portfolio.");
+                  else alert(t("portfolioNotSetup"));
                 }}
-              >Xem portfolio</span>
+              >{t("viewPortfolio")}</span>
             </div>
           </div>
 
           {art.subject && <div style={{ marginBottom: 12 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>Danh mục</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t("category")}</span>
             <div style={{ marginTop: 4 }}>
               <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 8, border: `1px solid #B3D9E8` }}>{art.subject}</span>
             </div>
           </div>}
 
           {(art.toolsUsed || []).length > 0 && <div style={{ marginBottom: 12 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>Công cụ sử dụng</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t("toolsUsed")}</span>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
               {art.toolsUsed.map(tool => (
                 <span key={tool} style={{ background: "#F0F0F0", color: "#333", fontSize: 12, padding: "4px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>{tool}</span>
@@ -1677,7 +1712,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
           </div>}
 
           {(art.collaborators || []).length > 0 && <div style={{ marginBottom: 12 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>Đồng tác giả</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t("coAuthor")}</span>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
               {(art.collaborators || []).map(c => (
                 <span key={c} style={{ background: "#F0FDF4", color: "#166534", fontSize: 12, padding: "4px 10px", borderRadius: 8, border: `1px solid #BBF7D0`, display: "flex", alignItems: "center", gap: 4 }}>
@@ -1694,7 +1729,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
           </div>
 
           <p style={{ fontSize: 13, color: "#444", lineHeight: 1.75, marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-            {art.description || "Chưa có mô tả cho tác phẩm này."}
+            {art.description || t("noDescription") }
           </p>
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
@@ -1730,7 +1765,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                    fill={isBookmarked && isBookmarked(art.id) ? CERULEAN : "none"}
                    color={isBookmarked && isBookmarked(art.id) ? CERULEAN : MUTED}
                  />
-                 {isBookmarked && isBookmarked(art.id) ? "Đã lưu" : "Lưu"}
+                 {isBookmarked && isBookmarked(art.id) ? t("saved") : t("save")}
                </button>
                <button onClick={() => setShowReport(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                  <ShieldAlert size={16} /> Báo cáo
@@ -1749,7 +1784,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 </div>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: BLACK }}>
-                    {existingGrade ? "Đã chấm điểm" : "Đánh giá của Giảng viên"}
+                    {existingGrade ? t("graded") : t("lecturerReview")}
                   </p>
                   <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>
                     {existingGrade ? `Điểm: ${existingGrade.score}/10` : "Nhập điểm và lời nhận xét"}
@@ -1757,11 +1792,11 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 </div>
               </div>
               <div style={{ marginBottom: 12 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Điểm số (0–10)</label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("scoreRange")}</label>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <input value={gradeScore} onChange={e => setGradeScore(e.target.value)} type="number" min="0" max="10" step="0.5" placeholder="8.5" style={{ width: 80, padding: "9px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, color: CERULEAN, background: "#fff", outline: "none", textAlign: "center" }} />
                   <div>
-                    <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>Nhập điểm từ 0 đến 10</p>
+                    <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{t("enterScoreRange")}</p>
                     {gradeScore && <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <div key={n} style={{ width: 14, height: 5, borderRadius: 2, background: parseFloat(gradeScore) >= n ? CERULEAN : GRAY_LIGHT }} />)}
                     </div>}
@@ -1769,11 +1804,11 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 </div>
               </div>
               <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Lời phê bình & Nhận xét</label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("critiqueAndFeedback")}</label>
                 <textarea value={gradeComment} onChange={e => setGradeComment(e.target.value)} placeholder="Nhận xét về kỹ thuật thực hiện, tư duy thiết kế, điểm mạnh và góp ý cải thiện..." style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 100, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
               </div>
               <button onClick={handleSaveGrade} disabled={!gradeScore || savingGrade} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: gradeScore && !savingGrade ? CERULEAN : GRAY_LIGHT, color: gradeScore && !savingGrade ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: gradeScore && !savingGrade ? "pointer" : "not-allowed" }}>
-                {savingGrade ? "Đang lưu..." : existingGrade ? "Cập nhật đánh giá" : "Lưu đánh giá"}
+                {savingGrade ? t("saving") : existingGrade ? t("updateGrade") : t("saveGrade")}
               </button>
             </div>
           )}
@@ -1783,7 +1818,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ fontSize: 32, fontWeight: 700, color: CERULEAN }}>{existingGrade.score}</div>
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>Điểm đánh giá</p>
+                  <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>{t("gradeScore")}</p>
                   {existingGrade.comment && <p style={{ fontSize: 12, color: "#444", margin: 0, lineHeight: 1.5 }}>{existingGrade.comment}</p>}
                   {existingGrade.lecturer && <p style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>Bởi: {existingGrade.lecturer.fullName}</p>}
                 </div>
@@ -1800,7 +1835,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                     <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Để lại bình luận của bạn..." style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
                     <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
                       <button onClick={handleSendComment} disabled={!commentText.trim() || sendingComment} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: commentText.trim() && !sendingComment ? CERULEAN : GRAY_LIGHT, color: commentText.trim() && !sendingComment ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: commentText.trim() && !sendingComment ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 6 }}>
-                        <Send size={14} /> {sendingComment ? "Đang gửi..." : "Gửi bình luận"}
+                        <Send size={14} /> {sendingComment ? t("sending") : "Gửi bình luận"}
                       </button>
                     </div>
                   </>
@@ -1811,7 +1846,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                 )}
               </div>
               {comments.length === 0 && (
-                <p style={{ fontSize: 13, color: MUTED, textAlign: "center", padding: "20px 0" }}>Chưa có bình luận nào.</p>
+                <p style={{ fontSize: 13, color: MUTED, textAlign: "center", padding: "20px 0" }}>{t("noComments")}</p>
               )}
               {comments.map(cmt => (
                 <div key={cmt.id} style={{ display: "flex", gap: 12 }}>
@@ -1820,7 +1855,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                       <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>
                         {cmt.user?.fullName}
-                        {cmt.user?.id === art.userId && <span style={{ fontSize: 11, color: CERULEAN, fontWeight: 400, marginLeft: 4 }}>(Tác giả)</span>}
+                        {cmt.user?.id === art.userId && <span style={{ fontSize: 11, color: CERULEAN, fontWeight: 400, marginLeft: 4 }}>{t("author")}</span>}
                       </p>
                       <span style={{ fontSize: 11, color: MUTED }}>{timeAgo(cmt.createdAt)}</span>
                     </div>
@@ -1837,7 +1872,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       {showFullscreen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.92)' }} onClick={() => setShowFullscreen(false)}>
           <button onClick={() => setShowFullscreen(false)} style={{ position: "absolute", top: 20, right: 24, width: 40, height: 40, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.15)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 22, zIndex: 10 }}>✕</button>
-          <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.5)", fontSize: 12, zIndex: 10 }}>Bấm ESC hoặc click nền để đóng</div>
+          <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", color: "rgba(255,255,255,0.5)", fontSize: 12, zIndex: 10 }}>{t("pressEscToClose")}</div>
           <div className="flex items-center justify-center p-8 w-full h-full" onClick={e => e.stopPropagation()}>
             {allImagesDeduped.length > 1 && (
               <button onClick={() => setActiveImageIdx(prev => prev > 0 ? prev - 1 : allImagesDeduped.length - 1)} style={{ position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)", width: 44, height: 44, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.12)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 20, zIndex: 10 }}>
@@ -1858,17 +1893,17 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowReport(false)}>
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-[#E0E0E0] flex items-center justify-between">
-              <h3 className="text-lg font-bold text-[#212121]">Báo cáo ấn phẩm</h3>
+              <h3 className="text-lg font-bold text-[#212121]">{t("reportArtwork")}</h3>
               <button onClick={() => setShowReport(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
             </div>
             <div className="p-6">
-              <label className="block text-sm font-semibold text-[#666666] mb-3">Loại vi phạm</label>
+              <label className="block text-sm font-semibold text-[#666666] mb-3">{t("violationType")}</label>
               <div className="flex flex-wrap gap-2 mb-5">
-                {["Đạo văn / Sao chép", "Nội dung không phù hợp", "Thông tin sai lệch", "Xâm phạm bản quyền", "Spam / Quảng cáo", "Khác"].map(t => (
+                {["Đạo văn / Sao chép", "Nội dung không phù hợp", "Thông tin sai lệch", "Xâm phạm bản quyền", "Spam / Quảng cáo", t("other")].map(t => (
                   <button key={t} onClick={() => setReportType(t)} className={`px-3.5 py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${reportType === t ? "bg-[#077E9E] text-white border-[#077E9E]" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8]"}`}>{t}</button>
                 ))}
               </div>
-              <label className="block text-sm font-semibold text-[#666666] mb-2">Chi tiết vi phạm</label>
+              <label className="block text-sm font-semibold text-[#666666] mb-2">{t("violationDetails")}</label>
               <textarea value={reportDetail} onChange={e => setReportDetail(e.target.value)} placeholder="Mô tả chi tiết về vi phạm..." className="w-full p-3 rounded-lg border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] resize-vertical min-h-[120px] font-inherit text-[#212121] box-border" style={{ fontFamily: "inherit" }} />
               <button onClick={async () => {
                 if (!reportType) return;
@@ -1878,13 +1913,13 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
                   setShowReport(false);
                   setReportType("");
                   setReportDetail("");
-                  alert("Cảm ơn bạn! Báo cáo đã được gửi đến quản trị viên.");
+                  alert(t("reportSubmitted"));
                 } catch (e) {
-                  alert("Lỗi khi gửi báo cáo: " + (e?.message || "Vui lòng thử lại"));
+                  alert(t("reportError") + (e?.message || t("pleaseTryAgain")));
                 }
                 setSendingReport(false);
               }} disabled={!reportType || sendingReport} className={`w-full mt-4 py-2.5 rounded-lg text-sm font-semibold border-none cursor-pointer ${!reportType || sendingReport ? "bg-[#E0E0E0] text-[#999]" : "bg-[#8B1A1A] text-white hover:bg-opacity-90"}`}>
-                {sendingReport ? "Đang gửi..." : "Gửi báo cáo"}
+                {sendingReport ? t("sending") : t("submitReport")}
               </button>
             </div>
           </div>
@@ -1893,7 +1928,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
 
       {relatedArtworks.length > 0 && (
         <div style={{ padding: "40px 48px 64px", borderTop: `1px solid ${GRAY_LIGHT}` }}>
-          <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 24 }}>Khám phá thêm</h3>
+          <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 24 }}>{t("exploreMore")}</h3>
           <MasonryGrid
             items={relatedArtworks.map((a, i) => ({
               id: a.id, title: a.title, student: a.user?.fullName || "", img: a.coverImageUrl,
@@ -1911,6 +1946,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   );
 }
 function AuthPage({ setPage, onLoginSuccess }) {
+  const { t } = useI18n();
   const { loginWithEmail, refreshSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -1921,7 +1957,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
   const handleEmailLogin = async () => {
     if (!email || !password) {
-      setLoginError("Vui lòng nhập email và mật khẩu");
+      setLoginError(t("enterEmailAndPassword"));
       return;
     }
     setLoginError("");
@@ -1931,7 +1967,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
       await refreshSession();
       setPage("home");
     } catch (e) {
-      setLoginError(e?.message || "Đăng nhập thất bại");
+      setLoginError(e?.message || t("loginFailed"));
     } finally {
       setLogging(false);
     }
@@ -1985,18 +2021,18 @@ function AuthPage({ setPage, onLoginSuccess }) {
         </div>
       </div>
       <div className="auth-form-panel" style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "0 64px" }}>
-        <h2 style={{ fontSize: 28, fontWeight: 700, color: BLACK, marginBottom: 8 }}>Đăng nhập</h2>
-        <p style={{ color: MUTED, fontSize: 14, marginBottom: 24 }}>Chào mừng trở lại với hệ thống Portfolio UEF</p>
+        <h2 style={{ fontSize: 28, fontWeight: 700, color: BLACK, marginBottom: 8 }}>{t("login")}</h2>
+        <p style={{ color: MUTED, fontSize: 14, marginBottom: 24 }}>{t("welcomeBack")}</p>
 
         <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-          {[{ key: "student", label: "Sinh viên" }, { key: "lecturer", label: "Giảng viên" }, { key: "admin", label: "Quản trị" }].map((r) => (
+          {[{ key: "student", label: "Sinh viên" }, { key: "lecturer", label: t("lecturer") }, { key: "admin", label: t("admin") }].map((r) => (
             <button disabled={logging} key={r.key} onClick={() => { setAuthRole(r.key); autoFillLogin(r.key); }} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: logging ? "not-allowed" : "pointer", opacity: logging ? 0.6 : 1 }}>{r.label}</button>
           ))}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Email</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("email")}</label>
             <input
               type="email"
               value={email}
@@ -2008,7 +2044,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
             />
           </div>
           <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>Mật khẩu</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("password")}</label>
             <div style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
@@ -2044,8 +2080,8 @@ function AuthPage({ setPage, onLoginSuccess }) {
           style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: logging ? GRAY_LIGHT : CERULEAN, color: logging ? MUTED : "#fff", fontSize: 15, fontWeight: 600, marginTop: 16, cursor: logging ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         >
           {logging ? (
-            <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> Đang đăng nhập...</>
-          ) : "Đăng nhập"}
+            <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> t("loggingIn")</>
+          ) : t("login")}
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
@@ -2080,6 +2116,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
 
 function AdminDashboardPage({ setPage }) {
+  const { t } = useI18n();
   const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, totalInteractions: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -2121,15 +2158,15 @@ function AdminDashboardPage({ setPage }) {
       <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[#212121]">Tổng quan Quản trị</h2>
-            <p className="text-sm text-[#666666] mt-1">Theo dõi số liệu hệ thống và xử lý vi phạm / cảnh cáo ấn phẩm</p>
+            <h2 className="text-2xl font-bold text-[#212121]">Tổng quan t("admin")</h2>
+            <p className="text-sm text-[#666666] mt-1">Theo dõi số liệu hệ thống và xử lý vi phạm / cảnh cáo t("artworks")</p>
           </div>
           <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 bg-[#077E9E] text-white rounded-lg text-sm font-semibold hover:bg-[#055F78] transition-colors flex items-center gap-2">
             <FileDown size={16} /> Báo cáo PDF
           </button>
         </div>
 
-        {loading ? <div className="text-center py-16 text-[#666666] text-sm">Đang tải dữ liệu...</div> : (
+        {loading ? <div className="text-center py-16 text-[#666666] text-sm">{t("loadingData")}</div> : (
         <><div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
             <div key={s.label} className="bg-white border border-[#E0E0E0] rounded-xl p-5">
@@ -2161,11 +2198,11 @@ function AdminDashboardPage({ setPage }) {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Tên ấn phẩm</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("artworkName")}</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Sinh viên</th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Môn học</th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ngày</th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Trạng thái</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("subject")}</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("date")}</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("status")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2212,7 +2249,7 @@ function AdminDashboardPage({ setPage }) {
             <div className="bg-white border border-[#E0E0E0] rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-[#212121]">Hoạt động gần đây</h3>
-                <span className="text-xs text-[#666666]">Hôm nay</span>
+                <span className="text-xs text-[#666666]">{t("today")}</span>
               </div>
               <div className="space-y-3">
                 {recent.map((r, idx) => (
@@ -2231,7 +2268,7 @@ function AdminDashboardPage({ setPage }) {
                   <ShieldAlert size={16} className="text-[#8B1A1A]" />
                   <div>
                     <p className="text-sm font-semibold text-[#212121]">Xử lý vi phạm</p>
-                    <p className="text-xs text-[#666666]">Ẩn / xóa / highlight ấn phẩm</p>
+                    <p className="text-xs text-[#666666]">Ẩn / xóa / highlight t("artworks")</p>
                   </div>
                 </button>
                 <button onClick={() => setPage("admin_users")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors text-left">
@@ -2254,6 +2291,7 @@ function AdminDashboardPage({ setPage }) {
 
 
 function MessagesPage({ setPage, userData }) {
+  const { t } = useI18n();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
@@ -2280,7 +2318,7 @@ function MessagesPage({ setPage, userData }) {
       await api.messages.archive(id);
       setMessages(prev => prev.filter(m => m.id !== id));
     } catch (e) {
-      alert("Lỗi khi lưu trữ: " + (e?.message || "Vui lòng thử lại"));
+      alert("Lỗi khi lưu trữ: " + (e?.message || t("pleaseTryAgain")));
     }
   };
 
@@ -2297,11 +2335,11 @@ function MessagesPage({ setPage, userData }) {
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
       <DashboardSidebar activePage="messages" setPage={setPage} userData={userData} />
       <div style={{ flex: 1, padding: "32px 40px" }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 24px", color: BLACK }}>Hộp thư đến</h2>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 24px", color: BLACK }}>{t("inboxTitle")}</h2>
         {loading ? (
-          <p style={{ textAlign: "center", color: MUTED, padding: 40 }}>Đang tải...</p>
+          <p style={{ textAlign: "center", color: MUTED, padding: 40 }}>{t("loading")}</p>
         ) : messages.length === 0 ? (
-          <p style={{ textAlign: "center", color: MUTED, padding: 40, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>Chưa có tin nhắn nào.</p>
+          <p style={{ textAlign: "center", color: MUTED, padding: 40, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>{t("noMessages")}</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {messages.map(msg => (
@@ -2317,11 +2355,11 @@ function MessagesPage({ setPage, userData }) {
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       {msg.purpose === 'order' && (
-                        <span style={{ background: "#ECFDF5", border: `1px solid #10B981`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: "#059669", whiteSpace: "nowrap" }}>Đặt hàng</span>
+                        <span style={{ background: "#ECFDF5", border: `1px solid #10B981`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: "#059669", whiteSpace: "nowrap" }}>{t("order")}</span>
                       )}
                       {msg.purpose && msg.purpose !== 'order' && <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>}
                       {msg.purpose === 'order' && (
-                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>Đặt hàng ấn phẩm</p>
+                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t("orderArtwork")}</p>
                       )}
                       {msg.purpose !== 'order' && msg.content && (
                         <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
@@ -2381,8 +2419,8 @@ function MessagesPage({ setPage, userData }) {
                         </button>
                       ) : (
                         <a
-                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Phản hồi: ${msg.purpose || "Liên hệ từ Portfolio"}`)}&body=${encodeURIComponent(
-                            `--- Tin nhắn gốc từ ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Mục đích: ${msg.purpose}\n` : ""}${msg.content}\n\n--- Phản hồi của tôi ---\n`
+                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(
+                            `--- Original message from ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Purpose: ${msg.purpose}\n` : ""}${msg.content}\n\n--- My reply ---\n`
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -2407,6 +2445,7 @@ function MessagesPage({ setPage, userData }) {
 }
 
 function AdminSidebar({ active, setPage }) {
+  const { t } = useI18n();
   const items = [
     { icon: <LayoutDashboard size={18} />, label: "Tổng quan", page: "admin" },
     { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users" },
@@ -2418,8 +2457,8 @@ function AdminSidebar({ active, setPage }) {
   return (
     <div className="w-64 bg-[#F8F8F8] border-r border-[#E0E0E0] flex-shrink-0 flex flex-col h-full overflow-y-auto">
       <div className="p-6 border-b border-[#E0E0E0]">
-        <h3 className="font-bold text-[#212121] text-sm uppercase tracking-wider">Admin Panel</h3>
-        <p className="text-xs text-[#666666] mt-1">Hệ thống quản trị UEF</p>
+        <h3 className="font-bold text-[#212121] text-sm uppercase tracking-wider">{t("adminPanel")}</h3>
+        <p className="text-xs text-[#666666] mt-1">{t("adminSystem")}</p>
       </div>
       <div className="py-4">
         {items.map(item => (
@@ -2439,6 +2478,7 @@ function AdminSidebar({ active, setPage }) {
 }
 
 function EditArtworkPage({ setPage, activeArtworkId }) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [title, setTitle] = useState("");
@@ -2553,7 +2593,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Xóa ấn phẩm này?")) return;
+    if (!confirm(t("confirmDeleteArtwork"))) return;
     try {
       await api.artworks.delete(activeArtworkId);
       setPage("dashboard");
@@ -2562,7 +2602,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     }
   };
 
-  if (loading) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
+  if (loading) return <div className="flex h-screen items-center justify-center text-[#666666]">{t("loading")}</div>;
 
   return (
     <div className="bg-white min-h-[calc(100vh-60px)] px-16 py-10">
@@ -2570,7 +2610,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         <div className="flex items-center gap-2 text-sm text-[#666666] mb-6 cursor-pointer hover:text-[#212121] transition-colors inline-flex" onClick={() => setPage("dashboard")}>
           <ArrowDownCircle className="rotate-90" size={16} /> Quay lại Tác phẩm của tôi
         </div>
-        <h2 className="text-2xl font-bold text-[#212121] mb-1">Chỉnh sửa Ấn phẩm</h2>
+        <h2 className="text-2xl font-bold text-[#212121] mb-1">{t("editArtwork")}</h2>
         <p className="text-sm text-[#666666] mb-8">Cập nhật thông tin chi tiết cho tác phẩm của bạn</p>
         {message.text && (
           <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
@@ -2607,31 +2647,31 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
           </div>
           <div className="flex flex-col gap-4">
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tên môn học</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại đồ án</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#F0F8FB] border-[#077E9E] text-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Loại bài</label><div className="flex gap-3">{[{ key: false, label: "Cá nhân", icon: <User size={16} /> }, { key: true, label: "Nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#F0F8FB] border-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
-            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Thêm thành viên nhóm</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Mô tả</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Danh mục</label>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("projectType")}</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#F0F8FB] border-[#077E9E] text-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("assignmentType")}</label><div className="flex gap-3">{[{ key: false, label: "Cá nhân", icon: <User size={16} /> }, { key: true, label: "Nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#F0F8FB] border-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
+            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("category")}</label>
               <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
                 <option value="">-- Chọn --</option>
                 {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Công cụ</label>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("tools")}</label>
               <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">
                 {tools.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTools(tools.filter(x => x !== t))} /></span>))}
                 <input value={toolInput} onChange={e => setToolInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && toolInput.trim()) { setTools([...tools, toolInput.trim()]); setToolInput(""); } }} placeholder="Add tool..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
               </div>
             </div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tags</label>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("tags")}</label>
               <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">
                 {tags.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTags(tags.filter(x => x !== t))} /></span>))}
                 <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
               </div>
             </div>
             <div className="mt-auto pt-4 border-t border-[#E0E0E0] flex gap-3">
-              <button onClick={handleDelete} className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> Xóa ấn phẩm</button>
-              <button onClick={handleSave} disabled={saving} className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50"><Check size={16} /> {saving ? "Đang lưu..." : "Lưu thay đổi"}</button>
+              <button onClick={handleDelete} className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> t("deleteArtwork")</button>
+              <button onClick={handleSave} disabled={saving} className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50"><Check size={16} /> {saving ? t("saving") : t("saveChanges")}</button>
             </div>
           </div>
         </div>
@@ -2641,13 +2681,14 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
 }
 
 function AdminUsersPage({ setPage }) {
+  const { t } = useI18n();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null });
   const [importFileName, setImportFileName] = useState("");
   const importInputRef = useRef(null);
 
-  const roleLabel = { student: "Sinh viên", lecturer: "Giảng viên", admin: "Admin" };
+  const roleLabel = { student: "Sinh viên", lecturer: t("lecturer"), admin: t("admin") };
 
   const fetchUsers = () => {
     setLoading(true);
@@ -2684,7 +2725,7 @@ function AdminUsersPage({ setPage }) {
       <div className="flex-1 overflow-y-auto p-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[#212121]">Quản lý Tài khoản</h2>
+            <h2 className="text-2xl font-bold text-[#212121]">Quản lý t("accounts")</h2>
             <p className="text-sm text-[#666666] mt-1">Danh sách người dùng và phân quyền hệ thống</p>
           </div>
           <div className="flex items-center gap-3">
@@ -2708,7 +2749,7 @@ function AdminUsersPage({ setPage }) {
         {importFileName && (
           <div className="mb-5 bg-[#E8F4F8] border border-[#B3D9E8] text-[#077E9E] rounded-lg px-4 py-3 text-sm flex items-center justify-between">
             <span className="font-medium">Đã chọn file: {importFileName}</span>
-            <button onClick={() => setImportFileName("")} className="text-[#077E9E] hover:text-[#055F78] font-semibold text-sm">Bỏ chọn</button>
+            <button onClick={() => setImportFileName("")} className="text-[#077E9E] hover:text-[#055F78] font-semibold text-sm">{t("deselect")}</button>
           </div>
         )}
 
@@ -2718,10 +2759,10 @@ function AdminUsersPage({ setPage }) {
             <thead>
               <tr>
                 <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Họ Tên</th>
-                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Email</th>
-                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Vai trò</th>
+                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("email")}</th>
+                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("role")}</th>
                 <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ngày tham gia</th>
-                <th className="bg-[#F8F8F8] text-[#666666] text-center px-4 py-3 text-xs uppercase tracking-wider font-semibold">Hành động</th>
+                <th className="bg-[#F8F8F8] text-[#666666] text-center px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -2775,7 +2816,7 @@ function AdminUsersPage({ setPage }) {
             <h3 className="font-bold text-lg text-[#212121] mb-2">Khóa tài khoản?</h3>
             <p className="text-sm text-[#666666] mb-6">Bạn có chắc chắn muốn khóa tài khoản của <strong>{confirmModal.user?.name}</strong>? Người dùng sẽ không thể đăng nhập vào hệ thống.</p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmModal({ isOpen: false, user: null })} className="flex-1 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Hủy</button>
+              <button onClick={() => setConfirmModal({ isOpen: false, user: null })} className="flex-1 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("cancel")}</button>
               <button onClick={() => toggleLockUser(confirmModal.user?.id)} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">Xác nhận Khóa</button>
             </div>
           </div>
@@ -2786,13 +2827,14 @@ function AdminUsersPage({ setPage }) {
 }
 
 function AdminArtworksPage({ setPage }) {
+  const { t } = useI18n();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [query, setQuery] = useState("");
-  const [filterSubject, setFilterSubject] = useState("Tất cả");
-  const [filterYear, setFilterYear] = useState("Tất cả");
-  const [filterTool, setFilterTool] = useState("Tất cả");
+  const [filterSubject, setFilterSubject] = useState(t("all"));
+  const [filterYear, setFilterYear] = useState(t("all"));
+  const [filterTool, setFilterTool] = useState(t("all"));
   const [selectedId, setSelectedId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, mode: "delete", artId: null });
@@ -2841,8 +2883,8 @@ function AdminArtworksPage({ setPage }) {
     if (!query.trim()) return true;
     const q = query.toLowerCase();
     return (a.title || '').toLowerCase().includes(q) || (a.user?.fullName || '').toLowerCase().includes(q);
-  }).filter(a => filterSubject === "Tất cả" ? true : a.subject === filterSubject)
-    .filter(a => filterYear === "Tất cả" ? true : a.academicYear === filterYear);
+}).filter(a => filterSubject === t("all") ? true : a.subject === filterSubject)
+      .filter(a => filterYear === t("all") ? true : a.academicYear === filterYear);
 
   const selected = items.find((a) => a.id === selectedId) ?? null;
 
@@ -2878,7 +2920,7 @@ function AdminArtworksPage({ setPage }) {
   };
 
   const badge = (s) => {
-    if (s === "Vi phạm") return "bg-red-50 text-[#8B1A1A] border border-[#F5C5C5]";
+    if (s === t("violation")) return "bg-red-50 text-[#8B1A1A] border border-[#F5C5C5]";
     if (s === "Bị báo cáo") return "bg-red-50 text-[#8B1A1A] border border-[#F5C5C5]";
     if (s === "Đã ẩn") return "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]";
     if (s === "Nổi bật") return "bg-blue-50 text-[#077E9E] border border-[#B3D9E8]";
@@ -2886,8 +2928,8 @@ function AdminArtworksPage({ setPage }) {
   };
 
   const statusText = (s) => {
-    if (s === "Đang hiển thị") return "Công khai";
-    if (s === "Bị báo cáo") return "Báo cáo";
+    if (s === "Đang hiển thị") return t("public");
+    if (s === "Bị báo cáo") return t("report");
     return s;
   };
 
@@ -2939,9 +2981,9 @@ function AdminArtworksPage({ setPage }) {
 
           <div className="mt-6 flex flex-wrap items-center gap-2">
             {[
-              { key: "all", label: "Tất cả" },
-              { key: "reported", label: "Báo cáo" },
-              { key: "pending", label: "Chờ duyệt" },
+              { key: "all", label: t("all") },
+              { key: "reported", label: t("report") },
+              { key: "pending", label: t("pending") },
               { key: "hidden", label: "Đã ẩn" },
               { key: "highlight", label: "Nổi bật" },
             ].map((t) => (
@@ -2963,20 +3005,20 @@ function AdminArtworksPage({ setPage }) {
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm theo tên ấn phẩm, sinh viên, tags..." className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
             </div>
             <FilterSelect value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
-              <option value="Tất cả">Môn học: Tất cả</option>
+              <option value="Tất cả">{t("subjectAll")}</option>
               <option value="Thiết kế TH">Thiết kế TH</option>
               <option value="Đồ hoạ ứng dụng">Đồ hoạ ứng dụng</option>
               <option value="Motion Design">Motion Design</option>
               <option value="UX/UI">UX/UI</option>
             </FilterSelect>
             <FilterSelect value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
-              <option value="Tất cả">Năm học: Tất cả</option>
+              <option value="Tất cả">{t("yearAll")}</option>
               <option value="2024">2024</option>
               <option value="2023">2023</option>
               <option value="2022">2022</option>
             </FilterSelect>
             <FilterSelect value={filterTool} onChange={(e) => setFilterTool(e.target.value)}>
-              <option value="Tất cả">Công cụ: Tất cả</option>
+              <option value="Tất cả">{t("toolAll")}</option>
               <option value="Illustrator">Illustrator</option>
               <option value="Photoshop">Photoshop</option>
               <option value="Figma">Figma</option>
@@ -3026,7 +3068,7 @@ function AdminArtworksPage({ setPage }) {
                   onChange={(e) => toggleSelectAll(e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-sm font-semibold text-[#212121]">{filtered.length} ấn phẩm</span>
+                <span className="text-sm font-semibold text-[#212121]">{filtered.length} t("artworks")</span>
               </div>
               {selectedIds.length > 0 && (
                 <span className="text-sm text-[#666666]">Đã chọn {selectedIds.length}</span>
@@ -3039,9 +3081,9 @@ function AdminArtworksPage({ setPage }) {
                   <tr>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold w-10"></th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ấn phẩm / Sinh viên</th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Môn học</th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ngày</th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold w-36">Trạng thái</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("subject")}</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("date")}</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold w-36">{t("status")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3079,7 +3121,7 @@ function AdminArtworksPage({ setPage }) {
                         <div className="flex items-center gap-2">
                           <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${a.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
                             {a.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} className="text-[#666666]" />}
-                            {a.isPublic ? "Công khai" : "Riêng tư"}
+                            {a.isPublic ? t("public") : t("private")}
                           </span>
                           {(a._count?.reports || 0) > 0 && (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#8B1A1A] bg-red-50 px-2 py-0.5 rounded-full border border-[#F5C5C5]">
@@ -3111,18 +3153,18 @@ function AdminArtworksPage({ setPage }) {
               <div className="bg-white border border-[#E0E0E0] rounded-xl overflow-hidden">
                 <div className="p-5 border-b border-[#E0E0E0] flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Chi tiết ấn phẩm</p>
+                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("artworkDetails")}</p>
                     <h3 className="text-lg font-bold text-[#212121] truncate">{selected.title}</h3>
                     <p className="text-sm text-[#666666] mt-1">{selected.student}</p>
                   </div>
-                  <button onClick={() => setSelectedId(null)} className="text-sm font-semibold text-[#666666] hover:text-[#212121] transition-colors">Đóng</button>
+                  <button onClick={() => setSelectedId(null)} className="text-sm font-semibold text-[#666666] hover:text-[#212121] transition-colors">{t("close")}</button>
                 </div>
 
                 <div className="p-5">
                   <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer" onClick={() => handleOpenGallery(0)}>
                     <img src={selected.coverImageUrl} className="w-full h-64 object-cover" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-semibold transition-opacity">Nhấp để phóng to</span>
+                      <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-semibold transition-opacity">{t("clickToZoom")}</span>
                     </div>
                   </div>
                   {(selected.fileUrls || []).length > 0 && (
@@ -3137,23 +3179,23 @@ function AdminArtworksPage({ setPage }) {
 
                   <div className="grid grid-cols-2 gap-4 mt-5">
                     <div>
-                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Môn học</p>
+                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("subject")}</p>
                       <p className="text-sm font-semibold text-[#212121]">{selected.subject}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Công cụ</p>
+                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("tools")}</p>
                       <p className="text-sm font-semibold text-[#212121]">{(selected.toolsUsed || []).join(", ") || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Trạng thái</p>
+                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("status")}</p>
                       <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${selected.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
                         {selected.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} />}
-                        {selected.isPublic ? "Công khai" : "Riêng tư"}
+                        {selected.isPublic ? t("public") : t("private")}
                       </span>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Điểm</p>
-                      <p className="text-sm font-semibold text-[#212121]">{selected.score ?? "Chưa chấm"}</p>
+                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("score")}</p>
+                      <p className="text-sm font-semibold text-[#212121]">{selected.score ?? t("notGraded") }</p>
                     </div>
                   </div>
 
@@ -3168,9 +3210,9 @@ function AdminArtworksPage({ setPage }) {
                       <ShieldAlert size={14} /> Báo cáo vi phạm {reports.length > 0 && <span className="bg-[#8B1A1A] text-white text-[10px] px-2 py-0.5 rounded-full">{reports.length}</span>}
                     </p>
                     {reportsLoading ? (
-                      <p className="text-sm text-[#666666]">Đang tải...</p>
+                      <p className="text-sm text-[#666666]">{t("loading")}</p>
                     ) : reports.length === 0 ? (
-                      <p className="text-sm text-[#666666] bg-[#F8F8F8] rounded-lg p-3 border border-[#E0E0E0]">Chưa có báo cáo nào cho ấn phẩm này.</p>
+                      <p className="text-sm text-[#666666] bg-[#F8F8F8] rounded-lg p-3 border border-[#E0E0E0]">{t("noReportsForArtwork")}</p>
                     ) : (
                       <div className="flex flex-col gap-3 max-h-[320px] overflow-y-auto">
                         {reports.map(r => (
@@ -3178,18 +3220,18 @@ function AdminArtworksPage({ setPage }) {
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-xs font-semibold text-[#8B1A1A] bg-red-50 px-2 py-0.5 rounded border border-[#F5C5C5]">{r.violationType}</span>
                               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${r.status === "pending" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" : r.status === "resolved" ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}>
-                                {r.status === "pending" ? "Chờ xử lý" : r.status === "resolved" ? "Đã xử lý" : "Đã bỏ qua"}
+                                {r.status === "pending" ? "Chờ xử lý" : r.status === "resolved" ? t("processed") : t("dismissed")}
                               </span>
                             </div>
                             {r.detail && <p className="text-sm text-[#212121] mb-2">{r.detail}</p>}
                             <div className="flex items-center justify-between">
                               <p className="text-[10px] text-[#666666]">
-                                Bởi {r.user?.fullName || r.user?.email || "Người dùng"} · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
+                                Bởi {r.user?.fullName || r.user?.email || t("user") } · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
                               </p>
                               {r.status === "pending" && (
                                 <div className="flex gap-1">
-                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "resolved").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "resolved" } : x)))} className="text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200 hover:bg-green-100 transition-colors cursor-pointer">Xử lý xong</button>
-                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "dismissed").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "dismissed" } : x)))} className="text-[10px] font-semibold text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">Bỏ qua</button>
+                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "resolved").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "resolved" } : x)))} className="text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200 hover:bg-green-100 transition-colors cursor-pointer">{t("resolve")}</button>
+                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "dismissed").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "dismissed" } : x)))} className="text-[10px] font-semibold text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">{t("dismiss")}</button>
                                 </div>
                               )}
                             </div>
@@ -3239,8 +3281,8 @@ function AdminArtworksPage({ setPage }) {
                 : "Ấn phẩm sẽ bị xóa khỏi danh sách. Hành động này không thể hoàn tác trong prototype."}
             </p>
             <div className="flex gap-3">
-              <button onClick={closeConfirm} className="flex-1 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Hủy</button>
-              <button onClick={confirmAction} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">Xác nhận</button>
+              <button onClick={closeConfirm} className="flex-1 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("cancel")}</button>
+              <button onClick={confirmAction} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">{t("confirm")}</button>
             </div>
           </div>
         </div>
@@ -3260,6 +3302,7 @@ function AdminArtworksPage({ setPage }) {
 }
 
 function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCreateCollection, onOpenCatalogBuilder }) {
+  const { t } = useI18n();
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <AdminSidebar active="admin_export" setPage={setPage} />
@@ -3291,7 +3334,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-1">Bộ sưu tập</p>
+                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-1">{t("collection")}</p>
                     <h3 className="text-lg font-bold text-[#212121] truncate">{c.name}</h3>
                     <p className="text-sm text-[#666666] mt-1">{c.items.length} tác phẩm · Theme: <span className="font-semibold text-[#212121]">{c.theme}</span></p>
                   </div>
@@ -3336,6 +3379,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
 }
 
 function CollectionExportConfigPage({ setPage, collection, onUpdateCollection }) {
+  const { t } = useI18n();
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState([]);
   const [detailArtwork, setDetailArtwork] = useState(null);
@@ -3417,7 +3461,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
               Quay lại
             </button>
             <button onClick={() => { onUpdateCollection && onUpdateCollection({ name: collection.name, curatorEssay: collection.curatorEssay, theme: collection.theme }); setSaved(true); setTimeout(() => setSaved(false), 2000); }} className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 cursor-pointer ${saved ? "bg-green-600 text-white" : "bg-[#212121] text-white hover:opacity-90"}`}>
-              <Check size={16} /> {saved ? "Đã lưu" : "Lưu thay đổi"}
+              <Check size={16} /> {saved ? t("saved") : t("saveChanges")}
             </button>
           </div>
         </div>
@@ -3437,7 +3481,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
               </>
             )}
             <button onClick={toggleDeleteMode} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${deleteMode ? "bg-[#8B1A1A] text-white border-[#8B1A1A]" : "bg-white text-[#666] border-[#E0E0E0] hover:border-[#8B1A1A] hover:text-[#8B1A1A]"}`}>
-              <Trash2 size={14} /> {deleteMode ? "Thoát xóa" : "Xóa ấn phẩm"}
+              <Trash2 size={14} /> {deleteMode ? "Thoát xóa" : t("deleteArtwork")}
             </button>
           </div>
         </div>
@@ -3511,7 +3555,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
                 </a>
               </div>
               <div className="px-5 py-3 border-t border-[#E0E0E0] flex justify-end">
-                <button onClick={() => setDetailArtwork(null)} className="px-4 py-2 rounded-lg text-sm font-semibold text-[#666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Đóng</button>
+                <button onClick={() => setDetailArtwork(null)} className="px-4 py-2 rounded-lg text-sm font-semibold text-[#666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("close")}</button>
               </div>
             </div>
           </div>
@@ -3522,6 +3566,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
 }
 
 function RegisterPage({ setPage }) {
+  const { t } = useI18n();
   const [form, setForm] = useState({ lastName: "", firstName: "", email: "", password: "", confirmPassword: "" });
   const [showPasswords, setShowPasswords] = useState({ password: false, confirm: false });
   const [error, setError] = useState("");
@@ -3534,8 +3579,8 @@ function RegisterPage({ setPage }) {
     e.preventDefault();
     setError("");
 
-    if (!form.lastName || !form.firstName) { setError("Vui lòng nhập họ và tên"); return; }
-    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError("Email không hợp lệ"); return; }
+    if (!form.lastName || !form.firstName) { setError(t("enterFullName")); return; }
+    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError(t("invalidEmail")); return; }
     if (form.password.length < 8) { setError("Mật khẩu phải có ít nhất 8 ký tự"); return; }
     if (form.password !== form.confirmPassword) { setError("Mật khẩu xác nhận không khớp"); return; }
 
@@ -3577,7 +3622,7 @@ function RegisterPage({ setPage }) {
       <div className="auth-form-panel" style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 56px", overflow: "auto" }}>
         <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}><img src="/logo-uef.png" alt="UEF" style={{ height: 30 }} /><span style={{ fontWeight: 700, fontSize: 16, color: BLACK }}>Design Gallery</span></div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>Tạo tài khoản mới</h1>
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>{t("createNewAccount")}</h1>
           <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>Tạo tài khoản để khám phá và kết nối với cộng đồng sáng tạo</p>
 
           {success ? (
@@ -3598,18 +3643,18 @@ function RegisterPage({ setPage }) {
                   </div>
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Email</label>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("email")}</label>
                   <input type="email" value={form.email} onChange={updateField("email")} placeholder="example@gmail.com" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Mật khẩu</label>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("password")}</label>
                   <div style={{ position: "relative" }}>
                     <input type={showPasswords.password ? "text" : "password"} value={form.password} onChange={updateField("password")} placeholder="•••••••• (tối thiểu 8 ký tự, gồm chữ và số)" required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
                     <button type="button" onClick={() => setShowPasswords({ ...showPasswords, password: !showPasswords.password })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.password ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                   </div>
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Xác nhận mật khẩu</label>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("confirmPassword")}</label>
                   <div style={{ position: "relative" }}>
                     <input type={showPasswords.confirm ? "text" : "password"} value={form.confirmPassword} onChange={updateField("confirmPassword")} placeholder="••••••••" required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
                     <button type="button" onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}</button>
@@ -3620,12 +3665,12 @@ function RegisterPage({ setPage }) {
               {error && <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 12, textAlign: "center" }}>{error}</p>}
 
               <button type="submit" disabled={loading} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, marginTop: 16, cursor: loading ? "not-allowed" : "pointer" }}>
-                {loading ? "Đang xử lý..." : "Đăng ký"}
+                {loading ? "Đang xử lý..." : t("register")}
               </button>
             </form>
           )}
 
-          <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>Đã có tài khoản? <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>Đăng nhập</span></p>
+          <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>Đã có tài khoản? <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>{t("login")}</span></p>
         </div>
       </div>
     </div>
@@ -3633,6 +3678,7 @@ function RegisterPage({ setPage }) {
 }
 
 function LandingPage({ setPage, isLoggedIn }) {
+  const { t } = useI18n();
   const artworks = [
     { id: 1, img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", title: "Kỷ niệm UEF", student: "Nguyễn Lê Minh Anh", likes: 142 },
     { id: 2, img: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg", title: "Poster Design", student: "Trần Bảo Long", likes: 89 },
@@ -3680,11 +3726,11 @@ function LandingPage({ setPage, isLoggedIn }) {
             </div>
             <div>
               <p className="text-3xl font-bold mb-1">18</p>
-              <p className="text-xs text-gray-500">Môn học</p>
+              <p className="text-xs text-gray-500">{t("subject")}</p>
             </div>
             <div>
               <p className="text-3xl font-bold mb-1">4 khoá</p>
-              <p className="text-xs text-gray-500">Hành trình sáng tạo</p>
+              <p className="text-xs text-gray-500">{t("creativeJourney")}</p>
             </div>
           </div>
         </div>
@@ -3798,7 +3844,7 @@ function LandingPage({ setPage, isLoggedIn }) {
               <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
                 <span className="w-6 h-px bg-[#077E9E]"></span> Sản phẩm nổi bật
               </p>
-              <h2 className="text-3xl font-extrabold">Khám phá ấn phẩm mới nhất</h2>
+              <h2 className="text-3xl font-extrabold">{t("exploreNewestArtworks")}</h2>
             </div>
             <button onClick={() => setPage("gallery")} className="text-sm font-semibold border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50">
               Xem toàn bộ Gallery &rsaquo;
@@ -3838,13 +3884,13 @@ function LandingPage({ setPage, isLoggedIn }) {
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
               <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">1</div>
-              <h3 className="font-bold mb-2">Đăng nhập</h3>
+              <h3 className="font-bold mb-2">{t("login")}</h3>
               <p className="text-sm text-gray-500">Dùng email của bạn để đăng nhập vào hệ thống</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
               <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">2</div>
-              <h3 className="font-bold mb-2">Đăng tải ấn phẩm</h3>
+              <h3 className="font-bold mb-2">Đăng tải t("artworks")</h3>
               <p className="text-sm text-gray-500">Upload ảnh/PDF kèm thông tin môn học, công cụ và mô tả</p>
             </div>
             
@@ -3865,8 +3911,8 @@ function LandingPage({ setPage, isLoggedIn }) {
             <p className="text-gray-400">Dành cho sinh viên Thiết kế Đồ họa UEF — đăng nhập ngay hôm nay</p>
           </div>
           <div className="flex gap-4">
-            <button onClick={() => setPage("auth")} className="bg-[#077E9E] hover:bg-[#066a85] text-white px-8 py-3 rounded-lg font-bold transition-colors">Đăng nhập ngay</button>
-            <button onClick={() => setPage("gallery")} className="border border-gray-600 hover:border-gray-400 text-white px-8 py-3 rounded-lg font-bold transition-colors">Xem Gallery</button>
+            <button onClick={() => setPage("auth")} className="bg-[#077E9E] hover:bg-[#066a85] text-white px-8 py-3 rounded-lg font-bold transition-colors">{t("loginNow")}</button>
+            <button onClick={() => setPage("gallery")} className="border border-gray-600 hover:border-gray-400 text-white px-8 py-3 rounded-lg font-bold transition-colors">{t("viewGallery")}</button>
           </div>
         </div>
       </section>
@@ -3883,8 +3929,8 @@ function LandingPage({ setPage, isLoggedIn }) {
           </div>
           <div className="flex gap-6">
             <button onClick={() => setPage("gallery")} className="hover:text-white">Gallery</button>
-            <button onClick={() => setPage("about")} className="hover:text-white">Giới thiệu Khoa</button>
-            <a href="#" className="hover:text-white">Liên hệ</a>
+            <button onClick={() => setPage("about")} className="hover:text-white">{t("aboutFaculty")}</button>
+            <a href="#" className="hover:text-white">{t("contact")}</a>
             <a href="#" className="hover:text-white">Chính sách</a>
           </div>
         </div>
@@ -3904,17 +3950,17 @@ const lecturers = [
 const lecturersList = [
   { name: "PGS. TS. Nguyễn Minh Khoa", title: "Trưởng Khoa Thiết kế Đồ họa", bio: "Chuyên ngành: Visual Communication, Brand Identity & Design Strategy. Hơn 20 năm kinh nghiệm giảng dạy và thực chiến.", skills: ["Typography", "Brand Identity", "Visual Communication"], img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&q=80" },
   { name: "ThS. Trần Thị Lan Anh", title: "Giảng viên chính", bio: "Chuyên ngành: UI/UX Design, Digital Product Design & Figma. Cố vấn thiết kế cho nhiều startup công nghệ.", skills: ["UI/UX", "Figma", "Product Design"], img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&q=80" },
-  { name: "ThS. Lê Quốc Bảo", title: "Giảng viên", bio: "Chuyên ngành: Motion Graphics, After Effects & 3D Animation. Freelance director với hơn 50 dự án thương mại lớn.", skills: ["Motion Graphics", "After Effects", "3D"], img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80" },
-  { name: "ThS. Phạm Hồng Nhung", title: "Giảng viên", bio: "Chuyên ngành: Typography, Editorial Design & Packaging. Từng đoạt 2 giải thưởng thiết kế bao bì quốc tế.", skills: ["Typography", "Editorial", "Packaging"], img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80" },
+  { name: "ThS. Lê Quốc Bảo", title: t("lecturer"), bio: "Chuyên ngành: Motion Graphics, After Effects & 3D Animation. Freelance director với hơn 50 dự án thương mại lớn.", skills: ["Motion Graphics", "After Effects", "3D"], img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80" },
+  { name: "ThS. Phạm Hồng Nhung", title: t("lecturer"), bio: "Chuyên ngành: Typography, Editorial Design & Packaging. Từng đoạt 2 giải thưởng thiết kế bao bì quốc tế.", skills: ["Typography", "Editorial", "Packaging"], img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&q=80" },
   { name: "TS. Nguyễn Đình Trọng", title: "Giảng viên cao cấp", bio: "Chuyên ngành: Illustration, Concept Art & Character Design. Cộng tác viên cho studio game và phim hoạt hình.", skills: ["Illustration", "Concept Art", "Character"], img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80" },
-  { name: "ThS. Vũ Thanh Tuyền", title: "Giảng viên", bio: "Chuyên ngành: Photography, Photo Editing & Visual Storytelling. Nhiếp ảnh gia thương mại với studio tự do.", skills: ["Photography", "Photoshop", "Lightroom"], img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80" },
+  { name: "ThS. Vũ Thanh Tuyền", title: t("lecturer"), bio: "Chuyên ngành: Photography, Photo Editing & Visual Storytelling. Nhiếp ảnh gia thương mại với studio tự do.", skills: ["Photography", "Photoshop", "Lightroom"], img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80" },
 ];
 
 const ABOUT_TABS = [
   { label: "Chương trình đào tạo", id: "chuong-trinh-dao-tao" },
   { label: "Đội ngũ giảng viên", id: "doi-ngu-giang-vien" },
   { label: "Cơ sở vật chất", id: "co-so-vat-chat" },
-  { label: "Liên hệ", id: "lien-he" },
+  { label: t("contact"), id: "lien-he" },
 ];
 
 const studentFeatures = [
@@ -3975,12 +4021,13 @@ const softwareStack = [
 ];
 
 function AboutPage({ setPage }) {
+  const { t } = useI18n();
   const [audience, setAudience] = useState("student");
 
   const audienceTabs = [
     { key: "student", label: "Sinh viên", icon: <GraduationCap size={18} />, color: CERULEAN, bg: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&q=80" },
-    { key: "employer", label: "Nhà tuyển dụng", icon: <Briefcase size={18} />, color: "#055F78", bg: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1400&q=80" },
-    { key: "school", label: "Nhà trường", icon: <BookOpen size={18} />, color: CRIMSON, bg: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1400&q=80" },
+    { key: "employer", label: t("employer"), icon: <Briefcase size={18} />, color: "#055F78", bg: "https://images.unsplash.com/photo-1559136555-9303baea8ebd?w=1400&q=80" },
+    { key: "school", label: t("school"), icon: <BookOpen size={18} />, color: CRIMSON, bg: "https://images.unsplash.com/photo-1571260899304-425eee4c7efc?w=1400&q=80" },
   ];
 
   const headlines = {
@@ -4019,11 +4066,11 @@ function AboutPage({ setPage }) {
           <div className="flex flex-wrap gap-8 md:gap-16 pt-8 border-t border-white/20">
             <div className="flex items-center gap-3">
               <p className="text-3xl md:text-4xl font-bold text-white">500+</p>
-              <p className="text-sm text-white/70">Ấn phẩm<br/>trưng bày</p>
+              <p className="text-sm text-white/70">{t("artwork")}<br/>trưng bày</p>
             </div>
             <div className="flex items-center gap-3">
               <p className="text-3xl md:text-4xl font-bold text-white">12</p>
-              <p className="text-sm text-white/70">Giảng viên<br/>chuyên môn</p>
+              <p className="text-sm text-white/70">{t("lecturer")}<br/>chuyên môn</p>
             </div>
             <div className="flex items-center gap-3">
               <p className="text-3xl md:text-4xl font-bold text-white">1,200+</p>
@@ -4038,7 +4085,7 @@ function AboutPage({ setPage }) {
           <>
             <section className="mb-20">
               <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Tính năng</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">Dành Cho Sinh Viên</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">{t("forStudents")}</h2>
               <p className="text-[#666666] max-w-3xl leading-relaxed text-[15px] mb-10">
                 Từ đồ án trên lớp đến portfolio ứng tuyển — hệ thống giúp bạn quản lý, trưng bày và kết nối cơ hội nghề nghiệp ngay từ khi còn ngồi trên ghế giảng đường.
               </p>
@@ -4055,8 +4102,8 @@ function AboutPage({ setPage }) {
                 })}
               </div>
               <div className="flex flex-wrap gap-3">
-                <button onClick={() => setPage("auth")} className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors cursor-pointer">Bắt đầu ngay</button>
-                <button onClick={() => setPage("gallery")} className="px-6 py-3 border border-[#E0E0E0] text-[#212121] rounded-lg font-semibold text-sm hover:bg-[#F8F8F8] transition-colors cursor-pointer">Khám phá Gallery</button>
+                <button onClick={() => setPage("auth")} className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors cursor-pointer">{t("startNow")}</button>
+                <button onClick={() => setPage("gallery")} className="px-6 py-3 border border-[#E0E0E0] text-[#212121] rounded-lg font-semibold text-sm hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("exploreGallery")}</button>
               </div>
             </section>
 
@@ -4125,7 +4172,7 @@ function AboutPage({ setPage }) {
           <>
             <section className="mb-20">
               <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: "#055F78" }}>Tính năng</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">Dành Cho Nhà Tuyển Dụng</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">{t("forEmployers")}</h2>
               <p className="text-[#666666] max-w-3xl leading-relaxed text-[15px] mb-10">
                 Tìm kiếm và kết nối với những tài năng thiết kế trẻ ngay từ khi họ còn ngồi trên ghế giảng đường. Đánh giá năng lực qua đồ án thực tế đã qua chấm điểm của giảng viên.
               </p>
@@ -4141,7 +4188,7 @@ function AboutPage({ setPage }) {
                   );
                 })}
               </div>
-              <button onClick={() => setPage("gallery")} className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors cursor-pointer">Duyệt Gallery ấn phẩm</button>
+              <button onClick={() => setPage("gallery")} className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors cursor-pointer">Duyệt Gallery t("artworks")</button>
             </section>
 
             <section className="mb-20">
@@ -4168,7 +4215,7 @@ function AboutPage({ setPage }) {
           <>
             <section className="mb-20">
               <p className="font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: CRIMSON }}>Tính năng</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">Dành Cho Nhà Trường</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">{t("forSchool")}</h2>
               <p className="text-[#666666] max-w-3xl leading-relaxed text-[15px] mb-10">
                 Hệ thống quản lý đồ án tập trung, lưu trữ học thuật và công cụ xuất bộ sưu tập triển lãm phục vụ kiểm định chất lượng đào tạo.
               </p>
@@ -4187,7 +4234,7 @@ function AboutPage({ setPage }) {
             </section>
 
             <section className="mb-20">
-              <p className="font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: CRIMSON }}>Lợi ích</p>
+              <p className="font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: CRIMSON }}>{t("benefits")}</p>
               <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Giá Trị Cho Nhà Trường</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {[
@@ -4207,7 +4254,7 @@ function AboutPage({ setPage }) {
                     <h3 className="font-bold text-[#212121] text-lg mb-2">Quan tâm đến hệ thống?</h3>
                     <p className="text-[#666666] text-sm">Liên hệ với chúng tôi để được tư vấn triển khai cho khoa/trường của bạn.</p>
                   </div>
-                  <a href="mailto:khoathietke@uef.edu.vn" className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors flex-shrink-0 cursor-pointer inline-block text-center">Liên hệ tư vấn</a>
+                  <a href="mailto:khoathietke@uef.edu.vn" className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors flex-shrink-0 cursor-pointer inline-block text-center">{t("contactConsultation")}</a>
                 </div>
               </div>
             </section>
@@ -4219,34 +4266,34 @@ function AboutPage({ setPage }) {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-16 md:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
             <div>
-              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Liên hệ</p>
-              <h2 className="text-3xl font-bold text-[#212121] mb-8">Kết nối với Khoa Thiết kế Đồ họa</h2>
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">{t("contact")}</p>
+              <h2 className="text-3xl font-bold text-[#212121] mb-8">{t("connectWithFaculty")}</h2>
               <div className="space-y-5">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-[#E8F4F8] flex items-center justify-center flex-shrink-0"><MapPin className="w-5 h-5 text-cerulean" /></div>
                   <div>
-                    <p className="text-sm font-bold text-[#212121] mb-1">Địa chỉ</p>
+                    <p className="text-sm font-bold text-[#212121] mb-1">{t("address")}</p>
                     <p className="text-sm text-[#666666]">141-145 Điện Biên Phủ, Phường 15, Q. Bình Thạnh, TP.HCM</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-[#E8F4F8] flex items-center justify-center flex-shrink-0"><Mail className="w-5 h-5 text-cerulean" /></div>
                   <div>
-                    <p className="text-sm font-bold text-[#212121] mb-1">Email</p>
+                    <p className="text-sm font-bold text-[#212121] mb-1">{t("email")}</p>
                     <a href="mailto:khoathietke@uef.edu.vn" className="text-sm text-cerulean hover:underline">khoathietke@uef.edu.vn</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-[#E8F4F8] flex items-center justify-center flex-shrink-0"><Phone className="w-5 h-5 text-cerulean" /></div>
                   <div>
-                    <p className="text-sm font-bold text-[#212121] mb-1">Điện thoại</p>
+                    <p className="text-sm font-bold text-[#212121] mb-1">{t("phone")}</p>
                     <p className="text-sm text-[#666666]">(028) 5422 5555</p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="bg-white border border-[#E0E0E0] rounded-xl p-8 md:p-10">
-              <h3 className="text-xl font-bold text-[#212121] mb-6">Gửi tin nhắn cho chúng tôi</h3>
+              <h3 className="text-xl font-bold text-[#212121] mb-6">{t("sendUsMessage")}</h3>
               <form className="space-y-4" onSubmit={e => e.preventDefault()}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -4254,7 +4301,7 @@ function AboutPage({ setPage }) {
                     <input placeholder="Nguyễn Văn A" className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean box-border" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#212121] mb-2">Email</label>
+                    <label className="block text-sm font-medium text-[#212121] mb-2">{t("email")}</label>
                     <input type="email" placeholder="email@example.com" className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean box-border" />
                   </div>
                 </div>
@@ -4262,7 +4309,7 @@ function AboutPage({ setPage }) {
                   <label className="block text-sm font-medium text-[#212121] mb-2">Tin nhắn</label>
                   <textarea placeholder="Viết tin nhắn của bạn..." className="w-full px-4 py-3 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean min-h-[140px] resize-y box-border" />
                 </div>
-                <button type="submit" className="w-full py-3 bg-cerulean hover:bg-[#055F78] text-white rounded-lg font-bold text-sm transition-colors cursor-pointer">Gửi tin nhắn</button>
+                <button type="submit" className="w-full py-3 bg-cerulean hover:bg-[#055F78] text-white rounded-lg font-bold text-sm transition-colors cursor-pointer">{t("sendMessage")}</button>
               </form>
             </div>
           </div>
@@ -4280,8 +4327,8 @@ function AboutPage({ setPage }) {
           </div>
           <div className="flex gap-6">
             <button onClick={() => setPage("gallery")} className="hover:text-white cursor-pointer">Gallery</button>
-            <button onClick={() => setPage("about")} className="hover:text-white cursor-pointer">Giới thiệu Khoa</button>
-            <a href="#" className="hover:text-white">Liên hệ</a>
+            <button onClick={() => setPage("about")} className="hover:text-white cursor-pointer">{t("aboutFaculty")}</button>
+            <a href="#" className="hover:text-white">{t("contact")}</a>
             <a href="#" className="hover:text-white">Chính sách</a>
           </div>
         </div>
@@ -4304,6 +4351,7 @@ function SaveToCollectionModal({
   onSave,
   onCreateCollection,
 }) {
+  const { t } = useI18n();
   const [selectedIds, setSelectedIds] = useState([]);
   const [note, setNote] = useState("");
   const [creating, setCreating] = useState(false);
@@ -4349,7 +4397,7 @@ function SaveToCollectionModal({
               <img src={artwork.coverImageUrl || artwork.img} alt={artwork.title} className="w-full h-full object-cover" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider">Lưu vào bộ sưu tập</p>
+              <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider">{t("saveToCollectionFlow")}</p>
               <p className="text-sm font-bold text-[#212121] truncate">{artwork.title}</p>
               <p className="text-xs text-[#666666] truncate">{artwork.student || artwork.user?.fullName || ""}</p>
             </div>
@@ -4357,7 +4405,7 @@ function SaveToCollectionModal({
           <button
             onClick={onClose}
             className="w-9 h-9 rounded-lg border border-[#E0E0E0] bg-white hover:bg-[#F8F8F8] transition-colors flex items-center justify-center text-[#666666]"
-            title="Đóng"
+            title={t("close")}
           >
             <X size={18} />
           </button>
@@ -4366,7 +4414,7 @@ function SaveToCollectionModal({
         <div className="px-5 sm:px-6 py-5">
           {/* collections */}
           <div className="mb-4">
-            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Chọn bộ sưu tập</p>
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("selectCollection")}</p>
             <div className="max-h-44 overflow-auto pr-1 space-y-2">
               {collections.map((c) => (
                 <label
@@ -4460,6 +4508,7 @@ function SaveToCollectionModal({
 }
 
 function PortfolioSettingsPage({ setPage, userData }) {
+  const { t } = useI18n();
   const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", major: "", yearLevel: "Năm 3", isPortfolioPublic: true, socialLinks: {}, featuredArtworkIds: [] });
   const [myArtworks, setMyArtworks] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -4508,7 +4557,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
         socialLinks: settings.socialLinks,
         featuredArtworkIds: settings.featuredArtworkIds,
       });
-      setMessage({ type: "success", text: "Đã lưu cài đặt portfolio!" });
+      setMessage({ type: "success", text: t("portfolioSettingsSaved") });
     } catch {
       setMessage({ type: "error", text: "Lỗi kết nối" });
     } finally {
@@ -4561,26 +4610,26 @@ function PortfolioSettingsPage({ setPage, userData }) {
       }
       setShowTimelineForm(false);
     } catch (e) {
-      alert('Lỗi: ' + e.message);
+      alert(t("errorGeneric") + e.message);
     } finally {
       setSavingTimeline(false);
     }
   };
 
   const deleteTimelineEntry = async (id) => {
-    if (!confirm('Xóa mốc timeline này?')) return;
+    if (!confirm(t('confirmDeleteTimeline'))) return;
     try {
       await api.timeline.delete(id);
       setTimelineEntries(prev => prev.filter(e => e.id !== id));
     } catch (e) {
-      alert('Lỗi: ' + e.message);
+      alert(t("errorGeneric") + e.message);
     }
   };
 
   const monthOptions = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
   const yearOptions = ['2023','2024','2025','2026','2027'];
 
-  if (!loaded) return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải...</div>;
+  if (!loaded) return <div className="flex h-screen items-center justify-center text-[#666666]">{t("loading")}</div>;
 
   return (
     <div className="flex min-h-screen bg-[#F8F8F8]">
@@ -4588,7 +4637,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
 
       <div className="flex-1 overflow-y-auto p-10">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-[#212121] mb-2">Cài đặt Portfolio</h2>
+          <h2 className="text-2xl font-bold text-[#212121] mb-2">{t("portfolioSettings")}</h2>
           <p className="text-[#666666] text-sm mb-8">Quản lý cách hiển thị hồ sơ năng lực của bạn với nhà tuyển dụng.</p>
 
           {message.text && (
@@ -4596,24 +4645,24 @@ function PortfolioSettingsPage({ setPage, userData }) {
           )}
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
-            <h3 className="font-bold text-[#212121] mb-4">Thông tin cơ bản</h3>
+            <h3 className="font-bold text-[#212121] mb-4">{t("basicInfo")}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#212121] mb-2">Đường dẫn Portfolio (Slug)</label>
+                <label className="block text-sm font-medium text-[#212121] mb-2">{t("portfolioSlug")}</label>
                 <div className="flex items-center">
                   <span className="px-4 py-2 bg-[#F8F8F8] border border-r-0 border-[#E0E0E0] rounded-l-lg text-[#666666] text-sm">portfoliohub.uef.edu.vn/</span>
                   <input type="text" value={settings.portfolioSlug} onChange={(e) => setSettings({ ...settings, portfolioSlug: e.target.value })} className="flex-1 px-4 py-2 border border-[#E0E0E0] rounded-r-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#212121] mb-2">Tiêu đề nghề nghiệp (Profile Headline)</label>
+                <label className="block text-sm font-medium text-[#212121] mb-2">{t("profileHeadline")}</label>
                 <input type="text" value={settings.profileHeadline} onChange={(e) => setSettings({ ...settings, profileHeadline: e.target.value })} placeholder="Graphic Designer & Visual Artist" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#212121] mb-2">Chuyên ngành</label>
+                <label className="block text-sm font-medium text-[#212121] mb-2">{t("major")}</label>
                 <select value={settings.major || ""} onChange={(e) => setSettings({ ...settings, major: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] bg-white">
-                  <option value="">Chọn chuyên ngành</option>
-                  <option value="Thiết kế Đồ họa">Thiết kế Đồ họa</option>
+                  <option value="">{t("selectMajor")}</option>
+                  <option value={t("graphicDesign")}>Thiết kế Đồ họa</option>
                   <option value="Thiết kế Truyền thông">Thiết kế Truyền thông</option>
                   <option value="Thiết kế Kỹ thuật số & UI/UX">Thiết kế Kỹ thuật số & UI/UX</option>
                   <option value="Motion Graphics & Video">Motion Graphics & Video</option>
@@ -4625,7 +4674,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#212121] mb-2">Năm học</label>
+                <label className="block text-sm font-medium text-[#212121] mb-2">{t("schoolYear")}</label>
                 <select value={settings.yearLevel} onChange={(e) => setSettings({ ...settings, yearLevel: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] bg-white">
                   <option value="Năm 1">Năm 1</option>
                   <option value="Năm 2">Năm 2</option>
@@ -4638,7 +4687,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
           </div>
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
-            <h3 className="font-bold text-[#212121] mb-4">Mạng xã hội</h3>
+            <h3 className="font-bold text-[#212121] mb-4">{t("socialMedia")}</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">Behance</label>
@@ -4658,8 +4707,8 @@ function PortfolioSettingsPage({ setPage, userData }) {
           </div>
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
-            <h3 className="font-bold text-[#212121] mb-1">Ấn phẩm tiêu biểu</h3>
-            <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm để hiển thị ở đầu portfolio.</p>
+            <h3 className="font-bold text-[#212121] mb-1">{t("featuredArtworks")}</h3>
+            <p className="text-sm text-[#666666] mb-4">{t("maxFourFeatured")}</p>
             {(settings.featuredArtworkIds || []).length > 0 && (
               <div className="flex gap-3 mb-4 flex-wrap">
                 {myArtworks.filter(a => (settings.featuredArtworkIds || []).includes(a.id)).map(a => (
@@ -4678,12 +4727,12 @@ function PortfolioSettingsPage({ setPage, userData }) {
           <div id="featPicker" className="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden'); }}>
             <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] overflow-y-auto p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-lg text-[#212121]">Chọn ấn phẩm tiêu biểu</h3>
+                <h3 className="font-bold text-lg text-[#212121]">{t("selectFeaturedArtworks")}</h3>
                 <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="text-[#666666] hover:text-[#212121] cursor-pointer"><X size={20} /></button>
               </div>
               <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm (đã chọn {(settings.featuredArtworkIds || []).length}/4)</p>
               {myArtworks.length === 0 ? (
-                <div className="text-center py-10 text-[#666666] text-sm">Bạn chưa có ấn phẩm công khai nào. <a href="/#/upload" className="text-[#077E9E] hover:underline font-semibold">Đăng ấn phẩm mới</a></div>
+                <div className="text-center py-10 text-[#666666] text-sm">Bạn chưa có ấn phẩm công khai nào. <a href="/#/upload" className="text-[#077E9E] hover:underline font-semibold">{t("uploadNewArtwork")}</a></div>
               ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {myArtworks.slice(0, 20).map(a => {
@@ -4700,7 +4749,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
                 })}
               </div>
               )}
-              <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="mt-4 w-full py-2.5 rounded-lg bg-[#077E9E] text-white font-semibold cursor-pointer">Xác nhận</button>
+              <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="mt-4 w-full py-2.5 rounded-lg bg-[#077E9E] text-white font-semibold cursor-pointer">{t("confirm")}</button>
             </div>
           </div>
 
@@ -4708,12 +4757,12 @@ function PortfolioSettingsPage({ setPage, userData }) {
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-bold text-[#212121]">Timeline thành tích</h3>
-              <button onClick={openAddTimeline} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#077E9E] text-white text-sm font-semibold hover:bg-opacity-90 transition-opacity cursor-pointer"><Plus size={15} />Thêm</button>
+              <button onClick={openAddTimeline} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#077E9E] text-white text-sm font-semibold hover:bg-opacity-90 transition-opacity cursor-pointer"><Plus size={15} />{t("add")}</button>
             </div>
             <p className="text-sm text-[#666666] mb-4">Quản lý các cột mốc thành tích trên dòng thời gian portfolio.</p>
 
             {timelineEntries.length === 0 ? (
-              <div className="text-center py-8 text-sm text-[#666666]">Chưa có mốc thành tích nào. Bấm "Thêm" để tạo mốc đầu tiên.</div>
+              <div className="text-center py-8 text-sm text-[#666666]">Chưa có mốc thành tích nào. Bấm t("add") để tạo mốc đầu tiên.</div>
             ) : (
               <div className="space-y-2">
                 {timelineEntries.map(entry => (
@@ -4767,7 +4816,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
                     <input type="text" value={timelineForm.title} onChange={e => setTimelineForm({...timelineForm, title: e.target.value})} placeholder="VD: Giải Nhất NCKH cấp Trường" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Mô tả</label>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("description")}</label>
                     <textarea value={timelineForm.description} onChange={e => setTimelineForm({...timelineForm, description: e.target.value})} rows={3} placeholder="Mô tả ngắn về thành tích..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] resize-none" />
                   </div>
                   <div>
@@ -4788,7 +4837,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
                 </div>
                 <div className="flex gap-3 mt-6">
                   <button onClick={saveTimelineEntry} disabled={savingTimeline || !timelineForm.title || !timelineForm.month || !timelineForm.year} className="flex-1 py-2.5 rounded-lg bg-[#077E9E] text-white text-sm font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{savingTimeline ? 'Đang lưu...' : editingTimelineId ? 'Cập nhật' : 'Thêm mới'}</button>
-                  <button onClick={() => setShowTimelineForm(false)} className="px-6 py-2.5 rounded-lg border border-[#E0E0E0] text-sm font-medium text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer">Hủy</button>
+                  <button onClick={() => setShowTimelineForm(false)} className="px-6 py-2.5 rounded-lg border border-[#E0E0E0] text-sm font-medium text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("cancel")}</button>
                 </div>
               </div>
             </div>
@@ -4829,8 +4878,8 @@ function PortfolioSettingsPage({ setPage, userData }) {
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-8 flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-[#212121] mb-1">Trạng thái Portfolio</h3>
-              <p className="text-sm text-[#666666]">Chuyển sang "Riêng tư" nếu bạn không muốn ai xem được portfolio này.</p>
+              <h3 className="font-bold text-[#212121] mb-1">{t("portfolioStatus")}</h3>
+              <p className="text-sm text-[#666666]">Chuyển sang t("private") nếu bạn không muốn ai xem được portfolio này.</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" checked={settings.isPortfolioPublic} onChange={(e) => setSettings({ ...settings, isPortfolioPublic: e.target.checked })} />
@@ -4839,7 +4888,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
           </div>
 
             <div className="flex items-center gap-4">
-              <button onClick={save} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{saving ? "Đang lưu..." : "Lưu cài đặt"}</button>
+              <button onClick={save} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{saving ? t("saving") : t("saveSettings")}</button>
               <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="px-6 py-2 border border-[#077E9E] text-[#077E9E] rounded-lg font-bold hover:bg-[#F0F8FB] transition-colors">
                 <ExternalLink size={16} className="inline mr-1.5" />Xem Portfolio
               </a>
@@ -4851,6 +4900,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
 }
 
 function SettingsPage({ setPage, userData }) {
+  const { t } = useI18n();
   const { refreshSession } = useAuth();
   const [profile, setProfile] = useState({ fullName: "", studentId: "", email: "", avatarUrl: "" });
   const [pendingAvatar, setPendingAvatar] = useState(null);
@@ -4891,7 +4941,7 @@ function SettingsPage({ setPage, userData }) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setMessage({ type: "success", text: "Đã cập nhật thông tin!" });
+        setMessage({ type: "success", text: t("profileUpdated") });
         setPendingAvatar(null);
         setProfile(p => ({ ...p, avatarUrl: data.user?.avatarUrl || p.avatarUrl }));
         refreshSession();
@@ -4910,11 +4960,11 @@ function SettingsPage({ setPage, userData }) {
 
   const changePassword = async () => {
     if (!passwords.current || !passwords.newPass || !passwords.confirm) {
-      setMessage({ type: "error", text: "Vui lòng nhập đầy đủ thông tin" });
+      setMessage({ type: "error", text: t("fillAllInfo") });
       return;
     }
     if (passwords.newPass.length < 8) {
-      setMessage({ type: "error", text: "Mật khẩu mới phải có ít nhất 8 ký tự" });
+      setMessage({ type: "error", text: t("passwordMinLength") });
       return;
     }
     if (passwords.newPass !== passwords.confirm) {
@@ -4931,10 +4981,10 @@ function SettingsPage({ setPage, userData }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage({ type: "success", text: "Đổi mật khẩu thành công!" });
+        setMessage({ type: "success", text: t("passwordChanged") });
         setPasswords({ current: "", newPass: "", confirm: "" });
       } else {
-        setMessage({ type: "error", text: data.error || "Đổi mật khẩu thất bại" });
+        setMessage({ type: "error", text: data.error || t("passwordChangeFailed") });
       }
     } catch {
       setMessage({ type: "error", text: "Lỗi kết nối" });
@@ -4953,7 +5003,7 @@ function SettingsPage({ setPage, userData }) {
 
       <div className="flex-1 overflow-y-auto p-10">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-[#212121] mb-2">Cài đặt Tài khoản</h2>
+          <h2 className="text-2xl font-bold text-[#212121] mb-2">{t("accountSettings")}</h2>
           <p className="text-[#666666] text-sm mb-8">Quản lý thông tin cá nhân và bảo mật tài khoản.</p>
 
           {message.text && (
@@ -4963,7 +5013,7 @@ function SettingsPage({ setPage, userData }) {
           )}
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
-            <h3 className="font-bold text-[#212121] mb-4">Ảnh đại diện</h3>
+            <h3 className="font-bold text-[#212121] mb-4">{t("avatar")}</h3>
             <div className="flex items-center gap-6">
               <img src={pendingAvatar || profile.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
               <div>
@@ -4987,51 +5037,51 @@ function SettingsPage({ setPage, userData }) {
           </div>
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
-            <h3 className="font-bold text-[#212121] mb-4">Thông tin cá nhân</h3>
+            <h3 className="font-bold text-[#212121] mb-4">{t("personalInfo")}</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#212121] mb-2">Họ và Tên</label>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">{t("fullNameLabel")}</label>
                   <input type="text" value={profile.fullName} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#212121] mb-2">Mã Sinh viên</label>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">{t("studentId")}</label>
                   <input type="text" value={profile.studentId} disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#212121] mb-2">Địa chỉ Email</label>
+                <label className="block text-sm font-medium text-[#212121] mb-2">{t("emailAddress")}</label>
                 <input type="email" value={profile.email} disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
               </div>
             </div>
           </div>
 
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-8">
-            <h3 className="font-bold text-[#212121] mb-4">Đổi mật khẩu</h3>
+            <h3 className="font-bold text-[#212121] mb-4">{t("changePassword")}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[#212121] mb-2">Mật khẩu hiện tại</label>
+                <label className="block text-sm font-medium text-[#212121] mb-2">{t("currentPassword")}</label>
                 <input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#212121] mb-2">Mật khẩu mới</label>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">{t("newPassword")}</label>
                   <input type="password" value={passwords.newPass} onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#212121] mb-2">Xác nhận mật khẩu mới</label>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">{t("confirmNewPassword")}</label>
                   <input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="••••••••" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
               <button onClick={changePassword} disabled={changingPass} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
-                {changingPass ? "Đang xử lý..." : "Đổi mật khẩu"}
+                {changingPass ? "Đang xử lý..." : t("changePassword")}
               </button>
             </div>
           </div>
 
           <div className="flex gap-3">
             <button onClick={saveProfile} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
-              {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              {saving ? t("saving") : t("saveChanges")}
             </button>
           </div>
         </div>
@@ -5041,6 +5091,7 @@ function SettingsPage({ setPage, userData }) {
 }
 
 function PortalPage({ setPage }) {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen bg-[#F8F8F8] p-10 flex flex-col items-center">
       <div className="max-w-6xl w-full mt-10">
@@ -5111,7 +5162,7 @@ function PortalPage({ setPage }) {
             <div onClick={() => setPage("dashboard")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
                 <Folder size={20} className="text-[#077E9E]" />
-                <h3 className="text-[#212121] font-medium text-base">Dashboard Sinh viên</h3>
+                <h3 className="text-[#212121] font-medium text-base">{t("studentDashboard")}</h3>
               </div>
               <p className="text-[#666666] text-xs">Quản lý các ấn phẩm đã tải lên của sinh viên</p>
             </div>
@@ -5132,21 +5183,21 @@ function PortalPage({ setPage }) {
             <div onClick={() => setPage("settings")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
                 <Settings size={20} className="text-[#077E9E]" />
-                <h3 className="text-[#212121] font-medium text-base">Cài đặt Tài khoản</h3>
+                <h3 className="text-[#212121] font-medium text-base">{t("accountSettings")}</h3>
               </div>
               <p className="text-[#666666] text-xs">Tùy chỉnh thông tin cá nhân và bảo mật</p>
             </div>
             <div onClick={() => setPage("portfolio_settings")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
                 <Briefcase size={20} className="text-[#077E9E]" />
-                <h3 className="text-[#212121] font-medium text-base">Cài đặt Portfolio</h3>
+                <h3 className="text-[#212121] font-medium text-base">{t("portfolioSettings")}</h3>
               </div>
               <p className="text-[#666666] text-xs">Trạng thái công khai và link mạng xã hội</p>
             </div>
             <div onClick={() => setPage("messages")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
                 <MessageSquare size={20} className="text-[#077E9E]" />
-                <h3 className="text-[#212121] font-medium text-base">Hộp thư đến</h3>
+                <h3 className="text-[#212121] font-medium text-base">{t("inboxTitle")}</h3>
               </div>
               <p className="text-[#666666] text-xs">Quản lý tin nhắn liên hệ từ nhà tuyển dụng</p>
             </div>
@@ -5193,16 +5244,17 @@ function PortalPage({ setPage }) {
 }
 
 function AccessDenied({ setPage }) {
+  const { t } = useI18n();
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 16, padding: 40 }}>
       <ShieldAlert size={64} color={CRIMSON} strokeWidth={1.2} />
-      <h2 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: 0 }}>Truy cập bị từ chối</h2>
+      <h2 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: 0 }}>{t("accessDenied")}</h2>
       <p style={{ fontSize: 14, color: MUTED, textAlign: "center", maxWidth: 400, lineHeight: 1.6 }}>
         Bạn không có quyền truy cập trang này. Vui lòng đăng nhập với tài khoản có quyền phù hợp.
       </p>
       <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-        <button onClick={() => setPage("home")} style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Về trang chủ</button>
-        <button onClick={() => setPage("auth")} style={{ padding: "10px 24px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Đăng nhập</button>
+        <button onClick={() => setPage("home")} style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{t("backToHome")}</button>
+        <button onClick={() => setPage("auth")} style={{ padding: "10px 24px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{t("login")}</button>
       </div>
     </div>
   );
@@ -5387,7 +5439,7 @@ function TimelineSection({ entries: propEntries, slug }) {
       <div className="flex items-end justify-between gap-6 mb-8">
         <div>
           <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-2">Academic Journey</p>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-black tracking-tight">Hành trình thành tích</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-black tracking-tight">{t("achievementJourney")}</h2>
           <p className="text-sm text-muted mt-2 max-w-lg">
             Những cột mốc đáng nhớ trên chặng đường học tập và nghiên cứu.
           </p>
@@ -5498,6 +5550,7 @@ function TimelineSection({ entries: propEntries, slug }) {
 }
 
 export default function App() {
+  const { t } = useI18n();
   const { user: authUser, loading, logout, refreshSession } = useAuth();
 
   const getHashState = useCallback(() => {
@@ -5649,7 +5702,7 @@ export default function App() {
 
   const createCollection = async (name) => {
     setCollections((prev) => [...prev, { id: name, name, curatorEssay: "", theme: "Classic", items: [] }]);
-    setToast({ title: "Đã tạo bộ sưu tập", message: name });
+    setToast({ title: t("collectionCreated"), message: name });
     api.collections.create({ collectionName: name }).catch(() => {});
     return name;
   };
@@ -5674,7 +5727,7 @@ export default function App() {
     );
     setOptimisticSavedIds((prev) => prev.filter((x) => x !== artworkId));
     setSaveModal({ open: false, artwork: null });
-    setToast({ title: "Đã lưu vào bộ sưu tập", message: "Đã cập nhật ghi chú giám tuyển." });
+    setToast({ title: t("savedToCollection"), message: t("curatorNoteUpdated") });
 
     try {
       const ops = [];
@@ -5834,3 +5887,7 @@ export default function App() {
     </div>
   );
 }
+
+
+
+
