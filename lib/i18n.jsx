@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import React from 'react';
 
 const translations = {
@@ -902,47 +902,42 @@ const translations = {
 
 const I18nContext = createContext();
 
-export function TranslationProvider({ children }) {
-  const [lang, setLang] = useState(() => {
-    try { return localStorage.getItem('app_lang') || 'vi'; } catch { return 'vi'; }
-  });
+let _currentLang = 'vi';
+try { _currentLang = localStorage.getItem('app_lang') || 'vi'; } catch {}
 
-  const t = useCallback((key) => {
-    return translations[lang]?.[key] ?? translations.vi[key] ?? key;
-  }, [lang]);
-
-  const toggleLang = useCallback(() => {
-    setLang(prev => {
-      const next = prev === 'vi' ? 'en' : 'vi';
-      try { localStorage.setItem('app_lang', next); } catch {}
-      return next;
-    });
-  }, []);
-
-  const setLangDirect = useCallback((l) => {
-    setLang(l);
-    try { localStorage.setItem('app_lang', l); } catch {}
-  }, []);
-
-  return (
-    <I18nContext.Provider value={{ lang, t, toggleLang, setLang: setLangDirect, isEN: lang === 'en' }}>
-      {children}
-    </I18nContext.Provider>
-  );
+export function t(key) {
+  return translations[_currentLang]?.[key] ?? translations.vi[key] ?? key;
 }
 
-const _vi = translations.vi;
-const _globalT = (key) => _vi[key] || key;
-try { window.__t = _globalT; } catch {}
+let _subscribers = [];
+function _notify() { _subscribers.forEach(fn => fn()); }
+
+export function setLang(lang) {
+  _currentLang = lang;
+  try { localStorage.setItem('app_lang', lang); } catch {}
+  _notify();
+}
+
+export function getLang() { return _currentLang; }
+
+export function TranslationProvider({ children }) {
+  const [, forceUpdate] = useState(0);
+
+  useEffect(() => {
+    _subscribers.push(forceUpdate);
+    return () => { _subscribers = _subscribers.filter(fn => fn !== forceUpdate); };
+  }, []);
+
+  return React.createElement(I18nContext.Provider, {
+    value: { t, lang: _currentLang, toggleLang: () => setLang(_currentLang === 'vi' ? 'en' : 'vi'), setLang, isEN: _currentLang === 'en' }
+  }, children);
+}
 
 export function useI18n() {
   const ctx = useContext(I18nContext);
-  if (!ctx) throw new Error('useI18n must be used within TranslationProvider');
-  try { window.__t = ctx.t; } catch {}
+  if (!ctx) return { t, lang: _currentLang, toggleLang: () => setLang(_currentLang === 'vi' ? 'en' : 'vi'), setLang, isEN: _currentLang === 'en' };
   return ctx;
 }
-
-export { I18nContext };
 
 
 
