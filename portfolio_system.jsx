@@ -605,7 +605,7 @@ function PortfolioPage({ setPage, pageParams }) {
             {featuredWorks.map((w) => (
               <div
                 key={w.id}
-                onClick={() => setPage && setPage("detail")}
+                onClick={() => setPage && setPage("detail", { artworkId: w.id })}
                 className={`group relative overflow-hidden rounded-2xl border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer ${w.colClass}`}
                 style={{ gridRow: `span ${w.rowSpan}` }}
               >
@@ -662,7 +662,7 @@ function PortfolioPage({ setPage, pageParams }) {
             ))}
           </div>
         </div>
-        <MasonryGrid items={artworks.slice(0, 6)} onArtworkClick={(art) => { setActiveArtworkId(art.id); setPage("detail"); }} />
+        <MasonryGrid items={artworks.slice(0, 6)} onArtworkClick={(art) => { setPage("detail", { artworkId: art.id }); }} />
         <div style={{ height: 64 }} />
       </main>
 
