@@ -1162,8 +1162,15 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
 
     setSendingOrder(true);
     try {
+      let recipientSlug = "uef-design-gallery";
+      try {
+        const artworkData = await api.artworks.get(activeArtworkId);
+        const ownerSlug = artworkData?.user?.portfolioSettings?.portfolioSlug;
+        if (ownerSlug) recipientSlug = ownerSlug;
+      } catch {}
+
       await api.messages.send({
-        recipientSlug: "uef-design-gallery",
+        recipientSlug,
         senderName: orderData.name.trim(),
         senderEmail: orderData.email.trim(),
         senderCompany: orderData.company.trim() || null,
