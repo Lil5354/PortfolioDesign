@@ -6,6 +6,7 @@ import { api } from "./lib/api-client";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import NotificationBell from "./components/NotificationBell";
 import { TranslationProvider, useI18n } from "./lib/i18n.jsx";
+import { t } from "./lib/i18n.jsx";
 
 import { saveAs } from "file-saver";
 import {
@@ -36,7 +37,7 @@ const artworks = [
 ];
 
 function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userData }) {
-  const { t, lang, toggleLang } = useI18n();
+  const { lang, toggleLang } = useI18n();
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -198,8 +199,7 @@ function MasonryGrid({
   isBookmarked,
   onBookmarkClick,
 }) {
-  const { t } = useI18n();
-  const [hovered, setHovered] = useState(null);
+    const [hovered, setHovered] = useState(null);
   const cols = [[], [], []];
   items.forEach((item, i) => cols[i % 3].push(item));
   return (
@@ -280,8 +280,7 @@ function MasonryGrid({
 }
 
 function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
-  const { t } = useI18n();
-  const [category, setCategory] = useState("Tất cả");
+    const [category, setCategory] = useState("Tất cả");
   const [year, setYear] = useState("Tất cả");
   const [tool, setTool] = useState("Tất cả");
   const [sort, setSort] = useState("newest");
@@ -399,8 +398,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 }
 
 function PortfolioPage({ setPage, pageParams }) {
-  const { t } = useI18n();
-  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -754,8 +752,7 @@ function ToggleSwitch({ isOn, onToggle }) {
 }
 
 function DashboardSidebar({ activePage, setPage, userData }) {
-  const { t } = useI18n();
-  const items = [
+    const items = [
     { icon: <Image size={18} />, label: t("myArtworks"), page: "dashboard" },
     { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
     { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
@@ -792,8 +789,7 @@ function DashboardSidebar({ activePage, setPage, userData }) {
 }
 
 function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userData }) {
-  const { t } = useI18n();
-  const [artworksList, setArtworksList] = useState([]);
+    const [artworksList, setArtworksList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [collabArtworks, setCollabArtworks] = useState([]);
   const [collabLoading, setCollabLoading] = useState(true);
@@ -928,8 +924,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
 }
 
 function UploadPage({ setPage, setActiveArtworkId }) {
-  const { t } = useI18n();
-  const [showPopup, setShowPopup] = useState(false);
+    const [showPopup, setShowPopup] = useState(false);
   const [uploadState, setUploadState] = useState("idle");
   const [createdId, setCreatedId] = useState(null);
   const [checked1, setChecked1] = useState(false);
@@ -1177,8 +1172,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
 }
 
 function OrderModal({ setPage, activeArtworkId, onClose }) {
-  const { t } = useI18n();
-  const [orderData, setOrderData] = useState({
+    const [orderData, setOrderData] = useState({
     name: "",
     email: "",
     phone: "",
@@ -1339,8 +1333,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
 }
 
 function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
-  const { t } = useI18n();
-  const { user: authUser } = useAuth();
+    const { user: authUser } = useAuth();
   const [art, setArt] = useState({
     title: t("loading"), subject: t("loading"), coverImageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
     description: "", tags: [], toolsUsed: [], likeCount: 0, commentCount: 0,
@@ -1946,8 +1939,7 @@ if (mins < 1) return t("justNow");
   );
 }
 function AuthPage({ setPage, onLoginSuccess }) {
-  const { t } = useI18n();
-  const { loginWithEmail, refreshSession } = useAuth();
+    const { loginWithEmail, refreshSession } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authRole, setAuthRole] = useState("student");
@@ -2116,8 +2108,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
 
 function AdminDashboardPage({ setPage }) {
-  const { t } = useI18n();
-  const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, totalInteractions: 0 });
+    const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, totalInteractions: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -2291,8 +2282,7 @@ function AdminDashboardPage({ setPage }) {
 
 
 function MessagesPage({ setPage, userData }) {
-  const { t } = useI18n();
-  const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
 
@@ -2445,8 +2435,7 @@ function MessagesPage({ setPage, userData }) {
 }
 
 function AdminSidebar({ active, setPage }) {
-  const { t } = useI18n();
-  const items = [
+    const items = [
     { icon: <LayoutDashboard size={18} />, label: "Tổng quan", page: "admin" },
     { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users" },
     { icon: <ShoppingCart size={18} />, label: "Đơn đặt hàng", page: "admin_orders" },
@@ -2478,8 +2467,7 @@ function AdminSidebar({ active, setPage }) {
 }
 
 function EditArtworkPage({ setPage, activeArtworkId }) {
-  const { t } = useI18n();
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -2681,8 +2669,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
 }
 
 function AdminUsersPage({ setPage }) {
-  const { t } = useI18n();
-  const [users, setUsers] = useState([]);
+    const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null });
   const [importFileName, setImportFileName] = useState("");
@@ -2827,8 +2814,7 @@ function AdminUsersPage({ setPage }) {
 }
 
 function AdminArtworksPage({ setPage }) {
-  const { t } = useI18n();
-  const [items, setItems] = useState([]);
+    const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [query, setQuery] = useState("");
@@ -3302,8 +3288,7 @@ function AdminArtworksPage({ setPage }) {
 }
 
 function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCreateCollection, onOpenCatalogBuilder }) {
-  const { t } = useI18n();
-  return (
+    return (
     <div className="flex h-screen overflow-hidden bg-white">
       <AdminSidebar active="admin_export" setPage={setPage} />
       <div className="flex-1 overflow-y-auto p-8">
@@ -3379,8 +3364,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
 }
 
 function CollectionExportConfigPage({ setPage, collection, onUpdateCollection }) {
-  const { t } = useI18n();
-  const [deleteMode, setDeleteMode] = useState(false);
+    const [deleteMode, setDeleteMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState([]);
   const [detailArtwork, setDetailArtwork] = useState(null);
   const [dragIndex, setDragIndex] = useState(null);
@@ -3566,8 +3550,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
 }
 
 function RegisterPage({ setPage }) {
-  const { t } = useI18n();
-  const [form, setForm] = useState({ lastName: "", firstName: "", email: "", password: "", confirmPassword: "" });
+    const [form, setForm] = useState({ lastName: "", firstName: "", email: "", password: "", confirmPassword: "" });
   const [showPasswords, setShowPasswords] = useState({ password: false, confirm: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -3678,8 +3661,7 @@ function RegisterPage({ setPage }) {
 }
 
 function LandingPage({ setPage, isLoggedIn }) {
-  const { t } = useI18n();
-  const artworks = [
+    const artworks = [
     { id: 1, img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", title: "Kỷ niệm UEF", student: "Nguyễn Lê Minh Anh", likes: 142 },
     { id: 2, img: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg", title: "Poster Design", student: "Trần Bảo Long", likes: 89 },
     { id: 3, img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80", title: "Typography", student: "Lê Thị Hương", likes: 203 },
@@ -4021,8 +4003,7 @@ const softwareStack = [
 ];
 
 function AboutPage({ setPage }) {
-  const { t } = useI18n();
-  const [audience, setAudience] = useState("student");
+    const [audience, setAudience] = useState("student");
 
   const audienceTabs = [
     { key: "student", label: "Sinh viên", icon: <GraduationCap size={18} />, color: CERULEAN, bg: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1400&q=80" },
@@ -4351,8 +4332,7 @@ function SaveToCollectionModal({
   onSave,
   onCreateCollection,
 }) {
-  const { t } = useI18n();
-  const [selectedIds, setSelectedIds] = useState([]);
+    const [selectedIds, setSelectedIds] = useState([]);
   const [note, setNote] = useState("");
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -4508,8 +4488,7 @@ function SaveToCollectionModal({
 }
 
 function PortfolioSettingsPage({ setPage, userData }) {
-  const { t } = useI18n();
-  const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", major: "", yearLevel: "Năm 3", isPortfolioPublic: true, socialLinks: {}, featuredArtworkIds: [] });
+    const [settings, setSettings] = useState({ portfolioSlug: "", profileHeadline: "", major: "", yearLevel: "Năm 3", isPortfolioPublic: true, socialLinks: {}, featuredArtworkIds: [] });
   const [myArtworks, setMyArtworks] = useState([]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -4900,8 +4879,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
 }
 
 function SettingsPage({ setPage, userData }) {
-  const { t } = useI18n();
-  const { refreshSession } = useAuth();
+    const { refreshSession } = useAuth();
   const [profile, setProfile] = useState({ fullName: "", studentId: "", email: "", avatarUrl: "" });
   const [pendingAvatar, setPendingAvatar] = useState(null);
   const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
@@ -5091,8 +5069,7 @@ function SettingsPage({ setPage, userData }) {
 }
 
 function PortalPage({ setPage }) {
-  const { t } = useI18n();
-  return (
+    return (
     <div className="min-h-screen bg-[#F8F8F8] p-10 flex flex-col items-center">
       <div className="max-w-6xl w-full mt-10">
         <h1 className="text-4xl font-bold text-[#212121] text-center mb-16 tracking-tight">Hệ thống Prototype Portfolio UEF</h1>
@@ -5244,8 +5221,7 @@ function PortalPage({ setPage }) {
 }
 
 function AccessDenied({ setPage }) {
-  const { t } = useI18n();
-  return (
+    return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 16, padding: 40 }}>
       <ShieldAlert size={64} color={CRIMSON} strokeWidth={1.2} />
       <h2 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: 0 }}>{t("accessDenied")}</h2>
@@ -5550,8 +5526,7 @@ function TimelineSection({ entries: propEntries, slug }) {
 }
 
 export default function App() {
-  const { t } = useI18n();
-  const { user: authUser, loading, logout, refreshSession } = useAuth();
+    const { user: authUser, loading, logout, refreshSession } = useAuth();
 
   const getHashState = useCallback(() => {
     const hash = window.location.hash.replace(/^#\/?/, '');
@@ -5887,6 +5862,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
