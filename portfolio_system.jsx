@@ -7,7 +7,6 @@ import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import NotificationBell from "./components/NotificationBell";
 
 import { saveAs } from "file-saver";
-import JSZip from "jszip";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -1454,73 +1453,61 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   };
 
   const drawWatermarkedImage = async (imgUrl, fmt = "png") => {
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = "anonymous";
     await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imgUrl; });
-    const pad = 20;
     const canvas = document.createElement("canvas");
     canvas.width = img.naturalWidth;
     canvas.height = img.naturalHeight;
     const ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0);
+    const wmText = art.watermarkText || "UEF";
     const wmSize = Math.max(Math.min(canvas.width, canvas.height) * 0.04, 14);
-    ctx.font = `bold ${wmSize}px Inter, -apple-system, sans-serif`;
+    ctx.font = `bold ${wmSize}px sans-serif`;
     ctx.textAlign = "right";
     ctx.textBaseline = "bottom";
-    const wm = art.watermarkText || "UEF";
-    const tw = ctx.measureText(wm).width;
+    const tw = ctx.measureText(wmText).width;
+    const pad = 20;
     const bx = canvas.width - pad;
     const by = canvas.height - pad;
     const bh = wmSize * 1.8;
     ctx.fillStyle = "rgba(0,0,0,0.6)";
-    const r = 6;
     ctx.beginPath();
-    ctx.moveTo(bx - tw - pad + r, by - bh);
-    ctx.lineTo(bx + r, by - bh);
-    ctx.arcTo(bx + r, by - bh, bx + r, by - bh + r, r);
-    ctx.lineTo(bx + r, by);
-    ctx.arcTo(bx + r, by, bx + r - r, by, r);
-    ctx.lineTo(bx - tw - pad, by);
-    ctx.arcTo(bx - tw - pad, by, bx - tw - pad, by - r, r);
-    ctx.lineTo(bx - tw - pad, by - bh + r);
-    ctx.arcTo(bx - tw - pad, by - bh, bx - tw - pad + r, by - bh, r);
-    ctx.closePath();
+    ctx.roundRect(bx - tw - pad, by - bh, tw + pad, bh, 6);
     ctx.fill();
     ctx.fillStyle = "rgba(255,255,255,0.92)";
-    ctx.fillText(wm, bx, by - bh / 2 + wmSize * 0.35);
+    ctx.fillText(wmText, bx, by - bh / 2 + wmSize * 0.35);
     const mime = fmt === "jpg" ? "image/jpeg" : "image/png";
-    const quality = fmt === "jpg" ? 0.92 : undefined;
-    const blob = await new Promise(res => canvas.toBlob(b => res(b), mime, quality));
+    const blob = await new Promise(res => canvas.toBlob(b => res(b), mime, fmt === "jpg" ? 0.92 : undefined));
     return { blob, width: canvas.width, height: canvas.height };
   };
 
-  const generateMinimalPDF = async ({ blob, width, height }) => {
-    const imgBytes = await blob.arrayBuffer();
-    const pw = 595; const ph = 842;
+  const getPdfBlob = async ({ blob, width, height }) => {
+    const imgBytes = new Uint8Array(await blob.arrayBuffer());
+    const pw = 595, ph = 842;
     const scale = Math.min(pw / width, ph / height) * 0.95;
-    const iw = Math.round(width * scale);
-    const ih = Math.round(height * scale);
+    const iw = Math.round(width * scale), ih = Math.round(height * scale);
+    const pdf = [
+      `%PDF-1.4\n`,
+      `1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n`,
+      `2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n`,
+      `3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${pw} ${ph}]/Contents 4 0 R/Resources<</XObject<</Im0 5 0 R>>>>>>endobj\n`,
+      `4 0 obj<</Length ${40 + iw + ih}>>stream\nq ${iw} 0 0 ${ih} ${(pw - iw) / 2} ${(ph - ih) / 2} cm /Im0 Do Q\nendstream\nendobj\n`,
+      `5 0 obj<</Type/XObject/Subtype/Image/Width ${width}/Height ${height}/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${imgBytes.length}>>stream\n`,
+    ];
+    const offsets = [0];
     const enc = new TextEncoder();
-    const chunks = [];
-    let offset = 0;
-    const wr = (s) => { const b = enc.encode(s); chunks.push(b); const o = offset; offset += b.byteLength; return o; };
-    const wrB = (b) => { chunks.push(new Uint8Array(b)); const o = offset; offset += b.byteLength; return o; };
-    const o = [];
-    o.push(wr("%PDF-1.4\n"));
-    o.push(wr("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"));
-    o.push(wr("2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"));
-    o.push(wr(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw} ${ph}] /Contents 4 0 R /Resources << /XObject << /Im0 5 0 R >> >> >>\nendobj\n`));
-    const stream = `q ${iw} 0 0 ${ih} ${(pw - iw) / 2} ${(ph - ih) / 2} cm /Im0 Do Q\n`;
-    o.push(wr(`4 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}\nendstream\nendobj\n`));
-    o.push(wr(`5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgBytes.byteLength} >>\nstream\n`));
-    o.push(wrB(imgBytes));
-    o.push(wr("\nendstream\nendobj\n"));
-    const xrefOffset = offset;
-    let xref = `xref\n0 7\n0000000000 65535 f \n`;
-    for (let i = 0; i < 6; i++) xref += `${String(o[i]).padStart(10, "0")} 00000 n \n`;
-    xref += "trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n" + xrefOffset + "\n%%EOF\n";
-    wr(xref);
-    return new Blob(chunks, { type: "application/pdf" });
+    const all = [];
+    for (let i = 0; i < pdf.length; i++) {
+      const b = enc.encode(pdf[i]);
+      all.push(b);
+      offsets.push(offsets[i] + b.length);
+    }
+    all.push(imgBytes);
+    offsets.push(offsets[offsets.length - 1] + imgBytes.length);
+    const last = enc.encode(`\nendstream\nendobj\nxref\n0 7\n0000000000 65535 f \n${offsets.slice(0, 6).map((o, i) => `${String(o).padStart(10, "0")} 00000 n`).join("\n")}\ntrailer<</Size 7/Root 1 0 R>>\nstartxref\n${offsets[6]}\n%%EOF\n`);
+    all.push(last);
+    return new Blob(all, { type: "application/pdf" });
   };
 
   const handleDownload = async (fmt) => {
@@ -1528,26 +1515,16 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     setShowDownloadModal(false);
     try {
       const images = allImagesDeduped.length > 0 ? allImagesDeduped : [art.coverImageUrl];
-      const results = await Promise.all(images.map(url => drawWatermarkedImage(url, fmt === "pdf" ? "jpg" : fmt)));
-      if (results.length === 1) {
-        if (fmt === "pdf") {
-          const pdfBlob = await generateMinimalPDF(results[0]);
-          saveAs(pdfBlob, `${art.title || "artwork"}.pdf`);
+      const isPdf = fmt === "pdf";
+      for (let i = 0; i < images.length; i++) {
+        const result = await drawWatermarkedImage(images[i], isPdf ? "jpg" : fmt);
+        const baseName = `${art.title || "artwork"}${images.length > 1 ? `_${i + 1}` : ""}`;
+        if (isPdf) {
+          const pdfBlob = await getPdfBlob(result);
+          saveAs(pdfBlob, `${baseName}.pdf`);
         } else {
-          saveAs(results[0].blob, `${art.title || "artwork"}.${fmt}`);
+          saveAs(result.blob, `${baseName}.${fmt}`);
         }
-      } else {
-        const zip = new JSZip();
-        for (let i = 0; i < results.length; i++) {
-          if (fmt === "pdf") {
-            const pdfBlob = await generateMinimalPDF(results[i]);
-            zip.file(`${art.title || "artwork"}_${i + 1}.pdf`, pdfBlob);
-          } else {
-            zip.file(`${art.title || "artwork"}_${i + 1}.${fmt}`, results[i].blob);
-          }
-        }
-        const zipBlob = await zip.generateAsync({ type: "blob" });
-        saveAs(zipBlob, `${art.title || "artwork"}.zip`);
       }
     } catch (e) { console.error("Download error:", e); alert("Lỗi khi tải xuống. Vui lòng thử lại."); }
     setDownloading(false);
