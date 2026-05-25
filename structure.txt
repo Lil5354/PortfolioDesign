@@ -1,0 +1,44 @@
+CẤU TRÚC BÀI VIẾT
+ỨNG DỤNG TRUYỀN THÔNG TƯƠNG TÁC TRONG ĐÀO TẠO ĐẠI HỌC
+Tên và học vị tác giả: email tác giả
+Nơi công tác của tác giả
+Ví dụ: PGS.TS. Nguyễn Văn A: abc@uef.edu.vn
+Khoa QHCC -TT, Trường Đại học Kinh tế - Tài chính Thành phố Hồ Chí Minh 
+PGS.TS. Nguyễn Văn B: bac@uef.edu.vn
+Khoa Kinh tế, Trường Đại học Kinh tế - Tài chính Thành phố Hồ Chí Minh 
+
+(Lưu ý: thứ tự trên phản ánh tác giả số 1, 2, 3 của bài viết.
+Email của trường đại học nơi công tác/học tập
+Bài viết từ 3000 – 5000 chữ)
+Tóm tắt
+Nội dung tóm tắt (chữ nghiêng, không đậm, không quá 250 từ).
+Từ khoá: 3 - 5 từ (chữ nghiêng, không đậm).
+THE PAPER TITLE IN ENGLISH 
+(ALL WORDS IN THE TITLE SHOULD BE CAPITALIZED)
+Abstract
+Replace the content of this template with paper abstract (no more than 250 words).
+Keywords: Please include 3 – 5 appropriate keywords. They should be in an alphabetical order and be separated by commas.  
+(Lưu ý: Cấu trúc dưới đây chỉ có tính chất tham khảo. Tùy vào từng nội dung bài viết cụ thể, tác giả chủ động xác định cấu trúc hợp lý cho bài viết của mình)
+1. Giới thiệu
+Phần này nên bao gồm: Tính cấp thiết và lý do lựa chọn nghiên cứu, mục tiêu nghiên cứu, câu hỏi nghiên cứu, đối tượng và phạm vi nghiên cứu, ý nghĩa khoa học và thực tiễn của nghiên cứu…
+2. Cơ sở lý thuyết
+Phần này nên bao gồm: Các định nghĩa, khái niệm, đặc điểm, lý thuyết liên quan, các nghiên cứu trước liên quan, đề xuất mô hình nghiên cứu và giả thuyết… (phần này không quá 1 trang)
+
+Hình 1. Logo UEF
+(Nguồn: Tác giả đề xuất)
+3. Phương pháp nghiên cứu
+Phần này nên bao gồm: Thiết kế nghiên cứu, phương pháp chọn mẫu/cỡ mẫu, phương pháp thu thập, phân tích và xử lý số liệu…
+4. Kết quả nghiên cứu
+Phần này trình bày kết quả nghiên cứu nhằm trả lời từng câu hỏi nghiên cứu đã được nêu ở Mục 1.
+Bảng 1. Phông chữ và quy cách định dạng nội dung bài viết 
+(Nguồn: Nguyễn Văn A và cộng sự, 2015)
+5. Kết luận và khuyến nghị
+Phần này tóm tắt lại nghiên cứu, thảo luận về kết quả nghiên cứu, đề xuất những khuyến nghị và kết luận.
+Tài liệu tham khảo
+[1] Alavi, M. and Leidner, D.E. (2001), ‘Review: Knowledge Management and Knowledge Management Systems: Conceptual Foundations and Research Issues’, MIS Quarterly, số 25, tr. 107-136. 
+[2] APO (2009), Knowledge Management: Facilitators’ Guide, Asian Productivity Organization, Tokyo, Japan.   
+[3] Beijerse, R.P. (1999), ‘Questions in Knowledge Management: Defining and Conceptualizing a Phenomenon’, Journal of Knowledge Management, số 3, tr. 94-109.   
+[4] Bouthillier, F. and Shearer, K. (2020), ‘Understanding knowledge management and information management: the need for an empirical perspective’, Information Research, số 8, tập 1, tr. 141, truy cập ngày 02 tháng 4 năm 2020, từ <http://InformationR.net/ir/8-1/paper141.html>.
+[5] Choo, C.W. (1998), Information management for the intelligent orgnization: the art of scanning the environment, Information Today, Medford, NJ, USA.
+[6] Kakabadse, N.K., Kouzmin, A. and Kakabadse A. (2001), ‘From tacit knowledge to knowledge: leveraging invisible assets’, Knowledge and Process Management, số 8, tập 3, tr. 137-154.
+Phụ lục (nếu có)

@@ -903,7 +903,13 @@ const translations = {
 const I18nContext = createContext();
 
 let _currentLang = 'vi';
-try { _currentLang = localStorage.getItem('app_lang') || 'vi'; } catch {}
+try { 
+  _currentLang = localStorage.getItem('app_lang') || 'vi'; 
+  if (typeof document !== 'undefined') {
+    document.cookie = googtrans=/vi/; path=/;
+    document.cookie = googtrans=/vi/; path=/; domain=;
+  }
+} catch {}
 
 export function t(key) {
   return translations[_currentLang]?.[key] ?? translations.vi[key] ?? key;
@@ -914,7 +920,21 @@ function _notify() { _subscribers.forEach(fn => fn()); }
 
 export function setLang(lang) {
   _currentLang = lang;
-  try { localStorage.setItem('app_lang', lang); } catch {}
+  try { 
+    localStorage.setItem('app_lang', lang); 
+    if (typeof document !== 'undefined') {
+      document.cookie = googtrans=/vi/; path=/;
+      document.cookie = googtrans=/vi/; path=/; domain=;
+      
+      const select = document.querySelector('.goog-te-combo');
+      if (select) {
+        select.value = lang;
+        select.dispatchEvent(new Event('change'));
+      } else {
+        window.location.reload();
+      }
+    }
+  } catch {}
   _notify();
 }
 
@@ -938,6 +958,3 @@ export function useI18n() {
   if (!ctx) return { t, lang: _currentLang, toggleLang: () => setLang(_currentLang === 'vi' ? 'en' : 'vi'), setLang, isEN: _currentLang === 'en' };
   return ctx;
 }
-
-
-

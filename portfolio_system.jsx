@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+﻿import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "./lib/AuthContext";
 import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
@@ -95,7 +95,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
         <div className="relative" ref={langRef}>
           <button onClick={() => setIsLangOpen(!isLangOpen)}
             className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[#E0E0E0] bg-white text-[#666666] hover:text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer"
-            title={lang === 'vi' ? 'English' : 'Tiếng Việt'}>
+            title={lang === 'vi' ? t("english") : t("vietnamese")}>
             <Languages size={16} />
             <span className="text-[11px] font-semibold uppercase">{lang === 'vi' ? 'VI' : 'EN'}</span>
           </button>
@@ -313,7 +313,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const mapped = (data.artworks || []).map((a, i) => ({
     id: a.id,
     title: a.title,
-    student: a.user?.fullName || "Sinh viên",
+    student: a.user?.fullName || t("student"),
     img: a.coverImageUrl,
     likes: a.likeCount || 0,
     h: [240, 300, 350, 270, 320, 380][i % 6],
@@ -411,7 +411,7 @@ function PortfolioPage({ setPage, pageParams }) {
 
   const hashSlug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
   const slug = pageParams?.portfolioSlug || hashSlug;
-  const titleByYear = { "Năm 1": "Nhà thiết kế mầm non", "Năm 2": "Nhà thiết kế tập sự", "Năm 3": "Nhà thiết kế chuyên nghiệp", "Năm 4": "Nhà thiết kế cao cấp", "Tốt nghiệp": "Nhà thiết kế xuất sắc" };
+  const titleByYear = { "Năm 1": t("freshmanDesigner"), "Năm 2": t("internDesigner"), "Năm 3": t("professionalDesigner"), "Năm 4": t("seniorDesigner"), "Tốt nghiệp": t("graduateDesigner") };
 
   useEffect(() => {
     setLoading(true);
@@ -444,7 +444,7 @@ function PortfolioPage({ setPage, pageParams }) {
 
   const { user, portfolioSettings, stats, featuredArtworks, privateGrade } = portfolioData;
   const profile = {
-    fullName: user?.fullName || "Sinh viên",
+    fullName: user?.fullName || t("student"),
     profileHeadline: portfolioSettings?.profileHeadline || "Design Student",
     bio: user?.bio || "",
     avatarUrl: user?.avatarUrl || "",
@@ -758,9 +758,9 @@ function DashboardSidebar({ activePage, setPage, userData }) {
     { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
     { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
   ];
-  const profileName = userData?.name || "Sinh viên";
+  const profileName = userData?.name || t("student");
   const profileAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
-  const studentYear = "Sinh viên";
+  const studentYear = t("student");
 
   return (
     <div style={{ width: 220, background: "#fff", borderRight: `1px solid ${GRAY_LIGHT}`, padding: "28px 0", flexShrink: 0 }}>
@@ -1133,12 +1133,12 @@ function UploadPage({ setPage, setActiveArtworkId }) {
                 {[{ key: false, label: t("individual"), desc: t("selfPerformed"), icon: <User size={16} /> }, { key: true, label: t("group"), desc: t("teamwork"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#F0F8FB" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
               </div>
             </div>
-            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("addTeamMembers")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
+            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("addTeamMembers")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("describeYourArtwork")} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("category")} *</label>
                 <select value={subject} onChange={e => setSubject(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
-                  <option value="">-- Chọn --</option>
+<option value="">{t("selectOption")}</option>
                   {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
               </div>
@@ -1249,7 +1249,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
                 type="text"
                 value={orderData.name}
                 onChange={e => setOrderData({ ...orderData, name: e.target.value })}
-                placeholder="Nguyễn Văn A"
+                placeholder={t("placeholderFullName")}
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
               />
             </div>
@@ -1279,7 +1279,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
                 type="text"
                 value={orderData.company}
                 onChange={e => setOrderData({ ...orderData, company: e.target.value })}
-                placeholder="Công ty TNHH ABC"
+                placeholder={t("placeholderCompany")}
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
               />
             </div>
@@ -1288,7 +1288,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
               <textarea
                 value={orderData.description}
                 onChange={e => setOrderData({ ...orderData, description: e.target.value })}
-                placeholder="Mô tả chi tiết về ấn phẩm bạn muốn đặt (kích thước, số lượng, màu sắc, deadline...)"
+                placeholder={t("orderDescriptionPlaceholder")}
                 rows={4}
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", resize: "vertical", minHeight: 100, boxSizing: "border-box", color: BLACK }}
               />
@@ -1297,7 +1297,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
         </div>
         <div className="p-6 border-t border-[#E0E0E0] flex gap-3">
           <button onClick={onClose} disabled={sendingOrder} style={{ flex: 1, padding: "12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", color: BLACK, opacity: sendingOrder ? 0.6 : 1 }}>
-            Hủy
+            {t("cancel")}
           </button>
           <button
             onClick={handleSubmit}
@@ -1322,7 +1322,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
               <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> {t("sending")}</>
             ) : (
               <>
-                <ShoppingCart size={16} /> Xác nhận đơn hàng
+                <ShoppingCart size={16} /> {t("confirmOrder")}
               </>
             )}
           </button>
@@ -1567,7 +1567,7 @@ if (mins < 1) return t("justNow");
           <ShieldAlert size={28} color={CRIMSON} />
         </div>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: BLACK, margin: 0 }}>{t("cannotLoadArtwork")}</h2>
-        <p style={{ fontSize: 14, color: MUTED, margin: 0, maxWidth: 400, textAlign: "center" }}>Ấn phẩm không tồn tại hoặc đã bị gỡ. Vui lòng quay lại Gallery để khám phá các tác phẩm khác.</p>
+        <p style={{ fontSize: 14, color: MUTED, margin: 0, maxWidth: 400, textAlign: "center" }}>{t("artworkNotFound")}</p>
         <button onClick={() => setPage("gallery")} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{t("backToGallery")}</button>
       </div>
     );
@@ -1604,7 +1604,7 @@ if (mins < 1) return t("justNow");
             <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
               <button onClick={() => setShowFullscreen(true)} title={t("zoomIn")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
               <button onClick={() => setShowDownloadModal(true)} title={t("download")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><FileDown size={16} /></button>
-              <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt('Sao chép link:', window.location.href); } }} title={t("copyLink")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Link size={16} /></button>
+              <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt(t("copyLinkPrompt"), window.location.href); } }} title={t("copyLink")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Link size={16} /></button>
             </div>
           </div>
           {shareToast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: BLACK, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>{t("linkCopied")}</div>}
@@ -1616,7 +1616,7 @@ if (mins < 1) return t("justNow");
                   <button onClick={() => setShowDownloadModal(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={18} /></button>
                 </div>
                 <div className="p-5">
-                  <p className="text-xs text-[#666666] mb-4">Chọn định dạng để tải{allImagesDeduped.length > 1 ? ` (${allImagesDeduped.length} ảnh)` : ""}:</p>
+                  <p className="text-xs text-[#666666] mb-4">{t("chooseFormatToDownload")}{allImagesDeduped.length > 1 ? ` (${allImagesDeduped.length} ${t("images")})` : ""}:</p>
                   <div className="flex flex-col gap-3">
                     {[
                       { key: "png", label: "PNG", desc: t("pngDescription") },
@@ -1656,7 +1656,7 @@ if (mins < 1) return t("justNow");
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
               {art.semester && <span style={{ background: "#FEF3E2", color: "#92400E", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}>{(semesterMeta[art.semester]?.icon) || <BookOpen size={12} />} {semesterMeta[art.semester]?.label || art.semester}</span>}
               {art.academicYear && <span style={{ background: "#E8F0FE", color: "#1E40AF", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Calendar size={12} /> {art.academicYear}</span>}
-              {(art.collaborators || []).length > 0 && <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {(art.collaborators || []).length} thành viên</span>}
+              {(art.collaborators || []).length > 0 && <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {(art.collaborators || []).length} {t("members")}</span>}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <img
@@ -1761,10 +1761,10 @@ if (mins < 1) return t("justNow");
                  {isBookmarked && isBookmarked(art.id) ? t("saved") : t("save")}
                </button>
                <button onClick={() => setShowReport(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                 <ShieldAlert size={16} /> Báo cáo
-               </button>
-               <button onClick={() => setShowOrderModal(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid #10B981`, background: "#ECFDF5", color: "#059669", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                 <ShoppingCart size={16} /> Đặt hàng
+                  <ShieldAlert size={16} /> {t("report")}
+                </button>
+                <button onClick={() => setShowOrderModal(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid #10B981`, background: "#ECFDF5", color: "#059669", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                  <ShoppingCart size={16} /> {t("order")}
                </button>
              </div>
           </div>
@@ -1780,7 +1780,7 @@ if (mins < 1) return t("justNow");
                     {existingGrade ? t("graded") : t("lecturerReview")}
                   </p>
                   <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>
-                    {existingGrade ? `Điểm: ${existingGrade.score}/10` : "Nhập điểm và lời nhận xét"}
+                    {existingGrade ? `${t("score")}: ${existingGrade.score}/10` : t("enterScoreAndComment")}
                   </p>
                 </div>
               </div>
@@ -1798,7 +1798,7 @@ if (mins < 1) return t("justNow");
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("critiqueAndFeedback")}</label>
-                <textarea value={gradeComment} onChange={e => setGradeComment(e.target.value)} placeholder="Nhận xét về kỹ thuật thực hiện, tư duy thiết kế, điểm mạnh và góp ý cải thiện..." style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 100, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
+                <textarea value={gradeComment} onChange={e => setGradeComment(e.target.value)} placeholder={t("gradeCommentPlaceholder")} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 100, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
               </div>
               <button onClick={handleSaveGrade} disabled={!gradeScore || savingGrade} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: gradeScore && !savingGrade ? CERULEAN : GRAY_LIGHT, color: gradeScore && !savingGrade ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: gradeScore && !savingGrade ? "pointer" : "not-allowed" }}>
                 {savingGrade ? t("saving") : existingGrade ? t("updateGrade") : t("saveGrade")}
@@ -1813,19 +1813,19 @@ if (mins < 1) return t("justNow");
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>{t("gradeScore")}</p>
                   {existingGrade.comment && <p style={{ fontSize: 12, color: "#444", margin: 0, lineHeight: 1.5 }}>{existingGrade.comment}</p>}
-                  {existingGrade.lecturer && <p style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>Bởi: {existingGrade.lecturer.fullName}</p>}
+                  {existingGrade.lecturer && <p style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>{t("by")}: {existingGrade.lecturer.fullName}</p>}
                 </div>
               </div>
             </div>
           )}
 
           <div style={{ marginTop: 32 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>Bình luận ({comments.length})</h3>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>{t("comments")} ({comments.length})</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
               <div style={{ border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, padding: 12, background: GRAY_BG }}>
                 {currentUserId ? (
                   <>
-                    <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Để lại bình luận của bạn..." style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
+                    <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder={t("leaveCommentPlaceholder")} style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
                     <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
                       <button onClick={handleSendComment} disabled={!commentText.trim() || sendingComment} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: commentText.trim() && !sendingComment ? CERULEAN : GRAY_LIGHT, color: commentText.trim() && !sendingComment ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: commentText.trim() && !sendingComment ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 6 }}>
                         <Send size={14} /> {sendingComment ? t("sending") : t("sendComment")}
@@ -1834,7 +1834,7 @@ if (mins < 1) return t("justNow");
                   </>
                 ) : (
                   <div style={{ textAlign: "center", padding: "16px 0" }}>
-                    <p style={{ fontSize: 13, color: MUTED, margin: "0 0 10px" }}>Vui lòng <strong style={{ color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("auth")}>đăng nhập</strong> để bình luận</p>
+                    <p style={{ fontSize: 13, color: MUTED, margin: "0 0 10px" }}>{t("pleaseLoginToComment1")} <strong style={{ color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("auth")}>{t("login")}</strong> {t("pleaseLoginToComment2")}</p>
                   </div>
                 )}
               </div>
@@ -1897,7 +1897,7 @@ if (mins < 1) return t("justNow");
                 ))}
               </div>
               <label className="block text-sm font-semibold text-[#666666] mb-2">{t("violationDetails")}</label>
-              <textarea value={reportDetail} onChange={e => setReportDetail(e.target.value)} placeholder="Mô tả chi tiết về vi phạm..." className="w-full p-3 rounded-lg border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] resize-vertical min-h-[120px] font-inherit text-[#212121] box-border" style={{ fontFamily: "inherit" }} />
+              <textarea value={reportDetail} onChange={e => setReportDetail(e.target.value)} placeholder={t("describeViolation")} className="w-full p-3 rounded-lg border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] resize-vertical min-h-[120px] font-inherit text-[#212121] box-border" style={{ fontFamily: "inherit" }} />
               <button onClick={async () => {
                 if (!reportType) return;
                 setSendingReport(true);
@@ -2017,7 +2017,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
         <p style={{ color: MUTED, fontSize: 14, marginBottom: 24 }}>{t("welcomeBack")}</p>
 
         <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-          {[{ key: "student", label: "Sinh viên" }, { key: "lecturer", label: t("lecturer") }, { key: "admin", label: t("admin") }].map((r) => (
+          {[{ key: "student", label: t("student") }, { key: "lecturer", label: t("lecturer") }, { key: "admin", label: t("admin") }].map((r) => (
             <button disabled={logging} key={r.key} onClick={() => { setAuthRole(r.key); autoFillLogin(r.key); }} style={{ flex: 1, padding: "7px 0", borderRadius: 6, border: `1px solid ${authRole === r.key ? CERULEAN : GRAY_LIGHT}`, background: authRole === r.key ? `${CERULEAN}12` : "transparent", color: authRole === r.key ? CERULEAN : MUTED, fontSize: 12, fontWeight: 500, cursor: logging ? "not-allowed" : "pointer", opacity: logging ? 0.6 : 1 }}>{r.label}</button>
           ))}
         </div>
@@ -2078,7 +2078,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
         <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
           <div style={{ flex: 1, height: 1, background: GRAY_LIGHT }} />
-          <span style={{ fontSize: 12, color: MUTED }}>Hoặc</span>
+          <span style={{ fontSize: 12, color: MUTED }}>{t("or")}</span>
           <div style={{ flex: 1, height: 1, background: GRAY_LIGHT }} />
         </div>
 
@@ -2093,12 +2093,12 @@ function AuthPage({ setPage, onLoginSuccess }) {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          Đăng nhập với Google
+          {t("loginWithGoogle")}
         </button>
 
           <p style={{ color: "#666", fontSize: 11, marginTop: 16, textAlign: "center", lineHeight: 1.5 }}>
-          Đăng nhập bằng email của bạn để sử dụng hệ thống.<br />
-          Sinh viên: <strong>sv@uef.edu.vn</strong> / Mật khẩu: <strong>test123</strong>
+          {t("loginWithEmailToUse")}<br />
+          {t("studentLabel")}: <strong>sv@uef.edu.vn</strong> / {t("passwordLabel")}: <strong>test123</strong>
         </p>
       </div>
     </div>
@@ -2124,16 +2124,16 @@ function AdminDashboardPage({ setPage }) {
   }, []);
 
   const stats = [
-    { label: "Ấn phẩm đang hiển thị", value: adminStats.publishedArtworks || 0, hint: "Tổng ấn phẩm công khai", accent: "#077E9E" },
-    { label: "Bài bị báo cáo", value: adminStats.reportedArtworks || 0, hint: "Cần xử lý", accent: "#8B1A1A" },
-    { label: "Tổng tài khoản", value: adminStats.totalAccounts || 0, hint: "SV + GV + Admin", accent: "#212121" },
-    { label: "Lượt tương tác", value: (adminStats.totalInteractions || 0).toLocaleString(), hint: "Lượt thích + bình luận", accent: "#055F78" },
+    { label: t("publishedArtworks"), value: adminStats.publishedArtworks || 0, hint: t("totalPublishedArtworks"), accent: "#077E9E" },
+    { label: t("reportedArtworks"), value: adminStats.reportedArtworks || 0, hint: t("needsProcessing"), accent: "#8B1A1A" },
+    { label: t("totalAccounts"), value: adminStats.totalAccounts || 0, hint: "SV + GV + Admin", accent: "#212121" },
+    { label: t("interactions"), value: (adminStats.totalInteractions || 0).toLocaleString(), hint: t("likesAndComments"), accent: "#055F78" },
   ];
 
   const categoryCounts = [];
   const recent = recentActivity.slice(0, 4).map(a => ({
     color: a.isPublic ? "#077E9E" : "#8B1A1A",
-    text: `${a.user?.fullName || "User"} ${a.isPublic ? "đã được duyệt" : "vừa đăng"} ấn phẩm "${(a.title || "").slice(0, 30)}"`,
+    text: `${a.user?.fullName || "User"} ${a.isPublic ? t("approvedArtwork") : t("justPosted")} "${(a.title || "").slice(0, 30)}"`,
   }));
 
   const statusBadge = (s) => {
@@ -2153,7 +2153,7 @@ function AdminDashboardPage({ setPage }) {
             <p className="text-sm text-[#666666] mt-1">{t("adminDescription")}</p>
           </div>
           <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 bg-[#077E9E] text-white rounded-lg text-sm font-semibold hover:bg-[#055F78] transition-colors flex items-center gap-2">
-            <FileDown size={16} /> Báo cáo PDF
+            <FileDown size={16} /> {t("pdfReport")}
           </button>
         </div>
 
@@ -2177,11 +2177,11 @@ function AdminDashboardPage({ setPage }) {
           <div className="xl:col-span-2 bg-white border border-[#E0E0E0] rounded-xl overflow-hidden">
             <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-bold text-[#212121]">Ấn phẩm cần chú ý</h3>
-                <p className="text-xs text-[#666666] mt-1">Danh sách bài bị báo cáo / đã ẩn / nổi bật</p>
+                <h3 className="text-sm font-bold text-[#212121]">{t("artworksToReview")}</h3>
+                <p className="text-xs text-[#666666] mt-1">{t("artworksToReviewDesc")}</p>
               </div>
               <button onClick={() => setPage("admin_artworks")} className="text-sm font-semibold text-[#077E9E] hover:text-[#055F78] transition-colors">
-                Mở trang xử lý →
+                {t("openProcessingPage")} →
               </button>
             </div>
 
@@ -2190,7 +2190,7 @@ function AdminDashboardPage({ setPage }) {
                 <thead>
                   <tr>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("artworkName")}</th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Sinh viên</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("student")}</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("subject")}</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("date")}</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("status")}</th>
@@ -2223,7 +2223,7 @@ function AdminDashboardPage({ setPage }) {
 
           <div className="flex flex-col gap-6">
             <div className="bg-white border border-[#E0E0E0] rounded-xl p-5">
-              <h3 className="text-sm font-bold text-[#212121] mb-4">Phân bổ ấn phẩm theo môn học</h3>
+              <h3 className="text-sm font-bold text-[#212121] mb-4">{t("artworkDistributionBySubject")}</h3>
               <div className="space-y-3">
                 {categoryCounts.map((c) => (
                   <div key={c.label} className="flex items-center gap-3">
@@ -2239,7 +2239,7 @@ function AdminDashboardPage({ setPage }) {
 
             <div className="bg-white border border-[#E0E0E0] rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold text-[#212121]">Hoạt động gần đây</h3>
+                <h3 className="text-sm font-bold text-[#212121]">{t("recentActivity")}</h3>
                 <span className="text-xs text-[#666666]">{t("today")}</span>
               </div>
               <div className="space-y-3">
@@ -2253,20 +2253,20 @@ function AdminDashboardPage({ setPage }) {
             </div>
 
             <div className="bg-white border border-[#E0E0E0] rounded-xl p-5">
-              <h3 className="text-sm font-bold text-[#212121] mb-4">Thao tác nhanh</h3>
+              <h3 className="text-sm font-bold text-[#212121] mb-4">{t("quickActions")}</h3>
               <div className="space-y-2">
                 <button onClick={() => setPage("admin_artworks")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors text-left">
                   <ShieldAlert size={16} className="text-[#8B1A1A]" />
                   <div>
-                    <p className="text-sm font-semibold text-[#212121]">Xử lý vi phạm</p>
+                    <p className="text-sm font-semibold text-[#212121]">{t("handleViolations")}</p>
                     <p className="text-xs text-[#666666]">{t("hideDeleteHighlight")}</p>
                   </div>
                 </button>
                 <button onClick={() => setPage("admin_users")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors text-left">
                   <Users size={16} className="text-[#077E9E]" />
                   <div>
-                    <p className="text-sm font-semibold text-[#212121]">Quản lý tài khoản</p>
-                    <p className="text-xs text-[#666666]">Phân quyền và khóa/mở khóa</p>
+                    <p className="text-sm font-semibold text-[#212121]">{t("manageAccounts")}</p>
+                    <p className="text-xs text-[#666666]">{t("permissionsAndLock")}</p>
                   </div>
                 </button>
               </div>
@@ -2308,7 +2308,7 @@ function MessagesPage({ setPage, userData }) {
       await api.messages.archive(id);
       setMessages(prev => prev.filter(m => m.id !== id));
     } catch (e) {
-      alert("Lỗi khi lưu trữ: " + (e?.message || t("pleaseTryAgain")));
+      alert(t("archiveError") + (e?.message || t("pleaseTryAgain")));
     }
   };
 
@@ -2317,7 +2317,7 @@ function MessagesPage({ setPage, userData }) {
     const now = new Date();
     const diff = now - d;
     if (diff < 86400000 && d.getDate() === now.getDate()) return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
-    if (diff < 172800000) return "Hôm qua";
+    if (diff < 172800000) return t("yesterday");
     return d.toLocaleDateString("vi-VN");
   };
 
@@ -2376,7 +2376,7 @@ function MessagesPage({ setPage, userData }) {
                                   </div>
                                   <div>
                                     <p style={{ fontSize: 14, fontWeight: 600, color: BLACK, margin: "0 0 8px" }}>{data.artworkTitle}</p>
-                                    <p style={{ fontSize: 13, color: "#444", margin: "0 0 8px", lineHeight: 1.5 }}>{data.description || "Chưa có mô tả"}</p>
+                                    <p style={{ fontSize: 13, color: "#444", margin: "0 0 8px", lineHeight: 1.5 }}>{data.description || t("noDescription")}</p>
                                     <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                                       {data.phone && (
                                         <a href={`tel:${data.phone}`} style={{ fontSize: 13, color: CERULEAN, textDecoration: "underline" }}>📞 {data.phone}</a>
@@ -2405,7 +2405,7 @@ function MessagesPage({ setPage, userData }) {
                             setPage("messages");
                           }
                         }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                          <Mail size={14} /> Xem ấn phẩm
+                          <Mail size={14} /> {t("viewArtwork")}
                         </button>
                       ) : (
                         <a
@@ -2416,11 +2416,11 @@ function MessagesPage({ setPage, userData }) {
                           rel="noopener noreferrer"
                           style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
                         >
-                          <Mail size={14} /> Phản hồi qua Email
+                          <Mail size={14} /> {t("replyViaEmail")}
                         </a>
                       )}
                       <button onClick={() => handleArchive(msg.id)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
-                        <Archive size={14} /> Lưu trữ
+                        <Archive size={14} /> {t("archive")}
                       </button>
                     </div>
                   </div>
@@ -2436,11 +2436,11 @@ function MessagesPage({ setPage, userData }) {
 
 function AdminSidebar({ active, setPage }) {
     const items = [
-    { icon: <LayoutDashboard size={18} />, label: "Tổng quan", page: "admin" },
-    { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users" },
-    { icon: <ShoppingCart size={18} />, label: "Đơn đặt hàng", page: "admin_orders" },
-    { icon: <ShieldAlert size={18} />, label: "Cảnh cáo ấn phẩm", page: "admin_artworks" },
-    { icon: <Folder size={18} />, label: "Quản lý bộ sưu tập", page: "admin_export" },
+    { icon: <LayoutDashboard size={18} />, label: t("overview"), page: "admin" },
+    { icon: <Users size={18} />, label: t("accounts"), page: "admin_users" },
+    { icon: <ShoppingCart size={18} />, label: t("orders"), page: "admin_orders" },
+    { icon: <ShieldAlert size={18} />, label: t("artworkWarnings"), page: "admin_artworks" },
+    { icon: <Folder size={18} />, label: t("collectionManagement"), page: "admin_export" },
   ];
 
   return (
@@ -2459,7 +2459,7 @@ function AdminSidebar({ active, setPage }) {
       </div>
       <div className="mt-auto p-6">
         <button onClick={() => setPage("portal")} className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm font-medium hover:bg-white transition-colors text-[#212121]">
-          <Globe size={16} /> Về trang Portal
+          <Globe size={16} /> {t("backToPortal")}
         </button>
       </div>
     </div>
@@ -2514,7 +2514,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
   }, [activeArtworkId]);
 
   const handleSave = async () => {
-    if (!title.trim()) { setMessage({ type: "error", text: "Vui lòng nhập tên môn học" }); return; }
+    if (!title.trim()) { setMessage({ type: "error", text: t("pleaseEnterCourseName") }); return; }
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
@@ -2534,7 +2534,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         academicYear: yearToAcademic[projectYear] || "2024-2025",
       };
       await api.artworks.update(activeArtworkId, body);
-      setMessage({ type: "success", text: "Đã cập nhật!" });
+      setMessage({ type: "success", text: t("updated") });
       setTimeout(() => setPage("dashboard"), 1000);
     } catch (e) {
       setMessage({ type: "error", text: e?.message || "Lỗi lưu" });
@@ -2596,10 +2596,10 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     <div className="bg-white min-h-[calc(100vh-60px)] px-16 py-10">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-2 text-sm text-[#666666] mb-6 cursor-pointer hover:text-[#212121] transition-colors inline-flex" onClick={() => setPage("dashboard")}>
-          <ArrowDownCircle className="rotate-90" size={16} /> Quay lại Tác phẩm của tôi
+          <ArrowDownCircle className="rotate-90" size={16} /> {t("backToMyArtworks")}
         </div>
         <h2 className="text-2xl font-bold text-[#212121] mb-1">{t("editArtwork")}</h2>
-        <p className="text-sm text-[#666666] mb-8">Cập nhật thông tin chi tiết cho tác phẩm của bạn</p>
+        <p className="text-sm text-[#666666] mb-8">{t("updateArtworkDetails")}</p>
         {message.text && (
           <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>
             {message.text}
@@ -2607,18 +2607,18 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         )}
         <div className="grid grid-cols-2 gap-8">
           <div>
-            <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh bìa</label>
+            <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("coverImage")}</label>
             <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer">
               <img src={coverImage || originalCover} alt="cover" className="w-full h-[360px] object-cover block" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <label className="cursor-pointer">
-                  <span className="px-5 py-2.5 rounded-lg border-2 border-white text-white text-sm font-semibold flex items-center gap-2 hover:bg-white hover:text-[#212121] transition-colors"><Image size={16} /> Đổi ảnh bìa</span>
+                  <span className="px-5 py-2.5 rounded-lg border-2 border-white text-white text-sm font-semibold flex items-center gap-2 hover:bg-white hover:text-[#212121] transition-colors"><Image size={16} /> {t("changeCoverImage")}</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleCoverChange} />
                 </label>
               </div>
             </div>
             <div className="mt-4">
-              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Ảnh bổ sung ({additionalImages.length}/9)</label>
+              <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("additionalImages")} ({additionalImages.length}/9)</label>
               <input type="file" id="editAdditionalInput" accept="image/*" multiple className="hidden" onChange={handleAddImage} />
               <div className="flex gap-2 flex-wrap">
                 {additionalImages.map((url, idx) => (
@@ -2634,14 +2634,14 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Tên môn học</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("courseName")}</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("projectType")}</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#F0F8FB] border-[#077E9E] text-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("assignmentType")}</label><div className="flex gap-3">{[{ key: false, label: "Cá nhân", icon: <User size={16} /> }, { key: true, label: "Nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#F0F8FB] border-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
-            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("assignmentType")}</label><div className="flex gap-3">{[{ key: false, label: t("individual"), icon: <User size={16} /> }, { key: true, label: t("group"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#F0F8FB] border-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
+            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("category")}</label>
               <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
-                <option value="">-- Chọn --</option>
+                <option value="">{t("selectOption")}</option>
                 {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
@@ -2654,7 +2654,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("tags")}</label>
               <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">
                 {tags.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTags(tags.filter(x => x !== t))} /></span>))}
-                <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder="Thêm tag..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
+                <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder={t("addTag")} className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
               </div>
             </div>
             <div className="mt-auto pt-4 border-t border-[#E0E0E0] flex gap-3">
@@ -2729,26 +2729,26 @@ function AdminUsersPage({ setPage }) {
             </button>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" size={16} />
-              <input placeholder="Tìm kiếm user..." className="pl-10 pr-4 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm w-64 outline-none focus:border-[#077E9E]" />
+              <input placeholder={t("searchUser")} className="pl-10 pr-4 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm w-64 outline-none focus:border-[#077E9E]" />
             </div>
           </div>
         </div>
         {importFileName && (
           <div className="mb-5 bg-[#E8F4F8] border border-[#B3D9E8] text-[#077E9E] rounded-lg px-4 py-3 text-sm flex items-center justify-between">
-            <span className="font-medium">Đã chọn file: {importFileName}</span>
+            <span className="font-medium">{t("selectedFile")}: {importFileName}</span>
             <button onClick={() => setImportFileName("")} className="text-[#077E9E] hover:text-[#055F78] font-semibold text-sm">{t("deselect")}</button>
           </div>
         )}
 
-        {loading ? <div className="text-center py-16 text-[#666666] text-sm">Đang tải danh sách...</div> : users.length === 0 ? <div className="text-center py-16 text-[#666666] text-sm">Không có người dùng</div> : (
+        {loading ? <div className="text-center py-16 text-[#666666] text-sm">{t("loadingList")}</div> : users.length === 0 ? <div className="text-center py-16 text-[#666666] text-sm">{t("noUsers")}</div> : (
         <div className="border border-[#E0E0E0] rounded-xl overflow-hidden shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr>
-                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Họ Tên</th>
+                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("fullNameHeader")}</th>
                 <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("email")}</th>
                 <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("role")}</th>
-                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ngày tham gia</th>
+                <th className="bg-[#F8F8F8] text-[#666666] text-left px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("joinDate")}</th>
                 <th className="bg-[#F8F8F8] text-[#666666] text-center px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("actions")}</th>
               </tr>
             </thead>
@@ -2780,9 +2780,9 @@ function AdminUsersPage({ setPage }) {
                   <td className="px-4 py-3 text-sm text-[#666666]">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "—"}</td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center">
-                      <button onClick={() => locked ? toggleLockUser(u) : setConfirmModal({ isOpen: true, user: u })} className={`px-3 py-1.5 flex items-center gap-2 rounded-md border transition-colors cursor-pointer ${locked ? 'border-[#077E9E] text-[#077E9E] hover:bg-[#077E9E] hover:text-white' : 'border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white'}`} title={locked ? "Mở khóa" : "Khóa tài khoản"}>
+                      <button onClick={() => locked ? toggleLockUser(u) : setConfirmModal({ isOpen: true, user: u })} className={`px-3 py-1.5 flex items-center gap-2 rounded-md border transition-colors cursor-pointer ${locked ? 'border-[#077E9E] text-[#077E9E] hover:bg-[#077E9E] hover:text-white' : 'border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white'}`} title={locked ? t("unlock") : t("lockAccount")}>
                         {locked ? <Unlock size={14} /> : <Lock size={14} />}
-                        <span className="text-xs font-semibold">{locked ? "Mở khóa" : "Khóa tài khoản"}</span>
+                        <span className="text-xs font-semibold">{locked ? t("unlock") : t("lockAccount")}</span>
                       </button>
                     </div>
                   </td>
@@ -2800,11 +2800,11 @@ function AdminUsersPage({ setPage }) {
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <ShieldAlert size={28} className="text-[#8B1A1A]" />
             </div>
-            <h3 className="font-bold text-lg text-[#212121] mb-2">Khóa tài khoản?</h3>
-            <p className="text-sm text-[#666666] mb-6">Bạn có chắc chắn muốn khóa tài khoản của <strong>{confirmModal.user?.name}</strong>? Người dùng sẽ không thể đăng nhập vào hệ thống.</p>
+            <h3 className="font-bold text-lg text-[#212121] mb-2">{t("lockAccountQuestion")}</h3>
+            <p className="text-sm text-[#666666] mb-6">{t("lockAccountConfirm")} <strong>{confirmModal.user?.name}</strong>? {t("lockAccountWarning")}</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmModal({ isOpen: false, user: null })} className="flex-1 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("cancel")}</button>
-              <button onClick={() => toggleLockUser(confirmModal.user?.id)} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">Xác nhận Khóa</button>
+              <button onClick={() => toggleLockUser(confirmModal.user?.id)} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">{t("confirmLock")}</button>
             </div>
           </div>
         </div>
@@ -2960,8 +2960,8 @@ function AdminArtworksPage({ setPage }) {
         <div className="p-8 border-b border-[#E0E0E0]">
           <div className="flex items-start justify-between gap-6">
             <div>
-              <h2 className="text-2xl font-bold text-[#212121]">Xử lý Ấn phẩm</h2>
-              <p className="text-sm text-[#666666] mt-1">Xử lý vi phạm / báo cáo và quản lý trạng thái hiển thị</p>
+              <h2 className="text-2xl font-bold text-[#212121]">{t("processArtworks")}</h2>
+              <p className="text-sm text-[#666666] mt-1">{t("processArtworksDesc")}</p>
             </div>
           </div>
 
@@ -2970,8 +2970,8 @@ function AdminArtworksPage({ setPage }) {
               { key: "all", label: t("all") },
               { key: "reported", label: t("report") },
               { key: "pending", label: t("pending") },
-              { key: "hidden", label: "Đã ẩn" },
-              { key: "highlight", label: "Nổi bật" },
+              { key: "hidden", label: t("hidden") },
+              { key: "highlight", label: t("highlighted") },
             ].map((t) => (
               <button
                 key={t.key}
@@ -2988,7 +2988,7 @@ function AdminArtworksPage({ setPage }) {
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[260px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" size={16} />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tìm theo tên ấn phẩm, sinh viên, tags..." className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchArtworkStudentTags")} className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
             </div>
             <FilterSelect value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
               <option value="Tất cả">{t("subjectAll")}</option>
@@ -3020,7 +3020,7 @@ function AdminArtworksPage({ setPage }) {
                   selectedIds.length === 0 ? "bg-[#F8F8F8] text-[#999999] border-[#E0E0E0] cursor-not-allowed" : "bg-white text-[#212121] border-[#E0E0E0] hover:bg-[#F8F8F8]"
                 }`}
               >
-                Ẩn đã chọn
+                {t("hideSelected")}
               </button>
               <button
                 onClick={() => toggleHighlight(selectedIds)}
@@ -3038,7 +3038,7 @@ function AdminArtworksPage({ setPage }) {
                   selectedIds.length === 0 ? "bg-[#F8F8F8] text-[#999999] border-[#E0E0E0] cursor-not-allowed" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8] hover:text-[#212121]"
                 }`}
               >
-                Bỏ chọn
+                {t("deselect")}
               </button>
             </div>
           </div>
@@ -3057,7 +3057,7 @@ function AdminArtworksPage({ setPage }) {
                 <span className="text-sm font-semibold text-[#212121]">{filtered.length} {t("artworks")}</span>
               </div>
               {selectedIds.length > 0 && (
-                <span className="text-sm text-[#666666]">Đã chọn {selectedIds.length}</span>
+                <span className="text-sm text-[#666666]">{t("selected")} {selectedIds.length}</span>
               )}
             </div>
 
@@ -3066,7 +3066,7 @@ function AdminArtworksPage({ setPage }) {
                 <thead className="sticky top-0 z-10">
                   <tr>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold w-10"></th>
-                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">Ấn phẩm / Sinh viên</th>
+                    <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("artworkStudent")}</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("subject")}</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold">{t("date")}</th>
                     <th className="bg-[#F8F8F8] text-[#666666] px-4 py-3 text-xs uppercase tracking-wider font-semibold w-36">{t("status")}</th>
@@ -3120,7 +3120,7 @@ function AdminArtworksPage({ setPage }) {
                   ))}
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="text-center py-12 text-[#666666]">Không có ấn phẩm phù hợp.</td>
+                      <td colSpan={5} className="text-center py-12 text-[#666666]">{t("noMatchingArtworks")}</td>
                     </tr>
                   )}
                 </tbody>
@@ -3131,7 +3131,7 @@ function AdminArtworksPage({ setPage }) {
           <div className="flex-1 overflow-y-auto p-6 bg-[#F8F8F8]">
             {!selected && (
               <div className="bg-white border border-[#E0E0E0] rounded-xl p-8 text-center text-[#666666]">
-                Chọn một ấn phẩm để xem chi tiết
+                {t("selectArtworkToViewDetails")}
               </div>
             )}
 
@@ -3187,13 +3187,13 @@ function AdminArtworksPage({ setPage }) {
 
                   <div className="mt-4">
                     <a href={`${window.location.origin}/#/detail/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[#077E9E] hover:text-[#055F78] font-semibold flex items-center gap-1.5 transition-colors">
-                      <ExternalLink size={14} /> Xem chi tiết: {selected.title}
+                      <ExternalLink size={14} /> {t("viewDetails")}: {selected.title}
                     </a>
                   </div>
 
                   <div className="mt-4">
                     <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <ShieldAlert size={14} /> Báo cáo vi phạm {reports.length > 0 && <span className="bg-[#8B1A1A] text-white text-[10px] px-2 py-0.5 rounded-full">{reports.length}</span>}
+                      <ShieldAlert size={14} /> {t("reportViolation")} {reports.length > 0 && <span className="bg-[#8B1A1A] text-white text-[10px] px-2 py-0.5 rounded-full">{reports.length}</span>}
                     </p>
                     {reportsLoading ? (
                       <p className="text-sm text-[#666666]">{t("loading")}</p>
@@ -3206,13 +3206,13 @@ function AdminArtworksPage({ setPage }) {
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-xs font-semibold text-[#8B1A1A] bg-red-50 px-2 py-0.5 rounded border border-[#F5C5C5]">{r.violationType}</span>
                               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${r.status === "pending" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" : r.status === "resolved" ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}>
-                                {r.status === "pending" ? "Chờ xử lý" : r.status === "resolved" ? t("processed") : t("dismissed")}
+                                {r.status === "pending" ? t("pending") : r.status === "resolved" ? t("processed") : t("dismissed")}
                               </span>
                             </div>
                             {r.detail && <p className="text-sm text-[#212121] mb-2">{r.detail}</p>}
                             <div className="flex items-center justify-between">
                               <p className="text-[10px] text-[#666666]">
-                                Bởi {r.user?.fullName || r.user?.email || t("user") } · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
+                                {t("by")} {r.user?.fullName || r.user?.email || t("user") } · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
                               </p>
                               {r.status === "pending" && (
                                 <div className="flex gap-1">
@@ -3230,22 +3230,22 @@ function AdminArtworksPage({ setPage }) {
                   <div className="mt-5 grid grid-cols-3 gap-3">
                     {!selected.isPublic ? (
                       <button onClick={() => approveArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#077E9E] bg-white text-[#077E9E] text-sm font-semibold hover:bg-[#F0F8FB] transition-colors">
-                        <Check size={14} className="inline mr-1" /> Duyệt bài
+                        <Check size={14} className="inline mr-1" /> {t("approveArtwork")}
                       </button>
                     ) : (
                       <button onClick={() => hideArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
-                        Ẩn bài
+                        {t("hideArtwork")}
                       </button>
                     )}
                     <button onClick={() => openConfirm("delete", selected.id)} className="py-2.5 rounded-lg border border-[#F5C5C5] bg-red-50 text-sm font-bold text-[#8B1A1A] hover:bg-red-100 transition-colors">
-                      Xóa vĩnh viễn
+                      {t("deletePermanently")}
                     </button>
                   </div>
 
                   <button onClick={() => toggleHighlight(selected.id, !selected.isHighlighted)} className={`mt-3 w-full py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
                     selected.isHighlighted ? "bg-[#212121] text-white border-[#212121]" : "bg-[#E8F4F8] text-[#077E9E] border-[#B3D9E8] hover:bg-[#D9EEF6]"
                   }`}>
-                    {selected.isHighlighted ? "Bỏ Highlight" : "Highlight ấn phẩm"}
+                    {selected.isHighlighted ? t("removeHighlight") : t("highlightArtwork")}
                   </button>
                 </div>
               </div>
@@ -3260,11 +3260,11 @@ function AdminArtworksPage({ setPage }) {
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <ShieldAlert size={28} className="text-[#8B1A1A]" />
             </div>
-            <h3 className="font-bold text-lg text-[#212121] mb-2">{confirmModal.mode === "hide" ? "Ẩn ấn phẩm?" : "Xóa ấn phẩm?"}</h3>
+            <h3 className="font-bold text-lg text-[#212121] mb-2">{confirmModal.mode === "hide" ? t("hideArtworkQuestion") : t("deleteArtworkQuestion")}</h3>
             <p className="text-sm text-[#666666] mb-6">
               {confirmModal.mode === "hide"
-                ? "Ấn phẩm sẽ bị ẩn khỏi gallery công khai."
-                : "Ấn phẩm sẽ bị xóa khỏi danh sách. Hành động này không thể hoàn tác trong prototype."}
+                ? t("hideArtworkWarning")
+                : t("deleteArtworkWarning")}
             </p>
             <div className="flex gap-3">
               <button onClick={closeConfirm} className="flex-1 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("cancel")}</button>
@@ -3294,9 +3294,9 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
       <div className="flex-1 overflow-y-auto p-8">
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-end gap-4 mb-8 pb-6 border-b border-[#E0E0E0]">
           <div>
-            <h2 className="text-2xl font-bold text-[#212121]">Cấu hình xuất PDF Triển lãm</h2>
+            <h2 className="text-2xl font-bold text-[#212121]">{t("exportPdfConfig")}</h2>
             <p className="text-sm text-[#666666] mt-1">
-              Chọn bộ sưu tập & mở trang cấu hình tiền kỳ (pre-export): chỉnh tên tập san, lời tựa giám tuyển, kéo-thả thứ tự, chọn theme.
+              {t("exportPdfConfigDesc")}
             </p>
           </div>
           <button
@@ -3304,7 +3304,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
             className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#077E9E] text-white rounded-xl font-bold hover:bg-[#055F78] transition-colors shadow-sm cursor-pointer w-full lg:w-auto"
           >
             <Plus size={18} />
-            Tạo bộ sưu tập mới
+            {t("createNewCollection")}
           </button>
         </div>
 
@@ -3321,7 +3321,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
                   <div className="min-w-0">
                     <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-1">{t("collection")}</p>
                     <h3 className="text-lg font-bold text-[#212121] truncate">{c.name}</h3>
-                    <p className="text-sm text-[#666666] mt-1">{c.items.length} tác phẩm · Theme: <span className="font-semibold text-[#212121]">{c.theme}</span></p>
+                    <p className="text-sm text-[#666666] mt-1">{c.items.length} {t("artworks")} · {t("theme")}: <span className="font-semibold text-[#212121]">{c.theme}</span></p>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-[#E8F4F8] border border-[#B3D9E8] flex items-center justify-center text-[#077E9E] flex-shrink-0">
                     <FileDown size={18} />
@@ -3337,22 +3337,22 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
                     ))
                   ) : (
                     <div className="col-span-3 border border-dashed border-[#E0E0E0] rounded-xl p-4 text-sm text-[#666666]">
-                      Chưa có tác phẩm. Hãy “Lưu” từ Gallery/Detail để thêm vào bộ sưu tập.
+                      {t("noArtworksInCollectionGuide")}
                     </div>
                   )}
                 </div>
 
                 <div className="mt-4 flex items-center justify-between">
-                  <span className="text-[11px] text-[#666666]">
-                    * Ghi chú giám tuyển (note) sẽ ưu tiên in kèm khi export.
+                    <span className="text-[11px] text-[#666666]">
+                    {t("curatorNotePriority")}
                   </span>
-                  <span className="text-sm font-bold text-[#077E9E]">Mở cấu hình →</span>
+                  <span className="text-sm font-bold text-[#077E9E]">{t("openConfig")} →</span>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); onOpenCatalogBuilder && onOpenCatalogBuilder(c); }}
                   className="mt-3 w-full py-2 rounded-lg bg-[#212121] text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <FileDown size={14} /> Tạo tập san PDF
+                  <FileDown size={14} /> {t("createPdfJournal")}
                 </button>
               </div>
             );
@@ -3375,9 +3375,9 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
       <div className="flex h-screen overflow-hidden bg-white">
         <AdminSidebar active="admin_export" setPage={setPage} />
         <div className="flex-1 p-8">
-          <p className="text-sm text-[#666666]">Không tìm thấy bộ sưu tập.</p>
+          <p className="text-sm text-[#666666]">{t("collectionNotFound")}</p>
           <button onClick={() => setPage("admin_export")} className="mt-4 px-4 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold hover:bg-[#F8F8F8]">
-            Quay lại
+            {t("goBack")}
           </button>
         </div>
       </div>
@@ -3430,19 +3430,19 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
               value={collection.name}
               onChange={(e) => onUpdateCollection && onUpdateCollection({ name: e.target.value })}
               className="w-full text-2xl font-bold text-[#212121] bg-transparent border-none outline-none placeholder:text-[#ccc]"
-              placeholder="Tên bộ sưu tập..."
+              placeholder={t("collectionNamePlaceholder")}
             />
             <textarea
               value={collection.curatorEssay || ""}
               onChange={(e) => onUpdateCollection && onUpdateCollection({ curatorEssay: e.target.value })}
               className="w-full mt-2 text-sm text-[#666666] bg-transparent border-none outline-none resize-none placeholder:text-[#ccc]"
               rows={2}
-              placeholder="Mô tả bộ sưu tập..."
+              placeholder={t("collectionDescPlaceholder")}
             />
           </div>
           <div className="flex gap-2 flex-shrink-0">
             <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">
-              Quay lại
+              {t("goBack")}
             </button>
             <button onClick={() => { onUpdateCollection && onUpdateCollection({ name: collection.name, curatorEssay: collection.curatorEssay, theme: collection.theme }); setSaved(true); setTimeout(() => setSaved(false), 2000); }} className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 cursor-pointer ${saved ? "bg-green-600 text-white" : "bg-[#212121] text-white hover:opacity-90"}`}>
               <Check size={16} /> {saved ? t("saved") : t("saveChanges")}
@@ -3453,19 +3453,19 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
         {/* Toolbar */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm font-semibold text-[#212121]">
-            {detailedItems.length} tác phẩm
+            {detailedItems.length} {t("artworks")}
           </p>
           <div className="flex items-center gap-2">
             {deleteMode && (
               <>
-                <span className="text-sm text-[#666666]">Đã chọn {selectedForDelete.length}</span>
+                <span className="text-sm text-[#666666]">{t("selected")} {selectedForDelete.length}</span>
                 <button onClick={executeDelete} disabled={selectedForDelete.length === 0} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${selectedForDelete.length > 0 ? "bg-[#8B1A1A] text-white" : "bg-[#E0E0E0] text-[#999]"}`}>
-                  Xóa
+                  {t("delete")}
                 </button>
               </>
             )}
             <button onClick={toggleDeleteMode} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer flex items-center gap-1.5 ${deleteMode ? "bg-[#8B1A1A] text-white border-[#8B1A1A]" : "bg-white text-[#666] border-[#E0E0E0] hover:border-[#8B1A1A] hover:text-[#8B1A1A]"}`}>
-              <Trash2 size={14} /> {deleteMode ? "Thoát xóa" : t("deleteArtwork")}
+              <Trash2 size={14} /> {deleteMode ? t("exitDeleteMode") : t("deleteArtwork")}
             </button>
           </div>
         </div>
@@ -3473,7 +3473,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection })
         {/* Artwork Grid */}
         {detailedItems.length === 0 ? (
           <div className="text-sm text-[#666666] border border-dashed border-[#E0E0E0] rounded-xl p-8 text-center">
-            Chưa có tác phẩm trong bộ sưu tập.
+            {t("noArtworksInCollectionMsg")}
           </div>
         ) : (
           <div className="grid grid-cols-4 gap-4">
@@ -3564,8 +3564,8 @@ function RegisterPage({ setPage }) {
 
     if (!form.lastName || !form.firstName) { setError(t("enterFullName")); return; }
     if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError(t("invalidEmail")); return; }
-    if (form.password.length < 8) { setError("Mật khẩu phải có ít nhất 8 ký tự"); return; }
-    if (form.password !== form.confirmPassword) { setError("Mật khẩu xác nhận không khớp"); return; }
+    if (form.password.length < 8) { setError(t("passwordMinLength")); return; }
+    if (form.password !== form.confirmPassword) { setError(t("passwordMismatch")); return; }
 
     setLoading(true);
     try {
@@ -3599,30 +3599,30 @@ function RegisterPage({ setPage }) {
           <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
         </div>
         <div style={{ position: "absolute", bottom: 48, left: 48, right: 48 }}>
-          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: 22, fontWeight: 300, lineHeight: 1.55, letterSpacing: "-0.3px", margin: "0 0 14px" }}>"Sáng tạo là kết nối mọi thứ với nhau." <br /><span style={{ fontSize: 16, opacity: 0.8 }}>Tham gia cộng đồng sáng tạo UEF</span></p>
+          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: 22, fontWeight: 300, lineHeight: 1.55, letterSpacing: "-0.3px", margin: "0 0 14px" }}>{t("creativityQuote")}<br /><span style={{ fontSize: 16, opacity: 0.8 }}>{t("joinUefCreative")}</span></p>
         </div>
       </div>
       <div className="auth-form-panel" style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 56px", overflow: "auto" }}>
         <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}><img src="/logo-uef.png" alt="UEF" style={{ height: 30 }} /><span style={{ fontWeight: 700, fontSize: 16, color: BLACK }}>Design Gallery</span></div>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>{t("createNewAccount")}</h1>
-          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>Tạo tài khoản để khám phá và kết nối với cộng đồng sáng tạo</p>
+          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>{t("registerDescription")}</p>
 
           {success ? (
             <div style={{ padding: 20, background: "#F0FFF0", borderRadius: 8, textAlign: "center" }}>
-              <p style={{ color: "#2F855A", fontWeight: 600, fontSize: 14 }}>✓ Đăng ký thành công! Đang chuyển đến trang đăng nhập...</p>
+              <p style={{ color: "#2F855A", fontWeight: 600, fontSize: 14 }}>{t("registerSuccess")}</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Họ</label>
-                    <input type="text" value={form.lastName} onChange={updateField("lastName")} placeholder="Nguyễn" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("lastName")}</label>
+                    <input type="text" value={form.lastName} onChange={updateField("lastName")} placeholder={t("lastNamePlaceholder")} required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>Tên</label>
-                    <input type="text" value={form.firstName} onChange={updateField("firstName")} placeholder="Minh Anh" required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("firstName")}</label>
+                    <input type="text" value={form.firstName} onChange={updateField("firstName")} placeholder={t("firstNamePlaceholder")} required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
                   </div>
                 </div>
                 <div>
@@ -3632,7 +3632,7 @@ function RegisterPage({ setPage }) {
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("password")}</label>
                   <div style={{ position: "relative" }}>
-                    <input type={showPasswords.password ? "text" : "password"} value={form.password} onChange={updateField("password")} placeholder="•••••••• (tối thiểu 8 ký tự, gồm chữ và số)" required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <input type={showPasswords.password ? "text" : "password"} value={form.password} onChange={updateField("password")} placeholder={t("passwordPlaceholder")} required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
                     <button type="button" onClick={() => setShowPasswords({ ...showPasswords, password: !showPasswords.password })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.password ? <EyeOff size={18} /> : <Eye size={18} />}</button>
                   </div>
                 </div>
@@ -3648,12 +3648,12 @@ function RegisterPage({ setPage }) {
               {error && <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 12, textAlign: "center" }}>{error}</p>}
 
               <button type="submit" disabled={loading} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, marginTop: 16, cursor: loading ? "not-allowed" : "pointer" }}>
-                {loading ? "Đang xử lý..." : t("register")}
+                {loading ? t("processing") : t("register")}
               </button>
             </form>
           )}
 
-          <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>Đã có tài khoản? <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>{t("login")}</span></p>
+          <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>{t("alreadyHaveAccount")} <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>{t("login")}</span></p>
         </div>
       </div>
     </div>
@@ -3675,12 +3675,12 @@ function LandingPage({ setPage, isLoggedIn }) {
       <section className="px-8 py-20 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
         <div className="flex-1">
           <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
-            <span className="w-8 h-px bg-[#077E9E]"></span> Khoa Thiết kế Đồ họa
+            <span className="w-8 h-px bg-[#077E9E]"></span> {t("facultyName")}
           </p>
           <h2 className="text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6">
-            Nơi trưng bày<br />
-            <span className="text-[#077E9E]">tác phẩm</span> thiết kế<br />
-            của sinh viên UEF
+            {t("heroTitle1")}<br />
+            <span className="text-[#077E9E]">{t("heroTitle2")}</span> {t("heroTitle3")}<br />
+            {t("heroTitle4")}
           </h2>
           <div className="space-y-1 mb-10 max-w-sm">
             <div className="h-0.5 bg-gray-200 w-full"></div>
@@ -3689,29 +3689,29 @@ function LandingPage({ setPage, isLoggedIn }) {
           </div>
           <div className="flex flex-wrap gap-4 mb-4">
             <button onClick={() => setPage("gallery")} className="bg-[#077E9E] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#066a85] transition-colors">
-              Khám phá Gallery <ArrowRight size={18} />
+              {t("exploreGallery")} <ArrowRight size={18} />
             </button>
             <button onClick={() => setPage("auth")} className="bg-white text-[#212121] border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
-              Đăng nhập sinh viên
+              {t("studentLogin")}
             </button>
           </div>
-          <p className="text-xs text-gray-500 mb-16">* Dành cho sinh viên đăng nhập bằng email của bạn</p>
+          <p className="text-xs text-gray-500 mb-16">{t("loginNote")}</p>
           
           <div className="flex flex-wrap items-center gap-8 border-t border-gray-100 pt-8">
             <div>
               <p className="text-3xl font-bold mb-1">500+</p>
-              <p className="text-xs text-gray-500">Ấn phẩm trưng bày</p>
+              <p className="text-xs text-gray-500">{t("displayedArtworks")}</p>
             </div>
             <div>
               <p className="text-3xl font-bold mb-1">120+</p>
-              <p className="text-xs text-gray-500">Giảng viên tham gia</p>
+              <p className="text-xs text-gray-500">{t("participatingLecturers")}</p>
             </div>
             <div>
               <p className="text-3xl font-bold mb-1">18</p>
               <p className="text-xs text-gray-500">{t("subject")}</p>
             </div>
             <div>
-              <p className="text-3xl font-bold mb-1">4 khoá</p>
+              <p className="text-3xl font-bold mb-1">{t("fourCourses")}</p>
               <p className="text-xs text-gray-500">{t("creativeJourney")}</p>
             </div>
           </div>
@@ -3756,17 +3756,17 @@ function LandingPage({ setPage, isLoggedIn }) {
       <section className="px-8 py-20 bg-gray-50/50">
         <div className="max-w-7xl mx-auto">
           <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
-            <span className="w-6 h-px bg-[#077E9E]"></span> Tính năng cốt lõi
+            <span className="w-6 h-px bg-[#077E9E]"></span> {t("coreFeatures")}
           </p>
-          <h2 className="text-3xl font-extrabold mb-12">Mọi thứ bạn cần trong một nền tảng</h2>
+          <h2 className="text-3xl font-extrabold mb-12">{t("everythingInOnePlatform")}</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-white p-8 rounded-2xl border border-[#077E9E] shadow-sm hover:shadow-md transition-shadow">
               <div className="w-10 h-10 bg-[#E8F4F8] text-[#077E9E] rounded-lg flex items-center justify-center mb-6">
                 <Image size={20} />
               </div>
-              <h3 className="font-bold text-lg mb-3">Gallery Triển lãm</h3>
-              <p className="text-sm text-gray-500 leading-relaxed mb-6">Hiển thị toàn bộ ấn phẩm theo Masonry Layout, lọc theo môn học, năm học, công cụ và thể loại.</p>
+              <h3 className="font-bold text-lg mb-3">{t("exhibitGallery")}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed mb-6">{t("exhibitGalleryDesc")}</p>
               <div className="flex items-center gap-2 text-xs font-medium text-[#077E9E] bg-[#E8F4F8] w-fit px-3 py-1.5 rounded-md">
                 <Image size={14} /> gallery
               </div>
@@ -3776,10 +3776,10 @@ function LandingPage({ setPage, isLoggedIn }) {
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <User size={20} />
               </div>
-              <h3 className="font-bold text-lg mb-3">Portfolio Cá nhân</h3>
-              <p className="text-sm text-gray-500 leading-relaxed mb-6">Mỗi sinh viên có trang portfolio riêng với URL chia sẻ, phù hợp gửi cho nhà tuyển dụng.</p>
+              <h3 className="font-bold text-lg mb-3">{t("personalPortfolio")}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed mb-6">{t("personalPortfolioDesc")}</p>
               <div className="flex items-center gap-2 text-xs font-medium text-[#077E9E] bg-[#E8F4F8] w-fit px-3 py-1.5 rounded-md">
-                <User size={14} /> portfolio cá nhân
+                <User size={14} /> {t("personalPortfolioLabel")}
               </div>
             </div>
 
@@ -3787,32 +3787,32 @@ function LandingPage({ setPage, isLoggedIn }) {
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <Star size={20} />
               </div>
-              <h3 className="font-bold text-lg mb-3">Điểm số & Nhận xét</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">Giảng viên chấm điểm trực tiếp trên hệ thống. Sinh viên nhận thông báo và xem kết quả công khai hoặc ẩn.</p>
+              <h3 className="font-bold text-lg mb-3">{t("scoresAndFeedback")}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{t("scoresAndFeedbackDesc")}</p>
             </div>
 
             <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <Monitor size={20} />
               </div>
-              <h3 className="font-bold text-lg mb-3">Đa thiết bị</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">Giao diện responsive, hiển thị hoàn hảo trên desktop, tablet và điện thoại di động.</p>
+              <h3 className="font-bold text-lg mb-3">{t("multiDevice")}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{t("multiDeviceDesc")}</p>
             </div>
 
             <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <Heart size={20} />
               </div>
-              <h3 className="font-bold text-lg mb-3">Nổi bật & Tương tác</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">Like, Bookmark ấn phẩm. Giảng viên highlight tác phẩm xuất sắc lên đầu Gallery.</p>
+              <h3 className="font-bold text-lg mb-3">{t("highlightAndInteract")}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{t("highlightAndInteractDesc")}</p>
             </div>
 
             <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <Users size={20} />
               </div>
-              <h3 className="font-bold text-lg mb-3">Kết nối Tuyển dụng</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">Nhà tuyển dụng liên hệ sinh viên qua form -&gt; email chuyển tiếp thẳng đến @uef.edu.vn.</p>
+              <h3 className="font-bold text-lg mb-3">{t("recruitmentConnection")}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{t("recruitmentConnectionDesc")}</p>
             </div>
           </div>
         </div>
@@ -3824,12 +3824,12 @@ function LandingPage({ setPage, isLoggedIn }) {
           <div className="flex justify-between items-end mb-12">
             <div>
               <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
-                <span className="w-6 h-px bg-[#077E9E]"></span> Sản phẩm nổi bật
+                <span className="w-6 h-px bg-[#077E9E]"></span> {t("featuredProducts")}
               </p>
               <h2 className="text-3xl font-extrabold">{t("exploreNewestArtworks")}</h2>
             </div>
             <button onClick={() => setPage("gallery")} className="text-sm font-semibold border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50">
-              Xem toàn bộ Gallery &rsaquo;
+              {t("viewFullGallery")} &rsaquo;
             </button>
           </div>
 
@@ -3839,7 +3839,7 @@ function LandingPage({ setPage, isLoggedIn }) {
                 <div className={`rounded-xl overflow-hidden mb-4 relative ${idx % 2 === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
                   <img src={work.img} alt={work.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   {idx === 0 && (
-                    <div className="absolute top-3 left-3 bg-[#077E9E] text-white text-[10px] font-bold px-2 py-1 rounded">Nổi bật</div>
+                    <div className="absolute top-3 left-3 bg-[#077E9E] text-white text-[10px] font-bold px-2 py-1 rounded">{t("featured")}</div>
                   )}
                 </div>
                 <h4 className="font-bold text-[15px] mb-1">{work.title}</h4>
@@ -3857,9 +3857,9 @@ function LandingPage({ setPage, isLoggedIn }) {
       <section className="px-8 py-20 bg-gray-50/50">
         <div className="max-w-7xl mx-auto border-t border-gray-100 pt-16">
           <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2 justify-center">
-            <span className="w-6 h-px bg-[#077E9E]"></span> Hướng dẫn
+            <span className="w-6 h-px bg-[#077E9E]"></span> {t("guide")}
           </p>
-          <h2 className="text-3xl font-extrabold text-center mb-16">Bắt đầu chỉ trong 3 bước</h2>
+          <h2 className="text-3xl font-extrabold text-center mb-16">{t("startInThreeSteps")}</h2>
           
           <div className="flex flex-col md:flex-row justify-center items-center gap-8 relative max-w-4xl mx-auto">
             <div className="hidden md:block absolute top-6 left-[15%] right-[15%] h-px bg-gray-300 z-0 border-t border-dashed border-gray-300"></div>
@@ -3867,7 +3867,7 @@ function LandingPage({ setPage, isLoggedIn }) {
             <div className="flex-1 flex flex-col items-center text-center z-10">
               <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">1</div>
               <h3 className="font-bold mb-2">{t("login")}</h3>
-              <p className="text-sm text-gray-500">Dùng email của bạn để đăng nhập vào hệ thống</p>
+              <p className="text-sm text-gray-500">{t("step1Desc")}</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
@@ -3878,8 +3878,8 @@ function LandingPage({ setPage, isLoggedIn }) {
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
               <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">3</div>
-              <h3 className="font-bold mb-2">Chia sẻ Portfolio</h3>
-              <p className="text-sm text-gray-500">Nhận link portfolio cá nhân để gửi cho nhà tuyển dụng</p>
+              <h3 className="font-bold mb-2">{t("sharePortfolio")}</h3>
+              <p className="text-sm text-gray-500">{t("step3Desc")}</p>
             </div>
           </div>
         </div>
@@ -3889,8 +3889,8 @@ function LandingPage({ setPage, isLoggedIn }) {
       <section className="bg-[#1A1A1A] text-white px-8 py-20">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
-            <h2 className="text-3xl font-extrabold mb-3">Sẵn sàng trưng bày tác phẩm của bạn?</h2>
-            <p className="text-gray-400">Dành cho sinh viên Thiết kế Đồ họa UEF — đăng nhập ngay hôm nay</p>
+            <h2 className="text-3xl font-extrabold mb-3">{t("readyToShowcase")}</h2>
+            <p className="text-gray-400">{t("forStudents")}</p>
           </div>
           <div className="flex gap-4">
             <button onClick={() => setPage("auth")} className="bg-[#077E9E] hover:bg-[#066a85] text-white px-8 py-3 rounded-lg font-bold transition-colors">{t("loginNow")}</button>
@@ -3905,15 +3905,15 @@ function LandingPage({ setPage, isLoggedIn }) {
           <div className="flex items-center gap-3">
             <div className="bg-gray-800 text-white font-serif font-bold w-8 h-8 flex items-center justify-center rounded">UEF</div>
             <div>
-              <p className="font-bold text-white">UEF Design Gallery - Khoa Thiết kế Đồ họa</p>
-              <p className="text-xs mt-1">© 2024 Trương Vĩnh Ký - Khóa 21 - Tài chính TP.HCM</p>
+              <p className="font-bold text-white">{t("footerTitle")}</p>
+              <p className="text-xs mt-1">{t("footerCopyright")}</p>
             </div>
           </div>
           <div className="flex gap-6">
             <button onClick={() => setPage("gallery")} className="hover:text-white">Gallery</button>
             <button onClick={() => setPage("about")} className="hover:text-white">{t("aboutFaculty")}</button>
             <a href="#" className="hover:text-white">{t("contact")}</a>
-            <a href="#" className="hover:text-white">Chính sách</a>
+            <a href="#" className="hover:text-white">{t("policy")}</a>
           </div>
         </div>
       </footer>
@@ -4041,21 +4041,21 @@ function AboutPage({ setPage }) {
               </button>
             ))}
           </div>
-          <p className="text-white/70 font-semibold text-xs tracking-widest uppercase mb-4">Khoa Thiết Kế Đồ Họa — UEF</p>
+          <p className="text-white/70 font-semibold text-xs tracking-widest uppercase mb-4">{t("facultyName")} — UEF</p>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-5 leading-tight">{currentHeadline.title}</h1>
           <p className="text-white/80 max-w-2xl leading-relaxed text-base md:text-lg mb-10">{currentHeadline.desc}</p>
           <div className="flex flex-wrap gap-8 md:gap-16 pt-8 border-t border-white/20">
             <div className="flex items-center gap-3">
               <p className="text-3xl md:text-4xl font-bold text-white">500+</p>
-              <p className="text-sm text-white/70">{t("artwork")}<br/>trưng bày</p>
+              <p className="text-sm text-white/70">{t("artwork")}<br/>{t("onDisplay")}</p>
             </div>
             <div className="flex items-center gap-3">
               <p className="text-3xl md:text-4xl font-bold text-white">12</p>
-              <p className="text-sm text-white/70">{t("lecturer")}<br/>chuyên môn</p>
+              <p className="text-sm text-white/70">{t("lecturer")}<br/>{t("specialized")}</p>
             </div>
             <div className="flex items-center gap-3">
               <p className="text-3xl md:text-4xl font-bold text-white">1,200+</p>
-              <p className="text-sm text-white/70">Sinh viên<br/>theo học</p>
+              <p className="text-sm text-white/70">{t("student")}<br/>{t("enrolled")}</p>
             </div>
           </div>
         </div>
@@ -4065,10 +4065,10 @@ function AboutPage({ setPage }) {
         {audience === "student" && (
           <>
             <section className="mb-20">
-              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Tính năng</p>
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">{t("features")}</p>
               <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">{t("forStudents")}</h2>
               <p className="text-[#666666] max-w-3xl leading-relaxed text-[15px] mb-10">
-                Từ đồ án trên lớp đến portfolio ứng tuyển — hệ thống giúp bạn quản lý, trưng bày và kết nối cơ hội nghề nghiệp ngay từ khi còn ngồi trên ghế giảng đường.
+                {t("studentDesc")}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
                 {studentFeatures.map(f => {
@@ -4089,20 +4089,20 @@ function AboutPage({ setPage }) {
             </section>
 
             <section className="mb-20">
-              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Chương trình đào tạo</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Hành Trình Trở Thành Nhà Thiết Kế Chuyên Nghiệp</h2>
-              <p className="text-[#666666] mb-10 max-w-3xl leading-relaxed text-[15px]">Từ năm nhất đến tốt nghiệp, bạn sẽ được trang bị toàn diện: tư duy thẩm mỹ, kỹ năng công cụ chuẩn ngành, và portfolio đủ mạnh để ứng tuyển.</p>
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">{t("trainingProgram")}</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">{t("journeyToDesigner")}</h2>
+              <p className="text-[#666666] mb-10 max-w-3xl leading-relaxed text-[15px]">{t("trainingDesc")}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-12">
-                <MajorCard title="Thiết kế đồ họa Truyền thông" desc="Brand identity, print design, packaging, typography và visual communication." />
-                <MajorCard title="Thiết kế Kỹ thuật số & UI/UX" desc="Web design, mobile app, user experience và interactive design." />
-                <MajorCard title="Motion Graphics & Video" desc="Animation, motion design, video editing và visual effects." />
-                <MajorCard title="Minh họa & Nghệ thuật 3D" desc="Digital illustration, concept art, character design và 3D modeling." />
+                <MajorCard title={t("majorCommDesign")} desc="Brand identity, print design, packaging, typography and visual communication." />
+                <MajorCard title={t("majorDigitalUIUX")} desc="Web design, mobile app, user experience and interactive design." />
+                <MajorCard title="Motion Graphics & Video" desc="Animation, motion design, video editing and visual effects." />
+                <MajorCard title={t("majorIllustration3D")} desc="Digital illustration, concept art, character design and 3D modeling." />
               </div>
             </section>
 
             <section className="mb-20">
-              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Đội ngũ giảng viên</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Những Người Thầy Dẫn Đường</h2>
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">{t("lecturerTeam")}</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">{t("mentorsTitle")}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
                 {lecturers.map(lec => (
                   <div key={lec.email} className="bg-white border border-[#E0E0E0] rounded-xl p-5 hover:shadow-md hover:border-[#077E9E] transition-all">
@@ -4122,8 +4122,8 @@ function AboutPage({ setPage }) {
             </section>
 
             <section className="mb-20">
-              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">Cơ sở vật chất</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Không Gian Sáng Tạo</h2>
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3">{t("facilities")}</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">{t("creativeSpace")}</h2>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 {facilitiesList.map(f => {
                   const I = f.icon;
@@ -4152,10 +4152,10 @@ function AboutPage({ setPage }) {
         {audience === "employer" && (
           <>
             <section className="mb-20">
-              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: "#055F78" }}>Tính năng</p>
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: "#055F78" }}>{t("features")}</p>
               <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">{t("forEmployers")}</h2>
               <p className="text-[#666666] max-w-3xl leading-relaxed text-[15px] mb-10">
-                Tìm kiếm và kết nối với những tài năng thiết kế trẻ ngay từ khi họ còn ngồi trên ghế giảng đường. Đánh giá năng lực qua đồ án thực tế đã qua chấm điểm của giảng viên.
+                {t("employerDesc")}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
                 {employerFeatures.map(f => {
@@ -4173,13 +4173,13 @@ function AboutPage({ setPage }) {
             </section>
 
             <section className="mb-20">
-              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: "#055F78" }}>Quy trình</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Cách Tìm Ứng Viên Phù Hợp</h2>
+              <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: "#055F78" }}>{t("process")}</p>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">{t("findRightCandidate")}</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {[
-                  { step: "1", title: "Duyệt Gallery", desc: "Xem bộ sưu tập ấn phẩm theo môn học, kỹ năng và năm tốt nghiệp." },
-                  { step: "2", title: "Đánh giá hồ sơ", desc: "Xem điểm đánh giá, nhận xét từ giảng viên và lịch sử tương tác." },
-                  { step: "3", title: "Kết nối ứng viên", desc: "Gửi tin nhắn tuyển dụng trực tiếp qua hệ thống." },
+                  { step: "1", title: t("browseGallery"), desc: t("browseGalleryDesc") },
+                  { step: "2", title: t("evaluateProfile"), desc: t("evaluateProfileDesc") },
+                  { step: "3", title: t("connectCandidate"), desc: t("connectCandidateDesc") },
                 ].map(item => (
                   <div key={item.step} className="bg-white border border-[#E0E0E0] rounded-xl p-6">
                     <div className="w-9 h-9 rounded-lg bg-[#055F78] text-white flex items-center justify-center font-bold text-sm mb-4">{item.step}</div>
@@ -4195,10 +4195,10 @@ function AboutPage({ setPage }) {
         {audience === "school" && (
           <>
             <section className="mb-20">
-              <p className="font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: CRIMSON }}>Tính năng</p>
+              <p className="font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: CRIMSON }}>{t("features")}</p>
               <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-4">{t("forSchool")}</h2>
               <p className="text-[#666666] max-w-3xl leading-relaxed text-[15px] mb-10">
-                Hệ thống quản lý đồ án tập trung, lưu trữ học thuật và công cụ xuất bộ sưu tập triển lãm phục vụ kiểm định chất lượng đào tạo.
+                {t("schoolDesc")}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
                 {schoolFeatures.map(f => {
@@ -4216,12 +4216,12 @@ function AboutPage({ setPage }) {
 
             <section className="mb-20">
               <p className="font-semibold text-xs tracking-widest uppercase mb-3" style={{ color: CRIMSON }}>{t("benefits")}</p>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">Giá Trị Cho Nhà Trường</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#212121] mb-6">{t("valueForSchool")}</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {[
-                  { title: "Học liệu số hóa", desc: "Toàn bộ đồ án được lưu trữ tập trung, phục vụ tham khảo và kiểm định chất lượng." },
-                  { title: "Triển lãm trực tuyến", desc: "Xuất bộ sưu tập ấn phẩm đẹp nhất thành tập san PDF — kéo thả sắp xếp dễ dàng." },
-                  { title: "Thống kê đào tạo", desc: "Dashboard quản trị tổng quan: số lượng ấn phẩm, tương tác, điểm số theo môn học." },
+                  { title: t("digitalMaterials"), desc: t("digitalMaterialsDesc") },
+                  { title: t("onlineExhibition"), desc: t("onlineExhibitionDesc") },
+                  { title: t("trainingStats"), desc: t("trainingStatsDesc") },
                 ].map(item => (
                   <div key={item.title} className="bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-6">
                     <h3 className="font-bold text-[#212121] text-sm mb-2">{item.title}</h3>
@@ -4232,8 +4232,8 @@ function AboutPage({ setPage }) {
               <div className="mt-10 bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-8">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                   <div>
-                    <h3 className="font-bold text-[#212121] text-lg mb-2">Quan tâm đến hệ thống?</h3>
-                    <p className="text-[#666666] text-sm">Liên hệ với chúng tôi để được tư vấn triển khai cho khoa/trường của bạn.</p>
+                    <h3 className="font-bold text-[#212121] text-lg mb-2">{t("interestedInSystem")}</h3>
+                    <p className="text-[#666666] text-sm">{t("contactForConsultation")}</p>
                   </div>
                   <a href="mailto:khoathietke@uef.edu.vn" className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors flex-shrink-0 cursor-pointer inline-block text-center">{t("contactConsultation")}</a>
                 </div>
@@ -4254,7 +4254,7 @@ function AboutPage({ setPage }) {
                   <div className="w-10 h-10 rounded-full bg-[#E8F4F8] flex items-center justify-center flex-shrink-0"><MapPin className="w-5 h-5 text-cerulean" /></div>
                   <div>
                     <p className="text-sm font-bold text-[#212121] mb-1">{t("address")}</p>
-                    <p className="text-sm text-[#666666]">141-145 Điện Biên Phủ, Phường 15, Q. Bình Thạnh, TP.HCM</p>
+                    <p className="text-sm text-[#666666]">{t("schoolAddress")}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-4">
@@ -4278,8 +4278,8 @@ function AboutPage({ setPage }) {
               <form className="space-y-4" onSubmit={e => e.preventDefault()}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[#212121] mb-2">Họ tên</label>
-                    <input placeholder="Nguyễn Văn A" className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean box-border" />
+                    <label className="block text-sm font-medium text-[#212121] mb-2">{t("fullName")}</label>
+                    <input placeholder={t("placeholderFullName")} className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean box-border" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#212121] mb-2">{t("email")}</label>
@@ -4287,8 +4287,8 @@ function AboutPage({ setPage }) {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#212121] mb-2">Tin nhắn</label>
-                  <textarea placeholder="Viết tin nhắn của bạn..." className="w-full px-4 py-3 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean min-h-[140px] resize-y box-border" />
+                  <label className="block text-sm font-medium text-[#212121] mb-2">{t("message")}</label>
+                  <textarea placeholder={t("writeYourMessage")} className="w-full px-4 py-3 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-cerulean min-h-[140px] resize-y box-border" />
                 </div>
                 <button type="submit" className="w-full py-3 bg-cerulean hover:bg-[#055F78] text-white rounded-lg font-bold text-sm transition-colors cursor-pointer">{t("sendMessage")}</button>
               </form>
@@ -4302,15 +4302,15 @@ function AboutPage({ setPage }) {
           <div className="flex items-center gap-3">
             <div className="bg-gray-800 text-white font-serif font-bold w-8 h-8 flex items-center justify-center rounded">UEF</div>
             <div>
-              <p className="font-bold text-white">UEF Design Gallery - Khoa Thiết kế Đồ họa</p>
-              <p className="text-xs mt-1">© 2024 Trương Vĩnh Ký - Khóa 21 - Tài chính TP.HCM</p>
+              <p className="font-bold text-white">{t("footerTitle")}</p>
+              <p className="text-xs mt-1">{t("footerCopyright")}</p>
             </div>
           </div>
           <div className="flex gap-6">
             <button onClick={() => setPage("gallery")} className="hover:text-white cursor-pointer">Gallery</button>
             <button onClick={() => setPage("about")} className="hover:text-white cursor-pointer">{t("aboutFaculty")}</button>
             <a href="#" className="hover:text-white">{t("contact")}</a>
-            <a href="#" className="hover:text-white">Chính sách</a>
+            <a href="#" className="hover:text-white">{t("policy")}</a>
           </div>
         </div>
       </footer>
@@ -4403,7 +4403,7 @@ function SaveToCollectionModal({
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-[#212121] truncate">{c.name}</p>
-                    <p className="text-[11px] text-[#666666]">{c.items.length} tác phẩm</p>
+                    <p className="text-[11px] text-[#666666]">{c.items.length} {t("artworks")}</p>
                   </div>
                   <input
                     type="checkbox"
@@ -4422,7 +4422,7 @@ function SaveToCollectionModal({
                   onClick={() => setCreating(true)}
                   className="text-sm font-semibold text-[#077E9E] hover:opacity-80 transition-opacity inline-flex items-center gap-2"
                 >
-                  <Plus size={16} /> + Tạo bộ sưu tập mới
+                  <Plus size={16} /> {t("createNewCollection")}
                 </button>
               ) : (
                 <div className="flex gap-2 mt-2">
@@ -4430,14 +4430,14 @@ function SaveToCollectionModal({
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && submitCreate()}
-                    placeholder="Tên bộ sưu tập…"
+                    placeholder={t("collectionNamePlaceholder")}
                     className="flex-1 px-3 py-2 rounded-xl border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
                   />
                   <button
                     onClick={submitCreate}
                     className="px-3 py-2 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors"
                   >
-                    Tạo
+                    {t("create")}
                   </button>
                   <button
                     onClick={() => {
@@ -4446,7 +4446,7 @@ function SaveToCollectionModal({
                     }}
                     className="px-3 py-2 rounded-xl border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors"
                   >
-                    Hủy
+                    {t("cancel")}
                   </button>
                 </div>
               )}
@@ -4456,12 +4456,12 @@ function SaveToCollectionModal({
           {/* curator note */}
           <div className="mb-2">
             <label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">
-              Ghi chú của giám tuyển
+              {t("curatorNote")}
             </label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ghi nhận xét chuyên môn riêng (sẽ lưu vào COLLECTION_ITEMS.note và ưu tiên in kèm khi xuất PDF)…"
+              placeholder={t("curatorNotePlaceholder")}
               className="w-full min-h-[110px] px-4 py-3 rounded-2xl border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] resize-y"
             />
           </div>
@@ -4473,13 +4473,13 @@ function SaveToCollectionModal({
             onClick={onClose}
             className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] bg-white text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors"
           >
-            Đóng
+            {t("close")}
           </button>
           <button
             onClick={() => onSave && onSave({ artworkId: artwork.id, selectedCollectionIds: selectedIds, note })}
             className="px-4 py-2.5 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors"
           >
-            Lưu thay đổi
+            {t("saveChanges")}
           </button>
         </div>
       </div>
@@ -4617,7 +4617,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
       <div className="flex-1 overflow-y-auto p-10">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl font-bold text-[#212121] mb-2">{t("portfolioSettings")}</h2>
-          <p className="text-[#666666] text-sm mb-8">Quản lý cách hiển thị hồ sơ năng lực của bạn với nhà tuyển dụng.</p>
+          <p className="text-[#666666] text-sm mb-8">{t("portfolioSettingsDesc")}</p>
 
           {message.text && (
             <div className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${message.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}>{message.text}</div>
@@ -4699,7 +4699,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
               </div>
             )}
             <button onClick={() => document.getElementById('featPicker')?.classList.remove('hidden')} className="px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer">
-              {settings.featuredArtworkIds?.length ? "Thay đổi ấn phẩm" : "Chọn ấn phẩm tiêu biểu"} ({(settings.featuredArtworkIds || []).length}/4)
+              {settings.featuredArtworkIds?.length ? t("changeArtwork") : t("selectFeaturedArtwork")} ({(settings.featuredArtworkIds || []).length}/4)
             </button>
           </div>
 
@@ -4709,9 +4709,9 @@ function PortfolioSettingsPage({ setPage, userData }) {
                 <h3 className="font-bold text-lg text-[#212121]">{t("selectFeaturedArtworks")}</h3>
                 <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="text-[#666666] hover:text-[#212121] cursor-pointer"><X size={20} /></button>
               </div>
-              <p className="text-sm text-[#666666] mb-4">Chọn tối đa 4 tác phẩm (đã chọn {(settings.featuredArtworkIds || []).length}/4)</p>
+              <p className="text-sm text-[#666666] mb-4">{t("selectMaxFour")} ({(settings.featuredArtworkIds || []).length}/4)</p>
               {myArtworks.length === 0 ? (
-                <div className="text-center py-10 text-[#666666] text-sm">Bạn chưa có ấn phẩm công khai nào. <a href="/#/upload" className="text-[#077E9E] hover:underline font-semibold">{t("uploadNewArtwork")}</a></div>
+                <div className="text-center py-10 text-[#666666] text-sm">{t("noPublicArtworks")} <a href="/#/upload" className="text-[#077E9E] hover:underline font-semibold">{t("uploadNewArtwork")}</a></div>
               ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {myArtworks.slice(0, 20).map(a => {
@@ -4735,13 +4735,13 @@ function PortfolioSettingsPage({ setPage, userData }) {
           {/* TIMELINE ACHIEVEMENTS */}
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="font-bold text-[#212121]">Timeline thành tích</h3>
+              <h3 className="font-bold text-[#212121]">{t("timelineAchievements")}</h3>
               <button onClick={openAddTimeline} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#077E9E] text-white text-sm font-semibold hover:bg-opacity-90 transition-opacity cursor-pointer"><Plus size={15} />{t("add")}</button>
             </div>
-            <p className="text-sm text-[#666666] mb-4">Quản lý các cột mốc thành tích trên dòng thời gian portfolio.</p>
+            <p className="text-sm text-[#666666] mb-4">{t("manageTimeline")}</p>
 
             {timelineEntries.length === 0 ? (
-              <div className="text-center py-8 text-sm text-[#666666]">Chưa có mốc thành tích nào. Bấm t("add") để tạo mốc đầu tiên.</div>
+              <div className="text-center py-8 text-sm text-[#666666]">{t("noTimelineEntries")}</div>
             ) : (
               <div className="space-y-2">
                 {timelineEntries.map(entry => (
@@ -4770,52 +4770,52 @@ function PortfolioSettingsPage({ setPage, userData }) {
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setShowTimelineForm(false); }}>
               <div className="bg-white rounded-xl w-full max-w-lg max-h-[85vh] overflow-y-auto p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-lg text-[#212121]">{editingTimelineId ? 'Sửa mốc timeline' : 'Thêm mốc timeline'}</h3>
+                  <h3 className="font-bold text-lg text-[#212121]">{editingTimelineId ? t("editTimelineEntry") : t("addTimelineEntry")}</h3>
                   <button onClick={() => setShowTimelineForm(false)} className="text-[#666666] hover:text-[#212121] cursor-pointer"><X size={20} /></button>
                 </div>
                 <div className="space-y-4">
                   <div className="flex gap-3">
                     <div className="flex-1">
-                      <label className="block text-xs font-medium text-[#212121] mb-1.5">Tháng</label>
+                      <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("month")}</label>
                       <select value={timelineForm.month} onChange={e => setTimelineForm({...timelineForm, month: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white">
-                        <option value="">Chọn tháng</option>
+                        <option value="">{t("selectMonth")}</option>
                         {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
                     <div className="flex-1">
-                      <label className="block text-xs font-medium text-[#212121] mb-1.5">Năm</label>
+                      <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("year")}</label>
                       <select value={timelineForm.year} onChange={e => setTimelineForm({...timelineForm, year: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white">
-                        <option value="">Chọn năm</option>
+                        <option value="">{t("selectYear")}</option>
                         {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                       </select>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Tiêu đề</label>
-                    <input type="text" value={timelineForm.title} onChange={e => setTimelineForm({...timelineForm, title: e.target.value})} placeholder="VD: Giải Nhất NCKH cấp Trường" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("title")}</label>
+                    <input type="text" value={timelineForm.title} onChange={e => setTimelineForm({...timelineForm, title: e.target.value})} placeholder={t("timelineTitlePlaceholder")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("description")}</label>
-                    <textarea value={timelineForm.description} onChange={e => setTimelineForm({...timelineForm, description: e.target.value})} rows={3} placeholder="Mô tả ngắn về thành tích..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] resize-none" />
+                    <textarea value={timelineForm.description} onChange={e => setTimelineForm({...timelineForm, description: e.target.value})} rows={3} placeholder={t("timelineDescPlaceholder")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] resize-none" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Tags (phân cách bằng dấu phẩy)</label>
-                    <input type="text" value={timelineForm.tags} onChange={e => setTimelineForm({...timelineForm, tags: e.target.value})} placeholder="VD: Nghiên cứu, AI/NLP, Giải Nhất" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("tagsCommaSeparated")}</label>
+                    <input type="text" value={timelineForm.tags} onChange={e => setTimelineForm({...timelineForm, tags: e.target.value})} placeholder={t("tagsPlaceholder")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#212121] mb-1.5">Link bài báo / chứng nhận</label>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("linkPaperCert")}</label>
                     <div className="flex gap-2">
                       <input type="text" value={timelineForm.linkUrl} onChange={e => setTimelineForm({...timelineForm, linkUrl: e.target.value})} placeholder="https://..." className="flex-1 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
-                      <input type="text" value={timelineForm.linkLabel} onChange={e => setTimelineForm({...timelineForm, linkLabel: e.target.value})} placeholder="Nhãn (VD: Xem bài báo)" className="w-1/3 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                      <input type="text" value={timelineForm.linkLabel} onChange={e => setTimelineForm({...timelineForm, linkLabel: e.target.value})} placeholder={t("linkLabelPlaceholder")} className="w-1/3 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#212121] mb-1.5">URL ảnh nền</label>
+                    <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("bgImageUrl")}</label>
                     <input type="text" value={timelineForm.imageUrl} onChange={e => setTimelineForm({...timelineForm, imageUrl: e.target.value})} placeholder="https://images.unsplash.com/..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
-                  <button onClick={saveTimelineEntry} disabled={savingTimeline || !timelineForm.title || !timelineForm.month || !timelineForm.year} className="flex-1 py-2.5 rounded-lg bg-[#077E9E] text-white text-sm font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{savingTimeline ? 'Đang lưu...' : editingTimelineId ? 'Cập nhật' : 'Thêm mới'}</button>
+                  <button onClick={saveTimelineEntry} disabled={savingTimeline || !timelineForm.title || !timelineForm.month || !timelineForm.year} className="flex-1 py-2.5 rounded-lg bg-[#077E9E] text-white text-sm font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{savingTimeline ? t("savingDots") : editingTimelineId ? t("update") : t("addNew")}</button>
                   <button onClick={() => setShowTimelineForm(false)} className="px-6 py-2.5 rounded-lg border border-[#E0E0E0] text-sm font-medium text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("cancel")}</button>
                 </div>
               </div>
@@ -4826,8 +4826,8 @@ function PortfolioSettingsPage({ setPage, userData }) {
           {timelineEntries.length > 0 && (
             <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6 overflow-hidden">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-[#212121]">Xem trước Timeline</h3>
-                <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#077E9E] font-semibold hover:underline">Xem trên portfolio →</a>
+                <h3 className="font-bold text-[#212121]">{t("previewTimeline")}</h3>
+                <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#077E9E] font-semibold hover:underline">{t("viewOnPortfolio")} →</a>
               </div>
               <div className="relative">
                 <div className="relative overflow-hidden rounded-xl" style={{ minHeight: 260, backgroundImage: `url(${timelineEntries[0]?.imageUrl || ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -4849,7 +4849,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
                   {timelineEntries.length > 6 && <span className="text-[10px] text-[#666666]">+{timelineEntries.length - 6}</span>}
                 </div>
                 <p className="text-center text-[10px] text-[#999] mt-2 flex items-center justify-center gap-1">
-                  <Calendar size={11} />{timelineEntries.length} mốc thành tích
+                  <Calendar size={11} />{timelineEntries.length} {t("achievementMilestones")}
                 </p>
               </div>
             </div>
@@ -4858,7 +4858,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-8 flex items-center justify-between">
             <div>
               <h3 className="font-bold text-[#212121] mb-1">{t("portfolioStatus")}</h3>
-              <p className="text-sm text-[#666666]">Chuyển sang t("private") nếu bạn không muốn ai xem được portfolio này.</p>
+              <p className="text-sm text-[#666666]">{t("portfolioVisibilityDesc")}</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" checked={settings.isPortfolioPublic} onChange={(e) => setSettings({ ...settings, isPortfolioPublic: e.target.checked })} />
@@ -4869,7 +4869,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
             <div className="flex items-center gap-4">
               <button onClick={save} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{saving ? t("saving") : t("saveSettings")}</button>
               <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="px-6 py-2 border border-[#077E9E] text-[#077E9E] rounded-lg font-bold hover:bg-[#F0F8FB] transition-colors">
-                <ExternalLink size={16} className="inline mr-1.5" />Xem Portfolio
+                <ExternalLink size={16} className="inline mr-1.5" />{t("viewPortfolio")}
               </a>
             </div>
         </div>
@@ -4925,12 +4925,12 @@ function SettingsPage({ setPage, userData }) {
         refreshSession();
         setTimeout(() => refreshSession(), 300);
       } else if (res.status === 401) {
-        setMessage({ type: "error", text: "Phiên đăng nhập hết hạn" });
+        setMessage({ type: "error", text: t("sessionExpired") });
       } else {
-        setMessage({ type: "error", text: data.error || "Lỗi cập nhật" });
+        setMessage({ type: "error", text: data.error || t("updateError") });
       }
     } catch {
-      setMessage({ type: "error", text: "Lỗi kết nối" });
+      setMessage({ type: "error", text: t("connectionError") });
     } finally {
       setSaving(false);
     }
@@ -4946,7 +4946,7 @@ function SettingsPage({ setPage, userData }) {
       return;
     }
     if (passwords.newPass !== passwords.confirm) {
-      setMessage({ type: "error", text: "Mật khẩu xác nhận không khớp" });
+      setMessage({ type: "error", text: t("passwordMismatch") });
       return;
     }
     setChangingPass(true);
@@ -4965,14 +4965,14 @@ function SettingsPage({ setPage, userData }) {
         setMessage({ type: "error", text: data.error || t("passwordChangeFailed") });
       }
     } catch {
-      setMessage({ type: "error", text: "Lỗi kết nối" });
+      setMessage({ type: "error", text: t("connectionError") });
     } finally {
       setChangingPass(false);
     }
   };
 
   if (!loaded) {
-    return <div className="flex h-screen items-center justify-center text-[#666666]">Đang tải thông tin...</div>;
+    return <div className="flex h-screen items-center justify-center text-[#666666]">{t("loadingInfo")}</div>;
   }
 
   return (
@@ -5862,6 +5862,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
