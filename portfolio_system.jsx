@@ -1354,6 +1354,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     description: "", tags: [], toolsUsed: [], likeCount: 0, commentCount: 0,
     createdAt: new Date().toISOString(), user: null, userId: null, isPublic: true,
   });
+  const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState([]);
@@ -1400,6 +1401,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
 
   useEffect(() => {
     if (!activeArtworkId) return;
+    setLoading(true);
     setActiveImageIdx(0);
       setLoadError(false);
       api.artworks.get(activeArtworkId).then(res => {
@@ -1418,7 +1420,8 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
         setGradeScore(String(res.grade.score));
         setGradeComment(res.grade.comment || "");
       }
-    }).catch(() => { setLoadError(true); });
+      setLoading(false);
+    }).catch(() => { setLoadError(true); setLoading(false); });
     api.artworks.related(activeArtworkId, 6).then(setRelatedArtworks).catch(() => {});
   }, [activeArtworkId]);
 
@@ -1587,6 +1590,8 @@ if (mins < 1) return t("justNow");
       </div>
     );
   }
+
+  if (loading) return <GlobalLoading />;
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
@@ -5438,28 +5443,28 @@ function TimelineSection({ entries: propEntries, slug }) {
       </div>
 
       <div className="relative">
-        <div className="relative flex items-center justify-center mb-6 py-4 overflow-hidden" style={{ backgroundImage: `url(${timelineData[activeIndex].img})`, backgroundSize: 'cover', backgroundPosition: 'center', borderRadius: 24, border: `1px solid ${GRAY_LIGHT}`, minHeight: 400, transition: 'background-image 0.5s cubic-bezier(0.4,0,0.2,1)' }}>
-          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)', borderRadius: 24 }} />
-          <div ref={cardsRef} className="relative w-full max-w-[420px] z-10" style={{ minHeight: 380 }}>
+        <div className="relative flex flex-col md:flex-row mb-6 overflow-hidden bg-white" style={{ borderRadius: 24, border: `1px solid ${GRAY_LIGHT}`, minHeight: 400 }}>
+          {/* Left: Content Area */}
+          <div ref={cardsRef} className="relative w-full md:w-1/2 z-10 flex items-center justify-center" style={{ minHeight: 400 }}>
             {timelineData.map((item, i) => {
               const cardStyle = getCardClass(i);
               return (
-                <div key={item.id} className="absolute inset-0 flex items-center justify-center px-4"
+                <div key={item.id} className="absolute inset-0 flex items-center justify-center p-8"
                   style={{ transition: 'transform 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1)', ...cardStyle }}>
-                  <div className="w-full max-w-[400px]" style={{ background: BLACK, color: '#fff', padding: '32px 36px', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+                  <div className="w-full max-w-[420px]">
                     <div className="mb-5">
                       <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold"
                         style={{ background: item.monthColor, color: item.monthText }}>
                         {item.month} {item.year}
                       </span>
                     </div>
-                    <h3 className="text-xl md:text-2xl font-bold mb-3 leading-snug">{item.title}</h3>
-                    <p className="text-sm leading-relaxed mb-5" style={{ color: '#9ca3af' }}>
+                    <h3 className="text-xl md:text-3xl font-bold mb-3 leading-snug" style={{ color: BLACK }}>{item.title}</h3>
+                    <p className="text-sm leading-relaxed mb-5" style={{ color: MUTED }}>
                       {item.description}
                     </p>
                     <div className="flex flex-wrap gap-2 mb-5">
                       {item.tags.map(t => (
-                        <span key={t} className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.8)' }}>
+                        <span key={t} className="text-xs font-medium px-2.5 py-1 rounded-full" style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, color: '#4b5563' }}>
                           {t}
                         </span>
                       ))}
@@ -5476,6 +5481,10 @@ function TimelineSection({ entries: propEntries, slug }) {
                 </div>
               );
             })}
+          </div>
+          {/* Right: Image Area */}
+          <div className="w-full md:w-1/2 relative min-h-[300px] md:min-h-full">
+            <div className="absolute inset-0" style={{ backgroundImage: `url(${timelineData[activeIndex].img})`, backgroundSize: 'cover', backgroundPosition: 'center', transition: 'background-image 0.5s cubic-bezier(0.4,0,0.2,1)' }} />
           </div>
         </div>
 
