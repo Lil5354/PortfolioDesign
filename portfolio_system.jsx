@@ -662,7 +662,7 @@ function PortfolioPage({ setPage, pageParams }) {
             ))}
           </div>
         </div>
-        <MasonryGrid items={artworks.slice(0, 6)} onArtworkClick={() => setPage("detail")} />
+        <MasonryGrid items={artworks.slice(0, 6)} onArtworkClick={(art) => { setActiveArtworkId(art.id); setPage("detail"); }} />
         <div style={{ height: 64 }} />
       </main>
 
