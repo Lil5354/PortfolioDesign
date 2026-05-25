@@ -1835,7 +1835,7 @@ if (mins < 1) return t("justNow");
                     <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Để lại bình luận của bạn..." style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
                     <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
                       <button onClick={handleSendComment} disabled={!commentText.trim() || sendingComment} style={{ padding: "8px 16px", borderRadius: 6, border: "none", background: commentText.trim() && !sendingComment ? CERULEAN : GRAY_LIGHT, color: commentText.trim() && !sendingComment ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: commentText.trim() && !sendingComment ? "pointer" : "not-allowed", display: "flex", alignItems: "center", gap: 6 }}>
-                        <Send size={14} /> {sendingComment ? t("sending") : "Gửi bình luận"}
+                        <Send size={14} /> {sendingComment ? t("sending") : t("sendComment")}
                       </button>
                     </div>
                   </>
@@ -1899,8 +1899,8 @@ if (mins < 1) return t("justNow");
             <div className="p-6">
               <label className="block text-sm font-semibold text-[#666666] mb-3">{t("violationType")}</label>
               <div className="flex flex-wrap gap-2 mb-5">
-                {["Đạo văn / Sao chép", "Nội dung không phù hợp", "Thông tin sai lệch", "Xâm phạm bản quyền", "Spam / Quảng cáo", t("other")].map(t => (
-                  <button key={t} onClick={() => setReportType(t)} className={`px-3.5 py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${reportType === t ? "bg-[#077E9E] text-white border-[#077E9E]" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8]"}`}>{t}</button>
+                {[t("plagiarism"), t("inappropriateContent"), t("falseInformation"), t("copyrightInfringement"), t("spam"), t("other")].map(type => (
+                  <button key={type} onClick={() => setReportType(type)} className={`px-3.5 py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${reportType === type ? "bg-[#077E9E] text-white border-[#077E9E]" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8]"}`}>{type}</button>
                 ))}
               </div>
               <label className="block text-sm font-semibold text-[#666666] mb-2">{t("violationDetails")}</label>
@@ -3890,8 +3890,8 @@ function LandingPage({ setPage, isLoggedIn }) {
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
               <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">2</div>
-              <h3 className="font-bold mb-2">Đăng tải t("artworks")</h3>
-              <p className="text-sm text-gray-500">Upload ảnh/PDF kèm thông tin môn học, công cụ và mô tả</p>
+              <h3 className="font-bold mb-2">{t("uploadArtworkStep")}</h3>
+              <p className="text-sm text-gray-500">{t("step2Desc")}</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
@@ -4188,7 +4188,7 @@ function AboutPage({ setPage }) {
                   );
                 })}
               </div>
-              <button onClick={() => setPage("gallery")} className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors cursor-pointer">Duyệt Gallery t("artworks")</button>
+              <button onClick={() => setPage("gallery")} className="px-6 py-3 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-lg font-semibold text-sm transition-colors cursor-pointer">{t("browseGallery")} {t("artworks")}</button>
             </section>
 
             <section className="mb-20">

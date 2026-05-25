@@ -41,6 +41,7 @@ const translations = {
     publicPortfolio: "Portfolio công khai",
     featuredProjects: "Những đồ án xuất sắc",
     bentoDescription: 'Bento grid giúp nhấn mạnh 4–6 đồ án tốt nhất (không "đổ" tất cả ảnh ra cùng lúc), hover để xem tên đồ án & công cụ.',
+    browseGallery: "Duyệt Gallery",
     viewAll: "Xem tất cả →",
     privateUppercase: "RIÊNG TƯ",
     lecturerFeedback: "Nhận xét từ Giảng viên · GV. Trần Văn Phúc",
@@ -488,6 +489,7 @@ const translations = {
     publicPortfolio: "Public Portfolio",
     featuredProjects: "Featured Projects",
     bentoDescription: "A bento grid highlighting 4–6 best projects (not dumping all images at once), hover to see project name & tools.",
+    browseGallery: "Browse Gallery",
     viewAll: "View all →",
     privateUppercase: "PRIVATE",
     lecturerFeedback: "Lecturer Feedback · Lecturer Trần Văn Phúc",
@@ -935,4 +937,6 @@ export function useI18n() {
 }
 
 export { I18nContext };
+
+
 
