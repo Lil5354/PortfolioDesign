@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { createNotification, notifyAdminsAndLecturers } from '@/lib/notifications';
 
 export async function GET() {
   try {
@@ -51,6 +52,9 @@ export async function POST(request: NextRequest) {
       content,
     };
 
+    let artworkOwnerId: string | undefined;
+    let artworkTitleStr = 'Ấn phẩm';
+
     if (purpose === 'order' && typeof content === 'string') {
       try {
         const orderData = JSON.parse(content);
@@ -61,10 +65,13 @@ export async function POST(request: NextRequest) {
               title: true,
               coverImageUrl: true,
               portfolioSlug: true,
+              userId: true,
             },
           });
 
           if (artwork) {
+            artworkOwnerId = artwork.userId;
+            artworkTitleStr = artwork.title;
             messageData.content = JSON.stringify({
               artworkId: orderData.artworkId,
               artworkTitle: artwork.title,
@@ -81,6 +88,41 @@ export async function POST(request: NextRequest) {
     const message = await prisma.message.create({
       data: messageData,
     });
+
+    if (purpose === 'order') {
+      const orderContent = `Đơn đặt hàng mới cho "${artworkTitleStr}" từ ${senderName}`;
+
+      if (artworkOwnerId) {
+        await createNotification({
+          userId: artworkOwnerId,
+          type: 'new_order',
+          referenceId: message.id,
+          referenceType: 'message',
+          content: orderContent,
+          actorName: senderName,
+        });
+      }
+
+      await notifyAdminsAndLecturers({
+        type: 'new_order',
+        referenceId: message.id,
+        referenceType: 'message',
+        content: orderContent,
+        actorName: senderName,
+      });
+
+      const session = await auth();
+      if (session?.user?.id) {
+        await createNotification({
+          userId: session.user.id,
+          type: 'new_order',
+          referenceId: message.id,
+          referenceType: 'message',
+          content: `Đơn đặt hàng của bạn cho "${artworkTitleStr}" đã được gửi thành công`,
+          actorName: senderName,
+        });
+      }
+    }
 
     return NextResponse.json(message, { status: 201 });
   } catch (error) {
