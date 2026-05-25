@@ -931,9 +931,14 @@ export function TranslationProvider({ children }) {
   );
 }
 
+const _vi = translations.vi;
+const _globalT = (key) => _vi[key] || key;
+try { window.__t = _globalT; } catch {}
+
 export function useI18n() {
   const ctx = useContext(I18nContext);
   if (!ctx) throw new Error('useI18n must be used within TranslationProvider');
+  try { window.__t = ctx.t; } catch {}
   return ctx;
 }
 
