@@ -102,11 +102,11 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
             <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
               <button onClick={() => { if (lang !== 'vi') toggleLang(); setIsLangOpen(false); }}
                 className={`w-full text-left px-4 py-2 text-sm ${lang === 'vi' ? 'text-[#077E9E] font-bold bg-[#F0F8FB]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
-                t("tiengViet")
+                {t("tiengViet")}
               </button>
               <button onClick={() => { if (lang !== 'en') toggleLang(); setIsLangOpen(false); }}
                 className={`w-full text-left px-4 py-2 text-sm ${lang === 'en' ? 'text-[#077E9E] font-bold bg-[#F0F8FB]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
-                t("tiengAnh")
+                {t("tiengAnh")}
               </button>
             </div>
           )}
@@ -329,7 +329,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       <div style={{ padding: "32px 48px 0" }}>
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-1px" }}>{t("artworkLibrary")}</h1>
-          <p style={{ color: MUTED, fontSize: 15, marginTop: 6 }}>Khám phá hàng trăm ấn phẩm sáng tạo từ sinh viên Thiết kế Đồ họa UEF</p>
+          <p style={{ color: MUTED, fontSize: 15, marginTop: 6 }}>{t("gallerySubtitle")}</p>
         </div>
         <div style={{ display: "flex", gap: 24, marginBottom: 28, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
           <div>
@@ -358,7 +358,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           </div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <span style={{ fontSize: 13, color: MUTED }}>{data.total} tác phẩm được tìm thấy</span>
+          <span style={{ fontSize: 13, color: MUTED }}>{data.total} {t("artworksFound")}</span>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => setSort("newest")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "newest" ? CERULEAN : GRAY_LIGHT}`, background: sort === "newest" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "newest" ? CERULEAN : BLACK, fontWeight: sort === "newest" ? 600 : 400 }}>{t("newest")}</button>
             <button onClick={() => setSort("most_likes")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "most_likes" ? CERULEAN : GRAY_LIGHT}`, background: sort === "most_likes" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "most_likes" ? CERULEAN : BLACK, fontWeight: sort === "most_likes" ? 600 : 400 }}>{t("mostLiked")}</button>
@@ -384,11 +384,11 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             />
             {data.totalPages > 1 && (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 40 }}>
-                <button onClick={() => paginate(page - 1)} disabled={page <= 1} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page <= 1 ? GRAY_BG : "#fff", color: page <= 1 ? MUTED : BLACK, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer" }}>Trước</button>
+                <button onClick={() => paginate(page - 1)} disabled={page <= 1} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page <= 1 ? GRAY_BG : "#fff", color: page <= 1 ? MUTED : BLACK, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer" }}>{t("previous")}</button>
                 {Array.from({ length: data.totalPages }, (_, i) => i + 1).map(p => (
                   <button key={p} onClick={() => paginate(p)} style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: p === page ? CERULEAN : GRAY_BG, color: p === page ? "#fff" : MUTED, fontSize: 13, fontWeight: p === page ? 600 : 400, cursor: "pointer" }}>{p}</button>
                 ))}
-                <button onClick={() => paginate(page + 1)} disabled={page >= data.totalPages} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page >= data.totalPages ? GRAY_BG : "#fff", color: page >= data.totalPages ? MUTED : BLACK, fontSize: 13, cursor: page >= data.totalPages ? "not-allowed" : "pointer" }}>Sau</button>
+                <button onClick={() => paginate(page + 1)} disabled={page >= data.totalPages} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page >= data.totalPages ? GRAY_BG : "#fff", color: page >= data.totalPages ? MUTED : BLACK, fontSize: 13, cursor: page >= data.totalPages ? "not-allowed" : "pointer" }}>{t("next")}</button>
               </div>
             )}
           </>
@@ -531,7 +531,7 @@ function PortfolioPage({ setPage, pageParams }) {
                 </div>
                 <div className="flex-1">
                   <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-1">
-                    Portfolio công khai
+                    {t("publicPortfolio")}
                   </p>
                   <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#212121] leading-[1.05]">
                     {profile.fullName}
@@ -576,10 +576,10 @@ function PortfolioPage({ setPage, pageParams }) {
                   className="px-5 py-2.5 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors"
                   onClick={() => setIsContactModalOpen(true)}
                 >
-                  Liên hệ
+                  {t("contact")}
                 </button>
                 <button className="px-5 py-2.5 rounded-xl border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:bg-[#F8F8F8] transition-colors">
-                  Chia sẻ
+                  {t("share")}
                 </button>
               </div>
 
@@ -622,11 +622,11 @@ function PortfolioPage({ setPage, pageParams }) {
               <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2">Featured Case Studies</p>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#212121] tracking-tight">{t("featuredProjects")}</h2>
               <p className="text-sm text-[#666666] mt-2 max-w-2xl">
-                Bento grid giúp nhấn mạnh 4–6 đồ án tốt nhất (không “đổ” tất cả ảnh ra cùng lúc), hover để xem tên đồ án & công cụ.
+                {t("bentoDescription")}
               </p>
             </div>
             <button className="hidden sm:inline-flex px-4 py-2 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#212121] hover:bg-[#F8F8F8] transition-colors">
-              Xem tất cả →
+              {t("viewAll")}
             </button>
           </div>
 
@@ -670,7 +670,7 @@ function PortfolioPage({ setPage, pageParams }) {
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: BLACK }}>Nhận xét từ Giảng viên · GV. Trần Văn Phúc</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: BLACK }}>{t("lecturerFeedback")}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ fontSize: 12, color: MUTED }}>{t("totalScore")}</span>
                 <span style={{ fontSize: 22, fontWeight: 700, color: CERULEAN }}>{privateGrade.score}</span>
@@ -708,7 +708,7 @@ function PortfolioPage({ setPage, pageParams }) {
                   <Check size={32} className="text-[#077E9E]" />
                 </div>
                 <h4 className="text-xl font-bold text-[#212121] mb-2">{t("sentSuccessfully")}</h4>
-                <p className="text-sm text-[#666666] mb-6">Tin nhắn của bạn đã được chuyển đến {profile.fullName}.</p>
+                <p className="text-sm text-[#666666] mb-6">{t("messageSentTo")}{profile.fullName}.</p>
                 <button onClick={closeContactModal} className="w-full py-2.5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-semibold text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">{t("close")}</button>
               </div>
             ) : (
@@ -734,7 +734,7 @@ function PortfolioPage({ setPage, pageParams }) {
                   <textarea value={contactContent} onChange={e => setContactContent(e.target.value)} placeholder={t("enterMessageContent")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
                 </div>
                 <button onClick={handleContactSubmit} disabled={contactState === "loading"} className={`mt-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all flex justify-center items-center gap-2 ${contactState === "loading" ? "bg-[#666666] cursor-wait" : "bg-[#077E9E] hover:opacity-90 cursor-pointer"}`}>
-                  {contactState === "loading" ? t("sending") : <><Send size={16} /> Gửi tin nhắn</>}
+                  {contactState === "loading" ? t("sending") : <><Send size={16} /> {t("sendMessage")}</>}
                 </button>
               </div>
             )}
@@ -839,7 +839,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
           </div>
           <button onClick={() => setPage("upload")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 22px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             <Plus size={18} color="#fff" />
-            Đăng ấn phẩm mới
+            {t("uploadNewArtwork")}
           </button>
         </div>
 
@@ -896,7 +896,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
             {collabArtworks.length > 0 && (
               <>
               <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginTop: 40, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
-                <Users size={20} color={CERULEAN} /> Đồng tác giả ({collabArtworks.length})
+                <Users size={20} color={CERULEAN} /> {t("coAuthor")} ({collabArtworks.length})
               </h3>
     <div className="masonry-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
                 {collabArtworks.map(art => (
@@ -999,10 +999,10 @@ function UploadPage({ setPage, setActiveArtworkId }) {
   const allFileUrls = coverImage ? [coverImage, ...additionalImages] : [...additionalImages];
 
   const handleUploadSubmit = async () => {
-    if (!coverImage) { setError("Vui lòng chọn ảnh chính"); return; }
-    if (!title.trim()) { setError("Vui lòng nhập tên học phần"); return; }
-    if (!subject) { setError("Vui lòng chọn danh mục"); return; }
-    if (!checked1 || !checked2 || !checked3) { setError("Vui lòng xác nhận đầy đủ cam kết"); return; }
+    if (!coverImage) { setError(t("pleaseSelectCoverImage")); return; }
+    if (!title.trim()) { setError(t("pleaseEnterCourseName")); return; }
+    if (!subject) { setError(t("pleaseSelectCategory")); return; }
+    if (!checked1 || !checked2 || !checked3) { setError(t("pleaseConfirmCommitments")); return; }
     setError("");
     setUploadState("loading");
     try {
@@ -1032,7 +1032,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         setPage("dashboard");
       }, 1800);
     } catch (e) {
-      setError(e?.message || "Lỗi khi đăng tác phẩm");
+      setError(e?.message || t("uploadError"));
       setUploadState("idle");
     }
   };
@@ -1062,13 +1062,13 @@ function UploadPage({ setPage, setActiveArtworkId }) {
                   </div>
                 </div>
                 <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, marginBottom: 20, background: GRAY_BG, padding: "12px 14px", borderRadius: 8, borderLeft: `3px solid ${CRIMSON}` }}>
-                  Để đảm bảo tính trung thực và toàn vẹn học thuật, bạn cần xác nhận các cam kết sau trước khi đăng tác phẩm lên hệ thống.
+                  {t("commitmentDescription")}
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   {[
-                    { id: "c1", state: checked1, set: setChecked1, text: "Tôi xác nhận tác phẩm này là sản phẩm tự thực hiện, không sử dụng bất kỳ công cụ AI tạo sinh nào (Midjourney, DALL·E, Stable Diffusion, v.v.)" },
-                    { id: "c2", state: checked2, set: setChecked2, text: "Tôi không sao chép hoặc sử dụng tác phẩm của người khác mà không có sự cho phép và ghi rõ nguồn" },
-                    { id: "c3", state: checked3, set: setChecked3, text: "Tôi hiểu rằng vi phạm cam kết này sẽ dẫn đến hậu quả theo quy chế học vụ của trường UEF" },
+                    { id: "c1", state: checked1, set: setChecked1, text: t("commitmentAi") },
+                    { id: "c2", state: checked2, set: setChecked2, text: t("commitmentNoCopy") },
+                    { id: "c3", state: checked3, set: setChecked3, text: t("commitmentConsequences") },
                   ].map(c => (
                     <label key={c.id} style={{ display: "flex", gap: 10, cursor: "pointer", alignItems: "flex-start" }}>
                       <div onClick={() => c.set(!c.state)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${c.state ? CERULEAN : GRAY_LIGHT}`, background: c.state ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>
@@ -1082,7 +1082,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
                 <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
                   <button onClick={() => setShowPopup(false)} disabled={uploadState === "loading"} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: uploadState === "loading" ? "not-allowed" : "pointer", color: MUTED }}>{t("cancel")}</button>
                   <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3 && !uploadState) ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3 && !uploadState) ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3 && !uploadState) ? "pointer" : "not-allowed" }}>
-                    {uploadState === "loading" ? "Đang xử lý..." : "Xác nhận & Đăng bài"}
+                    {uploadState === "loading" ? t("processing") : t("confirmAndPost")}
                   </button>
                 </div>
               </>
@@ -1096,7 +1096,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>{t("shareWithCommunity")}</p>
         <div className="upload-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
           <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{t("mainImage")}</label>
+            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{t("coverImage")}</label>
             <input type="file" id="coverInput" accept="image/*" style={{ display: "none" }} onChange={handleCoverUpload} />
             <div onClick={() => document.getElementById("coverInput")?.click()} style={{ border: `2px dashed ${coverImage ? CERULEAN : GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG, cursor: "pointer" }}>
               {coverImage ? (
@@ -1104,13 +1104,13 @@ function UploadPage({ setPage, setActiveArtworkId }) {
               ) : (
                 <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   <FileImage size={36} color={MUTED} strokeWidth={1.5} />
-                  <p style={{ color: MUTED, fontSize: 14, fontWeight: 600, margin: 0 }}>{t("clickToSelectImage")}</p>
+                  <p style={{ color: MUTED, fontSize: 14, fontWeight: 600, margin: 0 }}>{t("clickToSelectCover")}</p>
                   <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>{t("imageFormatHint")}</p>
                 </div>
               )}
             </div>
             <div style={{ marginTop: 16 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Ảnh bổ sung ({additionalImages.length}/9)</label>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("additionalImages")} ({additionalImages.length}/9)</label>
               <input type="file" id="additionalInput" accept="image/*" multiple style={{ display: "none" }} onChange={handleAdditionalUpload} />
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {additionalImages.map((url, idx) => (
@@ -1129,19 +1129,19 @@ function UploadPage({ setPage, setActiveArtworkId }) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("subjectName")}</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Design Graphic - Flowers Garden" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("courseName")}</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Design Graphic - Flowers Garden" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("projectType")}</label>
               <div style={{ display: "flex", gap: 6 }}>{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${projectYear === y ? CERULEAN : GRAY_LIGHT}`, background: projectYear === y ? "#F0F8FB" : GRAY_BG, color: projectYear === y ? CERULEAN : MUTED, fontSize: 12, fontWeight: projectYear === y ? 600 : 400, cursor: "pointer" }}>{y}</button>))}</div>
             </div>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("assignmentType")}</label>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("projectCategory")}</label>
               <div style={{ display: "flex", gap: 10 }}>
-                {[{ key: false, label: "Cá nhân", desc: "Tự thực hiện", icon: <User size={16} /> }, { key: true, label: "Nhóm", desc: "Làm việc nhóm", icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#F0F8FB" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
+                {[{ key: false, label: t("individual"), desc: t("selfPerformed"), icon: <User size={16} /> }, { key: true, label: t("group"), desc: t("teamwork"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#F0F8FB" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
               </div>
             </div>
             {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("addTeamMembers")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder="Nhập tên hoặc email..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Mô tả về tác phẩm của bạn..." style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("describeYourArtwork")} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("categoryAsterisk")}</label>
+              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("category")} *</label>
                 <select value={subject} onChange={e => setSubject(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
                   <option value="">-- Chọn --</option>
                   {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
@@ -1158,16 +1158,16 @@ function UploadPage({ setPage, setActiveArtworkId }) {
             <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
                 <div onClick={() => setAgreedToTerms(!agreedToTerms)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${agreedToTerms ? CERULEAN : GRAY_LIGHT}`, background: agreedToTerms ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>{agreedToTerms && <Check size={12} color="#fff" strokeWidth={3} />}</div>
-                <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6, margin: 0 }}>Tôi cam kết tác phẩm này là sản phẩm tự thực hiện, không sao chép từ nguồn không hợp lệ. Tôi chịu trách nhiệm về nội dung đăng tải. Tôi hiểu rằng tác phẩm sẽ được giảng viên/admin xác nhận trước khi công khai trên hệ thống.</p>
+                <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6, margin: 0 }}>{t("fullCommitment")}</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div onClick={() => setNotifyOnConfirm(!notifyOnConfirm)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${notifyOnConfirm ? CERULEAN : GRAY_LIGHT}`, background: notifyOnConfirm ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>{notifyOnConfirm && <Check size={12} color="#fff" strokeWidth={3} />}</div>
-                <span style={{ fontSize: 12, color: "#666" }}>{t("notifyOnConfirm")}</span>
+                <span style={{ fontSize: 12, color: "#666" }}>{t("notifyOnConfirmText")}</span>
               </div>
             </div>
             <div style={{ paddingTop: 4 }}>
-              <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{t("publishArtwork")}</button>
-              <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("pendingApprovalNote")}</p>
+              <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{t("submitArtwork")}</button>
+              <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("postSubmissionNote")}</p>
             </div>
           </div>
         </div>
@@ -1237,12 +1237,12 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
         </div>
         <div className="p-6">
           <div style={{ marginBottom: 20 }}>
-            <p className="text-sm text-[#666666] mb-3">Khi đặt hàng ấn phẩm, bạn sẽ nhận được thông báo từ quản trị viên sau khi được phê duyệt. Vui lòng cung cấp đầy đủ thông tin liên hệ.</p>
+            <p className="text-sm text-[#666666] mb-3">{t("orderDescription")}</p>
             <div style={{ background: "#FEF3C7", border: "1px solid #FCD34D", borderRadius: 8, padding: "12px 14px" }}>
               <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
                 <ShieldAlert size={16} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
                 <p className="text-xs text-[#92400E]">
-                  <strong>{t("orderAttention")}</strong> Đơn đặt hàng sẽ được xem xét và phê duyệt bởi quản trị viên trước khi in ấn. Vui lòng kiểm tra lại thông tin trước khi xác nhận.
+                  <strong>{t("notice")}</strong> {t("orderNotice")}
                 </p>
               </div>
             </div>
