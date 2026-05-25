@@ -906,8 +906,8 @@ let _currentLang = 'vi';
 try { 
   _currentLang = localStorage.getItem('app_lang') || 'vi'; 
   if (typeof document !== 'undefined') {
-    document.cookie = googtrans=/vi/; path=/;
-    document.cookie = googtrans=/vi/; path=/; domain=;
+    document.cookie = "googtrans=/vi/" + _currentLang + "; path=/";
+    document.cookie = "googtrans=/vi/" + _currentLang + "; path=/; domain=" + window.location.hostname;
   }
 } catch {}
 
@@ -923,8 +923,8 @@ export function setLang(lang) {
   try { 
     localStorage.setItem('app_lang', lang); 
     if (typeof document !== 'undefined') {
-      document.cookie = googtrans=/vi/; path=/;
-      document.cookie = googtrans=/vi/; path=/; domain=;
+      document.cookie = "googtrans=/vi/" + lang + "; path=/";
+      document.cookie = "googtrans=/vi/" + lang + "; path=/; domain=" + window.location.hostname;
       
       const select = document.querySelector('.goog-te-combo');
       if (select) {
