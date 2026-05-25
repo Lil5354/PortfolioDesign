@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "./lib/AuthContext";
 import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
@@ -92,7 +92,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
       </button>
       <div className="flex items-center gap-3 text-sm font-medium">
         {isLoggedIn && <NotificationBell setPage={setPage} />}
-        <div className="relative" ref={langRef}>
+        <div className="relative skiptranslate" ref={langRef}>
           <button onClick={() => setIsLangOpen(!isLangOpen)}
             className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[#E0E0E0] bg-white text-[#666666] hover:text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer"
             title={lang === 'vi' ? t("english") : t("vietnamese")}>
