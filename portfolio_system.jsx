@@ -17,6 +17,21 @@ import {
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive,
   GraduationCap, Rocket, Upload, Menu, ShoppingCart, Languages
 } from "lucide-react";
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+
+export function GlobalLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full bg-white z-50">
+      <div style={{ width: 300, height: 300 }}>
+        <DotLottieReact
+          src="https://lottie.host/c21c637c-1f75-4ece-8274-afbb094dcfd8/VvdZEvXog8.lottie"
+          loop
+          autoplay
+        />
+      </div>
+    </div>
+  );
+}
 
 const CERULEAN = "#077E9E";
 const CRIMSON = "#8B1A1A";
@@ -366,7 +381,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       </div>
       <div style={{ padding: "0 48px 64px" }}>
         {loading ? (
-          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>{t("loadingData")}</div>
+          <GlobalLoading />
         ) : mapped.length === 0 ? (
           <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>{t("noArtworksFound")}</div>
         ) : (
@@ -439,7 +454,7 @@ function PortfolioPage({ setPage, pageParams }) {
     }).catch(() => {});
   }, [slug]);
 
-  if (loading) return <div className="flex min-h-screen items-center justify-center text-[#666666]">{t("loadingPortfolio")}</div>;
+  if (loading) return <GlobalLoading />;
   if (!portfolioData) return <div className="flex min-h-screen items-center justify-center text-[#666666]">{t("portfolioNotFound")}</div>;
 
   const { user, portfolioSettings, stats, featuredArtworks, privateGrade } = portfolioData;
@@ -840,7 +855,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
         </div>
 
         {loading ? (
-          <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>{t("loadingData")}</div>
+          <GlobalLoading />
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
@@ -2157,7 +2172,7 @@ function AdminDashboardPage({ setPage }) {
           </button>
         </div>
 
-        {loading ? <div className="text-center py-16 text-[#666666] text-sm">{t("loadingData")}</div> : (
+        {loading ? <GlobalLoading /> : (
         <><div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
           {stats.map((s) => (
             <div key={s.label} className="bg-white border border-[#E0E0E0] rounded-xl p-5">
@@ -2590,7 +2605,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     }
   };
 
-  if (loading) return <div className="flex h-screen items-center justify-center text-[#666666]">{t("loading")}</div>;
+  if (loading) return <GlobalLoading />;
 
   return (
     <div className="bg-white min-h-[calc(100vh-60px)] px-16 py-10">
