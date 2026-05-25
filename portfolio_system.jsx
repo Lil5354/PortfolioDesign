@@ -2670,7 +2670,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
               </div>
             </div>
             <div className="mt-auto pt-4 border-t border-[#E0E0E0] flex gap-3">
-              <button onClick={handleDelete} className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> t("deleteArtwork")</button>
+              <button onClick={handleDelete} className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> {t("deleteArtwork")}</button>
               <button onClick={handleSave} disabled={saving} className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50"><Check size={16} /> {saving ? t("saving") : t("saveChanges")}</button>
             </div>
           </div>
@@ -2725,8 +2725,8 @@ function AdminUsersPage({ setPage }) {
       <div className="flex-1 overflow-y-auto p-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[#212121]">Quản lý t("accounts")</h2>
-            <p className="text-sm text-[#666666] mt-1">Danh sách người dùng và phân quyền hệ thống</p>
+            <h2 className="text-2xl font-bold text-[#212121]">{t("manageAccounts")}</h2>
+            <p className="text-sm text-[#666666] mt-1">{t("userListDescription")}</p>
           </div>
           <div className="flex items-center gap-3">
             <input
