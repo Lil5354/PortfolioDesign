@@ -126,20 +126,20 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                 <div className="py-1">
                   {userRole === "student" ? (
                     <>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> t("studentDashboard")</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> t("accountSettings")</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> t("portfolioSettings")</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("messages"); setIsDropdownOpen(false); }}><Mail size={16} className="text-[#666666]" /> t("inbox")</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {t("studentDashboard")}</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> {t("portfolioSettings")}</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("messages"); setIsDropdownOpen(false); }}><Mail size={16} className="text-[#666666]" /> {t("inbox")}</div>
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("admin"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> t("adminDashboard")</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> t("accountSettings")</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("admin"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {t("adminDashboard")}</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
                     </>
                   )}
                 </div>
                 <div className="border-t border-[#E0E0E0] py-1">
-                  <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#FEF2F2] hover:text-[#8B1A1A] cursor-pointer text-[#8B1A1A] text-sm font-medium transition-colors" onClick={() => { onLogout && onLogout(); setIsDropdownOpen(false); }}><LogOut size={16} /> t("logout")</div>
+                  <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#FEF2F2] hover:text-[#8B1A1A] cursor-pointer text-[#8B1A1A] text-sm font-medium transition-colors" onClick={() => { onLogout && onLogout(); setIsDropdownOpen(false); }}><LogOut size={16} /> {t("logout")}</div>
                 </div>
               </div>
             )}
@@ -1325,7 +1325,7 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
             }}
           >
             {sendingOrder ? (
-              <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> t("sending")</>
+              <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> {t("sending")}</>
             ) : (
               <>
                 <ShoppingCart size={16} /> Xác nhận đơn hàng
@@ -2080,7 +2080,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
           style={{ width: "100%", padding: "14px", borderRadius: 8, border: "none", background: logging ? GRAY_LIGHT : CERULEAN, color: logging ? MUTED : "#fff", fontSize: 15, fontWeight: 600, marginTop: 16, cursor: logging ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
         >
           {logging ? (
-            <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> t("loggingIn")</>
+            <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> {t("loggingIn")}</>
           ) : t("login")}
         </button>
 
@@ -2158,8 +2158,8 @@ function AdminDashboardPage({ setPage }) {
       <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[#212121]">Tổng quan t("admin")</h2>
-            <p className="text-sm text-[#666666] mt-1">Theo dõi số liệu hệ thống và xử lý vi phạm / cảnh cáo t("artworks")</p>
+            <h2 className="text-2xl font-bold text-[#212121]">{t("adminOverview")}</h2>
+            <p className="text-sm text-[#666666] mt-1">{t("adminDescription")}</p>
           </div>
           <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 bg-[#077E9E] text-white rounded-lg text-sm font-semibold hover:bg-[#055F78] transition-colors flex items-center gap-2">
             <FileDown size={16} /> Báo cáo PDF
@@ -2268,7 +2268,7 @@ function AdminDashboardPage({ setPage }) {
                   <ShieldAlert size={16} className="text-[#8B1A1A]" />
                   <div>
                     <p className="text-sm font-semibold text-[#212121]">Xử lý vi phạm</p>
-                    <p className="text-xs text-[#666666]">Ẩn / xóa / highlight t("artworks")</p>
+                    <p className="text-xs text-[#666666]">{t("hideDeleteHighlight")}</p>
                   </div>
                 </button>
                 <button onClick={() => setPage("admin_users")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors text-left">
@@ -3068,7 +3068,7 @@ function AdminArtworksPage({ setPage }) {
                   onChange={(e) => toggleSelectAll(e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-sm font-semibold text-[#212121]">{filtered.length} t("artworks")</span>
+                <span className="text-sm font-semibold text-[#212121]">{filtered.length} {t("artworks")}</span>
               </div>
               {selectedIds.length > 0 && (
                 <span className="text-sm text-[#666666]">Đã chọn {selectedIds.length}</span>
@@ -5887,6 +5887,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
