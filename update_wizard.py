@@ -1,4 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import os
+
+CODE = """import { useState, useCallback, useRef, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import ImageExtension from "@tiptap/extension-image";
@@ -492,3 +494,8 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     </div>
   );
 }
+"""
+
+with open("components/catalog/CatalogBuilderWizard.jsx", "w", encoding="utf-8") as f:
+    f.write(CODE)
+print("Updated Wizard")

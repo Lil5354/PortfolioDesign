@@ -1,4 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import os
+
+CODE = """import { useState, useCallback, useRef, useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import ImageExtension from "@tiptap/extension-image";
@@ -15,8 +17,6 @@ import {
   AlignLeft, Layout, Eye, FileDown, Bold, Italic, List, GripVertical, 
   Palette, Settings, FileText, Smartphone, Laptop
 } from "lucide-react";
-
-import { generatePreviewHTML, generatePrintReadyHTML } from "./templates/index.js";
 
 // Tiptap Editor Component
 function RichTextEditor({ value, onChange, placeholder }) {
@@ -76,42 +76,43 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
   const [exporting, setExporting] = useState(false);
   const iframeRef = useRef(null);
 
+  // PAYLOAD ĐẦY ĐỦ THEO PHASE 3
   const [payload, setPayload] = useState({
     // 1. Basic Info
-    journalTitle: collection?.name || "FORMA",
-    journalSubtitle: "Tập San Ấn Phẩm Thiết Kế Đồ Họa",
-    editionNumber: "I",
-    eventName: "Triển Lãm Thường Niên",
+    journalTitle: collection?.name || "GRAPHICA",
+    journalSubtitle: "Triển Lãm Ấn Phẩm Đồ Họa Thường Niên",
+    editionNumber: "VII",
+    eventName: "Triển Lãm Cuối Khóa K16",
     schoolName: "Đại học Tôn Đức Thắng",
     departmentName: "Khoa Mỹ thuật Công nghiệp",
     academicYear: "2024 - 2025",
     publishMonthYear: "05/2025",
-    forewordText: "<p>Kính gửi quý thầy cô và các bạn sinh viên...</p>",
-    closingText: "<p>Trân Trọng.</p>",
+    forewordText: "<p>Kính gửi quý thầy cô và các bạn sinh viên,</p><p>Đây là tập san tổng hợp những tác phẩm xuất sắc nhất...</p>",
+    closingText: "<p>Xin trân trọng cảm ơn.</p>",
     thanksList: "Ban Giám Hiệu, Khoa MTCN",
     
     // 2. Layout Setup
-    layoutTheme: "modern", 
-    coverLayout: "centered",
-    coverImage: "", 
+    layoutTheme: "modern", // classic, modern, asymmetrical
+    coverLayout: "centered", // centered, top_heavy, split
+    coverImage: "", // URL ảnh bìa tùy chỉnh
     showOnCover: { logo: true, title: true, edition: true, event: true, year: true, dept: true },
-    tocLayout: "grid_2col",
-    artworkCardStyle: "magazine_spread",
-    artworksPerPage: 1, 
+    tocLayout: "grid_2col", // grid_2col, list, visual
+    artworkCardStyle: "magazine_spread", // magazine, editorial, gallery
+    artworksPerPage: 1, // 1, 2, 3, 4
     showOnArtwork: { image: true, title: true, student: true, category: true, note: true, award: true },
-    imageDisplayMode: "contain",
+    imageDisplayMode: "contain", // contain, cover, original
 
     // 3. Design System
-    colorMode: "dark",
-    primaryColor: "#ff3c00", // Accent Modern
-    secondaryColor: "#00c2a8", 
-    backgroundColor: "#080808", // Modern dark bg
-    textColor: "#f2f2f0", // Modern white text
-    headingFont: "Barlow Condensed",
-    bodyFont: "Barlow",
-    monoFont: "IBM Plex Mono",
-    borderStyle: "none",
-    showGrain: false,
+    colorMode: "dark", // dark, light
+    primaryColor: "#c9a84c", // Gold
+    secondaryColor: "#8b1a1a", // Crimson
+    backgroundColor: "#0a0a0a",
+    textColor: "#f5f0e8",
+    headingFont: "Playfair Display",
+    bodyFont: "Cormorant Garamond",
+    monoFont: "Space Mono",
+    borderStyle: "gold_rule",
+    showGrain: true,
     bgLetter: "G",
 
     // 4. Structure
@@ -153,53 +154,88 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     update({ enabledArtworkIds: payload.enabledArtworkIds.includes(id) ? payload.enabledArtworkIds.filter(x => x !== id) : [...payload.enabledArtworkIds, id] });
   };
 
+  // HTML Preview generation (simplified logic for Iframe)
+  const generatePreviewHTML = () => {
+    const themeStyles = `
+      :root {
+        --bg: ${payload.backgroundColor};
+        --text: ${payload.textColor};
+        --primary: ${payload.primaryColor};
+        --secondary: ${payload.secondaryColor};
+        --heading-font: '${payload.headingFont}', serif;
+        --body-font: '${payload.bodyFont}', serif;
+        --mono-font: '${payload.monoFont}', monospace;
+      }
+      body { background: var(--bg); color: var(--text); font-family: var(--body-font); margin: 0; padding: 0; }
+      .page { width: 100%; min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; page-break-after: always; padding: 40px; box-sizing: border-box; }
+      .cover { justify-content: center; align-items: center; text-align: center; }
+      .title { font-family: var(--heading-font); font-size: 4rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; }
+      .subtitle { font-size: 1.5rem; margin-bottom: 2rem; font-style: italic; }
+      .meta { font-family: var(--mono-font); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; }
+      .border-gold { border: 1px solid var(--primary); position: absolute; inset: 20px; pointer-events: none; }
+      .bg-letter { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60vw; opacity: 0.05; font-family: var(--heading-font); pointer-events: none; }
+      .artwork-page { display: flex; flex-direction: ${payload.layoutTheme === 'classic' ? 'column' : 'row'}; gap: 20px; align-items: center; justify-content: center;}
+      .artwork-img { max-width: 100%; max-height: 60vh; object-fit: ${payload.imageDisplayMode}; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+      .artwork-info { flex: 1; text-align: ${payload.layoutTheme === 'classic' ? 'center' : 'left'}; }
+    `;
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono&display=swap" rel="stylesheet">
+        <style>${themeStyles}</style>
+      </head>
+      <body>
+        <!-- Cover Page -->
+        <div class="page cover">
+          ${payload.borderStyle === 'gold_rule' ? '<div class="border-gold"></div>' : ''}
+          ${payload.bgLetter ? `<div class="bg-letter">${payload.bgLetter}</div>` : ''}
+          <div style="z-index: 10">
+            ${payload.showOnCover.edition ? `<div class="meta" style="margin-bottom: 2rem">EDITION ${payload.editionNumber}</div>` : ''}
+            ${payload.showOnCover.title ? `<h1 class="title">${payload.journalTitle}</h1>` : ''}
+            <div class="subtitle">${payload.journalSubtitle}</div>
+            ${payload.showOnCover.event ? `<div class="meta" style="margin-top: 2rem">${payload.eventName}</div>` : ''}
+            ${payload.showOnCover.dept ? `<div class="meta" style="margin-top: 1rem">${payload.schoolName} <br> ${payload.departmentName}</div>` : ''}
+          </div>
+        </div>
+        
+        <!-- Artwork Sample Page -->
+        ${sortedEnabled.length > 0 ? `
+        <div class="page artwork-page">
+           ${payload.borderStyle === 'gold_rule' ? '<div class="border-gold"></div>' : ''}
+           <div style="flex: 1.5; text-align: center">
+             <img src="${sortedEnabled[0].coverImageUrl}" class="artwork-img" />
+           </div>
+           <div class="artwork-info" style="z-index:10;">
+             <h2 class="title" style="font-size: 2.5rem; margin-bottom: 0.5rem">${sortedEnabled[0].title}</h2>
+             <p class="subtitle" style="font-size: 1.2rem; color: var(--primary)">${sortedEnabled[0].student}</p>
+             <p class="meta" style="margin-bottom: 1rem">${sortedEnabled[0].category}</p>
+             ${payload.showOnArtwork.note && sortedEnabled[0].note ? `<p style="font-style: italic; border-left: 2px solid var(--primary); padding-left: 1rem; margin-top: 2rem">"${sortedEnabled[0].note}"</p>` : ''}
+             ${payload.showOnArtwork.award && sortedEnabled[0].award ? `<div style="margin-top: 2rem; color: var(--primary); font-weight: bold; border: 1px solid var(--primary); display: inline-block; padding: 4px 12px; border-radius: 20px;">Giải ${sortedEnabled[0].award}</div>` : ''}
+           </div>
+        </div>
+        ` : ''}
+      </body>
+      </html>
+    `;
+  };
+
   useEffect(() => {
     if (step === 4 && iframeRef.current) {
       const doc = iframeRef.current.contentWindow.document;
       doc.open();
-      doc.write(generatePreviewHTML(payload, sortedEnabled));
+      doc.write(generatePreviewHTML());
       doc.close();
     }
-  }, [step, payload, sortedEnabled]);
+  }, [step, payload]);
 
-  const handleExport = () => {
+  const handleExport = async () => {
     setExporting(true);
-    const html = generatePrintReadyHTML(payload, sortedEnabled);
-    const printWin = window.open('', '_blank');
-    if (printWin) {
-      printWin.document.write(html);
-      printWin.document.close();
-      printWin.onload = () => {
-        setTimeout(() => {
-          printWin.print();
-          setExporting(false);
-        }, 800); // wait for fonts to load
-      };
-    } else {
-      alert("Trình duyệt đã chặn popup. Vui lòng cho phép popup để kết xuất PDF.");
+    setTimeout(() => {
+      alert("Mô phỏng xuất PDF thành công (Puppeteer backend)!");
       setExporting(false);
-    }
-  };
-
-  // Color presets based on theme
-  const getThemePresets = () => {
-    if (payload.layoutTheme === 'modern') {
-      return [
-        { name: "Neon Grid", bg: "#080808", text: "#f2f2f0", primary: "#ff3c00", secondary: "#00c2a8", head: "Barlow Condensed", body: "Barlow" },
-        { name: "Cyber Mono", bg: "#111111", text: "#e0e0e0", primary: "#ffe600", secondary: "#ff003c", head: "IBM Plex Mono", body: "Barlow" }
-      ];
-    } else if (payload.layoutTheme === 'classic') {
-      return [
-        { name: "Forma Sepia", bg: "#f8f4ec", text: "#1a1410", primary: "#b8963e", secondary: "#8b3a1e", head: "IM Fell English", body: "Libre Baskerville" },
-        { name: "Midnight Gold", bg: "#1a1410", text: "#f8f4ec", primary: "#d4af6a", secondary: "#b8963e", head: "IM Fell English", body: "Libre Baskerville" }
-      ];
-    } else {
-      // asymmetrical
-      return [
-        { name: "Onyx Gold", bg: "#0a0a0a", text: "#f5f0e8", primary: "#c9a84c", secondary: "#8b1a1a", head: "Playfair Display", body: "Cormorant Garamond" },
-        { name: "Ivory Minimal", bg: "#f5f0e8", text: "#2c3e50", primary: "#8b1a1a", secondary: "#c9a84c", head: "Playfair Display", body: "Cormorant Garamond" }
-      ];
-    }
+    }, 2000);
   };
 
   const InputRow = ({ label, value, onChange, placeholder }) => (
@@ -213,25 +249,29 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     switch (step) {
       case 0:
         return (
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div>
               <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><AlignLeft className="text-[#077E9E]" /> Tiêu đề & Thông tin bìa</h3>
               <div className="grid grid-cols-2 gap-x-6">
                 <InputRow label="Tên tập san" value={payload.journalTitle} onChange={v => update({ journalTitle: v })} />
                 <InputRow label="Phụ đề" value={payload.journalSubtitle} onChange={v => update({ journalSubtitle: v })} />
                 <InputRow label="Số xuất bản (Edition)" value={payload.editionNumber} onChange={v => update({ editionNumber: v })} />
-                <InputRow label="Năm học" value={payload.academicYear} onChange={v => update({ academicYear: v })} />
+                <InputRow label="Tên sự kiện / Chủ đề" value={payload.eventName} onChange={v => update({ eventName: v })} />
                 <InputRow label="Tên trường" value={payload.schoolName} onChange={v => update({ schoolName: v })} />
                 <InputRow label="Khoa / Bộ môn" value={payload.departmentName} onChange={v => update({ departmentName: v })} />
               </div>
             </div>
             <hr className="border-[#E0E0E0]" />
             <div>
-              <h3 className="text-xl font-bold text-[#212121] mb-6">Nội dung</h3>
+              <h3 className="text-xl font-bold text-[#212121] mb-6">Nội dung Lời tựa</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Tên gọi thông điệp kết</label>
-                  <InputRow label="" value={payload.closingText} onChange={v => update({ closingText: v })} />
+                  <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Lời mở đầu</label>
+                  <RichTextEditor value={payload.forewordText} onChange={v => update({ forewordText: v })} />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Lời kết & Cảm ơn</label>
+                  <RichTextEditor value={payload.closingText} onChange={v => update({ closingText: v })} />
                 </div>
               </div>
             </div>
@@ -240,28 +280,16 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
 
       case 1:
         return (
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div>
               <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><Layout className="text-[#077E9E]" /> Bố cục tổng thể (Theme)</h3>
               <div className="grid grid-cols-3 gap-4">
                 {[
                   { id: "classic", label: "Classic", desc: "Cổ điển, đối xứng, sang trọng." },
                   { id: "modern", label: "Modern", desc: "Hiện đại, grid full-bleed." },
-                  { id: "asymmetrical", label: "Editorial", desc: "Phá cách như tạp chí nghệ thuật." }
+                  { id: "asymmetrical", label: "Editorial", label2: "Bất đối xứng", desc: "Phá cách như tạp chí nghệ thuật." }
                 ].map(t => (
-                  <button key={t.id} onClick={() => {
-                      update({ layoutTheme: t.id });
-                      // auto apply first preset of this theme
-                      const presets = getThemePresets();
-                      if(t.id === 'classic') {
-                        update({ backgroundColor: presets[0].bg, textColor: presets[0].text, primaryColor: presets[0].primary, secondaryColor: presets[0].secondary, headingFont: presets[0].head, bodyFont: presets[0].body });
-                      } else if (t.id === 'modern') {
-                        update({ backgroundColor: presets[0].bg, textColor: presets[0].text, primaryColor: presets[0].primary, secondaryColor: presets[0].secondary, headingFont: presets[0].head, bodyFont: presets[0].body });
-                      } else {
-                        update({ backgroundColor: presets[0].bg, textColor: presets[0].text, primaryColor: presets[0].primary, secondaryColor: presets[0].secondary, headingFont: presets[0].head, bodyFont: presets[0].body });
-                      }
-                    }} 
-                    className={`p-5 rounded-2xl border-2 text-left transition-all ${payload.layoutTheme === t.id ? "border-[#077E9E] bg-[#F0F8FB]" : "border-[#E0E0E0] hover:border-[#B3D9E8] bg-white"}`}>
+                  <button key={t.id} onClick={() => update({ layoutTheme: t.id })} className={`p-5 rounded-2xl border-2 text-left transition-all ${payload.layoutTheme === t.id ? "border-[#077E9E] bg-[#F0F8FB]" : "border-[#E0E0E0] hover:border-[#B3D9E8] bg-white"}`}>
                     <div className="text-sm font-bold text-[#212121] mb-1">{t.label}</div>
                     <div className="text-xs text-[#666]">{t.desc}</div>
                   </button>
@@ -273,10 +301,22 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
             
             <div className="grid grid-cols-2 gap-8">
               <div>
-                <h4 className="text-sm font-bold text-[#212121] mb-4">Cấu hình Bìa & Thông tin</h4>
-                <div className="bg-[#F8F8F8] p-4 rounded-xl border border-[#E0E0E0] space-y-2">
-                  <p className="text-xs font-bold text-[#666] mb-2 uppercase">Chữ cái trang trí (Chỉ dùng cho Editorial)</p>
-                  <input value={payload.bgLetter} onChange={e => update({ bgLetter: e.target.value })} maxLength={1} className="w-16 px-4 py-2 border border-[#E0E0E0] rounded-xl text-center font-bold text-lg" />
+                <h4 className="text-sm font-bold text-[#212121] mb-4">Trang Bìa</h4>
+                <div className="space-y-3">
+                  <select value={payload.coverLayout} onChange={e => update({ coverLayout: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-xl text-sm bg-white outline-none">
+                    <option value="centered">Căn giữa (Centered)</option>
+                    <option value="top_heavy">Phía trên (Top Heavy)</option>
+                    <option value="split">Chia dọc (Split Vertical)</option>
+                  </select>
+                  <div className="bg-[#F8F8F8] p-4 rounded-xl border border-[#E0E0E0] space-y-2">
+                    <p className="text-xs font-bold text-[#666] mb-2 uppercase">Hiển thị thông tin</p>
+                    {Object.keys(payload.showOnCover).map(key => (
+                      <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" checked={payload.showOnCover[key]} onChange={e => updateNested("showOnCover", key, e.target.checked)} className="accent-[#077E9E]" />
+                        <span className="capitalize">{key}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
               
@@ -288,6 +328,19 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
                     <option value="editorial">Editorial Card (1 cột)</option>
                     <option value="gallery">Gallery Grid (Nhiều ảnh)</option>
                   </select>
+                  <select value={payload.imageDisplayMode} onChange={e => update({ imageDisplayMode: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-xl text-sm bg-white outline-none">
+                    <option value="contain">Hiển thị toàn bộ (Contain)</option>
+                    <option value="cover">Cắt vừa khung (Cover Crop)</option>
+                  </select>
+                  <div className="bg-[#F8F8F8] p-4 rounded-xl border border-[#E0E0E0] space-y-2">
+                    <p className="text-xs font-bold text-[#666] mb-2 uppercase">Hiển thị thông tin</p>
+                    {Object.keys(payload.showOnArtwork).map(key => (
+                      <label key={key} className="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" checked={payload.showOnArtwork[key]} onChange={e => updateNested("showOnArtwork", key, e.target.checked)} className="accent-[#077E9E]" />
+                        <span className="capitalize">{key}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -296,19 +349,22 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
 
       case 2:
         return (
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><Palette className="text-[#077E9E]" /> Thiết kế Visual</h3>
             
             <div className="bg-[#F8F8F8] p-5 rounded-2xl border border-[#E0E0E0]">
-              <h4 className="text-sm font-bold text-[#212121] mb-4">Color Presets (Phù hợp với Layout {payload.layoutTheme})</h4>
+              <h4 className="text-sm font-bold text-[#212121] mb-4">Color Mode & Theme Presets</h4>
               <div className="flex gap-3 mb-6">
-                {getThemePresets().map(theme => (
-                  <button key={theme.name} onClick={() => update({ backgroundColor: theme.bg, textColor: theme.text, primaryColor: theme.primary, secondaryColor: theme.secondary, headingFont: theme.head, bodyFont: theme.body })} 
+                {[
+                  { name: "Onyx Gold", bg: "#0a0a0a", text: "#f5f0e8", primary: "#c9a84c" },
+                  { name: "Ivory Classic", bg: "#f5f0e8", text: "#2c3e50", primary: "#8b1a1a" },
+                  { name: "Minimal", bg: "#ffffff", text: "#111111", primary: "#000000" },
+                ].map(theme => (
+                  <button key={theme.name} onClick={() => update({ backgroundColor: theme.bg, textColor: theme.text, primaryColor: theme.primary })} 
                     className="flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border border-[#E0E0E0] bg-white hover:border-[#077E9E] transition-all">
                     <div className="w-full h-8 rounded-lg flex overflow-hidden border border-gray-200">
                       <div className="flex-1" style={{ background: theme.bg }}></div>
                       <div className="flex-1" style={{ background: theme.primary }}></div>
-                      <div className="flex-1" style={{ background: theme.secondary }}></div>
                     </div>
                     <span className="text-xs font-bold">{theme.name}</span>
                   </button>
@@ -342,18 +398,36 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
                   <div>
                     <label className="block text-xs font-bold text-[#666] mb-1">Heading Font</label>
                     <select value={payload.headingFont} onChange={e => update({ headingFont: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-xl text-sm outline-none">
-                      <option value="Barlow Condensed">Barlow Condensed (Modern)</option>
-                      <option value="IM Fell English">IM Fell English (Classic)</option>
-                      <option value="Playfair Display">Playfair Display (Editorial)</option>
+                      <option value="Playfair Display">Playfair Display (Sang trọng)</option>
+                      <option value="Cormorant">Cormorant (Thanh lịch)</option>
+                      <option value="DM Serif Display">DM Serif (Hiện đại)</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#666] mb-1">Body Font</label>
                     <select value={payload.bodyFont} onChange={e => update({ bodyFont: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-xl text-sm outline-none">
-                      <option value="Barlow">Barlow (Sans-serif)</option>
-                      <option value="Libre Baskerville">Libre Baskerville (Serif)</option>
                       <option value="Cormorant Garamond">Cormorant Garamond</option>
+                      <option value="Lora">Lora</option>
+                      <option value="Inter">Inter (Sans-serif)</option>
                     </select>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-[#212121] mb-4">Chi tiết trang trí (Decorations)</h4>
+                <div className="space-y-3">
+                  <select value={payload.borderStyle} onChange={e => update({ borderStyle: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-xl text-sm outline-none">
+                    <option value="gold_rule">Viền mỏng kim loại (Gold Rule)</option>
+                    <option value="double_line">Viền đôi (Double Line)</option>
+                    <option value="none">Không có viền</option>
+                  </select>
+                  <label className="flex items-center gap-2 text-sm cursor-pointer mt-4">
+                    <input type="checkbox" checked={payload.showGrain} onChange={e => update({ showGrain: e.target.checked })} className="accent-[#077E9E]" />
+                    <span>Thêm hiệu ứng Grain (Hạt giấy)</span>
+                  </label>
+                  <div className="mt-4">
+                    <label className="block text-xs font-bold text-[#666] mb-1">Chữ cái in chìm (Background Letter)</label>
+                    <input value={payload.bgLetter} onChange={e => update({ bgLetter: e.target.value })} maxLength={1} className="w-16 px-4 py-2 border border-[#E0E0E0] rounded-xl text-center font-bold text-lg" />
                   </div>
                 </div>
               </div>
@@ -363,7 +437,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
 
       case 3:
         return (
-          <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><FileText className="text-[#077E9E]" /> Cấu trúc & Thứ tự trang</h3>
               <div className="bg-[#F8F8F8] px-3 py-1.5 rounded-full text-xs font-bold text-[#666]">
@@ -400,40 +474,31 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
 
       case 4:
         return (
-          <div className="h-[calc(100vh-200px)] w-full flex animate-in fade-in slide-in-from-bottom-2 duration-300 gap-6">
-            {/* Left strip */}
-            <div className="w-64 bg-white border border-[#E0E0E0] rounded-2xl flex flex-col overflow-hidden">
-               <div className="p-4 border-b border-[#E0E0E0] bg-[#F8F8F8]">
-                 <h4 className="font-bold text-[#212121]">Xuất Bản Tập San</h4>
-                 <p className="text-xs text-[#666] mt-1">{sortedEnabled.length} tác phẩm đã chọn</p>
-               </div>
-               <div className="p-4 flex-1 overflow-y-auto space-y-4">
-                 <div>
-                    <label className="block text-xs font-bold text-[#666] mb-1">Khổ Giấy</label>
-                    <select value={payload.pdfSize} onChange={e => update({ pdfSize: e.target.value })} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm bg-white font-semibold">
-                      <option value="A4">A4 Portrait (210x297)</option>
-                      <option value="Square">Vuông (210x210)</option>
-                    </select>
-                 </div>
-                 <div>
-                    <label className="block text-xs font-bold text-[#666] mb-1">Chất lượng in</label>
-                    <select value={payload.pdfResolution} onChange={e => update({ pdfResolution: e.target.value })} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm bg-white font-semibold">
-                      <option value="print_300dpi">In ấn (300 DPI, CMYK)</option>
-                      <option value="screen_72dpi">Đăng web (72 DPI, RGB)</option>
-                    </select>
-                 </div>
-               </div>
-               <div className="p-4 border-t border-[#E0E0E0]">
-                 <button onClick={handleExport} disabled={exporting} className="w-full py-3 rounded-xl bg-[#077E9E] text-white font-bold shadow hover:bg-[#055F78] transition-all flex items-center justify-center gap-2">
-                   <FileDown size={18} /> {exporting ? "Đang xử lý..." : "Print to PDF"}
-                 </button>
-               </div>
+          <div className="h-full flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><Eye className="text-[#077E9E]" /> Preview & Xuất File</h3>
+              <div className="flex gap-4">
+                <select value={payload.pdfSize} onChange={e => update({ pdfSize: e.target.value })} className="px-3 py-1.5 border border-[#E0E0E0] rounded-lg text-sm bg-white font-semibold">
+                  <option value="A4">Khổ A4 (210x297mm)</option>
+                  <option value="Square">Khổ Vuông (210x210mm)</option>
+                </select>
+                <select value={payload.pdfResolution} onChange={e => update({ pdfResolution: e.target.value })} className="px-3 py-1.5 border border-[#E0E0E0] rounded-lg text-sm bg-white font-semibold">
+                  <option value="print_300dpi">In ấn (300 DPI, CMYK)</option>
+                  <option value="screen_72dpi">Đăng web (72 DPI, RGB)</option>
+                </select>
+              </div>
             </div>
 
-            {/* Right Iframe preview full width */}
             <div className="flex-1 bg-[#E0E0E0] rounded-2xl overflow-hidden border border-[#CCC] relative shadow-inner">
-              <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">Live Full Preview</div>
+              <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">Realtime HTML Preview</div>
+              {/* Iframe render HTML mockup */}
               <iframe ref={iframeRef} className="w-full h-full bg-white border-0" title="PDF Preview" />
+            </div>
+
+            <div className="mt-6">
+              <button onClick={handleExport} disabled={exporting} className="w-full py-4 rounded-xl bg-[#077E9E] text-white font-bold text-lg shadow-lg hover:bg-[#055F78] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:transform-none">
+                <FileDown size={20} /> {exporting ? "Đang kết xuất PDF (Rendering)..." : "Xuất Tập San (Generate PDF)"}
+              </button>
             </div>
           </div>
         );
@@ -467,8 +532,8 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       </div>
 
       {/* Main Content */}
-      <div className={`flex-1 overflow-y-auto bg-[#FAFAFA] p-8 ${step === 4 ? '' : 'flex flex-col'}`}>
-        <div className={`${step === 4 ? 'w-full h-full' : 'max-w-4xl mx-auto bg-white rounded-3xl border border-[#E0E0E0] shadow-sm min-h-[600px] p-8 flex flex-col w-full'}`}>
+      <div className="flex-1 overflow-y-auto bg-[#FAFAFA] p-8">
+        <div className="max-w-4xl mx-auto bg-white rounded-3xl border border-[#E0E0E0] shadow-sm min-h-[600px] p-8 flex flex-col">
           {renderStep()}
         </div>
       </div>
@@ -492,3 +557,8 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     </div>
   );
 }
+"""
+
+with open("components/catalog/CatalogBuilderWizard.jsx", "w", encoding="utf-8") as f:
+    f.write(CODE)
+print("Updated successfully")
