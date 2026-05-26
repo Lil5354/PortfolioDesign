@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UEF Design Gallery — E-Portfolio Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- Lucide Icons -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --white: #ffffff;
+    --off-white: #f5f6f8;
+    --black: #0a0c0f;
+    --blue-deep: #0d2e6e;
+    --blue-mid: #1a4ba8;
+    --blue-bright: #1e6fd9;
+    --blue-light: #d6e8ff;
+    --red-deep: #9b1c1c;
+    --red-accent: #c0392b;
+    --gray-100: #f0f2f5;
+    --gray-200: #e2e6ec;
+    --gray-400: #8b96a8;
+    --gray-600: #4a5568;
+    --gold: #c9a227;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--white);color:var(--black);overflow-x:hidden;}
+
+  /* ===== LUCIDE ICON HELPER ===== */
+  .ico { display:inline-flex; align-items:center; justify-content:center; }
+  .ico svg { width:var(--ico-size,18px); height:var(--ico-size,18px); stroke:var(--ico-color,currentColor); fill:none; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* ===== NAVBAR ===== */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5%;display:flex;align-items:center;justify-content:space-between;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--gray-200);}
+  .nav-logo{display:flex;align-items:center;gap:12px;text-decoration:none;}
+  .logo-mark{width:44px;height:44px;background:var(--blue-deep);border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+  .logo-mark::before{content:'';position:absolute;bottom:0;right:0;width:18px;height:18px;background:var(--red-accent);border-radius:50% 0 0 0;}
+  .logo-mark span{font-family:'Space Mono',monospace;font-weight:700;color:white;font-size:13px;position:relative;z-index:1;}
+  .logo-text{line-height:1.2;}
+  .logo-text strong{display:block;font-size:14px;font-weight:800;color:var(--blue-deep);letter-spacing:-0.02em;}
+  .logo-text small{font-size:10px;color:var(--gray-400);letter-spacing:0.08em;text-transform:uppercase;font-weight:500;}
+  .nav-links{display:flex;gap:36px;list-style:none;}
+  .nav-links a{text-decoration:none;font-size:14px;font-weight:500;color:var(--gray-600);transition:color 0.2s;}
+  .nav-links a:hover,.nav-links a.active{color:var(--blue-mid);}
+  .nav-links a.active{border-bottom:2px solid var(--blue-bright);padding-bottom:2px;}
+  .nav-actions{display:flex;gap:10px;align-items:center;}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none;border:none;font-family:'Plus Jakarta Sans',sans-serif;}
+  .btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--black);}
+  .btn-outline:hover{border-color:var(--blue-mid);color:var(--blue-mid);}
+  .btn-primary{background:var(--blue-deep);color:white;}
+  .btn-primary:hover{background:var(--blue-mid);transform:translateY(-1px);box-shadow:0 8px 24px rgba(13,46,110,0.25);}
+  .btn-lg{padding:14px 28px;font-size:15px;border-radius:10px;}
+  .btn-red{background:var(--red-accent);color:white;}
+  .btn-red:hover{background:var(--red-deep);transform:translateY(-1px);}
+  .btn-white{background:white;color:var(--blue-deep);}
+  .btn-white:hover{background:var(--blue-light);transform:translateY(-1px);}
+  .btn-ghost{background:transparent;border:1.5px solid rgba(255,255,255,0.3);color:white;}
+  .btn-ghost:hover{border-color:white;background:rgba(255,255,255,0.1);}
+
+  /* ===== HERO ===== */
+  .hero{min-height:100vh;padding-top:72px;display:grid;grid-template-columns:1fr 1fr;align-items:center;overflow:hidden;position:relative;background:#f9fafc;}
+  .hero-bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 55% 80% at 100% 50%,rgba(214,232,255,0.6) 0%,transparent 70%),radial-gradient(ellipse 35% 40% at 5% 90%,rgba(155,28,28,0.06) 0%,transparent 60%);}
+  .hero-content{padding:80px 6% 80px 8%;position:relative;z-index:1;}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:var(--blue-light);color:var(--blue-deep);padding:6px 14px;border-radius:100px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:28px;}
+  .hero-badge-dot{width:6px;height:6px;background:var(--blue-bright);border-radius:50%;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+  h1.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(40px,5.2vw,68px);line-height:1.08;letter-spacing:-0.02em;color:var(--black);margin-bottom:12px;}
+  h1.hero-title .highlight{color:var(--blue-mid);font-style:italic;}
+  .hero-sub{font-size:16px;color:var(--gray-600);line-height:1.75;max-width:460px;margin-bottom:40px;}
+  .hero-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+  .hero-hint{font-size:12px;color:var(--gray-400);margin-bottom:40px;display:flex;align-items:center;gap:6px;}
+  .hero-stats{display:flex;gap:32px;padding-top:28px;border-top:1px solid var(--gray-200);}
+  .stat-number{font-size:26px;font-weight:800;color:var(--blue-deep);font-family:'DM Serif Display',serif;line-height:1;}
+  .stat-label{font-size:11px;color:var(--gray-400);margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:0.05em;}
+
+  /* ===== HERO GALLERY MOSAIC with REAL IMAGES ===== */
+  .hero-visual{position:relative;z-index:1;height:100vh;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .mosaic{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,140px);gap:10px;width:100%;height:100%;padding:80px 28px 28px 0;transform:rotate(-2deg) scale(1.08);animation:mosaicFloat 9s ease-in-out infinite;}
+  @keyframes mosaicFloat{0%,100%{transform:rotate(-2deg) scale(1.08) translateY(0);}50%{transform:rotate(-2deg) scale(1.08) translateY(-10px);}}
+  .mosaic-item{border-radius:12px;overflow:hidden;position:relative;transition:transform 0.3s ease;}
+  .mosaic-item:hover{transform:scale(1.04);z-index:10;}
+  .mosaic-item.tall{grid-row:span 2;}
+  .mosaic-item.wide{grid-column:span 2;}
+  .mosaic-item img{width:100%;height:100%;object-fit:cover;display:block;}
+  .mosaic-item .tag{position:absolute;bottom:8px;left:8px;background:rgba(10,12,15,0.65);color:white;font-size:10px;font-weight:700;padding:3px 9px;border-radius:4px;backdrop-filter:blur(6px);text-transform:uppercase;letter-spacing:0.07em;}
+  .mosaic-item .like{position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.92);color:var(--black);font-size:10px;font-weight:700;padding:3px 8px;border-radius:100px;display:flex;align-items:center;gap:4px;}
+
+  /* ===== TICKER ===== */
+  .ticker-section{background:var(--blue-deep);padding:18px 0;overflow:hidden;border-top:1px solid rgba(255,255,255,0.08);border-bottom:1px solid rgba(255,255,255,0.08);}
+  .ticker-track{display:flex;gap:0;animation:ticker 32s linear infinite;white-space:nowrap;}
+  @keyframes ticker{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  .ticker-item{display:inline-flex;align-items:center;gap:12px;padding:0 40px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.7);border-right:1px solid rgba(255,255,255,0.12);}
+  .ticker-dot{width:5px;height:5px;background:var(--gold);border-radius:50%;flex-shrink:0;}
+
+  /* ===== SECTIONS ===== */
+  section{padding:100px 8%;}
+  .section-label{display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue-mid);margin-bottom:20px;}
+  .section-label::before{content:'';display:block;width:28px;height:2px;background:var(--blue-mid);}
+  h2.section-title{font-family:'DM Serif Display',serif;font-size:clamp(30px,3.8vw,50px);line-height:1.1;letter-spacing:-0.02em;color:var(--black);margin-bottom:16px;}
+  .section-desc{font-size:16px;color:var(--gray-600);max-width:560px;line-height:1.75;}
+
+  /* ===== AUDIENCE TABS ===== */
+  .audience-section{background:var(--off-white);}
+  .audience-tabs{display:flex;gap:0;margin-bottom:56px;border-bottom:2px solid var(--gray-200);}
+  .tab-btn{padding:15px 32px;background:none;border:none;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:600;color:var(--gray-400);position:relative;transition:color 0.2s;border-bottom:3px solid transparent;margin-bottom:-2px;display:flex;align-items:center;gap:9px;}
+  .tab-btn.active{color:var(--blue-deep);border-bottom-color:var(--blue-deep);}
+  .tab-btn:hover{color:var(--blue-mid);}
+  .tab-btn .ico svg{width:17px;height:17px;}
+  .tab-panel{display:none;}
+  .tab-panel.active{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+  .tab-content h3{font-family:'DM Serif Display',serif;font-size:34px;letter-spacing:-0.02em;color:var(--black);margin-bottom:14px;line-height:1.15;}
+  .tab-content p{font-size:15px;color:var(--gray-600);line-height:1.8;margin-bottom:28px;}
+  .feature-list{list-style:none;display:flex;flex-direction:column;gap:14px;margin-bottom:32px;}
+  .feature-list li{display:flex;align-items:flex-start;gap:13px;font-size:14px;color:var(--gray-600);line-height:1.55;}
+  .feature-icon{width:34px;height:34px;min-width:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;--ico-size:16px;}
+  .fi-blue{background:var(--blue-light);--ico-color:var(--blue-mid);}
+  .fi-red{background:rgba(192,57,43,0.1);--ico-color:var(--red-accent);}
+  .fi-green{background:rgba(34,197,94,0.12);--ico-color:#16a34a;}
+  .fi-gold{background:rgba(201,162,39,0.12);--ico-color:var(--gold);}
+
+  /* ===== TAB VISUAL PANELS ===== */
+  .tab-visual{background:white;border-radius:20px;overflow:hidden;box-shadow:0 20px 64px rgba(0,0,0,0.1);border:1px solid var(--gray-200);}
+  .mockup-header{background:var(--blue-deep);padding:14px 20px;display:flex;align-items:center;gap:8px;}
+  .dot-row{display:flex;gap:6px;}
+  .dot{width:10px;height:10px;border-radius:50%;}
+  .dot-r{background:#ff5f57;}.dot-y{background:#febc2e;}.dot-g{background:#28c840;}
+  .mockup-title{color:rgba(255,255,255,0.6);font-size:11px;margin-left:auto;font-family:'Space Mono',monospace;}
+  .mockup-body{padding:20px;}
+
+  /* Student panel */
+  .demo-topbar{background:var(--off-white);padding:10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--gray-200);}
+  .demo-url{background:white;border:1px solid var(--gray-200);border-radius:6px;padding:5px 12px;font-family:'Space Mono',monospace;font-size:10px;color:var(--gray-600);flex:1;}
+  .demo-content{padding:18px;}
+  .demo-profile{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .avatar{width:44px;height:44px;border-radius:50%;background:var(--blue-deep);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:15px;}
+  .profile-info strong{display:block;font-size:13px;font-weight:700;}
+  .profile-info span{font-size:11px;color:var(--gray-400);}
+  .uef-badge{margin-left:auto;background:var(--blue-light);color:var(--blue-deep);font-size:10px;font-weight:700;padding:4px 10px;border-radius:100px;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+  .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;}
+  .mini-card{aspect-ratio:1;border-radius:8px;overflow:hidden;position:relative;}
+  .mini-card img{width:100%;height:100%;object-fit:cover;}
+  .mini-card .score{position:absolute;top:5px;right:5px;background:var(--gold);color:white;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;}
+  .mini-card .score.lc{background:var(--blue-mid);}
+  .mini-card .type{position:absolute;bottom:5px;left:5px;background:rgba(0,0,0,0.55);color:white;font-size:8px;font-weight:600;padding:2px 5px;border-radius:3px;}
+  .verified-bar{margin-top:12px;padding:9px 12px;background:var(--blue-light);border-radius:7px;font-size:11px;color:var(--blue-deep);display:flex;align-items:center;gap:7px;font-weight:600;}
+
+  /* Grading panel */
+  .grading-panel{padding:18px;}
+  .grade-header{background:var(--blue-light);color:var(--blue-deep);font-size:12px;font-weight:700;margin-bottom:14px;padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:7px;}
+  .artwork-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--gray-200);}
+  .artwork-thumb{width:44px;height:44px;border-radius:7px;overflow:hidden;flex-shrink:0;}
+  .artwork-thumb img{width:100%;height:100%;object-fit:cover;}
+  .artwork-info{flex:1;}
+  .artwork-info strong{font-size:12px;font-weight:700;display:block;}
+  .artwork-info span{font-size:10px;color:var(--gray-400);}
+  .grade-input{width:44px;padding:5px 6px;border:1.5px solid var(--blue-bright);border-radius:6px;font-size:12px;font-weight:700;text-align:center;color:var(--blue-deep);background:var(--blue-light);}
+  .lc-badge{background:var(--gold);color:white;font-size:9px;font-weight:800;padding:3px 7px;border-radius:4px;white-space:nowrap;}
+  .private-note{margin-top:12px;padding:9px 12px;border-radius:7px;background:rgba(192,57,43,0.06);border:1px solid rgba(192,57,43,0.15);font-size:11px;color:var(--red-deep);display:flex;align-items:center;gap:6px;}
+
+  /* Recruiter panel */
+  .search-bar{background:var(--off-white);border:1px solid var(--gray-200);border-radius:8px;padding:9px 13px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--gray-400);margin-bottom:12px;--ico-size:14px;--ico-color:var(--gray-400);}
+  .filter-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .chip{padding:4px 11px;border-radius:100px;font-size:10px;font-weight:700;border:1.5px solid;}
+  .chip-blue{background:var(--blue-light);border-color:var(--blue-bright);color:var(--blue-deep);}
+  .chip-gray{background:white;border-color:var(--gray-200);color:var(--gray-600);}
+  .candidate-list{display:flex;flex-direction:column;gap:9px;}
+  .candidate-card{display:flex;align-items:center;gap:11px;padding:11px;border-radius:10px;background:var(--off-white);border:1px solid var(--gray-200);}
+  .cand-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:white;background:var(--blue-deep);flex-shrink:0;}
+  .cand-info{flex:1;}
+  .cand-info strong{font-size:12px;font-weight:700;display:block;}
+  .cand-info span{font-size:10px;color:var(--gray-400);}
+  .cand-skills{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;}
+  .skill-tag{padding:2px 6px;background:var(--blue-light);color:var(--blue-deep);font-size:8px;font-weight:700;border-radius:3px;}
+  .connect-btn{padding:6px 12px;background:var(--blue-deep);color:white;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Plus Jakarta Sans',sans-serif;}
+
+  /* ===== ABOUT DARK SECTION ===== */
+  .about-section{background:var(--black);color:white;position:relative;overflow:hidden;padding:120px 8%;}
+  .about-bg-grid{position:absolute;inset:0;z-index:0;opacity:0.035;background-image:linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px);background-size:52px 52px;}
+  .about-bg-glow{position:absolute;width:700px;height:700px;border-radius:50%;filter:blur(130px);opacity:0.12;top:-200px;right:-120px;background:var(--blue-mid);animation:glowPulse 7s ease-in-out infinite;}
+  .about-bg-glow2{position:absolute;width:500px;height:500px;border-radius:50%;filter:blur(100px);opacity:0.1;bottom:-100px;left:5%;background:var(--red-accent);animation:glowPulse 7s ease-in-out infinite 3.5s;}
+  @keyframes glowPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+  .about-inner{position:relative;z-index:1;}
+  .about-header{max-width:620px;margin-bottom:72px;}
+  .about-header .section-label{color:rgba(255,255,255,0.45);}
+  .about-header .section-label::before{background:rgba(255,255,255,0.25);}
+  .about-header h2{color:white;}
+  .about-header p{color:rgba(255,255,255,0.55);}
+
+  .pillar-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:72px;}
+  .pillar-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:20px;padding:36px 28px;position:relative;overflow:hidden;transition:all 0.3s ease;}
+  .pillar-card:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.18);transform:translateY(-5px);}
+  .pillar-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0;}
+  .pillar-card.blue::before{background:linear-gradient(90deg,var(--blue-bright),#60afff);}
+  .pillar-card.red::before{background:linear-gradient(90deg,var(--red-accent),#ff7b6e);}
+  .pillar-card.gold::before{background:linear-gradient(90deg,var(--gold),#f5d87e);}
+  .pillar-number{font-family:'Space Mono',monospace;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:20px;opacity:0.45;color:white;}
+  .pillar-ico-wrap{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;--ico-size:22px;}
+  .pillar-card.blue .pillar-ico-wrap{background:rgba(30,111,217,0.2);--ico-color:#60afff;}
+  .pillar-card.red .pillar-ico-wrap{background:rgba(192,57,43,0.2);--ico-color:#ff7b6e;}
+  .pillar-card.gold .pillar-ico-wrap{background:rgba(201,162,39,0.18);--ico-color:#f5d87e;}
+  .pillar-title{font-family:'DM Serif Display',serif;font-size:22px;color:white;margin-bottom:10px;line-height:1.25;}
+  .pillar-desc{font-size:14px;color:rgba(255,255,255,0.5);line-height:1.7;}
+
+  /* HPPP Diagram */
+  .hppp-diagram{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:24px;padding:44px;display:grid;grid-template-columns:1fr auto 1fr;gap:28px;align-items:center;}
+  .hppp-col-label{color:rgba(255,255,255,0.35);font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:14px;}
+  .hppp-row{background:rgba(255,255,255,0.07);border-radius:8px;padding:10px 13px;font-size:12px;color:rgba(255,255,255,0.65);margin-bottom:8px;display:flex;align-items:center;gap:8px;--ico-size:13px;}
+  .hppp-row.bad{background:rgba(192,57,43,0.15);color:rgba(255,110,90,0.85);--ico-color:rgba(255,110,90,0.8);}
+  .hppp-row.good{--ico-color:rgba(255,255,255,0.65);}
+  .hppp-center-ico{width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--blue-bright),var(--red-accent));display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 50px rgba(30,111,217,0.35);--ico-size:32px;--ico-color:white;}
+  .hppp-center-label{text-align:center;}
+  .hppp-center-label strong{font-family:'DM Serif Display',serif;font-size:19px;color:white;display:block;}
+  .hppp-center-label span{font-size:10px;color:rgba(255,255,255,0.35);line-height:1.5;}
+  .stats-row{display:inline-flex;gap:0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:16px;overflow:hidden;margin-top:48px;}
+  .stat-block{padding:28px 44px;text-align:center;border-right:1px solid rgba(255,255,255,0.09);}
+  .stat-block:last-child{border-right:none;}
+  .stat-block .num{font-family:'DM Serif Display',serif;font-size:40px;color:white;line-height:1;}
+  .stat-block .lbl{font-size:11px;color:rgba(255,255,255,0.35);margin-top:6px;text-transform:uppercase;letter-spacing:0.06em;}
+
+  /* ===== COMPARE ===== */
+  .compare-section{background:var(--white);}
+  .compare-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:16px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.08);margin-top:48px;}
+  .compare-table th{padding:20px 22px;text-align:center;font-size:13px;font-weight:700;}
+  .compare-table th:first-child{text-align:left;background:var(--off-white);}
+  .compare-table th:nth-child(2),.compare-table th:nth-child(3){background:var(--gray-100);color:var(--gray-600);}
+  .compare-table th:last-child{background:var(--blue-deep);color:white;}
+  .compare-table th .th-sub{font-size:10px;font-weight:400;opacity:0.65;display:block;margin-top:2px;}
+  .compare-table td{padding:14px 22px;font-size:13px;border-bottom:1px solid var(--gray-200);text-align:center;}
+  .compare-table td:first-child{text-align:left;font-weight:600;color:var(--black);background:var(--off-white);}
+  .compare-table td:nth-child(2),.compare-table td:nth-child(3){color:var(--gray-600);}
+  .compare-table td:last-child{background:rgba(13,46,110,0.04);font-weight:600;color:var(--blue-deep);}
+  .compare-table tr:last-child td{border-bottom:none;}
+  .chk{color:#22c55e;font-weight:800;}.crs{color:#ef4444;font-weight:800;}.prt{color:var(--gold);font-weight:800;}
+
+  /* ===== FLOW ===== */
+  .flow-section{background:var(--off-white);padding:100px 8%;}
+  .flow-diagram{display:flex;align-items:stretch;gap:0;margin-top:56px;overflow-x:auto;padding-bottom:8px;}
+  .flow-step{flex:1;min-width:155px;background:white;border-radius:16px;padding:28px 18px;text-align:center;position:relative;box-shadow:0 4px 20px rgba(0,0,0,0.07);border:1px solid var(--gray-200);transition:all 0.3s ease;animation:fadeUp 0.6s ease both;}
+  .flow-step:hover{transform:translateY(-4px);box-shadow:0 12px 36px rgba(0,0,0,0.12);}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+  .flow-step:nth-child(1){animation-delay:0.05s;}.flow-step:nth-child(3){animation-delay:0.15s;}.flow-step:nth-child(5){animation-delay:0.25s;}.flow-step:nth-child(7){animation-delay:0.35s;}.flow-step:nth-child(9){animation-delay:0.45s;}
+  .flow-num{width:34px;height:34px;border-radius:50%;background:var(--blue-deep);color:white;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-family:'Space Mono',monospace;}
+  .flow-ico{width:44px;height:44px;border-radius:12px;background:var(--blue-light);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;--ico-size:20px;--ico-color:var(--blue-mid);}
+  .flow-title{font-size:13px;font-weight:700;color:var(--black);margin-bottom:6px;}
+  .flow-desc{font-size:11px;color:var(--gray-400);line-height:1.55;}
+  .flow-arrow{font-size:18px;color:var(--blue-bright);padding:0 6px;flex-shrink:0;display:flex;align-items:center;--ico-size:20px;--ico-color:var(--blue-bright);}
+
+  /* ===== GALLERY STRIP ===== */
+  .gallery-strip{background:white;padding:60px 0;overflow:hidden;}
+  .gallery-strip-label{text-align:center;margin-bottom:36px;}
+  .strip-track{display:flex;gap:14px;animation:stripScroll 28s linear infinite;width:max-content;}
+  .strip-track:hover{animation-play-state:paused;}
+  @keyframes stripScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  .strip-img{width:220px;height:160px;border-radius:12px;overflow:hidden;flex-shrink:0;}
+  .strip-img img{width:100%;height:100%;object-fit:cover;transition:transform 0.4s ease;}
+  .strip-img:hover img{transform:scale(1.05);}
+
+  /* ===== CTA ===== */
+  .cta-section{background:linear-gradient(135deg,var(--blue-deep) 0%,#091a45 100%);padding:100px 8%;position:relative;overflow:hidden;text-align:center;}
+  .cta-section::before{content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:900px;height:900px;border-radius:50%;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05);}
+  .cta-section::after{content:'';position:absolute;top:-15%;left:50%;transform:translateX(-50%);width:450px;height:450px;border-radius:50%;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.05);}
+  .cta-inner{position:relative;z-index:1;}
+  .cta-section h2{font-family:'DM Serif Display',serif;font-size:clamp(34px,4.5vw,58px);color:white;line-height:1.1;letter-spacing:-0.02em;margin-bottom:18px;}
+  .cta-section p{font-size:16px;color:rgba(255,255,255,0.6);margin-bottom:44px;max-width:500px;margin-left:auto;margin-right:auto;}
+  .cta-buttons{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+
+  /* ===== QUOTE ===== */
+  .quote-wrap{padding:80px 8%;text-align:center;}
+  .quote-text{font-family:'DM Serif Display',serif;font-size:clamp(20px,2.8vw,34px);font-style:italic;line-height:1.55;color:var(--black);margin-bottom:22px;max-width:780px;margin-left:auto;margin-right:auto;}
+  .quote-text span{color:var(--blue-mid);}
+  .quote-author{font-size:13px;color:var(--gray-400);font-weight:500;}
+
+  /* ===== FOOTER ===== */
+  footer{background:var(--black);color:white;padding:64px 8% 36px;}
+  .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:48px;margin-bottom:48px;}
+  .footer-brand p{font-size:13px;color:rgba(255,255,255,0.4);line-height:1.75;margin-top:16px;max-width:270px;}
+  .footer-col h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.35);margin-bottom:16px;}
+  .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+  .footer-col li a{font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;transition:color 0.2s;}
+  .footer-col li a:hover{color:white;}
+  .footer-bottom{border-top:1px solid rgba(255,255,255,0.07);padding-top:26px;display:flex;justify-content:space-between;align-items:center;}
+  .footer-bottom p{font-size:12px;color:rgba(255,255,255,0.28);}
+  .footer-bottom-links{display:flex;gap:20px;}
+  .footer-bottom-links a{font-size:12px;color:rgba(255,255,255,0.3);text-decoration:none;}
+  .footer-bottom-links a:hover{color:rgba(255,255,255,0.7);}
+
+  /* ===== REVEAL ===== */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity 0.65s ease,transform 0.65s ease;}
+  .reveal.visible{opacity:1;transform:translateY(0);}
+
+  /* ===== SCROLL PROGRESS ===== */
+  .scroll-progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:200;background:transparent;}
+  .scroll-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--blue-bright),var(--red-accent));transition:width 0.1s linear;}
+
+  /* ===== MOBILE HAMBURGER ===== */
+  .hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;flex-direction:column;gap:5px;}
+  .hamburger span{display:block;width:22px;height:2px;background:var(--black);transition:all 0.3s;}
+  .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+  .hamburger.open span:nth-child(2){opacity:0;}
+  .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+  .mobile-menu{display:none;position:fixed;top:72px;left:0;right:0;background:white;border-bottom:1px solid var(--gray-200);z-index:99;padding:20px 24px;flex-direction:column;gap:0;box-shadow:0 12px 40px rgba(0,0,0,0.08);}
+  .mobile-menu.open{display:flex;}
+  .mobile-menu a{display:flex;align-items:center;gap:10px;padding:14px 0;border-bottom:1px solid var(--gray-100);font-size:15px;font-weight:600;color:var(--black);text-decoration:none;}
+  .mobile-menu a:last-child{border-bottom:none;}
+  .mobile-menu .mm-btn{margin-top:16px;display:flex;gap:10px;}
+
+  /* ===== TESTIMONIALS ===== */
+  .testimonials-section{background:var(--off-white);padding:100px 8%;}
+  .testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px;}
+  .testi-card{background:white;border-radius:20px;padding:36px 30px;border:1px solid var(--gray-200);position:relative;transition:all 0.3s ease;}
+  .testi-card:hover{transform:translateY(-5px);box-shadow:0 20px 60px rgba(0,0,0,0.09);}
+  .testi-card.featured{background:var(--blue-deep);border-color:var(--blue-deep);color:white;}
+  .testi-quote-mark{font-family:'DM Serif Display',serif;font-size:72px;line-height:0.6;color:var(--blue-light);margin-bottom:24px;display:block;}
+  .testi-card.featured .testi-quote-mark{color:rgba(255,255,255,0.15);}
+  .testi-text{font-size:15px;line-height:1.75;color:var(--gray-600);margin-bottom:28px;font-style:italic;}
+  .testi-card.featured .testi-text{color:rgba(255,255,255,0.75);}
+  .testi-author{display:flex;align-items:center;gap:13px;}
+  .testi-avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--blue-light);}
+  .testi-card.featured .testi-avatar{border-color:rgba(255,255,255,0.3);}
+  .testi-name{font-size:14px;font-weight:700;color:var(--black);}
+  .testi-card.featured .testi-name{color:white;}
+  .testi-role{font-size:12px;color:var(--gray-400);margin-top:2px;}
+  .testi-card.featured .testi-role{color:rgba(255,255,255,0.45);}
+  .testi-type-badge{position:absolute;top:24px;right:24px;font-size:10px;font-weight:700;padding:3px 10px;border-radius:100px;letter-spacing:0.06em;text-transform:uppercase;}
+  .badge-student{background:var(--blue-light);color:var(--blue-deep);}
+  .badge-lecturer{background:rgba(192,57,43,0.1);color:var(--red-accent);}
+  .badge-recruiter{background:rgba(201,162,39,0.12);color:var(--gold);}
+  .testi-card.featured .badge-student{background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);}
+  .testi-stars{display:flex;gap:3px;margin-bottom:16px;}
+  .testi-stars span{color:var(--gold);font-size:14px;}
+  .testi-card.featured .testi-stars span{color:rgba(255,255,255,0.6);}
+
+  /* ===== FAQ ===== */
+  .faq-section{background:white;padding:100px 8%;}
+  .faq-layout{display:grid;grid-template-columns:1fr 2fr;gap:72px;margin-top:56px;align-items:start;}
+  .faq-sidebar h3{font-family:'DM Serif Display',serif;font-size:28px;color:var(--black);margin-bottom:14px;line-height:1.25;}
+  .faq-sidebar p{font-size:14px;color:var(--gray-400);line-height:1.75;margin-bottom:28px;}
+  .faq-contact{display:flex;align-items:center;gap:12px;padding:16px 18px;background:var(--off-white);border-radius:12px;text-decoration:none;border:1px solid var(--gray-200);transition:all 0.2s;}
+  .faq-contact:hover{border-color:var(--blue-bright);background:var(--blue-light);}
+  .faq-contact-ico{width:40px;height:40px;border-radius:10px;background:var(--blue-deep);display:flex;align-items:center;justify-content:center;flex-shrink:0;--ico-size:17px;--ico-color:white;}
+  .faq-contact strong{font-size:13px;font-weight:700;color:var(--black);display:block;}
+  .faq-contact span{font-size:11px;color:var(--gray-400);}
+  .faq-list{display:flex;flex-direction:column;gap:0;}
+  .faq-item{border-bottom:1px solid var(--gray-200);overflow:hidden;}
+  .faq-item:first-child{border-top:1px solid var(--gray-200);}
+  .faq-q{display:flex;align-items:center;justify-content:space-between;padding:22px 0;cursor:pointer;gap:16px;user-select:none;}
+  .faq-q strong{font-size:15px;font-weight:600;color:var(--black);line-height:1.45;}
+  .faq-icon{width:28px;height:28px;border-radius:50%;background:var(--off-white);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.3s;--ico-size:14px;--ico-color:var(--gray-600);}
+  .faq-item.open .faq-icon{background:var(--blue-deep);--ico-color:white;transform:rotate(45deg);}
+  .faq-item.open .faq-q strong{color:var(--blue-deep);}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height 0.4s ease,padding 0.3s ease;}
+  .faq-a p{font-size:14px;color:var(--gray-600);line-height:1.8;padding-bottom:22px;}
+  .faq-item.open .faq-a{max-height:300px;}
+
+  /* ===== PARTNER LOGOS ===== */
+  .partners-section{background:var(--off-white);padding:60px 8%;border-top:1px solid var(--gray-200);}
+  .partners-label{text-align:center;font-size:12px;font-weight:600;color:var(--gray-400);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:36px;}
+  .partners-logos{display:flex;align-items:center;justify-content:center;gap:40px;flex-wrap:wrap;opacity:0.45;filter:grayscale(1);}
+  .partner-logo{font-family:'Space Mono',monospace;font-size:13px;font-weight:700;color:var(--black);letter-spacing:0.06em;padding:10px 20px;border:1.5px solid var(--gray-300);border-radius:8px;}
+
+  /* ===== STICKY SIDE CTA ===== */
+  .sticky-side{position:fixed;right:24px;bottom:80px;z-index:50;display:flex;flex-direction:column;gap:10px;opacity:0;transform:translateX(16px);transition:all 0.4s ease;}
+  .sticky-side.show{opacity:1;transform:translateX(0);}
+  .side-btn{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;box-shadow:0 4px 16px rgba(0,0,0,0.15);transition:all 0.2s;--ico-size:18px;}
+  .side-btn:hover{transform:scale(1.08);}
+  .side-btn-blue{background:var(--blue-deep);--ico-color:white;}
+  .side-btn-top{background:white;border:1px solid var(--gray-200);--ico-color:var(--blue-deep);}
+  .side-tooltip{position:absolute;right:58px;top:50%;transform:translateY(-50%);background:var(--black);color:white;font-size:11px;font-weight:600;white-space:nowrap;padding:5px 10px;border-radius:6px;pointer-events:none;opacity:0;transition:opacity 0.2s;}
+  .side-btn-wrap{position:relative;}
+  .side-btn-wrap:hover .side-tooltip{opacity:1;}
+
+  @media(max-width:768px){
+    .hero{grid-template-columns:1fr;}
+    .hero-visual{display:none;}
+    .tab-panel.active{grid-template-columns:1fr;}
+    .pillar-grid{grid-template-columns:1fr;}
+    .footer-grid{grid-template-columns:1fr 1fr;}
+    .compare-table{display:none;}
+    .flow-diagram{flex-direction:column;}
+    .hppp-diagram{grid-template-columns:1fr;}
+    nav{padding:0 18px;}
+    .nav-links{display:none;}
+    .hamburger{display:flex;}
+    section{padding:60px 5%;}
+    .stats-row{display:flex;flex-direction:column;}
+    .testimonials-grid{grid-template-columns:1fr;}
+    .faq-layout{grid-template-columns:1fr;}
+    .faq-sidebar{display:none;}
+    .sticky-side{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- SCROLL PROGRESS -->
+<div class="scroll-progress"><div class="scroll-bar" id="scrollBar"></div></div>
+
+<!-- STICKY SIDE BUTTONS -->
+<div class="sticky-side" id="stickySide">
+  <div class="side-btn-wrap">
+    <button class="side-btn side-btn-blue ico" onclick="document.querySelector('.cta-section').scrollIntoView({behavior:'smooth'})"><i data-lucide="rocket"></i></button>
+    <div class="side-tooltip">Bắt đầu ngay</div>
+  </div>
+  <div class="side-btn-wrap">
+    <button class="side-btn side-btn-top ico" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i data-lucide="chevron-up"></i></button>
+    <div class="side-tooltip">Lên đầu trang</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-mark"><span>UEF</span></div>
+    <div class="logo-text">
+      <strong>Design Gallery</strong>
+      <small>Faculty of Graphic Design</small>
+    </div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#" class="active">Gate</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#audience">Platform</a></li>
+    <li><a href="#compare">Why Us</a></li>
+    <li><a href="#testimonials">Reviews</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="#" class="btn btn-outline">
+      <span class="ico" style="--ico-size:14px;--ico-color:var(--gray-600);"><i data-lucide="globe"></i></span> EN
+    </a>
+    <a href="#" class="btn btn-outline">Sign Up</a>
+    <a href="#" class="btn btn-primary">Sign In <span class="ico" style="--ico-size:14px;--ico-color:white;"><i data-lucide="arrow-right"></i></span></a>
+    <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#"><span class="ico" style="--ico-size:16px;--ico-color:var(--blue-mid);"><i data-lucide="home"></i></span> Trang chủ</a>
+  <a href="#about"><span class="ico" style="--ico-size:16px;--ico-color:var(--blue-mid);"><i data-lucide="info"></i></span> Giới thiệu</a>
+  <a href="#audience"><span class="ico" style="--ico-size:16px;--ico-color:var(--blue-mid);"><i data-lucide="users"></i></span> Nền tảng</a>
+  <a href="#compare"><span class="ico" style="--ico-size:16px;--ico-color:var(--blue-mid);"><i data-lucide="bar-chart-2"></i></span> So sánh</a>
+  <div class="mm-btn">
+    <a href="#" class="btn btn-outline" style="flex:1;justify-content:center;">Sign Up</a>
+    <a href="#" class="btn btn-primary" style="flex:1;justify-content:center;">Sign In</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" style="padding:0;">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Faculty of Graphic Design — UEF
+    </div>
+    <h1 class="hero-title">
+      Discover<br>
+      <span class="highlight">The best projects</span><br>
+      from UEF students
+    </h1>
+    <p class="hero-sub">Nền tảng E-Portfolio tích hợp đánh giá học thuật — nơi sinh viên trưng bày tác phẩm, giảng viên chấm điểm chuyên nghiệp, và nhà tuyển dụng tìm kiếm nhân tài <strong style="color:var(--blue-mid);">đã được kiểm định.</strong></p>
+    <div class="hero-ctas">
+      <a href="#audience" class="btn btn-primary btn-lg">Explore Gallery <span class="ico" style="--ico-size:16px;--ico-color:white;"><i data-lucide="arrow-right"></i></span></a>
+      <a href="#audience" class="btn btn-outline btn-lg">Student Login</a>
+    </div>
+    <p class="hero-hint">
+      <span class="ico" style="--ico-size:13px;--ico-color:var(--gray-400);"><i data-lucide="info"></i></span>
+      For students, log in with your UEF email
+    </p>
+    <div class="hero-stats">
+      <div><div class="stat-number">500+</div><div class="stat-label">Displayed Artworks</div></div>
+      <div><div class="stat-number">120+</div><div class="stat-label">Participating Lecturers</div></div>
+      <div><div class="stat-number">18</div><div class="stat-label">Tech Tools</div></div>
+      <div><div class="stat-number">4</div><div class="stat-label">Courses</div></div>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="mosaic">
+      <!-- Real Unsplash images — graphic design / creative work themed -->
+      <div class="mosaic-item tall">
+        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80" alt="branding">
+        <span class="tag">Branding</span><span class="like">♥ 243</span>
+      </div>
+      <div class="mosaic-item">
+        <img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400&q=80" alt="typography">
+        <span class="tag">Typography</span>
+      </div>
+      <div class="mosaic-item">
+        <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&q=80" alt="ui design">
+        <span class="tag">UI/UX</span><span class="like">♥ 187</span>
+      </div>
+      <div class="mosaic-item">
+        <img src="https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&q=80" alt="3d art">
+        <span class="tag">3D Art</span>
+      </div>
+      <div class="mosaic-item tall">
+        <img src="https://images.unsplash.com/photo-1636955816868-fcb881e57954?w=400&q=80" alt="illustration">
+        <span class="tag">Illustration</span><span class="like">♥ 312</span>
+      </div>
+      <div class="mosaic-item">
+        <img src="https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400&q=80" alt="packaging">
+        <span class="tag">Packaging</span>
+      </div>
+      <div class="mosaic-item wide">
+        <img src="https://images.unsplash.com/photo-1523437113738-bbd3cc89fb19?w=600&q=80" alt="poster">
+        <span class="tag">Poster Design</span><span class="like">♥ 99</span>
+      </div>
+      <div class="mosaic-item">
+        <img src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=400&q=80" alt="logo">
+        <span class="tag">Logo</span>
+      </div>
+      <div class="mosaic-item">
+        <img src="https://images.unsplash.com/photo-1542744094-24638eff58bb?w=400&q=80" alt="editorial">
+        <span class="tag">Editorial</span>
+      </div>
+      <div class="mosaic-item">
+        <img src="https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=400&q=80" alt="motion">
+        <span class="tag">Motion</span><span class="like">♥ 145</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-section">
+  <div class="ticker-track" id="ticker">
+    <span class="ticker-item"><span class="ticker-dot"></span>UEF Design Gallery — Nền tảng E-Portfolio tích hợp đánh giá học thuật</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Được kiểm định bởi giảng viên Khoa Thiết kế Đồ họa UEF</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>80%+ nhà tuyển dụng xác nhận E-Portfolio hữu ích trong tuyển dụng</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>gallery.uef.edu.vn/portfolio/[ten-sinh-vien]</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Branding · Typography · 3D Art · Packaging · Motion Graphics · Poster</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>UEF Design Gallery — Nền tảng E-Portfolio tích hợp đánh giá học thuật</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Được kiểm định bởi giảng viên Khoa Thiết kế Đồ họa UEF</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>80%+ nhà tuyển dụng xác nhận E-Portfolio hữu ích trong tuyển dụng</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>gallery.uef.edu.vn/portfolio/[ten-sinh-vien]</span>
+    <span class="ticker-item"><span class="ticker-dot"></span>Branding · Typography · 3D Art · Packaging · Motion Graphics · Poster</span>
+  </div>
+</div>
+
+<!-- GALLERY STRIP -->
+<div class="gallery-strip">
+  <div class="gallery-strip-label">
+    <div class="section-label" style="justify-content:center;">Featured Artworks</div>
+  </div>
+  <div style="overflow:hidden;">
+    <div class="strip-track">
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1523437113738-bbd3cc89fb19?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1636955816868-fcb881e57954?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1542744094-24638eff58bb?w=440&q=75" alt=""></div>
+      <!-- Duplicate for seamless loop -->
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1523437113738-bbd3cc89fb19?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1636955816868-fcb881e57954?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=440&q=75" alt=""></div>
+      <div class="strip-img"><img src="https://images.unsplash.com/photo-1542744094-24638eff58bb?w=440&q=75" alt=""></div>
+    </div>
+  </div>
+</div>
+
+<!-- AUDIENCE SECTION -->
+<section class="audience-section" id="audience">
+  <div class="section-label">Core Platform</div>
+  <h2 class="section-title">Everything you need<br>in one platform</h2>
+  <p class="section-desc" style="margin-bottom:48px;">Được xây dựng cho ba nhóm người dùng cốt lõi với trải nghiệm riêng biệt, tích hợp mượt mà trong cùng một hệ sinh thái.</p>
+
+  <div class="audience-tabs">
+    <button class="tab-btn active" onclick="switchTab('student',this)">
+      <span class="ico"><i data-lucide="graduation-cap"></i></span> Sinh viên
+    </button>
+    <button class="tab-btn" onclick="switchTab('lecturer',this)">
+      <span class="ico"><i data-lucide="clipboard-list"></i></span> Giảng viên
+    </button>
+    <button class="tab-btn" onclick="switchTab('recruiter',this)">
+      <span class="ico"><i data-lucide="building-2"></i></span> Nhà tuyển dụng
+    </button>
+  </div>
+
+  <!-- STUDENT TAB -->
+  <div id="tab-student" class="tab-panel active">
+    <div class="tab-content">
+      <h3>Xây dựng hồ sơ chuyên nghiệp từ năm nhất</h3>
+      <p>Mỗi bài tập học thuật là một viên gạch tạo nên danh tiếng nghề nghiệp. UEF Design Gallery biến tác phẩm từ "bài nộp một lần" thành tài sản số lâu dài mang thương hiệu UEF.</p>
+      <ul class="feature-list">
+        <li>
+          <div class="feature-icon fi-blue"><span class="ico"><i data-lucide="layout-grid"></i></span></div>
+          <div><strong>Portfolio Masonry chuẩn thẩm mỹ</strong><br>Trưng bày tác phẩm đa phương tiện, hỗ trợ Pantone/CMYK và quy trình sáng tác đầy đủ concept → sketch → final.</div>
+        </li>
+        <li>
+          <div class="feature-icon fi-blue"><span class="ico"><i data-lucide="link"></i></span></div>
+          <div><strong>URL thương hiệu nhà trường</strong><br>Định danh số uy tín: <code style="background:var(--blue-light);color:var(--blue-deep);padding:2px 7px;border-radius:4px;font-size:11px;">gallery.uef.edu.vn/portfolio/ten-ban</code></div>
+        </li>
+        <li>
+          <div class="feature-icon fi-blue"><span class="ico"><i data-lucide="message-square"></i></span></div>
+          <div><strong>Phản hồi kín từ giảng viên</strong><br>Nhận góp ý chi tiết theo rubric trước khi tác phẩm được công khai. Bảo vệ tâm lý sáng tạo.</div>
+        </li>
+        <li>
+          <div class="feature-icon fi-green"><span class="ico"><i data-lucide="briefcase"></i></span></div>
+          <div><strong>Kết nối nhà tuyển dụng xác thực</strong><br>Được doanh nghiệp đối tác UEF tìm kiếm qua bộ lọc kỹ năng chuyên ngành chính xác.</div>
+        </li>
+      </ul>
+      <a href="#" class="btn btn-primary">Tạo Portfolio ngay <span class="ico" style="--ico-size:15px;--ico-color:white;"><i data-lucide="arrow-right"></i></span></a>
+    </div>
+    <div class="tab-visual">
+      <div class="mockup-header">
+        <div class="dot-row"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+        <div class="mockup-title">gallery.uef.edu.vn/portfolio/nguyen-van-a</div>
+      </div>
+      <div class="mockup-body">
+        <div class="demo-topbar">
+          <div class="dot-row"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+          <div class="demo-url">gallery.uef.edu.vn/portfolio/nguyen-van-a</div>
+        </div>
+        <div class="demo-content">
+          <div class="demo-profile">
+            <div class="avatar">NA</div>
+            <div class="profile-info">
+              <strong>Nguyễn Văn A</strong>
+              <span>Graphic Design · Year 3 · UEF</span>
+            </div>
+            <div class="uef-badge">
+              <span class="ico" style="--ico-size:10px;--ico-color:var(--blue-deep);"><i data-lucide="check-circle"></i></span> UEF Verified
+            </div>
+          </div>
+          <div class="mini-grid">
+            <div class="mini-card"><img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&q=70" alt=""><span class="score">9.5</span><span class="type">Branding</span></div>
+            <div class="mini-card"><img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?w=200&q=70" alt=""><span class="type">Typography</span></div>
+            <div class="mini-card"><img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?w=200&q=70" alt=""><span class="score lc">LC✦</span><span class="type">UI/UX</span></div>
+            <div class="mini-card"><img src="https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=200&q=70" alt=""><span class="type">3D Art</span></div>
+            <div class="mini-card"><img src="https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=200&q=70" alt=""><span class="score">9.0</span><span class="type">Packaging</span></div>
+            <div class="mini-card"><img src="https://images.unsplash.com/photo-1523437113738-bbd3cc89fb19?w=200&q=70" alt=""><span class="type">Poster</span></div>
+          </div>
+          <div class="verified-bar">
+            <span class="ico" style="--ico-size:13px;--ico-color:var(--blue-deep);"><i data-lucide="shield-check"></i></span>
+            12 tác phẩm đã kiểm định học thuật · Cập nhật hôm nay
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LECTURER TAB -->
+  <div id="tab-lecturer" class="tab-panel">
+    <div class="tab-content">
+      <h3>Quản lý đánh giá toàn bộ lớp học trong một màn hình</h3>
+      <p>Số hóa hoàn toàn quy trình chấm điểm đồ án — từ xem tác phẩm, chấm rubric, phản hồi kín đến gắn thẻ Lecturer's Choice.</p>
+      <ul class="feature-list">
+        <li>
+          <div class="feature-icon fi-red"><span class="ico"><i data-lucide="bar-chart-2"></i></span></div>
+          <div><strong>Chấm điểm theo Rubric chuẩn hóa</strong><br>Hệ thống rubric tích hợp theo từng môn học, phản hồi kín chỉ sinh viên liên quan thấy. Lưu trữ lịch sử đầy đủ.</div>
+        </li>
+        <li>
+          <div class="feature-icon fi-gold"><span class="ico"><i data-lucide="star"></i></span></div>
+          <div><strong>Lecturer's Choice Badge</strong><br>Gắn thẻ "Tác phẩm xuất sắc" để nổi bật trong gallery công khai, khuyến khích sinh viên và nâng cao uy tín khoa.</div>
+        </li>
+        <li>
+          <div class="feature-icon fi-red"><span class="ico"><i data-lucide="folder-open"></i></span></div>
+          <div><strong>Xem theo lớp / môn / khóa</strong><br>Bộ lọc đa chiều: năm học, khóa học, môn học, công cụ. Quản lý toàn bộ đồ án theo khung đào tạo.</div>
+        </li>
+        <li>
+          <div class="feature-icon fi-green"><span class="ico"><i data-lucide="lock"></i></span></div>
+          <div><strong>Bảo mật & Toàn vẹn học thuật</strong><br>Phản hồi mã hóa end-to-end. Sinh viên không thể sửa tác phẩm đã được chấm điểm chính thức.</div>
+        </li>
+      </ul>
+      <a href="#" class="btn btn-red">Đăng nhập Giảng viên <span class="ico" style="--ico-size:15px;--ico-color:white;"><i data-lucide="arrow-right"></i></span></a>
+    </div>
+    <div class="tab-visual">
+      <div class="mockup-header">
+        <div class="dot-row"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+        <div class="mockup-title">Grading Panel — GDes301 Typography</div>
+      </div>
+      <div class="mockup-body">
+        <div class="grading-panel">
+          <div class="grade-header">
+            <span class="ico" style="--ico-size:13px;--ico-color:var(--blue-deep);"><i data-lucide="clipboard-list"></i></span>
+            GDes 301 — Typography · 28 sinh viên · 3 chờ chấm
+          </div>
+          <div class="artwork-row">
+            <div class="artwork-thumb"><img src="https://images.unsplash.com/photo-1626785774573-4b799315345d?w=100&q=70" alt=""></div>
+            <div class="artwork-info"><strong>Nguyễn Văn A — "City Rhythms"</strong><span>Typography · 2 giờ trước</span></div>
+            <input class="grade-input" value="9.5">
+            <span class="lc-badge">LC ✦</span>
+          </div>
+          <div class="artwork-row">
+            <div class="artwork-thumb"><img src="https://images.unsplash.com/photo-1636955816868-fcb881e57954?w=100&q=70" alt=""></div>
+            <div class="artwork-info"><strong>Trần Thị B — "Bloom"</strong><span>Typography · 5 giờ trước</span></div>
+            <input class="grade-input" value="8.0">
+          </div>
+          <div class="artwork-row">
+            <div class="artwork-thumb"><img src="https://images.unsplash.com/photo-1542744094-24638eff58bb?w=100&q=70" alt=""></div>
+            <div class="artwork-info"><strong>Lê Văn C — "Nostalgia"</strong><span>Typography · Chờ duyệt</span></div>
+            <input class="grade-input" placeholder="—" style="background:var(--off-white);border-color:var(--gray-200);">
+          </div>
+          <div class="private-note">
+            <span class="ico" style="--ico-size:13px;--ico-color:var(--red-accent);"><i data-lucide="lock"></i></span>
+            Private feedback — Chỉ sinh viên liên quan thấy · Đã gửi 2 phản hồi hôm nay
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECRUITER TAB -->
+  <div id="tab-recruiter" class="tab-panel">
+    <div class="tab-content">
+      <h3>Tìm kiếm nhân tài đã được kiểm định học thuật</h3>
+      <p>Truy cập trực tiếp thư viện sinh viên UEF — mọi tác phẩm đều qua kiểm định giảng viên. Tuyển đúng người, tiết kiệm chi phí sàng lọc.</p>
+      <ul class="feature-list">
+        <li>
+          <div class="feature-icon fi-blue"><span class="ico"><i data-lucide="search"></i></span></div>
+          <div><strong>Bộ lọc kỹ năng đa tầng</strong><br>Tìm chính xác theo kỹ năng ngách: "Motion Graphics, After Effects, Year 3" — không nhiễu, đã xác thực.</div>
+        </li>
+        <li>
+          <div class="feature-icon fi-blue"><span class="ico"><i data-lucide="shield-check"></i></span></div>
+          <div><strong>Xác thực học thuật tự động</strong><br>Mỗi hồ sơ mang URL UEF và dấu "Academically Verified" — đảm bảo tính chân thực mà Behance không thể cung cấp.</div>
+        </li>
+        <li>
+          <div class="feature-icon fi-green"><span class="ico"><i data-lucide="mail"></i></span></div>
+          <div><strong>Kết nối bảo mật qua UEF</strong><br>Liên hệ qua biểu mẫu chính thức, chuyển đến email @uef.edu.vn — bảo vệ thông tin cá nhân sinh viên.</div>
+        </li>
+        <li>
+          <div class="feature-icon fi-gold"><span class="ico"><i data-lucide="handshake"></i></span></div>
+          <div><strong>Tài khoản Doanh nghiệp đối tác</strong><br>Đăng tuyển thực tập sinh, tổ chức critique session trực tuyến và xây dựng quan hệ chiến lược với UEF.</div>
+        </li>
+      </ul>
+      <a href="#" class="btn btn-primary">Tạo tài khoản Recruiter <span class="ico" style="--ico-size:15px;--ico-color:white;"><i data-lucide="arrow-right"></i></span></a>
+    </div>
+    <div class="tab-visual">
+      <div class="mockup-header">
+        <div class="dot-row"><div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div></div>
+        <div class="mockup-title">Recruiter Dashboard</div>
+      </div>
+      <div class="mockup-body">
+        <div class="search-bar">
+          <span class="ico"><i data-lucide="search"></i></span>
+          Motion Graphics, After Effects, Year 3
+        </div>
+        <div class="filter-chips">
+          <span class="chip chip-blue">Motion Graphics ×</span>
+          <span class="chip chip-blue">After Effects ×</span>
+          <span class="chip chip-blue">Year 3 ×</span>
+          <span class="chip chip-gray">+ Branding</span>
+          <span class="chip chip-gray">+ UI/UX</span>
+        </div>
+        <div style="font-size:11px;color:var(--gray-400);margin-bottom:10px;display:flex;align-items:center;gap:5px;">
+          <span class="ico" style="--ico-size:12px;--ico-color:var(--gray-400);"><i data-lucide="users"></i></span>
+          12 sinh viên phù hợp · Tất cả đã kiểm định học thuật
+        </div>
+        <div class="candidate-list">
+          <div class="candidate-card">
+            <div class="cand-avatar">NA</div>
+            <div class="cand-info">
+              <strong>Nguyễn Văn A <span style="color:var(--blue-mid);font-size:10px;font-weight:700;">✓ Verified</span></strong>
+              <span>Year 3 · GPA 3.7/4.0 · 8 artworks</span>
+              <div class="cand-skills"><span class="skill-tag">After Effects</span><span class="skill-tag">Blender</span><span class="skill-tag">Premiere</span></div>
+            </div>
+            <button class="connect-btn">Liên hệ</button>
+          </div>
+          <div class="candidate-card">
+            <div class="cand-avatar" style="background:var(--red-accent);">TB</div>
+            <div class="cand-info">
+              <strong>Trần Thị B <span style="color:var(--gold);font-size:10px;font-weight:700;">★ LC Award</span></strong>
+              <span>Year 3 · GPA 3.9/4.0 · 11 artworks</span>
+              <div class="cand-skills"><span class="skill-tag">Motion</span><span class="skill-tag">C4D</span><span class="skill-tag">Figma</span></div>
+            </div>
+            <button class="connect-btn">Liên hệ</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT DARK -->
+<section class="about-section" id="about">
+  <div class="about-bg-grid"></div>
+  <div class="about-bg-glow"></div>
+  <div class="about-bg-glow2"></div>
+  <div class="about-inner">
+    <div class="about-header">
+      <div class="section-label">About The Platform</div>
+      <h2 class="section-title">Nền tảng Lai giữa<br>Sư phạm và<br>Chuyên nghiệp</h2>
+      <p class="section-desc">UEF Design Gallery là hệ thống đầu tiên kết hợp tính bảo mật sư phạm của LMS với sức mạnh trưng bày của Behance — xây dựng đặc thù cho ngành Thiết kế Đồ họa.</p>
+    </div>
+
+    <div class="pillar-grid">
+      <div class="pillar-card blue">
+        <div class="pillar-number">01 — Students</div>
+        <div class="pillar-ico-wrap ico"><i data-lucide="image"></i></div>
+        <div class="pillar-title">Online Asset Gallery</div>
+        <div class="pillar-desc">Thư viện số học thuật sống động — tổ chức theo năm học, môn học, công cụ. Sinh viên xây dựng hồ sơ chuyên nghiệp ngay từ năm nhất với URL thương hiệu UEF.</div>
+      </div>
+      <div class="pillar-card red">
+        <div class="pillar-number">02 — Lecturers</div>
+        <div class="pillar-ico-wrap ico"><i data-lucide="clipboard-check"></i></div>
+        <div class="pillar-title">Academic Evaluation System</div>
+        <div class="pillar-desc">Chấm điểm rubric tích hợp, phản hồi kín bảo mật, gắn thẻ Lecturer's Choice. Quy trình đánh giá số hóa hoàn toàn — tiết kiệm thời gian và lưu trữ bền vững.</div>
+      </div>
+      <div class="pillar-card gold">
+        <div class="pillar-number">03 — Employers</div>
+        <div class="pillar-ico-wrap ico"><i data-lucide="users"></i></div>
+        <div class="pillar-title">Recruitment Connection</div>
+        <div class="pillar-desc">Tuyển dụng trực tiếp từ nguồn nhân tài đã kiểm định. Bộ lọc kỹ năng ngách, kết nối bảo mật qua UEF và tài khoản doanh nghiệp đối tác.</div>
+      </div>
+    </div>
+
+    <!-- HPPP Architecture -->
+    <div class="hppp-diagram">
+      <div>
+        <div class="hppp-col-label">LMS (Canvas / Moodle)</div>
+        <div class="hppp-row good"><span class="ico"><i data-lucide="check"></i></span> Rubric &amp; Grading</div>
+        <div class="hppp-row good"><span class="ico"><i data-lucide="check"></i></span> Academic Security</div>
+        <div class="hppp-row bad"><span class="ico"><i data-lucide="x"></i></span> Visual Showcase</div>
+        <div class="hppp-row bad"><span class="ico"><i data-lucide="x"></i></span> Recruiter Access</div>
+      </div>
+      <div style="text-align:center;">
+        <div class="hppp-center-ico ico"><i data-lucide="zap"></i></div>
+        <div class="hppp-center-label">
+          <strong>HPPP</strong>
+          <span>Hybrid Pedagogical-<br>Professional Platform</span>
+        </div>
+      </div>
+      <div>
+        <div class="hppp-col-label">Behance / Dribbble</div>
+        <div class="hppp-row good"><span class="ico"><i data-lucide="check"></i></span> Visual Showcase</div>
+        <div class="hppp-row good"><span class="ico"><i data-lucide="check"></i></span> Community Reach</div>
+        <div class="hppp-row bad"><span class="ico"><i data-lucide="x"></i></span> Academic Evaluation</div>
+        <div class="hppp-row bad"><span class="ico"><i data-lucide="x"></i></span> Identity Verification</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;">
+      <div class="stats-row">
+        <div class="stat-block"><div class="num">100%</div><div class="lbl">Academically Verified</div></div>
+        <div class="stat-block"><div class="num">3×</div><div class="lbl">Faster Evaluation</div></div>
+        <div class="stat-block"><div class="num">80%</div><div class="lbl">Recruiter Preference</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section class="flow-section reveal" id="flow">
+  <div class="section-label">How It Works</div>
+  <h2 class="section-title">Từ bài tập đến<br>cơ hội nghề nghiệp</h2>
+  <p class="section-desc">Quy trình khép kín — đăng tải đồ án, đánh giá học thuật, kết nối nhà tuyển dụng.</p>
+  <div class="flow-diagram">
+    <div class="flow-step">
+      <div class="flow-num">01</div>
+      <div class="flow-ico ico"><i data-lucide="upload"></i></div>
+      <div class="flow-title">Sinh viên nộp bài</div>
+      <div class="flow-desc">Đăng tác phẩm kèm quy trình sáng tác và gắn nhãn môn học</div>
+    </div>
+    <div class="flow-arrow ico"><i data-lucide="chevron-right"></i></div>
+    <div class="flow-step">
+      <div class="flow-num">02</div>
+      <div class="flow-ico ico"><i data-lucide="clipboard-check"></i></div>
+      <div class="flow-title">Giảng viên đánh giá</div>
+      <div class="flow-desc">Chấm rubric, phản hồi kín, gắn thẻ Lecturer's Choice</div>
+    </div>
+    <div class="flow-arrow ico"><i data-lucide="chevron-right"></i></div>
+    <div class="flow-step">
+      <div class="flow-num">03</div>
+      <div class="flow-ico ico"><i data-lucide="shield-check"></i></div>
+      <div class="flow-title">Kiểm định & Công khai</div>
+      <div class="flow-desc">Tác phẩm đạt chuẩn được phát hành với dấu Verified trên URL UEF</div>
+    </div>
+    <div class="flow-arrow ico"><i data-lucide="chevron-right"></i></div>
+    <div class="flow-step">
+      <div class="flow-num">04</div>
+      <div class="flow-ico ico"><i data-lucide="search"></i></div>
+      <div class="flow-title">Nhà tuyển dụng tìm kiếm</div>
+      <div class="flow-desc">Lọc ứng viên theo kỹ năng ngách, xem portfolio xác thực</div>
+    </div>
+    <div class="flow-arrow ico"><i data-lucide="chevron-right"></i></div>
+    <div class="flow-step">
+      <div class="flow-num">05</div>
+      <div class="flow-ico ico"><i data-lucide="rocket"></i></div>
+      <div class="flow-title">Cơ hội nghề nghiệp</div>
+      <div class="flow-desc">Từ bài tập năm nhất đến hợp đồng thực tập — liền mạch</div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE -->
+<section class="reveal" id="compare" style="background:white;padding:100px 8%;">
+  <div class="section-label">Why Choose Us</div>
+  <h2 class="section-title">Vượt trội hơn mọi<br>giải pháp hiện có</h2>
+  <p class="section-desc">Phân tích đối sánh theo 8 tiêu chí chuẩn giáo dục đại học quốc tế.</p>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Tiêu chí<br><span class="th-sub">Evaluation Criteria</span></th>
+        <th>LMS<br><span class="th-sub">Canvas / Moodle</span></th>
+        <th>Public Platform<br><span class="th-sub">Behance / Dribbble</span></th>
+        <th>UEF Design Gallery<br><span class="th-sub">Hybrid HPPP Model</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Giao diện trực quan</td><td><span class="crs">✕</span> Văn bản, thấp</td><td><span class="chk">✓</span> Cao, Masonry</td><td><span class="chk">✓</span> Masonry tối ưu</td></tr>
+      <tr><td>Chấm điểm Rubric</td><td><span class="chk">✓</span> Có, sâu</td><td><span class="crs">✕</span> Không hỗ trợ</td><td><span class="chk">✓</span> Tích hợp + phản hồi kín</td></tr>
+      <tr><td>Cấu trúc dữ liệu học thuật</td><td><span class="prt">◑</span> Theo khóa học</td><td><span class="crs">✕</span> Tự do, không quy chuẩn</td><td><span class="chk">✓</span> Chuẩn hóa theo đào tạo</td></tr>
+      <tr><td>Xác thực danh tính</td><td><span class="chk">✓</span> Email nhà trường</td><td><span class="crs">✕</span> Email tự do</td><td><span class="chk">✓</span> SSO @uef.edu.vn</td></tr>
+      <tr><td>Bảo mật sở hữu trí tuệ</td><td><span class="chk">✓</span> Hệ thống đóng</td><td><span class="crs">✕</span> Dữ liệu bên thứ ba</td><td><span class="chk">✓</span> Dữ liệu nội bộ UEF</td></tr>
+      <tr><td>Nhà tuyển dụng truy cập</td><td><span class="crs">✕</span> Không thể</td><td><span class="prt">◑</span> Cạnh tranh toàn cầu</td><td><span class="chk">✓</span> Có chọn lọc, định vị thương hiệu</td></tr>
+      <tr><td>Hỗ trợ quá trình học tập</td><td><span class="chk">✓</span> Cao</td><td><span class="crs">✕</span> Chỉ mạng xã hội</td><td><span class="chk">✓</span> Kết hợp cả hai</td></tr>
+      <tr><td>Tính xác thực học thuật</td><td><span class="prt">◑</span> Trong hệ thống đóng</td><td><span class="crs">✕</span> Không kiểm soát</td><td><span class="chk">✓</span> Verified Badge + URL UEF</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials-section reveal" id="testimonials">
+  <div class="section-label">Góc nhìn thực tế</div>
+  <h2 class="section-title">Người dùng nói gì<br>về chúng tôi?</h2>
+  <p class="section-desc">Phản hồi từ sinh viên, giảng viên và nhà tuyển dụng thực tế tại UEF và các đối tác.</p>
+  <div class="testimonials-grid">
+    <!-- Student -->
+    <div class="testi-card featured">
+      <span class="testi-type-badge badge-student">Sinh viên</span>
+      <span class="testi-quote-mark">"</span>
+      <p class="testi-text">Trước khi có UEF Design Gallery, tôi chỉ biết lưu bài vào Google Drive. Giờ tôi có một URL thực sự để gửi cho nhà tuyển dụng — và họ còn biết điểm số của từng dự án. Cảm giác rất khác biệt và chuyên nghiệp.</p>
+      <div class="testi-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+      <div class="testi-author">
+        <img class="testi-avatar" src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&q=80" alt="Sinh viên">
+        <div>
+          <div class="testi-name">Nguyễn Thị Minh Thư</div>
+          <div class="testi-role">Sinh viên Thiết kế Đồ họa · Năm 3 · UEF</div>
+        </div>
+      </div>
+    </div>
+    <!-- Lecturer -->
+    <div class="testi-card">
+      <span class="testi-type-badge badge-lecturer">Giảng viên</span>
+      <span class="testi-quote-mark" style="color:rgba(192,57,43,0.12);">"</span>
+      <p class="testi-text">Quy trình chấm điểm và phản hồi kín đã tiết kiệm cho tôi ít nhất 40% thời gian mỗi học kỳ. Đặc biệt tính năng Lecturer's Choice giúp tôi khuyến khích sinh viên một cách minh bạch và có hệ thống.</p>
+      <div class="testi-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+      <div class="testi-author">
+        <img class="testi-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80" alt="Giảng viên">
+        <div>
+          <div class="testi-name">ThS. Trần Hữu Nghĩa</div>
+          <div class="testi-role">Giảng viên Khoa Thiết kế Đồ họa · UEF</div>
+        </div>
+      </div>
+    </div>
+    <!-- Recruiter -->
+    <div class="testi-card">
+      <span class="testi-type-badge badge-recruiter">Nhà tuyển dụng</span>
+      <span class="testi-quote-mark" style="color:rgba(201,162,39,0.12);">"</span>
+      <p class="testi-text">Chúng tôi đã tuyển được 3 thực tập sinh xuất sắc trong học kỳ này thông qua nền tảng. Việc xem portfolio có điểm học thuật kèm theo giúp chúng tôi đánh giá ứng viên nhanh hơn 60% so với quy trình thông thường.</p>
+      <div class="testi-stars"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+      <div class="testi-author">
+        <img class="testi-avatar" src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=100&q=80" alt="Recruiter">
+        <div>
+          <div class="testi-name">Lê Anh Quân</div>
+          <div class="testi-role">Creative Director · Pmax Agency · TP.HCM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PARTNERS -->
+<div class="partners-section reveal">
+  <p class="partners-label">Đối tác tuyển dụng & doanh nghiệp</p>
+  <div class="partners-logos">
+    <div class="partner-logo">PMAX Agency</div>
+    <div class="partner-logo">Dentsu Creative</div>
+    <div class="partner-logo">Ogilvy Vietnam</div>
+    <div class="partner-logo">Mango DSC</div>
+    <div class="partner-logo">Vinalink Media</div>
+    <div class="partner-logo">Admicro</div>
+    <div class="partner-logo">VCCorp Design</div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<section class="faq-section reveal" id="faq">
+  <div class="section-label">FAQ</div>
+  <h2 class="section-title">Câu hỏi<br>thường gặp</h2>
+  <div class="faq-layout">
+    <div class="faq-sidebar">
+      <h3>Cần hỗ trợ thêm?</h3>
+      <p>Đội ngũ kỹ thuật và học thuật của Khoa Thiết kế Đồ họa luôn sẵn sàng hỗ trợ bạn.</p>
+      <a href="mailto:design-gallery@uef.edu.vn" class="faq-contact">
+        <div class="faq-contact-ico ico"><i data-lucide="mail"></i></div>
+        <div>
+          <strong>Email hỗ trợ</strong>
+          <span>design-gallery@uef.edu.vn</span>
+        </div>
+      </a>
+      <br>
+      <a href="#" class="faq-contact">
+        <div class="faq-contact-ico ico"><i data-lucide="book-open"></i></div>
+        <div>
+          <strong>Tài liệu hướng dẫn</strong>
+          <span>docs.gallery.uef.edu.vn</span>
+        </div>
+      </a>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item open">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <strong>Sinh viên không phải khoa Thiết kế có dùng được không?</strong>
+          <div class="faq-icon ico"><i data-lucide="plus"></i></div>
+        </div>
+        <div class="faq-a"><p>Hiện tại UEF Design Gallery được phát triển và vận hành chính thức bởi Khoa Thiết kế Đồ họa UEF. Sinh viên các khoa khác có thể xem công khai gallery nhưng tính năng đăng tải và đánh giá học thuật chỉ dành cho sinh viên đã đăng ký môn học thuộc khoa. Chúng tôi đang nghiên cứu mở rộng cho các ngành sáng tạo khác trong tương lai.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <strong>Tác phẩm của tôi có bị sử dụng cho mục đích thương mại không?</strong>
+          <div class="faq-icon ico"><i data-lucide="plus"></i></div>
+        </div>
+        <div class="faq-a"><p>Không. UEF Design Gallery tôn trọng tuyệt đối quyền sở hữu trí tuệ của sinh viên. Toàn bộ tác phẩm được lưu trữ trên hạ tầng nội bộ UEF — không chia sẻ với bên thứ ba vì mục đích thương mại. Chính sách IP đầy đủ có tại gallery.uef.edu.vn/ip-policy.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <strong>Nhà tuyển dụng liên hệ sinh viên theo cách nào?</strong>
+          <div class="faq-icon ico"><i data-lucide="plus"></i></div>
+        </div>
+        <div class="faq-a"><p>Mọi liên hệ từ nhà tuyển dụng đều đi qua biểu mẫu chính thức và được chuyển tiếp đến email @uef.edu.vn của sinh viên. Thông tin liên lạc cá nhân (số điện thoại, email cá nhân) không bao giờ được hiển thị công khai — bảo vệ tuyệt đối quyền riêng tư của sinh viên.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <strong>Làm sao giảng viên biết tác phẩm không bị copy từ AI hoặc internet?</strong>
+          <div class="faq-icon ico"><i data-lucide="plus"></i></div>
+        </div>
+        <div class="faq-a"><p>Hệ thống yêu cầu sinh viên đăng tải cả quy trình sáng tác (concept sketch, work-in-progress, final). Giảng viên có thể theo dõi lịch sử chỉnh sửa và truy vết nguồn gốc. Tính năng kiểm tra tương đồng và AI-detection đang trong lộ trình phát triển Q3/2025.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <strong>Portfolio sẽ tồn tại bao lâu sau khi ra trường?</strong>
+          <div class="faq-icon ico"><i data-lucide="plus"></i></div>
+        </div>
+        <div class="faq-a"><p>URL gallery.uef.edu.vn/portfolio/[tên-sinh-viên] sẽ được duy trì tối thiểu 5 năm sau khi tốt nghiệp. Alumni có thể đăng nhập để cập nhật thêm tác phẩm cá nhân (không cần liên kết môn học) và chia sẻ link cho nhà tuyển dụng trong quá trình xin việc.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">
+          <strong>Doanh nghiệp cần điều kiện gì để đăng ký tài khoản Recruiter?</strong>
+          <div class="faq-icon ico"><i data-lucide="plus"></i></div>
+        </div>
+        <div class="faq-a"><p>Doanh nghiệp cần đăng ký qua cổng đối tác UEF với mã số thuế hợp lệ và cam kết tuân thủ chính sách bảo vệ sinh viên. Quá trình xét duyệt mất 2–3 ngày làm việc. Sau khi được chấp thuận, tài khoản Recruiter cung cấp quyền truy cập bộ lọc nâng cao và tính năng kết nối trực tiếp.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<div class="quote-wrap reveal">
+  <div class="quote-text">"Mọi bài tập học thuật từ năm nhất đều có tiềm năng trở thành <span>mục trong hồ sơ chuyên nghiệp lâu dài</span> — đó là triết lý cốt lõi của UEF Design Gallery."</div>
+  <div class="quote-author">— Nghiên cứu ứng dụng HPPP, Khoa Công nghệ Thông tin, UEF 2024</div>
+</div>
+
+<!-- CTA -->
+<section class="cta-section reveal">
+  <div class="cta-inner">
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);border-radius:100px;padding:6px 18px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.65);margin-bottom:24px;--ico-size:13px;--ico-color:rgba(255,255,255,0.65);">
+      <span class="ico"><i data-lucide="rocket"></i></span> Bắt đầu hành trình của bạn
+    </div>
+    <h2>Tham gia UEF Design Gallery<br><em style="font-style:italic;color:rgba(255,255,255,0.7);">ngay hôm nay</em></h2>
+    <p>Dù bạn là sinh viên muốn xây dựng portfolio, giảng viên muốn tối ưu đánh giá, hay nhà tuyển dụng tìm kiếm nhân tài — nền tảng được thiết kế cho bạn.</p>
+    <div class="cta-buttons">
+      <a href="#" class="btn btn-white btn-lg">
+        <span class="ico" style="--ico-size:16px;--ico-color:var(--blue-deep);"><i data-lucide="graduation-cap"></i></span> Tôi là Sinh viên
+      </a>
+      <a href="#" class="btn btn-ghost btn-lg">
+        <span class="ico" style="--ico-size:16px;--ico-color:white;"><i data-lucide="clipboard-list"></i></span> Tôi là Giảng viên
+      </a>
+      <a href="#" class="btn btn-red btn-lg">
+        <span class="ico" style="--ico-size:16px;--ico-color:white;"><i data-lucide="building-2"></i></span> Tôi là Nhà tuyển dụng
+      </a>
+    </div>
+    <p style="font-size:12px;color:rgba(255,255,255,0.35);margin-top:24px;margin-bottom:0;">gallery.uef.edu.vn · Đăng nhập bằng email @uef.edu.vn</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="logo-mark"><span>UEF</span></div>
+        <div class="logo-text">
+          <strong style="color:white;">Design Gallery</strong>
+          <small style="color:rgba(255,255,255,0.3);">Faculty of Graphic Design</small>
+        </div>
+      </div>
+      <p>Nền tảng E-Portfolio tích hợp đánh giá học thuật — kết nối sinh viên, giảng viên và doanh nghiệp trong hệ sinh thái giáo dục sáng tạo số.</p>
+      <p style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.25);">Trường Đại học Kinh tế - Tài chính TP.HCM<br>Khoa Thiết kế Đồ họa</p>
+    </div>
+    <div class="footer-col">
+      <h4>Platform</h4>
+      <ul>
+        <li><a href="#">Gallery</a></li>
+        <li><a href="#">Student Portal</a></li>
+        <li><a href="#">Lecturer Dashboard</a></li>
+        <li><a href="#">Recruiter Access</a></li>
+        <li><a href="#">About HPPP</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Categories</h4>
+      <ul>
+        <li><a href="#">Branding &amp; Identity</a></li>
+        <li><a href="#">Typography</a></li>
+        <li><a href="#">3D Art</a></li>
+        <li><a href="#">Packaging Design</a></li>
+        <li><a href="#">Motion Graphics</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Support</h4>
+      <ul>
+        <li><a href="#">Documentation</a></li>
+        <li><a href="#">Student Guide</a></li>
+        <li><a href="#">Rubric Standards</a></li>
+        <li><a href="#">Contact UEF</a></li>
+        <li><a href="#">Research Paper</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2024 UEF Design Gallery · Khoa Thiết kế Đồ họa, UEF</p>
+    <div class="footer-bottom-links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Use</a>
+      <a href="#">IP Policy</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Init Lucide icons
+  lucide.createIcons();
+
+  // Tab switching
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+    lucide.createIcons();
+  }
+
+  // Scroll reveal — threshold 0 + unobserve prevents stuck elements
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0, rootMargin: '0px 0px -30px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Hero mosaic parallax
+  const heroVis = document.querySelector('.hero-visual');
+  const mosaic = document.querySelector('.mosaic');
+  if (heroVis && mosaic) {
+    heroVis.addEventListener('mousemove', (e) => {
+      const r = heroVis.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      mosaic.style.transform = `rotate(-2deg) scale(1.08) translate(${x*9}px,${y*7}px)`;
+    });
+    heroVis.addEventListener('mouseleave', () => {
+      mosaic.style.transform = 'rotate(-2deg) scale(1.08)';
+    });
+  }
+
+  // Scroll progress bar
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY;
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    document.getElementById('scrollBar').style.width = (scrolled / total * 100) + '%';
+
+    // Sticky side buttons
+    const sticky = document.getElementById('stickySide');
+    if (scrolled > 400) sticky.classList.add('show');
+    else sticky.classList.remove('show');
+
+    // Active nav link
+    const sections = ['audience', 'about', 'compare', 'faq'];
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.top <= 100 && rect.bottom >= 100) {
+        document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+        const link = document.querySelector(`.nav-links a[href="#${id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  });
+
+  // Mobile menu
+  function toggleMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn = document.getElementById('hamburger');
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+    lucide.createIcons();
+  }
+  // Close mobile menu on link click
+  document.querySelectorAll('.mobile-menu a').forEach(a => {
+    a.addEventListener('click', () => {
+      document.getElementById('mobileMenu').classList.remove('open');
+      document.getElementById('hamburger').classList.remove('open');
+    });
+  });
+
+  // FAQ toggle
+  function toggleFaq(btn) {
+    const item = btn.parentElement;
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+    lucide.createIcons();
+  }
+
+  // Counter animation for stats
+  function animateCounter(el, target, suffix='') {
+    const duration = 1800;
+    const start = performance.now();
+    const isDecimal = target % 1 !== 0;
+    function update(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = isDecimal ? (target * ease).toFixed(1) : Math.round(target * ease);
+      el.textContent = current + suffix;
+      if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
+
+  // Observe stat numbers for counter animation
+  const statObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting && !e.target.dataset.counted) {
+        e.target.dataset.counted = true;
+        const text = e.target.textContent;
+        const num = parseFloat(text.replace(/[^0-9.]/g, ''));
+        const suffix = text.replace(/[0-9.]/g, '');
+        if (!isNaN(num)) animateCounter(e.target, num, suffix);
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.stat-number, .stat-block .num').forEach(el => statObserver.observe(el));
+
+  // Ticker: HTML already has duplicated items for seamless loop, no JS needed
+  // (removed duplicate-via-JS to prevent 4x content overflow bug)
+</script>
+</body>
+</html>
