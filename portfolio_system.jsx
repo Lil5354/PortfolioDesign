@@ -2561,9 +2561,6 @@ function AdminSidebar({ active, setPage }) {
         ))}
       </div>
       <div className="mt-auto p-6">
-        <button onClick={() => setPage("portal")} className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm font-medium hover:bg-white transition-colors text-[#212121]">
-          <Globe size={16} /> {t("backToPortal")}
-        </button>
       </div>
     </div>
   );
