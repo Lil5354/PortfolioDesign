@@ -2299,14 +2299,14 @@ function ResetPasswordPage({ setPage, pageParams }) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("newPassword")}</label>
+              <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("resetNewPassword")}</label>
               <div style={{ position: "relative" }}>
                 <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("confirmNewPassword")}</label>
+              <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("resetConfirmNewPassword")}</label>
               <div style={{ position: "relative" }}>
                 <input type={showConfirm ? "text" : "password"} value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }} style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}</button>
@@ -5734,7 +5734,7 @@ function SettingsPage({ setPage, userData }) {
                   <input type="password" value={passwords.newPass} onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })}  className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#212121] mb-2">{t("confirmNewPassword")}</label>
+                  <label className="block text-sm font-medium text-[#212121] mb-2">{t("resetConfirmNewPassword")}</label>
                   <input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}  className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
                 </div>
               </div>
