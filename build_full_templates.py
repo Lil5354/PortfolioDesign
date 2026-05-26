@@ -5,32 +5,28 @@ def process_asymmetrical():
     with open('tapsan_anpham_thietke.html', 'r', encoding='utf-8') as f:
         html = f.read()
 
-    # 1. Replace CSS variables
+    # Escape backticks first
+    html = html.replace('`', '\\`')
+
+    # Replace CSS variables
     html = re.sub(r'--ink:\s*#[0-9a-fA-F]+;', r'--ink: ${payload.backgroundColor};', html)
     html = re.sub(r'--cream:\s*#[0-9a-fA-F]+;', r'--cream: ${payload.textColor};', html)
     html = re.sub(r'--gold:\s*#[0-9a-fA-F]+;', r'--gold: ${payload.primaryColor};', html)
     html = re.sub(r'--crimson:\s*#[0-9a-fA-F]+;', r'--crimson: ${payload.secondaryColor};', html)
 
-    # Replace Font families in CSS
-    html = re.sub(r'font-family:\s*\'Playfair Display\',\s*serif;', r"font-family: '${payload.headingFont}', serif;", html)
-    html = re.sub(r'font-family:\s*\'Cormorant Garamond\',\s*serif;', r"font-family: '${payload.bodyFont}', serif;", html)
-    html = re.sub(r'font-family:\s*\'Space Mono\',\s*monospace;', r"font-family: '${payload.monoFont}', monospace;", html)
+    html = re.sub(r'font-family:\s*\\?\'Playfair Display\\?\',\s*serif;', r"font-family: '${payload.headingFont}', serif;", html)
+    html = re.sub(r'font-family:\s*\\?\'Cormorant Garamond\\?\',\s*serif;', r"font-family: '${payload.bodyFont}', serif;", html)
+    html = re.sub(r'font-family:\s*\\?\'Space Mono\\?\',\s*monospace;', r"font-family: '${payload.monoFont}', monospace;", html)
 
-    # 2. Cover replacements
     html = html.replace('>GRAPHICA<', '>${payload.journalTitle}<')
     html = html.replace('Triển Lãm Đồ Họa Thường Niên — Xuất Bản Số VII', '${payload.journalSubtitle}')
     html = html.replace('Khoa Mỹ Thuật Ứng Dụng &nbsp;·&nbsp; Năm Học 2024 – 2025', '${payload.departmentName} &nbsp;&middot;&nbsp; ${payload.academicYear}')
     html = html.replace('VII &middot; 2025', '${payload.editionNumber} &middot; 2025')
     html = html.replace('<div class="cover-bg-letter">G</div>', '<div class="cover-bg-letter">${payload.bgLetter || \'G\'}</div>')
 
-    # 3. Foreword text
     foreword_pattern = r'(<div class="body-text">).*?(</div>\s*<div class="divider">)'
     html = re.sub(foreword_pattern, r'\1${payload.forewordText}\2', html, flags=re.DOTALL)
 
-    # Keep all existing sections! Just append the dynamic artworks loop right before the closing section.
-    # The user wants "8 trang bố cục hoặc hơn, thứ duy nhất được khác là số lượng ấn phẩm".
-    # This means the original 8 pages must remain EXACTLY as they are. We just append the dynamic artworks as additional pages.
-    
     closing_start = html.find('<section class="page page-closing"')
     
     spreads_template = r"""
@@ -62,15 +58,7 @@ def process_asymmetrical():
     
     html = html[:closing_start] + spreads_template + html[closing_start:]
 
-    # Escape backticks in HTML before wrapping in JS literal
-    html = html.replace('`', '\\`')
-    # Unescape our intended JS template interpolations
-    html = re.sub(r'\\\$\\{', '${', html)
-    html = html.replace('\\`${artworks.map((a, i) => \\`', '${artworks.map((a, i) => `')
-    html = html.replace('\\`).join(\'\')}', '`).join(\'\')}')
-
     js_content = f"""export function renderAsymmetrical(payload, artworks) {{\n  return `{html}`;\n}}\n"""
-    
     with open('components/catalog/templates/asymmetrical.js', 'w', encoding='utf-8') as f:
         f.write(js_content)
 
@@ -79,14 +67,16 @@ def process_classic():
     with open('tapsan_classic.html', 'r', encoding='utf-8') as f:
         html = f.read()
 
+    html = html.replace('`', '\\`')
+
     html = re.sub(r'--ivory:\s*#[0-9a-fA-F]+;', r'--ivory: ${payload.backgroundColor};', html)
     html = re.sub(r'--ink:\s*#[0-9a-fA-F]+;', r'--ink: ${payload.textColor};', html)
     html = re.sub(r'--gold:\s*#[0-9a-fA-F]+;', r'--gold: ${payload.primaryColor};', html)
     html = re.sub(r'--rust:\s*#[0-9a-fA-F]+;', r'--rust: ${payload.secondaryColor};', html)
 
-    html = re.sub(r'font-family:\s*\'IM Fell English\',\s*serif;', r"font-family: '${payload.headingFont}', serif;", html)
-    html = re.sub(r'font-family:\s*\'Libre Baskerville\',\s*serif;', r"font-family: '${payload.bodyFont}', serif;", html)
-    html = re.sub(r'font-family:\s*\'Josefin Sans\',\s*sans-serif;', r"font-family: '${payload.monoFont}', sans-serif;", html)
+    html = re.sub(r'font-family:\s*\\?\'IM Fell English\\?\',\s*serif;', r"font-family: '${payload.headingFont}', serif;", html)
+    html = re.sub(r'font-family:\s*\\?\'Libre Baskerville\\?\',\s*serif;', r"font-family: '${payload.bodyFont}', serif;", html)
+    html = re.sub(r'font-family:\s*\\?\'Josefin Sans\\?\',\s*sans-serif;', r"font-family: '${payload.monoFont}', sans-serif;", html)
 
     html = html.replace('>FORMA<', '>${payload.journalTitle}<')
     html = html.replace('Tập San Ấn Phẩm Thiết Kế Đồ Họa', '${payload.journalSubtitle}')
@@ -125,28 +115,25 @@ def process_classic():
     
     html = html[:colophon_start] + spreads_template + html[colophon_start:]
     
-    html = html.replace('`', '\\`')
-    html = re.sub(r'\\\$\\{', '${', html)
-    html = html.replace('\\`${artworks.map((a, i) => \\`', '${artworks.map((a, i) => `')
-    html = html.replace('\\`).join(\'\')}', '`).join(\'\')}')
-
     js_content = f"""export function renderClassic(payload, artworks) {{\n  return `{html}`;\n}}\n"""
-    
     with open('components/catalog/templates/classic.js', 'w', encoding='utf-8') as f:
         f.write(js_content)
+
 
 def process_modern():
     with open('tapsan_modern.html', 'r', encoding='utf-8') as f:
         html = f.read()
+
+    html = html.replace('`', '\\`')
 
     html = re.sub(r'--black:\s*#[0-9a-fA-F]+;', r'--black: ${payload.backgroundColor};', html)
     html = re.sub(r'--white:\s*#[0-9a-fA-F]+;', r'--white: ${payload.textColor};', html)
     html = re.sub(r'--accent:\s*#[0-9a-fA-F]+;', r'--accent: ${payload.primaryColor};', html)
     html = re.sub(r'--accent2:\s*#[0-9a-fA-F]+;', r'--accent2: ${payload.secondaryColor};', html)
 
-    html = re.sub(r'font-family:\s*\'Barlow Condensed\',\s*sans-serif;', r"font-family: '${payload.headingFont}', sans-serif;", html)
-    html = re.sub(r'font-family:\s*\'Barlow\',\s*sans-serif;', r"font-family: '${payload.bodyFont}', sans-serif;", html)
-    html = re.sub(r'font-family:\s*\'IBM Plex Mono\',\s*monospace;', r"font-family: '${payload.monoFont}', monospace;", html)
+    html = re.sub(r'font-family:\s*\\?\'Barlow Condensed\\?\',\s*sans-serif;', r"font-family: '${payload.headingFont}', sans-serif;", html)
+    html = re.sub(r'font-family:\s*\\?\'Barlow\\?\',\s*sans-serif;', r"font-family: '${payload.bodyFont}', sans-serif;", html)
+    html = re.sub(r'font-family:\s*\\?\'IBM Plex Mono\\?\',\s*monospace;', r"font-family: '${payload.monoFont}', monospace;", html)
 
     html = html.replace('>ĐỒ HỌA MỚI<', '>${payload.journalTitle}<')
     
@@ -178,17 +165,11 @@ def process_modern():
     
     html = html[:colophon_start] + spreads_template + html[colophon_start:]
     
-    html = html.replace('`', '\\`')
-    html = re.sub(r'\\\$\\{', '${', html)
-    html = html.replace('\\`${artworks.map(a => \\`', '${artworks.map(a => `')
-    html = html.replace('\\`).join(\'\')}', '`).join(\'\')}')
-
     js_content = f"""export function renderModern(payload, artworks) {{\n  return `{html}`;\n}}\n"""
-    
     with open('components/catalog/templates/modern.js', 'w', encoding='utf-8') as f:
         f.write(js_content)
 
 process_asymmetrical()
 process_classic()
 process_modern()
-print("Templates perfectly generated with all original mock pages retained.")
+print("Templates perfectly generated with syntax fix.")

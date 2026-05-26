@@ -927,10 +927,10 @@ export function renderClassic(payload, artworks) {
       </div>
       
       <div class="works-grid">
-      ${artworks.map((a, i) => \`
+      ${artworks.map((a, i) => `
         <div class="work-card">
           <div class="work-img">
-             ${a.coverImageUrl ? \`<img src="${a.coverImageUrl}" style="width:100%;height:100%;object-fit:cover;" />\` : \`<div style="color:var(--ivory)">IMG</div>\`}
+             ${a.coverImageUrl ? `<img src="${a.coverImageUrl}" style="width:100%;height:100%;object-fit:cover;" />` : `<div style="color:var(--ivory)">IMG</div>`}
           </div>
           <div class="work-info">
             <p>${a.category}</p>

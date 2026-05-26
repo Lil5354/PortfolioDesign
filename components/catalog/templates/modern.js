@@ -1092,9 +1092,9 @@ export function renderModern(payload, artworks) {
       <div style="padding: 40px;">
         <h2 style="font-family:'${payload.headingFont}', sans-serif; font-size: 60px; color: var(--white); text-transform: uppercase;">Sinh Viên</h2>
         <div class="works-grid">
-          ${artworks.map(a => \`
+          ${artworks.map(a => `
             <div class="work-block">
-              ${a.coverImageUrl ? \`<img src="${a.coverImageUrl}" style="width:100%;height:300px;object-fit:cover;"/>\` : \`<div style="height:300px; background:var(--gray1)"></div>\`}
+              ${a.coverImageUrl ? `<img src="${a.coverImageUrl}" style="width:100%;height:300px;object-fit:cover;"/>` : `<div style="height:300px; background:var(--gray1)"></div>`}
               <div class="work-block-overlay">
                 <div class="work-tag">${a.category}</div>
                 <div class="work-title">${a.title}</div>

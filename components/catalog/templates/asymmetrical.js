@@ -1376,7 +1376,7 @@ export function renderAsymmetrical(payload, artworks) {
 
 </body>
 </html>
-    ${artworks.map((a, i) => \`
+    ${artworks.map((a, i) => `
     <section class="page-spread" id="art-${i}">
       <div class="spread-left">
         <div class="section-label text-light" style="color:var(--gold)">Ấn Phẩm Nổi Bật 0${i+1}</div>
@@ -1396,7 +1396,7 @@ export function renderAsymmetrical(payload, artworks) {
       </div>
 
       <div class="spread-right" style="display:flex; align-items:center; justify-content:center;">
-        ${a.coverImageUrl ? \`<img src="${a.coverImageUrl}" style="max-width:100%; max-height:80vh; object-fit:contain; box-shadow: 0 20px 40px rgba(0,0,0,0.2);" />\` : \`<div style="width:100%;height:60vh;background:var(--mist);display:flex;align-items:center;justify-content:center;color:#999;">No Image</div>\`}
+        ${a.coverImageUrl ? `<img src="${a.coverImageUrl}" style="max-width:100%; max-height:80vh; object-fit:contain; box-shadow: 0 20px 40px rgba(0,0,0,0.2);" />` : `<div style="width:100%;height:60vh;background:var(--mist);display:flex;align-items:center;justify-content:center;color:#999;">No Image</div>`}
       </div>
     </section>
     `).join('')}
