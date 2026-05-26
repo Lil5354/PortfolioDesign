@@ -23,6 +23,10 @@ export function generatePrintReadyHTML(payload, artworks) {
           page-break-after: always !important;
           break-after: page !important;
         }
+        .page-spread > div, .work-card, .article-card, .highlight-box, .stat-item, .work-block, [style*="border:1px solid"] {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
         body { margin: 0 !important; }
       }
     </style>

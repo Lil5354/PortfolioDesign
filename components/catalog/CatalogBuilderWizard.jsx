@@ -71,6 +71,13 @@ const STEPS = [
   { key: "preview", label: "Preview", icon: Eye },
 ];
 
+const InputRow = ({ label, value, onChange, placeholder }) => (
+  <div className="mb-4">
+    {label && <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">{label}</label>}
+    <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-xl text-sm outline-none focus:border-[#077E9E] focus:ring-2 focus:ring-[#077E9E]/20 transition-all bg-[#F8F8F8] focus:bg-white" />
+  </div>
+);
+
 export default function CatalogBuilderWizard({ collection, onClose }) {
   const [step, setStep] = useState(0);
   const [exporting, setExporting] = useState(false);
@@ -202,12 +209,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     }
   };
 
-  const InputRow = ({ label, value, onChange, placeholder }) => (
-    <div className="mb-4">
-      <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">{label}</label>
-      <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-xl text-sm outline-none focus:border-[#077E9E] focus:ring-2 focus:ring-[#077E9E]/20 transition-all bg-[#F8F8F8] focus:bg-white" />
-    </div>
-  );
+  };
 
   const renderStep = () => {
     switch (step) {

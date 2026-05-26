@@ -702,6 +702,11 @@
   /* Print styles */
   @media print {
     .cover, .page, .page-spread, .page-toc, .page-closing { page-break-after: always; }
+    * { break-inside: auto; }
+    .page-spread > div, .work-card, .article-card, .highlight-box, .stat-item, [style*="border:1px solid"] {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
   }
 
   /* Responsive */
