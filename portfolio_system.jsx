@@ -4693,19 +4693,19 @@ function AboutPage({ setPage }) {
         <div className="relative z-10 lg:pr-12">
           <div className="inline-flex items-center gap-2 bg-[#d6e8ff] text-[#0d2e6e] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-8 animate-[fadeUp_0.5s_ease-out]">
             <span className="w-1.5 h-1.5 bg-[#1e6fd9] rounded-full animate-ping"></span>
-            Khoa Thiết kế Đồ họa — UEF
+            {t("aboutFacultyUef")}
           </div>
           <h1 className="text-5xl lg:text-7xl font-extrabold leading-[1.1] text-[#0a0c0f] mb-4 tracking-tight animate-[fadeUp_0.7s_ease-out]">
-            Khám phá<br/>
-            <span className="text-[#1a4ba8]">Dự án xuất sắc</span><br/>
-            từ sinh viên UEF
+            {t("aboutHeroExplore")}<br/>
+            <span className="text-[#1a4ba8]">{t("aboutHeroExcellentProjects")}</span><br/>
+            {t("aboutHeroFromUefStudents")}
           </h1>
           <p className="text-[#666] text-base leading-relaxed max-w-[460px] mb-10 animate-[fadeUp_0.9s_ease-out]">
-            Nền tảng E-Portfolio tích hợp đánh giá học thuật — nơi sinh viên trưng bày tác phẩm, giảng viên chấm điểm chuyên nghiệp, và nhà tuyển dụng tìm kiếm nhân tài <strong className="text-[#1a4ba8]">đã được kiểm định.</strong>
+            {t("aboutHeroDesc1")} <strong className="text-[#1a4ba8]">{t("aboutHeroDesc2")}</strong>
           </p>
           <div className="flex flex-wrap gap-3 mb-4 animate-[fadeUp_1.1s_ease-out]">
             <a href="#audience" className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#0d2e6e] text-white rounded-xl font-bold text-[15px] hover:bg-[#1a4ba8] hover:-translate-y-1 transition-all shadow-lg shadow-[#0d2e6e]/20 hover:shadow-[#1a4ba8]/40 duration-300">
-              Khám phá ngay <ArrowRight size={16} />
+              {t("aboutExploreNow")} <ArrowRight size={16} />
             </a>
             <button onClick={() => setPage("auth")} className="inline-flex items-center px-7 py-3.5 bg-transparent border-2 border-[#e2e6ec] text-[#0a0c0f] rounded-xl font-bold text-[15px] hover:border-[#1a4ba8] hover:text-[#1a4ba8] transition-colors">
               Đăng nhập
@@ -4714,11 +4714,11 @@ function AboutPage({ setPage }) {
           <div className="flex gap-8 pt-7 mt-10 border-t border-[#e2e6ec] animate-[fadeUp_1.3s_ease-out]">
             <div>
               <div className="text-[28px] font-black text-[#0d2e6e] leading-none">500+</div>
-              <div className="text-[11px] text-[#8b96a8] mt-1.5 font-bold uppercase tracking-wider">Tác phẩm trưng bày</div>
+              <div className="text-[11px] text-[#8b96a8] mt-1.5 font-bold uppercase tracking-wider">{t("aboutArtworksOnDisplay")}</div>
             </div>
             <div>
               <div className="text-[28px] font-black text-[#0d2e6e] leading-none">120+</div>
-              <div className="text-[11px] text-[#8b96a8] mt-1.5 font-bold uppercase tracking-wider">Giảng viên tham gia</div>
+              <div className="text-[11px] text-[#8b96a8] mt-1.5 font-bold uppercase tracking-wider">{t("aboutLecturersParticipating")}</div>
             </div>
           </div>
         </div>
@@ -4744,10 +4744,10 @@ function AboutPage({ setPage }) {
         <div className="flex gap-0 whitespace-nowrap animate-[ticker_32s_linear_infinite] w-max">
           {[...Array(2)].map((_, i) => (
             <React.Fragment key={i}>
-              <span className="inline-flex items-center gap-3 px-10 text-[13px] font-bold text-white/90 border-r border-white/20"><span className="w-2 h-2 bg-[#c9a227] rounded-full shadow-[0_0_10px_#c9a227]"></span>UEF Design Gallery — Nền tảng E-Portfolio</span>
-              <span className="inline-flex items-center gap-3 px-10 text-[13px] font-bold text-white/90 border-r border-white/20"><span className="w-2 h-2 bg-[#c9a227] rounded-full shadow-[0_0_10px_#c9a227]"></span>Được kiểm định bởi giảng viên Khoa Thiết kế Đồ họa</span>
-              <span className="inline-flex items-center gap-3 px-10 text-[13px] font-bold text-white/90 border-r border-white/20"><span className="w-2 h-2 bg-[#c9a227] rounded-full shadow-[0_0_10px_#c9a227]"></span>Kết nối trực tiếp Doanh nghiệp và Sinh viên</span>
-              <span className="inline-flex items-center gap-3 px-10 text-[13px] font-bold text-white/90 border-r border-white/20"><span className="w-2 h-2 bg-[#c9a227] rounded-full shadow-[0_0_10px_#c9a227]"></span>gallery.uef.edu.vn</span>
+              <span className="inline-flex items-center gap-3 px-10 text-[13px] font-bold text-white/90 border-r border-white/20"><span className="w-2 h-2 bg-[#c9a227] rounded-full shadow-[0_0_10px_#c9a227]"></span>{t("aboutTicker1")}</span>
+              <span className="inline-flex items-center gap-3 px-10 text-[13px] font-bold text-white/90 border-r border-white/20"><span className="w-2 h-2 bg-[#c9a227] rounded-full shadow-[0_0_10px_#c9a227]"></span>{t("aboutTicker2")}</span>
+              <span className="inline-flex items-center gap-3 px-10 text-[13px] font-bold text-white/90 border-r border-white/20"><span className="w-2 h-2 bg-[#c9a227] rounded-full shadow-[0_0_10px_#c9a227]"></span>{t("aboutTicker3")}</span>
+              <span className="inline-flex items-center gap-3 px-10 text-[13px] font-bold text-white/90 border-r border-white/20"><span className="w-2 h-2 bg-[#c9a227] rounded-full shadow-[0_0_10px_#c9a227]"></span>{t("aboutTicker4")}</span>
             </React.Fragment>
           ))}
         </div>
@@ -4760,7 +4760,7 @@ function AboutPage({ setPage }) {
         
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#1a4ba8] animate-[fadeUp_0.5s_ease-out]">
-            <span className="w-7 h-[2px] bg-[#1a4ba8]"></span> Tác phẩm nổi bật
+            <span className="w-7 h-[2px] bg-[#1a4ba8]"></span> {t("aboutFeaturedArtworks")}
           </div>
         </div>
         <div className="flex gap-4 w-max animate-[stripScroll_35s_linear_infinite] hover:[animation-play-state:paused] px-4">
@@ -4777,19 +4777,19 @@ function AboutPage({ setPage }) {
       <section id="audience" className="bg-gradient-to-b from-[#f5f6f8] to-white py-24 px-6 lg:px-12 border-t border-[#e2e6ec]">
         <div className="max-w-7xl mx-auto">
           <div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#1a4ba8] mb-5">
-            <span className="w-7 h-[2px] bg-[#1a4ba8]"></span> Hệ sinh thái cốt lõi
+            <span className="w-7 h-[2px] bg-[#1a4ba8]"></span> {t("aboutCoreEcosystem")}
           </div>
-          <h2 className="text-4xl md:text-5xl font-black text-[#0a0c0f] leading-[1.1] mb-6 tracking-tight">Trải nghiệm đồng bộ<br/>cho mọi đối tượng</h2>
+          <h2 className="text-4xl md:text-5xl font-black text-[#0a0c0f] leading-[1.1] mb-6 tracking-tight">{t("aboutSeamlessExperience1")}<br/>{t("aboutSeamlessExperience2")}</h2>
           <p className="text-[#666] text-base leading-relaxed max-w-[600px] mb-12">
-            Được xây dựng cho ba nhóm người dùng cốt lõi với trải nghiệm riêng biệt, tích hợp mượt mà trong cùng một hệ sinh thái thiết kế tại UEF.
+            {t("aboutAudienceDesc")}
           </p>
 
           <div className="flex gap-2 border-b-2 border-[#e2e6ec] mb-12 overflow-x-auto pb-1">
             <button onClick={() => setActiveTab("student")} className={`flex items-center gap-2 px-8 py-3.5 font-bold text-[15px] rounded-t-xl whitespace-nowrap transition-all ${activeTab === 'student' ? 'bg-[#0d2e6e] text-white shadow-md transform -translate-y-1' : 'text-[#8b96a8] hover:text-[#1a4ba8] hover:bg-gray-100'}`}>
-              <GraduationCap size={18} /> Sinh viên
+              <GraduationCap size={18} /> {t("student")}
             </button>
             <button onClick={() => setActiveTab("lecturer")} className={`flex items-center gap-2 px-8 py-3.5 font-bold text-[15px] rounded-t-xl whitespace-nowrap transition-all ${activeTab === 'lecturer' ? 'bg-[#0d2e6e] text-white shadow-md transform -translate-y-1' : 'text-[#8b96a8] hover:text-[#1a4ba8] hover:bg-gray-100'}`}>
-              <ClipboardList size={18} /> Giảng viên
+              <ClipboardList size={18} /> {t("lecturer")}
             </button>
             <button onClick={() => setActiveTab("recruiter")} className={`flex items-center gap-2 px-8 py-3.5 font-bold text-[15px] rounded-t-xl whitespace-nowrap transition-all ${activeTab === 'recruiter' ? 'bg-[#0d2e6e] text-white shadow-md transform -translate-y-1' : 'text-[#8b96a8] hover:text-[#1a4ba8] hover:bg-gray-100'}`}>
               <Building2 size={18} /> Nhà tuyển dụng
@@ -4800,34 +4800,34 @@ function AboutPage({ setPage }) {
             {activeTab === "student" && (
               <>
                 <div className="animate-[fadeUp_0.5s_ease-out]">
-                  <h3 className="text-3xl font-extrabold text-[#0a0c0f] mb-4 leading-tight">Xây dựng hồ sơ chuyên nghiệp từ năm nhất</h3>
+                  <h3 className="text-3xl font-extrabold text-[#0a0c0f] mb-4 leading-tight">{t("aboutStudentTitle")}</h3>
                   <p className="text-[#666] text-[15px] leading-relaxed mb-8">
-                    Mỗi bài tập học thuật là một viên gạch tạo nên danh tiếng nghề nghiệp. UEF Design Gallery biến tác phẩm từ "bài nộp một lần" thành tài sản số lâu dài mang thương hiệu UEF.
+                    {t("aboutStudentDesc")}
                   </p>
                   <ul className="space-y-6 mb-8">
                     <li className="flex gap-4 group">
                       <div className="w-12 h-12 shrink-0 rounded-xl bg-[#d6e8ff] text-[#1a4ba8] flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm"><LayoutGrid size={22} /></div>
                       <div>
-                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">Portfolio Masonry chuẩn thẩm mỹ</strong>
-                        <span className="text-[#666] text-sm leading-relaxed">Trưng bày tác phẩm đa phương tiện, hỗ trợ Pantone/CMYK và quy trình sáng tác.</span>
+                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">{t("aboutStudentPoint1Title")}</strong>
+                        <span className="text-[#666] text-sm leading-relaxed">{t("aboutStudentPoint1Desc")}</span>
                       </div>
                     </li>
                     <li className="flex gap-4 group">
                       <div className="w-12 h-12 shrink-0 rounded-xl bg-[#f0f2f5] text-[#1a4ba8] flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm"><Link size={22} /></div>
                       <div>
-                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">Cá nhân hóa liên kết định danh</strong>
-                        <span className="text-[#666] text-sm leading-relaxed">Sở hữu đường dẫn gallery.uef.edu.vn/portfolio/ten-cua-ban chuyên nghiệp.</span>
+                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">{t("aboutStudentPoint2Title")}</strong>
+                        <span className="text-[#666] text-sm leading-relaxed">{t("aboutStudentPoint2Desc")}</span>
                       </div>
                     </li>
                     <li className="flex gap-4 group">
                       <div className="w-12 h-12 shrink-0 rounded-xl bg-[#d6e8ff] text-[#1a4ba8] flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm"><Zap size={22} /></div>
                       <div>
-                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">Tự động kết xuất Tập San PDF</strong>
-                        <span className="text-[#666] text-sm leading-relaxed">Tạo cuốn Portfolio PDF chuẩn in ấn chỉ với 1 cú click chuột để gửi nhà tuyển dụng.</span>
+                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">{t("aboutStudentPoint3Title")}</strong>
+                        <span className="text-[#666] text-sm leading-relaxed">{t("aboutStudentPoint3Desc")}</span>
                       </div>
                     </li>
                   </ul>
-                  <button onClick={() => setPage("auth")} className="px-7 py-3.5 bg-[#0a0c0f] text-white rounded-xl font-bold text-[15px] hover:bg-[#1a4ba8] transition-colors shadow-lg hover:shadow-xl hover:-translate-y-0.5">Tạo Portfolio Ngay</button>
+                  <button onClick={() => setPage("auth")} className="px-7 py-3.5 bg-[#0a0c0f] text-white rounded-xl font-bold text-[15px] hover:bg-[#1a4ba8] transition-colors shadow-lg hover:shadow-xl hover:-translate-y-0.5">{t("aboutStudentCreateNow")}</button>
                 </div>
                 <div className="animate-[fadeUp_0.7s_ease-out]">
                   <div className="bg-white rounded-3xl overflow-hidden border border-[#e2e6ec] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] p-3">
@@ -4835,8 +4835,8 @@ function AboutPage({ setPage }) {
                       <img src="https://images.unsplash.com/photo-1542744094-3a31f272c490?w=800&q=80" alt="Student Dashboard" className="w-full h-full object-cover opacity-95 transition-transform duration-700 group-hover:scale-105" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                       <div className="absolute bottom-5 left-5 text-white">
-                        <div className="font-bold text-lg">Giao diện sinh viên</div>
-                        <div className="text-sm opacity-80">Quản lý Portfolio & Đồ án</div>
+                        <div className="font-bold text-lg">{t("aboutStudentDash1")}</div>
+                        <div className="text-sm opacity-80">{t("aboutStudentDash2")}</div>
                       </div>
                     </div>
                   </div>
@@ -4847,23 +4847,23 @@ function AboutPage({ setPage }) {
             {activeTab === "lecturer" && (
               <>
                 <div className="animate-[fadeUp_0.5s_ease-out]">
-                  <h3 className="text-3xl font-extrabold text-[#0a0c0f] mb-4 leading-tight">Số hóa toàn diện quy trình đánh giá</h3>
+                  <h3 className="text-3xl font-extrabold text-[#0a0c0f] mb-4 leading-tight">{t("aboutLecturerTitle")}</h3>
                   <p className="text-[#666] text-[15px] leading-relaxed mb-8">
-                    Chấm điểm, nhận xét và cấp chứng nhận điện tử trực tiếp trên nền tảng. Loại bỏ hoàn toàn giấy tờ, đảm bảo minh bạch và lưu trữ vĩnh viễn.
+                    {t("aboutLecturerDesc")}
                   </p>
                   <ul className="space-y-6 mb-8">
                     <li className="flex gap-4 group">
                       <div className="w-12 h-12 shrink-0 rounded-xl bg-[#fef2f2] text-[#c0392b] flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm"><FileBadge size={22} /></div>
                       <div>
-                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">Đánh giá & Cấp Verification Badge</strong>
-                        <span className="text-[#666] text-sm leading-relaxed">Xác thực tác phẩm chất lượng bằng huy hiệu "Đã kiểm định", gia tăng uy tín cho sinh viên.</span>
+                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">{t("aboutLecturerPoint1Title")}</strong>
+                        <span className="text-[#666] text-sm leading-relaxed">{t("aboutLecturerPoint1Desc")}</span>
                       </div>
                     </li>
                     <li className="flex gap-4 group">
                       <div className="w-12 h-12 shrink-0 rounded-xl bg-[#f0f2f5] text-[#1a4ba8] flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm"><ShieldCheck size={22} /></div>
                       <div>
-                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">Bảo vệ bản quyền trí tuệ</strong>
-                        <span className="text-[#666] text-sm leading-relaxed">Hệ thống Watermark thông minh và kiểm soát truy cập riêng tư.</span>
+                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">{t("aboutLecturerPoint2Title")}</strong>
+                        <span className="text-[#666] text-sm leading-relaxed">{t("aboutLecturerPoint2Desc")}</span>
                       </div>
                     </li>
                   </ul>
@@ -4874,8 +4874,8 @@ function AboutPage({ setPage }) {
                       <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80" alt="Lecturer Dashboard" className="w-full h-full object-cover opacity-95 transition-transform duration-700 group-hover:scale-105" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                       <div className="absolute bottom-5 left-5 text-white">
-                        <div className="font-bold text-lg">Giao diện Giảng viên</div>
-                        <div className="text-sm opacity-80">Công cụ chấm điểm & Đánh giá</div>
+                        <div className="font-bold text-lg">{t("aboutLecturerDash1")}</div>
+                        <div className="text-sm opacity-80">{t("aboutLecturerDash2")}</div>
                       </div>
                     </div>
                   </div>
@@ -4886,23 +4886,23 @@ function AboutPage({ setPage }) {
             {activeTab === "recruiter" && (
               <>
                 <div className="animate-[fadeUp_0.5s_ease-out]">
-                  <h3 className="text-3xl font-extrabold text-[#0a0c0f] mb-4 leading-tight">Nguồn ứng viên thiết kế chất lượng cao</h3>
+                  <h3 className="text-3xl font-extrabold text-[#0a0c0f] mb-4 leading-tight">{t("aboutRecruiterTitle")}</h3>
                   <p className="text-[#666] text-[15px] leading-relaxed mb-8">
-                    Tiếp cận trực tiếp với mạng lưới sinh viên đồ họa UEF. Tìm kiếm theo năng lực thực tế qua tác phẩm, không chỉ qua CV văn bản đơn thuần.
+                    {t("aboutRecruiterDesc")}
                   </p>
                   <ul className="space-y-6 mb-8">
                     <li className="flex gap-4 group">
                       <div className="w-12 h-12 shrink-0 rounded-xl bg-[#fdfaf1] text-[#c9a227] flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm"><Filter size={22} /></div>
                       <div>
-                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">Lọc ứng viên theo Skill-tag</strong>
-                        <span className="text-[#666] text-sm leading-relaxed">Tìm kiếm chính xác 3D Modeling, UI/UX, hoặc Branding trong vài giây.</span>
+                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">{t("aboutRecruiterPoint1Title")}</strong>
+                        <span className="text-[#666] text-sm leading-relaxed">{t("aboutRecruiterPoint1Desc")}</span>
                       </div>
                     </li>
                     <li className="flex gap-4 group">
                       <div className="w-12 h-12 shrink-0 rounded-xl bg-[#f0f2f5] text-[#1a4ba8] flex items-center justify-center group-hover:scale-110 transition-transform shadow-sm"><UserPlus size={22} /></div>
                       <div>
-                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">Kết nối & Tuyển dụng trực tiếp</strong>
-                        <span className="text-[#666] text-sm leading-relaxed">Gửi lời mời phỏng vấn hoặc đề xuất dự án ngay trên nền tảng.</span>
+                        <strong className="text-[#0a0c0f] text-[15px] block mb-1">{t("aboutRecruiterPoint2Title")}</strong>
+                        <span className="text-[#666] text-sm leading-relaxed">{t("aboutRecruiterPoint2Desc")}</span>
                       </div>
                     </li>
                   </ul>
@@ -4913,8 +4913,8 @@ function AboutPage({ setPage }) {
                       <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80" alt="Recruiter View" className="w-full h-full object-cover opacity-95 transition-transform duration-700 group-hover:scale-105" />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                       <div className="absolute bottom-5 left-5 text-white">
-                        <div className="font-bold text-lg">Giao diện Doanh nghiệp</div>
-                        <div className="text-sm opacity-80">Khám phá nhân tài đồ họa</div>
+                        <div className="font-bold text-lg">{t("aboutRecruiterDash1")}</div>
+                        <div className="text-sm opacity-80">{t("aboutRecruiterDash2")}</div>
                       </div>
                     </div>
                   </div>
@@ -4934,9 +4934,9 @@ function AboutPage({ setPage }) {
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="max-w-[700px] mb-20 text-center mx-auto animate-[fadeUp_0.5s_ease-out]">
             <div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-white/60 mb-5">
-              <span className="w-7 h-[2px] bg-white/40"></span> Giá trị cốt lõi
+              <span className="w-7 h-[2px] bg-white/40"></span> {t("aboutValuesPreTitle")}
             </div>
-            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight tracking-tight">Thiết kế vì sự phát triển<br/>toàn diện của sinh viên</h2>
+            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight tracking-tight">{t("aboutValuesTitle1")}<br/>{t("aboutValuesTitle2")}</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
@@ -4945,38 +4945,38 @@ function AboutPage({ setPage }) {
                 <LayoutGrid size={28} />
               </div>
               <h3 className="font-extrabold text-2xl mb-4 text-white">Portfolio Driven</h3>
-              <p className="text-[15px] text-white/60 leading-relaxed">Thiết kế xoay quanh tác phẩm. Giao diện tối giản, tôn vinh hình ảnh để nhường chỗ cho sự sáng tạo của người dùng lên ngôi.</p>
+              <p className="text-[15px] text-white/60 leading-relaxed">{t("aboutValue1Desc")}</p>
             </div>
             <div className="bg-white/5 border border-white/10 p-10 rounded-3xl hover:bg-white/10 hover:border-white/20 transition-all border-t-[4px] border-t-[#ff7b6e] group hover:shadow-[0_0_30px_rgba(255,123,110,0.15)] hover:-translate-y-2 duration-300 animate-[fadeUp_0.9s_ease-out]">
               <div className="w-14 h-14 rounded-2xl bg-[#ff7b6e]/10 text-[#ff7b6e] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <ShieldCheck size={28} />
               </div>
               <h3 className="font-extrabold text-2xl mb-4 text-white">Academic Integrity</h3>
-              <p className="text-[15px] text-white/60 leading-relaxed">Đề cao tính học thuật, bảo vệ bản quyền tác giả và xây dựng quy trình đánh giá minh bạch từ đội ngũ giảng viên chuyên môn.</p>
+              <p className="text-[15px] text-white/60 leading-relaxed">{t("aboutValue2Desc")}</p>
             </div>
             <div className="bg-white/5 border border-white/10 p-10 rounded-3xl hover:bg-white/10 hover:border-white/20 transition-all border-t-[4px] border-t-[#f5d87e] group hover:shadow-[0_0_30px_rgba(245,216,126,0.15)] hover:-translate-y-2 duration-300 animate-[fadeUp_1.1s_ease-out]">
               <div className="w-14 h-14 rounded-2xl bg-[#f5d87e]/10 text-[#f5d87e] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <Building2 size={28} />
               </div>
               <h3 className="font-extrabold text-2xl mb-4 text-white">Industry Ready</h3>
-              <p className="text-[15px] text-white/60 leading-relaxed">Cầu nối trực tiếp mang sinh viên đến với các cơ hội nghề nghiệp thực tế ngay từ khi còn ngồi trên ghế nhà trường.</p>
+              <p className="text-[15px] text-white/60 leading-relaxed">{t("aboutValue3Desc")}</p>
             </div>
           </div>
           
           <div className="bg-white/5 border border-white/10 rounded-3xl p-10 flex flex-col md:flex-row items-center justify-evenly gap-10 text-center animate-[fadeUp_1.3s_ease-out]">
              <div>
                 <div className="font-black text-5xl md:text-6xl text-white mb-2 tracking-tight">350+</div>
-                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#60afff]">Dự án Kiểm định</div>
+                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#60afff]">{t("aboutStats1Title")}</div>
              </div>
              <div className="w-full md:w-px h-px md:h-20 bg-white/10"></div>
              <div>
                 <div className="font-black text-5xl md:text-6xl text-white mb-2 tracking-tight">98%</div>
-                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#ff7b6e]">Hài lòng về UI/UX</div>
+                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#ff7b6e]">{t("aboutStats2Title")}</div>
              </div>
              <div className="w-full md:w-px h-px md:h-20 bg-white/10"></div>
              <div>
                 <div className="font-black text-5xl md:text-6xl text-white mb-2 tracking-tight">45+</div>
-                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#f5d87e]">Doanh nghiệp Đối tác</div>
+                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#f5d87e]">{t("aboutStats3Title")}</div>
              </div>
           </div>
         </div>
@@ -4986,8 +4986,8 @@ function AboutPage({ setPage }) {
       <section className="py-24 px-6 lg:px-12 bg-[#f9fafc] border-b border-[#e2e6ec] overflow-hidden relative">
         <div className="max-w-7xl mx-auto">
            <div className="text-center mb-16 animate-[fadeUp_0.5s_ease-out]">
-             <h2 className="text-4xl font-black text-[#0a0c0f] mb-4">Quy trình vận hành khép kín</h2>
-             <p className="text-[#666] max-w-2xl mx-auto text-base">Hệ sinh thái liên kết chặt chẽ giữa 3 đối tượng, tạo nên vòng lặp giá trị bền vững cho ngành Thiết kế.</p>
+             <h2 className="text-4xl font-black text-[#0a0c0f] mb-4">{t("aboutProcessTitle")}</h2>
+             <p className="text-[#666] max-w-2xl mx-auto text-base">{t("aboutProcessDesc")}</p>
            </div>
            
            <div className="relative flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10">
@@ -4996,24 +4996,24 @@ function AboutPage({ setPage }) {
              
              <div className="relative z-10 bg-white p-8 rounded-3xl border border-[#e2e6ec] shadow-lg flex-1 text-center w-full max-w-[300px] hover:-translate-y-2 transition-transform duration-300 animate-[fadeUp_0.7s_ease-out]">
                <div className="w-16 h-16 bg-gradient-to-br from-[#1a4ba8] to-[#0d2e6e] text-white rounded-2xl flex items-center justify-center mx-auto mb-6 font-black text-2xl shadow-xl shadow-[#1a4ba8]/20 ring-4 ring-white">1</div>
-               <h4 className="font-extrabold text-[#0a0c0f] text-lg mb-3">Sinh viên Upload</h4>
-               <p className="text-[14px] text-[#666] leading-relaxed">Đăng tải tác phẩm với đầy đủ hình ảnh, mô tả, thông số thiết kế.</p>
+               <h4 className="font-extrabold text-[#0a0c0f] text-lg mb-3">{t("aboutStep1Title")}</h4>
+               <p className="text-[14px] text-[#666] leading-relaxed">{t("aboutStep1Desc")}</p>
              </div>
              
              <ArrowRight className="text-[#1a4ba8] hidden md:block relative z-10 bg-[#f9fafc] ring-8 ring-[#f9fafc] rounded-full animate-[fadeUp_0.8s_ease-out]" size={32} />
              
              <div className="relative z-10 bg-white p-8 rounded-3xl border border-[#e2e6ec] shadow-lg flex-1 text-center w-full max-w-[300px] hover:-translate-y-2 transition-transform duration-300 animate-[fadeUp_0.9s_ease-out]">
                <div className="w-16 h-16 bg-gradient-to-br from-[#c0392b] to-[#8a1919] text-white rounded-2xl flex items-center justify-center mx-auto mb-6 font-black text-2xl shadow-xl shadow-[#c0392b]/20 ring-4 ring-white">2</div>
-               <h4 className="font-extrabold text-[#0a0c0f] text-lg mb-3">Giảng viên Chấm điểm</h4>
-               <p className="text-[14px] text-[#666] leading-relaxed">Duyệt, đánh giá và cấp huy hiệu xác thực chất lượng học thuật.</p>
+               <h4 className="font-extrabold text-[#0a0c0f] text-lg mb-3">{t("aboutStep2Title")}</h4>
+               <p className="text-[14px] text-[#666] leading-relaxed">{t("aboutStep2Desc")}</p>
              </div>
              
              <ArrowRight className="text-[#c0392b] hidden md:block relative z-10 bg-[#f9fafc] ring-8 ring-[#f9fafc] rounded-full animate-[fadeUp_1.0s_ease-out]" size={32} />
              
              <div className="relative z-10 bg-white p-8 rounded-3xl border border-[#e2e6ec] shadow-lg flex-1 text-center w-full max-w-[300px] hover:-translate-y-2 transition-transform duration-300 animate-[fadeUp_1.1s_ease-out]">
                <div className="w-16 h-16 bg-gradient-to-br from-[#c9a227] to-[#967615] text-white rounded-2xl flex items-center justify-center mx-auto mb-6 font-black text-2xl shadow-xl shadow-[#c9a227]/20 ring-4 ring-white">3</div>
-               <h4 className="font-extrabold text-[#0a0c0f] text-lg mb-3">Xuất bản & Kết nối</h4>
-               <p className="text-[14px] text-[#666] leading-relaxed">Hiển thị công khai, nhà tuyển dụng trực tiếp tiếp cận và tuyển dụng.</p>
+               <h4 className="font-extrabold text-[#0a0c0f] text-lg mb-3">{t("aboutStep3Title")}</h4>
+               <p className="text-[14px] text-[#666] leading-relaxed">{t("aboutStep3Desc")}</p>
              </div>
            </div>
         </div>
@@ -5023,14 +5023,14 @@ function AboutPage({ setPage }) {
       <section id="compare" className="py-24 px-6 lg:px-12 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16 animate-[fadeUp_0.5s_ease-out]">
-            <h2 className="text-4xl font-black text-[#0a0c0f] mb-4">Tại sao chọn UEF Design Gallery?</h2>
-            <p className="text-[#666] text-base">So sánh giá trị mang lại so với các nền tảng lưu trữ truyền thống.</p>
+            <h2 className="text-4xl font-black text-[#0a0c0f] mb-4">{t("aboutCompareTitle")}</h2>
+            <p className="text-[#666] text-base">{t("aboutCompareDesc")}</p>
           </div>
           <div className="overflow-x-auto rounded-2xl border border-[#e2e6ec] shadow-xl shadow-black/5 animate-[fadeUp_0.7s_ease-out]">
             <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr>
-                  <th className="bg-[#f9fafc] p-6 font-extrabold text-[#0a0c0f] border-b border-[#e2e6ec] text-[15px] uppercase tracking-wider w-[40%]">Tính năng nổi bật</th>
+                  <th className="bg-[#f9fafc] p-6 font-extrabold text-[#0a0c0f] border-b border-[#e2e6ec] text-[15px] uppercase tracking-wider w-[40%]">{t("aboutCompareCol1")}</th>
                   <th className="bg-white p-6 font-bold text-[#666] border-b border-[#e2e6ec] text-sm text-center">Behance / Dribbble</th>
                   <th className="bg-white p-6 font-bold text-[#666] border-b border-[#e2e6ec] text-sm text-center">Google Drive</th>
                   <th className="bg-gradient-to-r from-[#0d2e6e] to-[#1a4ba8] p-6 font-extrabold text-white border-b border-[#0d2e6e] text-[15px] text-center shadow-inner">UEF Gallery</th>
@@ -5038,25 +5038,25 @@ function AboutPage({ setPage }) {
               </thead>
               <tbody className="text-[15px]">
                 <tr className="hover:bg-[#f4f7fb] transition-colors">
-                  <td className="p-5 border-b border-[#e2e6ec] font-bold text-[#0a0c0f]">Môi trường học thuật chuyên biệt</td>
+                  <td className="p-5 border-b border-[#e2e6ec] font-bold text-[#0a0c0f]">{t("aboutCompareF1")}</td>
                   <td className="p-5 border-b border-[#e2e6ec] text-center text-[#e53e3e]/70"><X size={20} className="mx-auto" /></td>
                   <td className="p-5 border-b border-[#e2e6ec] text-center text-[#e53e3e]/70"><X size={20} className="mx-auto" /></td>
                   <td className="p-5 border-b border-[#e2e6ec] bg-[#f8fafc] text-center text-[#1a4ba8] font-black"><Check size={24} className="mx-auto" /></td>
                 </tr>
                 <tr className="hover:bg-[#f4f7fb] transition-colors">
-                  <td className="p-5 border-b border-[#e2e6ec] font-bold text-[#0a0c0f]">Xác thực từ Giảng viên (Verified Badge)</td>
+                  <td className="p-5 border-b border-[#e2e6ec] font-bold text-[#0a0c0f]">{t("aboutCompareF2")}</td>
                   <td className="p-5 border-b border-[#e2e6ec] text-center text-[#e53e3e]/70"><X size={20} className="mx-auto" /></td>
                   <td className="p-5 border-b border-[#e2e6ec] text-center text-[#e53e3e]/70"><X size={20} className="mx-auto" /></td>
                   <td className="p-5 border-b border-[#e2e6ec] bg-[#f8fafc] text-center text-[#1a4ba8] font-black"><Check size={24} className="mx-auto" /></td>
                 </tr>
                 <tr className="hover:bg-[#f4f7fb] transition-colors">
-                  <td className="p-5 border-b border-[#e2e6ec] font-bold text-[#0a0c0f]">Tự động kết xuất PDF Layout chuẩn in</td>
+                  <td className="p-5 border-b border-[#e2e6ec] font-bold text-[#0a0c0f]">{t("aboutCompareF3")}</td>
                   <td className="p-5 border-b border-[#e2e6ec] text-center text-[#e53e3e]/70"><X size={20} className="mx-auto" /></td>
                   <td className="p-5 border-b border-[#e2e6ec] text-center text-[#e53e3e]/70"><X size={20} className="mx-auto" /></td>
                   <td className="p-5 border-b border-[#e2e6ec] bg-[#f8fafc] text-center text-[#1a4ba8] font-black"><Check size={24} className="mx-auto" /></td>
                 </tr>
                 <tr className="hover:bg-[#f4f7fb] transition-colors">
-                  <td className="p-5 font-bold text-[#0a0c0f]">Tìm kiếm & Bộ lọc nâng cao cho Doanh nghiệp</td>
+                  <td className="p-5 font-bold text-[#0a0c0f]">{t("aboutCompareF4")}</td>
                   <td className="p-5 text-center text-[#38a169]/80"><Check size={20} className="mx-auto" /></td>
                   <td className="p-5 text-center text-[#e53e3e]/70"><X size={20} className="mx-auto" /></td>
                   <td className="p-5 bg-[#f8fafc] text-center text-[#1a4ba8] font-black"><Check size={24} className="mx-auto" /></td>
@@ -5071,15 +5071,15 @@ function AboutPage({ setPage }) {
       <section id="faq" className="py-24 px-6 lg:px-12 bg-[#f9fafc] border-t border-[#e2e6ec]">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-16">
            <div className="animate-[fadeUp_0.5s_ease-out]">
-             <h3 className="font-black text-4xl mb-5 tracking-tight text-[#0a0c0f]">Câu hỏi thường gặp</h3>
-             <p className="text-[#666] text-base leading-relaxed mb-10">Tất cả những thông tin bạn cần biết về cách vận hành của nền tảng UEF Design Gallery.</p>
+             <h3 className="font-black text-4xl mb-5 tracking-tight text-[#0a0c0f]">{t("aboutFaqTitle")}</h3>
+             <p className="text-[#666] text-base leading-relaxed mb-10">{t("aboutFaqDesc")}</p>
              <div className="bg-white border border-[#e2e6ec] shadow-md rounded-2xl p-6 flex items-start gap-5 hover:border-[#1a4ba8]/30 transition-colors">
                 <div className="w-12 h-12 bg-[#f0f4ff] text-[#1a4ba8] rounded-xl flex items-center justify-center shrink-0">
                   <Mail size={24} />
                 </div>
                 <div>
-                  <strong className="text-base block mb-1 font-extrabold text-[#0a0c0f]">Hỗ trợ kỹ thuật</strong>
-                  <span className="text-sm text-[#666] block mb-3">Chúng tôi luôn ở đây để giúp bạn.</span>
+                  <strong className="text-base block mb-1 font-extrabold text-[#0a0c0f]">{t("aboutFaqTechSupport")}</strong>
+                  <span className="text-sm text-[#666] block mb-3">{t("aboutFaqTechSupportDesc")}</span>
                   <a href="mailto:khoathietke@uef.edu.vn" className="text-[#1a4ba8] font-bold hover:underline">khoathietke@uef.edu.vn</a>
                 </div>
              </div>
@@ -5087,10 +5087,10 @@ function AboutPage({ setPage }) {
            
            <div className="space-y-4 animate-[fadeUp_0.7s_ease-out]">
              {[
-               { q: "Sinh viên ngành khác có được sử dụng nền tảng không?", a: "Hiện tại, nền tảng UEF Design Gallery được thiết kế chuyên biệt và cấp quyền ưu tiên cho sinh viên thuộc Khoa Thiết kế Đồ họa (Graphic Design) của UEF để đảm bảo tính chuyên môn cao nhất." },
-               { q: "Làm sao để tác phẩm được gán nhãn Verified (Đã kiểm định)?", a: "Sau khi bạn đăng tải, giảng viên phụ trách môn học hoặc đồ án đó sẽ nhận được thông báo để vào xem xét và đánh giá. Nếu đồ án đạt chất lượng theo tiêu chuẩn của Khoa, giảng viên sẽ phê duyệt và hệ thống tự động cấp huy hiệu Verified." },
-               { q: "Tính năng xuất PDF hoạt động như thế nào?", a: "Tại tính năng Bộ sưu tập (Tập san), bạn có thể gom nhóm các tác phẩm yêu thích. Sau đó bấm 'Xuất PDF', chọn layout có sẵn (Modern, Classic, Minimal), tùy chỉnh màu sắc và font chữ. Hệ thống sẽ tự động thiết kế dàn trang và cho phép bạn tải về dưới dạng PDF chuẩn in ấn." },
-               { q: "Doanh nghiệp làm sao để liên hệ với sinh viên?", a: "Tài khoản Doanh nghiệp có thể tìm kiếm sinh viên theo bộ lọc kỹ năng (UI/UX, 3D, Branding...). Khi thấy ấn tượng với tác phẩm nào, nhà tuyển dụng có thể gửi thông báo lời mời phỏng vấn trực tiếp tới sinh viên ngay trên nền tảng." }
+               { q: t("aboutFaq1Q"), a: t("aboutFaq1A") },
+               { q: t("aboutFaq2Q"), a: t("aboutFaq2A") },
+               { q: t("aboutFaq3Q"), a: t("aboutFaq3A") },
+               { q: t("aboutFaq4Q"), a: t("aboutFaq4A") }
              ].map((faq, i) => (
                <div key={i} className="border border-[#e2e6ec] rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
                  <button onClick={() => toggleFaq(i)} className="w-full flex items-center justify-between p-6 text-left bg-white transition-colors">
@@ -5119,8 +5119,8 @@ function AboutPage({ setPage }) {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] border border-white/10 rounded-full pointer-events-none border-dashed"></div>
         
         <div className="relative z-10 max-w-3xl mx-auto animate-[fadeUp_0.8s_ease-out]">
-          <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight tracking-tight">Sẵn sàng xây dựng dấu ấn<br/>nghề nghiệp của bạn?</h2>
-          <p className="text-white/80 mb-12 text-lg max-w-xl mx-auto">Gia nhập cùng hàng trăm sinh viên thiết kế xuất sắc khác và lọt vào "mắt xanh" của các nhà tuyển dụng hàng đầu.</p>
+          <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight tracking-tight">{t("aboutCtaTitle1")}<br/>{t("aboutCtaTitle2")}</h2>
+          <p className="text-white/80 mb-12 text-lg max-w-xl mx-auto">{t("aboutCtaDesc")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button onClick={() => setPage("auth")} className="px-10 py-4 bg-white text-[#0d2e6e] font-black rounded-2xl text-[16px] hover:bg-[#f0f4ff] hover:-translate-y-1 transition-all shadow-xl shadow-black/30 duration-300">
               Bắt đầu ngay miễn phí
@@ -5151,7 +5151,7 @@ function AboutPage({ setPage }) {
         </div>
         <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-white/10 text-center md:text-left text-sm flex flex-col md:flex-row justify-between items-center gap-4">
            <p>© 2026 UEF Design Gallery. Tất cả bản quyền được bảo hộ.</p>
-           <p>Phát triển bởi sinh viên UEF với <Heart size={14} className="inline text-red-500 mx-1" /></p>
+           <p>{t("aboutFooterDev")} <Heart size={14} className="inline text-red-500 mx-1" /></p>
         </div>
       </footer>
     </div>
