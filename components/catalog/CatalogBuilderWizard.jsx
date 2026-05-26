@@ -209,8 +209,6 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     }
   };
 
-  };
-
   const renderStep = () => {
     switch (step) {
       case 0:
