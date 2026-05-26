@@ -55,6 +55,11 @@ model User {
   avatarUrl         String?             @map("avatar_url")
   bio               String?
   isActive          Boolean             @default(true) @map("is_active")
+  emailVerified     DateTime?           @map("email_verified")
+  verificationCode  String?             @map("verification_code")
+  verificationCodeExpires DateTime?      @map("verification_code_expires")
+  resetCode         String?             @map("reset_code")
+  resetCodeExpires  DateTime?           @map("reset_code_expires")
   createdAt         DateTime            @default(now()) @map("created_at")
   updatedAt         DateTime            @updatedAt @map("updated_at")
 

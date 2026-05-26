@@ -133,8 +133,63 @@ export function AuthProvider({ children }) {
     return data;
   }, []);
 
+  const forgotPassword = useCallback(async (email) => {
+    const res = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Gửi mã thất bại");
+    return data;
+  }, []);
+
+  const verifyResetCode = useCallback(async (email, code) => {
+    const res = await fetch("/api/auth/verify-reset-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), code }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Mã không hợp lệ");
+    return data;
+  }, []);
+
+  const resetPassword = useCallback(async (email, code, password) => {
+    const res = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), code, password }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Đặt lại mật khẩu thất bại");
+    return data;
+  }, []);
+
+  const sendEmailVerification = useCallback(async (email) => {
+    const res = await fetch("/api/auth/send-verification", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Gửi mã thất bại");
+    return data;
+  }, []);
+
+  const verifyEmail = useCallback(async (email, code) => {
+    const res = await fetch("/api/auth/verify-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim(), code }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Xác thực email thất bại");
+    return data;
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithEmail, logout, register, refreshSession }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithEmail, logout, register, refreshSession, forgotPassword, verifyResetCode, resetPassword, sendEmailVerification, verifyEmail }}>
       {children}
     </AuthContext.Provider>
   );
