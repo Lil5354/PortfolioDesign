@@ -3175,7 +3175,22 @@ function AdminArtworksPage({ setPage }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((a) => (
+                  {loading ? (
+                    <tr>
+                      <td colSpan="5" className="px-4 py-16 text-center">
+                        <div className="flex flex-col items-center justify-center text-[#666]">
+                          <div className="w-8 h-8 border-4 border-[#077E9E]/20 border-t-[#077E9E] rounded-full animate-spin mb-4"></div>
+                          <p className="font-semibold">{t("loadingData") || "Đang tải..."}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-4 py-12 text-center text-[#666666]">
+                        Không tìm thấy ấn phẩm nào.
+                      </td>
+                    </tr>
+                  ) : filtered.map((a) => (
                     <tr
                       key={a.id}
                       onClick={() => setSelectedId(a.id)}
