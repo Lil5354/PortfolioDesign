@@ -140,9 +140,9 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     title: it.artwork?.title || "Untitled",
     student: it.artwork?.user?.fullName || "Student",
     coverImageUrl: it.artwork?.coverImageUrl || "",
-    category: it.category || "Design",
+    category: it.artwork?.subject || "Design",
     note: it.note || "",
-    award: it.award || ""
+    award: ""
   }));
 
   const enabledArtworks = items.filter(it => payload.enabledArtworkIds.includes(it.id));

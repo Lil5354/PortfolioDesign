@@ -5837,30 +5837,7 @@ export default function App() {
   useEffect(() => {
     api.collections.list().then(data => {
       let result = Array.isArray(data) ? data : [];
-      if (result.length === 0) {
-        // Fallback to mock data if empty
-        const mockArtworks = [
-          { id: '1', title: 'Typography Design', user: { fullName: 'Nguyễn Văn A' }, coverImageUrl: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?auto=format&fit=crop&q=80' },
-          { id: '2', title: 'Brand Identity', user: { fullName: 'Trần Thị B' }, coverImageUrl: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80' },
-          { id: '3', title: 'UI/UX Mobile App', user: { fullName: 'Lê Văn C' }, coverImageUrl: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80' },
-          { id: '4', title: 'Packaging Design', user: { fullName: 'Phạm Thị D' }, coverImageUrl: 'https://images.unsplash.com/photo-1557821552-17105176677c?auto=format&fit=crop&q=80' }
-        ];
-        result = [
-          {
-            id: 'mock-1',
-            name: 'Bộ sưu tập Tuyển chọn K16',
-            theme: 'Dark Mode & Neon',
-            curatorEssay: 'Tập hợp các đồ án xuất sắc nhất khóa K16 chuyên ngành thiết kế đồ họa.',
-            items: mockArtworks.map((aw, idx) => ({
-              artworkId: aw.id,
-              artwork: aw,
-              note: idx === 0 ? 'Ấn tượng với cách xử lý typography.' : '',
-              category: idx % 2 === 0 ? 'Branding' : 'UI/UX',
-              award: idx === 0 ? 'Vàng' : 'Không có'
-            }))
-          }
-        ];
-      }
+      // Removed mock data fallback. Just use the actual result from backend.
       setCollections(result);
       setCollectionsLoading(false);
     }).catch(() => {
@@ -5912,6 +5889,7 @@ export default function App() {
 
   const saveToCollections = async ({ artworkId, selectedCollectionIds, note }) => {
     const prevCollections = [...collections];
+    const savedArtworkObj = saveModal.artwork;
     setCollections((prev) =>
       prev.map((c) => {
         const has = c.items.some((it) => it.artworkId === artworkId);
@@ -5919,7 +5897,7 @@ export default function App() {
         if (shouldHave) {
           const nextItems = has
             ? c.items.map((it) => (it.artworkId === artworkId ? { ...it, note } : it))
-            : [...c.items, { artworkId, note }];
+            : [...c.items, { artworkId, note, artwork: savedArtworkObj }];
           return { ...c, items: nextItems };
         }
         if (!shouldHave && has) {
