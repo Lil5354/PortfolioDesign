@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "./lib/AuthContext";
 import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
