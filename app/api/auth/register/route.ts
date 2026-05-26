@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { sendEmailVerificationCode } from "@/lib/mail";
+
+function generateCode() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
+    const code = generateCode();
+    const expires = new Date(Date.now() + 10 * 60 * 1000);
 
     const user = await prisma.user.create({
       data: {
@@ -36,14 +43,18 @@ export async function POST(request: NextRequest) {
         passwordHash,
         fullName: fullName.trim(),
         role: "student",
-        isActive: true,
+        isActive: false,
+        verificationCode: code,
+        verificationCodeExpires: expires,
       },
     });
 
-    const { passwordHash: _, ...safeUser } = user;
+    await sendEmailVerificationCode(user.email, user.fullName, code).catch((err) => {
+      console.error("Failed to send verification email:", err);
+    });
 
     return NextResponse.json(
-      { success: true, user: safeUser },
+      { success: true, message: "Mã xác thực đã được gửi đến email của bạn." },
       { status: 201 }
     );
   } catch {

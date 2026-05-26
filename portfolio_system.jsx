@@ -4057,11 +4057,13 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
 }
 
 function RegisterPage({ setPage }) {
-    const [form, setForm] = useState({ lastName: "", firstName: "", email: "", password: "", confirmPassword: "" });
+  const [form, setForm] = useState({ lastName: "", firstName: "", email: "", password: "", confirmPassword: "" });
   const [showPasswords, setShowPasswords] = useState({ password: false, confirm: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState("form");
+  const [code, setCode] = useState("");
+  const [cooldown, setCooldown] = useState(0);
 
   const updateField = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -4087,8 +4089,49 @@ function RegisterPage({ setPage }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setSuccess(true);
+      setStep("verify");
+      setCooldown(60);
+      const timer = setInterval(() => setCooldown((c) => { if (c <= 1) clearInterval(timer); return c - 1; }), 1000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!code || code.length < 6) { setError("Vui lòng nhập mã xác thực"); return; }
+    setError(""); setLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, code }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setStep("success");
       setTimeout(() => setPage("auth"), 2000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (cooldown > 0) return;
+    setError(""); setLoading(true);
+    try {
+      const res = await fetch("/api/auth/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setCooldown(60);
+      const timer = setInterval(() => setCooldown((c) => { if (c <= 1) clearInterval(timer); return c - 1; }), 1000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -4112,55 +4155,89 @@ function RegisterPage({ setPage }) {
       <div className="auth-form-panel" style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 56px", overflow: "auto" }}>
         <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}><img src="/logo-uef.png" alt="UEF" style={{ height: 30 }} /><span style={{ fontWeight: 700, fontSize: 16, color: BLACK }}>Design Gallery</span></div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>{t("createNewAccount")}</h1>
-          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>{t("registerDescription")}</p>
 
-          {success ? (
-            <div style={{ padding: 20, background: "#F0FFF0", borderRadius: 8, textAlign: "center" }}>
-              <p style={{ color: "#2F855A", fontWeight: 600, fontSize: 14 }}>{t("registerSuccess")}</p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {step === "form" && (
+            <>
+              <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>{t("createNewAccount")}</h1>
+              <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>{t("registerDescription")}</p>
+              <form onSubmit={handleSubmit}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("lastName")}</label>
+                      <input type="text" value={form.lastName} onChange={updateField("lastName")} required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("firstName")}</label>
+                      <input type="text" value={form.firstName} onChange={updateField("firstName")} required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    </div>
+                  </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("lastName")}</label>
-                    <input type="text" value={form.lastName} onChange={updateField("lastName")}  required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("email")}</label>
+                    <input type="email" value={form.email} onChange={updateField("email")} required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("firstName")}</label>
-                    <input type="text" value={form.firstName} onChange={updateField("firstName")}  required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("password")}</label>
+                    <div style={{ position: "relative" }}>
+                      <input type={showPasswords.password ? "text" : "password"} value={form.password} onChange={updateField("password")} required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                      <button type="button" onClick={() => setShowPasswords({ ...showPasswords, password: !showPasswords.password })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.password ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("confirmPassword")}</label>
+                    <div style={{ position: "relative" }}>
+                      <input type={showPasswords.confirm ? "text" : "password"} value={form.confirmPassword} onChange={updateField("confirmPassword")} required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                      <button type="button" onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("email")}</label>
-                  <input type="email" value={form.email} onChange={updateField("email")}  required style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("password")}</label>
-                  <div style={{ position: "relative" }}>
-                    <input type={showPasswords.password ? "text" : "password"} value={form.password} onChange={updateField("password")}  required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
-                    <button type="button" onClick={() => setShowPasswords({ ...showPasswords, password: !showPasswords.password })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.password ? <EyeOff size={18} /> : <Eye size={18} />}</button>
-                  </div>
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("confirmPassword")}</label>
-                  <div style={{ position: "relative" }}>
-                    <input type={showPasswords.confirm ? "text" : "password"} value={form.confirmPassword} onChange={updateField("confirmPassword")}  required style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
-                    <button type="button" onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}</button>
-                  </div>
-                </div>
-              </div>
-
-              {error && <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 12, textAlign: "center" }}>{error}</p>}
-
-              <button type="submit" disabled={loading} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, marginTop: 16, cursor: loading ? "not-allowed" : "pointer" }}>
-                {loading ? t("processing") : t("register")}
-              </button>
-            </form>
+                {error && <p style={{ color: "#E53E3E", fontSize: 12, marginTop: 12, textAlign: "center" }}>{error}</p>}
+                <button type="submit" disabled={loading} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, marginTop: 16, cursor: loading ? "not-allowed" : "pointer" }}>
+                  {loading ? t("processing") : t("register")}
+                </button>
+              </form>
+              <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>{t("alreadyHaveAccount")} <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>{t("login")}</span></p>
+            </>
           )}
 
-          <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>{t("alreadyHaveAccount")} <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>{t("login")}</span></p>
+          {step === "verify" && (
+            <>
+              <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px" }}>{t("verifyEmail")}</h1>
+              <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>{t("resetCodeSentDesc")}</p>
+
+              {error && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFF5F5", border: "1px solid #FED7D7", borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>
+                  <ShieldAlert size={16} color="#E53E3E" style={{ flexShrink: 0 }} />
+                  <p style={{ color: "#C53030", fontSize: 12, margin: 0 }}>{error}</p>
+                </div>
+              )}
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("enterResetCode")}</label>
+                <input type="text" value={code} onChange={(e) => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }} placeholder="000000" maxLength={6} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, textAlign: "center", letterSpacing: 8, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG, fontFamily: "monospace" }} />
+              </div>
+              <button onClick={handleVerifyCode} disabled={loading || code.length < 6} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                {loading ? <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> {t("processing")}</> : t("verifyEmailButton")}
+              </button>
+              {cooldown > 0 ? (
+                <p style={{ fontSize: 11, color: MUTED, textAlign: "center", marginTop: 12 }}>{t("resendCode")} ({cooldown}s)</p>
+              ) : (
+                <p onClick={handleResendCode} style={{ fontSize: 11, color: CERULEAN, textAlign: "center", marginTop: 12, cursor: "pointer", fontWeight: 500 }}>{t("resendCode")}</p>
+              )}
+              <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>
+                <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>{t("backToLogin")}</span>
+              </p>
+            </>
+          )}
+
+          {step === "success" && (
+            <div style={{ padding: 20, background: "#F0FFF0", borderRadius: 8, textAlign: "center" }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#C6F6D5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2F855A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <p style={{ color: "#2F855A", fontWeight: 600, fontSize: 14 }}>{t("registerSuccess")}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

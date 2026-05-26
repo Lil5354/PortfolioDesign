@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
         emailVerified: new Date(),
         verificationCode: null,
         verificationCodeExpires: null,
+        isActive: true,
       },
     });
 
