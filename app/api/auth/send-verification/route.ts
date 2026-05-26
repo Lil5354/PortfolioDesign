@@ -31,9 +31,12 @@ export async function POST(request: NextRequest) {
       data: { verificationCode: code, verificationCodeExpires: expires },
     });
 
-    await sendEmailVerificationCode(user.email, user.fullName, code).catch((err) => {
+    try {
+      await sendEmailVerificationCode(user.email, user.fullName, code);
+    } catch (err) {
       console.error("Failed to send verification email:", err);
-    });
+      return NextResponse.json({ error: "Không thể gửi email xác thực. Vui lòng thử lại sau." }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true, message: "Mã xác thực đã được gửi đến email của bạn." });
   } catch {

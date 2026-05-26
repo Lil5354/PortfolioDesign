@@ -28,7 +28,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: errors.join("; ") }, { status: 400 });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (existing) {
       return NextResponse.json({ error: "Email đã được đăng ký" }, { status: 409 });
     }
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         passwordHash,
         fullName: fullName.trim(),
         role: "student",
@@ -49,9 +51,16 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    await sendEmailVerificationCode(user.email, user.fullName, code).catch((err) => {
+    try {
+      await sendEmailVerificationCode(user.email, user.fullName, code);
+    } catch (err) {
       console.error("Failed to send verification email:", err);
-    });
+      // We still return 201 because the user is created, but we notify them about the email error
+      return NextResponse.json(
+        { success: true, message: "Đăng ký thành công, nhưng không thể gửi email xác thực lúc này. Vui lòng thử gửi lại mã sau." },
+        { status: 201 }
+      );
+    }
 
     return NextResponse.json(
       { success: true, message: "Mã xác thực đã được gửi đến email của bạn." },

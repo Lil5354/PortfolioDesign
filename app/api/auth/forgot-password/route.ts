@@ -27,9 +27,12 @@ export async function POST(request: NextRequest) {
       data: { resetCode: code, resetCodeExpires: expires },
     });
 
-    await sendPasswordResetCode(user.email, user.fullName, code).catch((err) => {
+    try {
+      await sendPasswordResetCode(user.email, user.fullName, code);
+    } catch (err) {
       console.error("Failed to send email:", err);
-    });
+      return NextResponse.json({ error: "Không thể gửi email. Vui lòng thử lại sau." }, { status: 500 });
+    }
 
     return NextResponse.json({ success: true, message: "Mã xác thực đã được gửi đến email của bạn." });
   } catch {
