@@ -2136,12 +2136,17 @@ function AuthPage({ setPage, onLoginSuccess }) {
 function ForgotPasswordPage({ setPage }) {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
   const [step, setStep] = useState("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [cooldown, setCooldown] = useState(0);
+  const [showPw, setShowPw] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const { forgotPassword, verifyResetCode } = useAuth();
+  const { forgotPassword, verifyResetCode, resetPassword } = useAuth();
 
   const handleSendCode = async () => {
     if (!email) { setError(t("invalidEmail")); return; }
@@ -2156,14 +2161,55 @@ function ForgotPasswordPage({ setPage }) {
   };
 
   const handleVerifyCode = async () => {
-    if (!code) { setError(t("enterResetCode")); return; }
+    if (!code || code.length < 6) { setError(t("enterResetCode")); return; }
     setError(""); setLoading(true);
     try {
       await verifyResetCode(email, code);
-      setPage("reset_password", { resetEmail: email, resetCode: code });
+      setStep("password");
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
+
+  const handleResetPassword = async () => {
+    if (!password || password.length < 8) { setError(t("passwordMinLength")); return; }
+    if (password !== confirmPw) { setError(t("passwordMismatch")); return; }
+    setError(""); setLoading(true);
+    try {
+      await resetPassword(email, code, password);
+      setSuccess(true);
+      setTimeout(() => setPage("auth"), 2000);
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  const handleResendCode = async () => {
+    if (cooldown > 0) return;
+    setError(""); setLoading(true);
+    try {
+      await forgotPassword(email);
+      setCooldown(60);
+      const timer = setInterval(() => setCooldown((c) => { if (c <= 1) clearInterval(timer); return c - 1; }), 1000);
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  const stepTitle = step === "email" ? t("forgotPasswordTitle") : step === "code" ? t("enterResetCode") : t("resetPassword");
+  const stepDesc = step === "email" ? t("forgotPasswordDesc") : step === "code" ? t("resetCodeSentDesc") : t("resetCodeSentDesc");
+
+  if (success) {
+    return (
+      <div style={{ display: "flex", height: "100vh", width: "100%", alignItems: "center", justifyContent: "center", background: GRAY_BG }}>
+        <div style={{ maxWidth: 400, width: "100%", background: "#fff", borderRadius: 16, padding: 48, textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#C6F6D5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2F855A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: BLACK, margin: "0 0 8px" }}>{t("resetPasswordSuccess")}</h2>
+          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>{t("resetPasswordSuccessDesc")}</p>
+          <button onClick={() => setPage("auth")} style={{ padding: "12px 32px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{t("backToLogin")}</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
@@ -2174,9 +2220,6 @@ function ForgotPasswordPage({ setPage }) {
           <img src="/logo-uef.png" alt="UEF" style={{ height: 32, filter: "brightness(0) invert(1)" }} />
           <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
         </div>
-        <div style={{ position: "absolute", bottom: 48, left: 48, right: 48 }}>
-          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: 22, fontWeight: 300, lineHeight: 1.55, margin: "0 0 14px" }}>{t("creativityQuote")}<br /><span style={{ fontSize: 16, opacity: 0.8 }}>{t("joinUefCreative")}</span></p>
-        </div>
       </div>
       <div className="auth-form-panel" style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 56px" }}>
         <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
@@ -2184,8 +2227,16 @@ function ForgotPasswordPage({ setPage }) {
             <img src="/logo-uef.png" alt="UEF" style={{ height: 30 }} />
             <span style={{ fontWeight: 700, fontSize: 16, color: BLACK }}>Design Gallery</span>
           </div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px" }}>{step === "email" ? t("forgotPasswordTitle") : t("enterResetCode")}</h1>
-          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>{step === "email" ? t("forgotPasswordDesc") : t("resetCodeSentDesc")}</p>
+
+          {step !== "email" && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 16, cursor: "pointer" }} onClick={() => { if (step === "password") { setStep("code"); } else { setPage("auth"); } }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={CERULEAN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              <span style={{ fontSize: 12, color: CERULEAN, fontWeight: 500 }}>{t("backToLogin")}</span>
+            </div>
+          )}
+
+          <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px" }}>{stepTitle}</h1>
+          <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>{stepDesc}</p>
 
           {error && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFF5F5", border: "1px solid #FED7D7", borderRadius: 8, padding: "10px 14px", marginBottom: 16 }}>
@@ -2194,21 +2245,26 @@ function ForgotPasswordPage({ setPage }) {
             </div>
           )}
 
-          {step === "email" ? (
+          {step === "email" && (
             <>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("email")}</label>
-                <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} onKeyDown={(e) => e.key === "Enter" && handleSendCode()} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
               </div>
               <button onClick={handleSendCode} disabled={loading || !email} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 {loading ? <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> {t("processing")}</> : t("sendResetCode")}
               </button>
+              <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>
+                <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>{t("backToLogin")}</span>
+              </p>
             </>
-          ) : (
+          )}
+
+          {step === "code" && (
             <>
               <div style={{ marginBottom: 16 }}>
                 <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("enterResetCode")}</label>
-                <input type="text" value={code} onChange={(e) => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }} placeholder="000000" maxLength={6} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, textAlign: "center", letterSpacing: 8, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG, fontFamily: "monospace" }} />
+                <input type="text" value={code} onChange={(e) => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(""); }} placeholder="000000" maxLength={6} onKeyDown={(e) => e.key === "Enter" && handleVerifyCode()} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, textAlign: "center", letterSpacing: 8, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG, fontFamily: "monospace" }} />
               </div>
               <button onClick={handleVerifyCode} disabled={loading || code.length < 6} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 {loading ? <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> {t("processing")}</> : t("verifyCode")}
@@ -2216,14 +2272,34 @@ function ForgotPasswordPage({ setPage }) {
               {cooldown > 0 ? (
                 <p style={{ fontSize: 11, color: MUTED, textAlign: "center", marginTop: 12 }}>{t("resendCode")} ({cooldown}s)</p>
               ) : (
-                <p onClick={handleSendCode} style={{ fontSize: 11, color: CERULEAN, textAlign: "center", marginTop: 12, cursor: "pointer", fontWeight: 500 }}>{t("resendCode")}</p>
+                <p onClick={handleResendCode} style={{ fontSize: 11, color: CERULEAN, textAlign: "center", marginTop: 12, cursor: "pointer", fontWeight: 500 }}>{t("resendCode")}</p>
               )}
             </>
           )}
 
-          <p style={{ fontSize: 12, color: MUTED, textAlign: "center", marginTop: 20 }}>
-            <span onClick={() => setPage("auth")} style={{ color: CERULEAN, cursor: "pointer", fontWeight: 600 }}>{t("backToLogin")}</span>
-          </p>
+          {step === "password" && (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("resetNewPassword")}</label>
+                  <div style={{ position: "relative" }}>
+                    <input type={showPw ? "text" : "password"} value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} onKeyDown={(e) => e.key === "Enter" && handleResetPassword()} style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <button type="button" onClick={() => setShowPw(!showPw)} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showPw ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 500, color: BLACK, display: "block", marginBottom: 6 }}>{t("resetConfirmNewPassword")}</label>
+                  <div style={{ position: "relative" }}>
+                    <input type={showConfirm ? "text" : "password"} value={confirmPw} onChange={(e) => { setConfirmPw(e.target.value); setError(""); }} onKeyDown={(e) => e.key === "Enter" && handleResetPassword()} style={{ width: "100%", padding: "11px 14px", paddingRight: 44, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", boxSizing: "border-box", color: BLACK, background: GRAY_BG }} />
+                    <button type="button" onClick={() => setShowConfirm(!showConfirm)} tabIndex={-1} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 6, color: MUTED }}>{showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                  </div>
+                </div>
+              </div>
+              <button onClick={handleResetPassword} disabled={loading || !password || !confirmPw} style={{ width: "100%", padding: "13px", borderRadius: 8, border: "none", background: loading ? GRAY_LIGHT : CERULEAN, color: loading ? MUTED : "#fff", fontSize: 14, fontWeight: 600, marginTop: 16, cursor: loading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                {loading ? <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> {t("processing")}</> : t("resetPassword")}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
