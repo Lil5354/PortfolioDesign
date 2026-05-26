@@ -166,12 +166,55 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       doc.open();
       doc.write(generatePreviewHTML(payload, sortedEnabled));
       doc.close();
+
+      // Inject interactive editing script
+      const script = doc.createElement('script');
+      script.innerHTML = `
+        document.addEventListener('dblclick', function(e) {
+          const el = e.target;
+          if (el.tagName.toLowerCase() === 'img') {
+            const newSrc = prompt('Nhập đường dẫn hình ảnh mới (URL):', el.src);
+            if (newSrc) el.src = newSrc;
+          } else {
+            el.contentEditable = true;
+            el.focus();
+            el.style.outline = "2px dashed #077E9E";
+            el.addEventListener('blur', function() {
+              el.contentEditable = false;
+              el.style.outline = "none";
+            }, { once: true });
+          }
+        });
+      `;
+      doc.body.appendChild(script);
     }
   }, [step, payload, sortedEnabled]);
 
   const handleExport = () => {
     setExporting(true);
-    const html = generatePrintReadyHTML(payload, sortedEnabled);
+    
+    const doc = iframeRef.current.contentWindow.document;
+    let html = "<!DOCTYPE html><html>" + doc.documentElement.innerHTML + "</html>";
+    
+    const printCSS = `
+      <style>
+        @media print {
+          @page { size: ${payload.pdfSize === 'A4' ? 'A4 portrait' : '210mm 210mm'}; margin: 0; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .page, .cover, .page-foreword, .page-toc, .page-closing, .page-spread, .page-body {
+            page-break-after: always !important;
+            break-after: page !important;
+          }
+          .page-spread > div, .work-card, .article-card, .highlight-box, .stat-item, .work-block, [style*="border:1px solid"] {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          body { margin: 0 !important; }
+        }
+      </style>
+    `;
+    html = html.replace('</head>', printCSS + '</head>');
+
     const printWin = window.open('', '_blank');
     if (printWin) {
       printWin.document.write(html);
@@ -431,8 +474,11 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
             </div>
 
             {/* Right Iframe preview full width */}
-            <div className="flex-1 bg-[#E0E0E0] rounded-2xl overflow-hidden border border-[#CCC] relative shadow-inner">
-              <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">Live Full Preview</div>
+            <div className="flex-1 bg-[#E0E0E0] rounded-2xl overflow-hidden border border-[#CCC] relative shadow-inner group">
+              <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-3 py-1.5 rounded-lg backdrop-blur-sm z-10 flex items-center gap-2">
+                <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
+                Live Full Preview (Nháy đúp vào Văn bản / Ảnh để sửa trực tiếp)
+              </div>
               <iframe ref={iframeRef} className="w-full h-full bg-white border-0" title="PDF Preview" />
             </div>
           </div>
