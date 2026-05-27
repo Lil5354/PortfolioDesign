@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
               email: true,
             },
           },
-          sender: true,
         },
       }),
       prisma.message.count({ where: { purpose: 'order' } }),
@@ -46,7 +45,6 @@ export async function GET(request: NextRequest) {
         isRead: order.isRead,
         createdAt: order.createdAt,
         recipient: order.recipient,
-        sender: order.sender,
       })),
       pagination: {
         page,

@@ -11,7 +11,7 @@ import { t } from "./lib/i18n.jsx";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -2662,7 +2662,7 @@ function AdminDashboardPage({ setPage }) {
               doc.setFont("Roboto");
               doc.text("BAO CAO TONG QUAN HE THONG", 14, 20);
               
-              doc.autoTable({
+              autoTable(doc, {
                 startY: 30,
                 head: [["Chi tieu", "Gia tri", "Chu thich"]],
                 body: stats.map(s => [s.label, s.value, s.hint]),
@@ -2671,7 +2671,7 @@ function AdminDashboardPage({ setPage }) {
               });
               
               doc.text("HOAT DONG GAN DAY", 14, doc.lastAutoTable.finalY + 15);
-              doc.autoTable({
+              autoTable(doc, {
                 startY: doc.lastAutoTable.finalY + 25,
                 head: [["Hoat dong", "Loai"]],
                 body: recentActivity.map(a => [

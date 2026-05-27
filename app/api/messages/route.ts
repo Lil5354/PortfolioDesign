@@ -39,12 +39,21 @@ export async function POST(request: NextRequest) {
       select: { userId: true },
     });
 
-    if (!portfolio) {
+    let recipientId = portfolio?.userId;
+
+    if (!recipientId && purpose === 'order') {
+      const adminUser = await prisma.user.findFirst({ where: { role: 'admin' } });
+      if (adminUser) {
+        recipientId = adminUser.id;
+      }
+    }
+
+    if (!recipientId) {
       return NextResponse.json({ error: 'Recipient not found' }, { status: 404 });
     }
 
-    const messageData = {
-      recipientId: portfolio.userId,
+    const messageData: any = {
+      recipientId,
       senderName,
       senderEmail,
       senderCompany: senderCompany ?? null,
