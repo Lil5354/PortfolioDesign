@@ -2523,13 +2523,11 @@ function AdminOrdersPage({ setPage }) {
           { id: '1', senderName: 'Nguyễn Văn A', senderEmail: 'nva@example.com', purpose: 'order', content: 'Yêu cầu in 50 cuốn Portfolio chất lượng cao, bìa cứng.', createdAt: new Date().toISOString(), isRead: false },
           { id: '2', senderName: 'Trần Thị B', senderEmail: 'ttb@example.com', purpose: 'order', content: 'Cần in tập san đồ họa K16 số lượng 200 bản.', createdAt: new Date(Date.now() - 86400000).toISOString(), isRead: true }
         ]);
+        setOrders([]);
       }
       setLoading(false);
     }).catch(() => {
-      setOrders([
-        { id: '1', senderName: 'Nguyễn Văn A', senderEmail: 'nva@example.com', purpose: 'order', content: 'Yêu cầu in 50 cuốn Portfolio chất lượng cao, bìa cứng.', createdAt: new Date().toISOString(), isRead: false },
-        { id: '2', senderName: 'Trần Thị B', senderEmail: 'ttb@example.com', purpose: 'order', content: 'Cần in tập san đồ họa K16 số lượng 200 bản.', createdAt: new Date(Date.now() - 86400000).toISOString(), isRead: true }
-      ]);
+      setOrders([]);
       setLoading(false);
     });
   }, []);
@@ -2538,8 +2536,9 @@ function AdminOrdersPage({ setPage }) {
     return (
       <div className="flex h-screen overflow-hidden bg-white">
         <AdminSidebar active="admin_orders" setPage={setPage} />
-        <div className="flex-1 flex items-center justify-center">
-          <DotLottieReact src="https://lottie.host/80c6c06a-a1cc-4cb5-8bd3-61fc0f7e1b52/B1K4M1j97w.lottie" loop autoplay style={{ width: 150, height: 150 }} />
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <GlobalLoading />
+          <p className="text-gray-500 font-medium mt-4 animate-pulse">Đang tải dữ liệu đơn hàng...</p>
         </div>
       </div>
     );
@@ -2583,7 +2582,14 @@ function AdminOrdersPage({ setPage }) {
           )}
         </div>
       </div>
-      {selectedOrder && (
+      {selectedOrder && (() => {
+        let parsed = null;
+        try {
+          parsed = JSON.parse(selectedOrder.content);
+        } catch (e) {
+          parsed = { description: selectedOrder.content };
+        }
+        return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl overflow-hidden flex flex-col p-6">
             <div className="flex justify-between items-center mb-4 border-b pb-3">
@@ -2594,19 +2600,21 @@ function AdminOrdersPage({ setPage }) {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <img src={selectedOrder.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&h=500&fit=crop"} alt="Artwork" className="w-full h-auto aspect-square object-cover rounded-lg border border-gray-200" />
+                <img src={parsed.artworkImage || selectedOrder.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&h=500&fit=crop"} alt="Artwork" className="w-full h-auto aspect-square object-cover rounded-lg border border-gray-200" />
               </div>
               <div className="space-y-4">
-                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tài khoản người đặt (Buyer)</strong> <p className="text-sm font-medium">{selectedOrder.buyerAccount || selectedOrder.senderEmail}</p></div>
-                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tên Ấn phẩm</strong> <p className="text-sm font-medium">{selectedOrder.artworkName || '—'}</p></div>
-                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tác giả (Student)</strong> <p className="text-sm font-medium">{selectedOrder.studentAuthor || '—'}</p></div>
-                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Link liên kết</strong> <button onClick={() => setPage("gallery")} className="text-sm font-medium text-[#077E9E] hover:underline flex items-center gap-1">Chuyển đến ấn phẩm <ExternalLink size={14} /></button></div>
-                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Nội dung order</strong> <p className="text-sm font-medium bg-gray-50 p-3 rounded-lg border">{selectedOrder.content}</p></div>
+                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tài khoản người đặt (Buyer)</strong> <p className="text-sm font-medium">{selectedOrder.senderName} ({selectedOrder.senderEmail})</p></div>
+                {parsed.company && <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Công ty / Tổ chức</strong> <p className="text-sm font-medium">{parsed.company}</p></div>}
+                {parsed.phone && <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Số điện thoại</strong> <p className="text-sm font-medium">{parsed.phone}</p></div>}
+                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tên Ấn phẩm</strong> <p className="text-sm font-medium">{parsed.artworkTitle || '—'}</p></div>
+                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tác giả (Student)</strong> <p className="text-sm font-medium">{selectedOrder.recipient?.fullName || '—'}</p></div>
+                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Nội dung order</strong> <p className="text-sm font-medium bg-gray-50 p-3 rounded-lg border">{parsed.description || selectedOrder.content}</p></div>
               </div>
             </div>
           </div>
         </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
@@ -3402,7 +3410,7 @@ function AdminUsersPage({ setPage }) {
               <div className="space-y-4">
                 <h4 className="font-semibold text-[#077E9E] border-b pb-2">Thông tin cơ bản</h4>
                 <div className="flex items-center gap-4 mb-4">
-                  <img src={editModal.user.avatarUrl || "https://via.placeholder.com/64"} alt="Avatar" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
+                  <img src={editModal.user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(editModal.user.fullName || "User")}&background=random`} alt="Avatar" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Họ và tên</label>
                     <input type="text" value={editModal.user.fullName || ""} onChange={e => handleEditChange("fullName", e.target.value)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm" />
@@ -4010,6 +4018,22 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {collections.length === 0 && (
+            <div className="col-span-full py-20 text-center border-2 border-dashed border-[#E0E0E0] rounded-2xl bg-[#F8F8F8]">
+              <Folder className="mx-auto text-[#077E9E] mb-4 opacity-50" size={48} />
+              <h3 className="text-lg font-bold text-[#212121] mb-2">{t("noCollectionsYet", "Chưa có bộ sưu tập nào")}</h3>
+              <p className="text-[#666666] mb-6 max-w-md mx-auto">
+                {t("createCollectionPrompt", "Hãy tạo bộ sưu tập mới để lưu trữ và xuất file báo cáo tổng hợp các ấn phẩm.")}
+              </p>
+              <button
+                onClick={() => onQuickCreateCollection && onQuickCreateCollection()}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#077E9E] text-white rounded-xl font-bold hover:bg-[#055F78] transition-colors shadow-sm cursor-pointer"
+              >
+                <Plus size={18} />
+                {t("createNewCollection", "Tạo Bộ Sưu Tập Mới")}
+              </button>
+            </div>
+          )}
           {collections.map((c) => {
             const thumbs = c.items.slice(0, 3).map((it) => it.artwork?.coverImageUrl).filter(Boolean);
             return (
