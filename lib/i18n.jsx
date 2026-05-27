@@ -3,6 +3,13 @@ import React from 'react';
 
 const translations = {
   vi: {
+    facultyOfGraphicDesign: "Khoa Thiết kế Đồ họa",
+    whereToDisplay: "Nơi trưng bày",
+    creativeJourneys: "Hành trình sáng tạo",
+    exploreLatestArtworks: "Khám phá ấn phẩm mới nhất",
+    guidelines: "Hướng dẫn",
+    uploadArtwork: "Đăng tải ấn phẩm",
+    readyToDisplay: "Sẵn sàng trưng bày tác phẩm của bạn",
     aboutFacultyUef: "Khoa Thiết kế Đồ họa — UEF",
     aboutHeroExplore: "Khám phá",
     aboutHeroExcellentProjects: "Dự án xuất sắc",

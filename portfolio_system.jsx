@@ -9,6 +9,7 @@ import { TranslationProvider, useI18n } from "./lib/i18n.jsx";
 import { t } from "./lib/i18n.jsx";
 
 import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -2507,6 +2508,7 @@ function EmailVerificationPage({ setPage }) {
 
 function AdminOrdersPage({ setPage }) {
   const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -2560,7 +2562,7 @@ function AdminOrdersPage({ setPage }) {
             </thead>
             <tbody className="divide-y divide-[#E0E0E0]">
               {orders.map(order => (
-                <tr key={order.id} className="hover:bg-[#F8F8F8] transition-colors cursor-pointer">
+                <tr key={order.id} onClick={() => setSelectedOrder(order)} className="cursor-pointer border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors" className="hover:bg-[#F8F8F8] transition-colors cursor-pointer">
                   <td className="px-5 py-4 font-semibold text-[#212121]">{order.senderName}</td>
                   <td className="px-5 py-4 text-[#666666]">{order.senderEmail}</td>
                   <td className="px-5 py-4 text-[#666666] max-w-xs truncate">{order.content}</td>
@@ -2676,7 +2678,7 @@ function AdminDashboardPage({ setPage }) {
                   {recentActivity.map((a) => {
                     const aStatus = a.isPublic ? "Đang hiển thị" : (a.isHighlighted ? "Nổi bật" : "Đã ẩn");
                     return (
-                    <tr key={a.id} className="border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors">
+                    <tr key={a.id} >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <img src={a.coverImageUrl} className="w-10 h-10 rounded-md object-cover bg-[#E0E0E0] border border-[#E0E0E0]" />
@@ -3146,6 +3148,8 @@ function AdminUsersPage({ setPage }) {
   const [loading, setLoading] = useState(true);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, user: null });
   const [importFileName, setImportFileName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const { userRole } = useAuth();
   const importInputRef = useRef(null);
 
   const roleLabel = { student: "Sinh viên", lecturer: t("lecturer"), admin: t("admin") };
@@ -3172,6 +3176,30 @@ function AdminUsersPage({ setPage }) {
     } catch {}
   };
 
+  const handleExportExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(users.filter(u => u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())).map(u => ({
+      "Họ tên": u.fullName,
+      "Email": u.email,
+      "Vai trò": roleLabel[u.role] || u.role,
+      "Ngày tham gia": u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "—",
+      "Trạng thái": u.isActive ? "Hoạt động" : "Bị khóa"
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Accounts");
+    XLSX.writeFile(wb, "Accounts_Report.xlsx");
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (confirm("Bạn có chắc chắn muốn xóa người dùng " + user.fullName + "?")) {
+      try {
+        await api.admin.deleteUser(user.id);
+        fetchUsers();
+      } catch (e) {
+        alert("Lỗi khi xóa: " + (e.message || ""));
+      }
+    }
+  };
+
   const handleImportFile = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -3196,13 +3224,17 @@ function AdminUsersPage({ setPage }) {
               className="hidden"
               onChange={handleImportFile}
             />
+            <button onClick={handleExportExcel} className="px-4 py-2 border border-[#077E9E] text-[#077E9E] rounded-lg text-sm font-semibold hover:bg-[#E8F4F8] transition-colors flex items-center gap-2">
+              <ArrowDownCircle size={16} />
+              Export Excel
+            </button>
             <button onClick={() => importInputRef.current?.click()} className="px-4 py-2 bg-[#077E9E] text-white rounded-lg text-sm font-semibold hover:bg-[#055F78] transition-colors flex items-center gap-2">
               <ArrowDownCircle size={16} className="-rotate-90" />
               Import Excel
             </button>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" size={16} />
-              <input placeholder={t("searchUser")} className="pl-10 pr-4 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm w-64 outline-none focus:border-[#077E9E]" />
+              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t("searchUser")} className="pl-10 pr-4 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm w-64 outline-none focus:border-[#077E9E]" />
             </div>
           </div>
         </div>
@@ -3226,7 +3258,7 @@ function AdminUsersPage({ setPage }) {
               </tr>
             </thead>
             <tbody>
-              {users.map(u => {
+              {users.filter(u => u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())).map(u => {
                 const roleVal = roleLabel[u.role] || u.role;
                 const locked = !u.isActive;
                 return (
@@ -3277,7 +3309,7 @@ function AdminUsersPage({ setPage }) {
             <p className="text-sm text-[#666666] mb-6">{t("lockAccountConfirm")} <strong>{confirmModal.user?.name}</strong>? {t("lockAccountWarning")}</p>
             <div className="flex gap-3">
               <button onClick={() => setConfirmModal({ isOpen: false, user: null })} className="flex-1 py-2 rounded-lg border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("cancel")}</button>
-              <button onClick={() => toggleLockUser(confirmModal.user?.id)} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">{t("confirmLock")}</button>
+              <button onClick={() => toggleLockUser(confirmModal.user)} className="flex-1 py-2 rounded-lg border-none bg-[#8B1A1A] text-sm font-semibold text-white hover:bg-opacity-90 transition-opacity cursor-pointer">{t("confirmLock")}</button>
             </div>
           </div>
         </div>
@@ -4437,7 +4469,7 @@ function LandingPage({ setPage, isLoggedIn }) {
                 <User size={20} />
               </div>
               <h3 className="font-bold text-lg mb-3">{t("personalPortfolio")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed mb-6">{t("personalPortfolioDesc")}</p>
+              <p className="text-sm text-gray-500 leading-relaxed mb-6">{t("portfolioFeatureDesc")}</p>
               <div className="flex items-center gap-2 text-xs font-medium text-[#077E9E] bg-[#E8F4F8] w-fit px-3 py-1.5 rounded-md">
                 <User size={14} /> {t("personalPortfolioLabel")}
               </div>
@@ -4448,7 +4480,7 @@ function LandingPage({ setPage, isLoggedIn }) {
                 <Star size={20} />
               </div>
               <h3 className="font-bold text-lg mb-3">{t("scoresAndFeedback")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{t("scoresAndFeedbackDesc")}</p>
+              <p className="text-sm text-gray-500 leading-relaxed">{t("gradingFeatureDesc")}</p>
             </div>
 
             <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
@@ -4456,7 +4488,7 @@ function LandingPage({ setPage, isLoggedIn }) {
                 <Monitor size={20} />
               </div>
               <h3 className="font-bold text-lg mb-3">{t("multiDevice")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{t("multiDeviceDesc")}</p>
+              <p className="text-sm text-gray-500 leading-relaxed">{t("responsiveDesc")}</p>
             </div>
 
             <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
@@ -4464,7 +4496,7 @@ function LandingPage({ setPage, isLoggedIn }) {
                 <Heart size={20} />
               </div>
               <h3 className="font-bold text-lg mb-3">{t("highlightAndInteract")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{t("highlightAndInteractDesc")}</p>
+              <p className="text-sm text-gray-500 leading-relaxed">{t("interactionDesc")}</p>
             </div>
 
             <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
@@ -4472,7 +4504,7 @@ function LandingPage({ setPage, isLoggedIn }) {
                 <Users size={20} />
               </div>
               <h3 className="font-bold text-lg mb-3">{t("recruitmentConnection")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{t("recruitmentConnectionDesc")}</p>
+              <p className="text-sm text-gray-500 leading-relaxed">{t("recruitmentDesc")}</p>
             </div>
           </div>
         </div>
