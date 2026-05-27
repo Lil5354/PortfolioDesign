@@ -2562,11 +2562,22 @@ function AdminOrdersPage({ setPage }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E0E0E0]">
-              {orders.map(order => (
+              {orders.map(order => {
+                let parsed = null;
+                try {
+                  parsed = JSON.parse(order.content);
+                } catch (e) {
+                  parsed = { description: order.content };
+                }
+                
+                return (
                 <tr key={order.id} onClick={() => setSelectedOrder(order)} className="cursor-pointer border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors">
                   <td className="px-5 py-4 font-semibold text-[#212121]">{order.senderName}</td>
                   <td className="px-5 py-4 text-[#666666]">{order.senderEmail}</td>
-                  <td className="px-5 py-4 text-[#666666] max-w-xs truncate">{order.content}</td>
+                  <td className="px-5 py-4 text-[#666666] max-w-xs truncate">
+                    {parsed.artworkTitle ? `Đặt in: ${parsed.artworkTitle} - ` : ''}
+                    {parsed.description || order.content}
+                  </td>
                   <td className="px-5 py-4 text-[#666666]">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
                   <td className="px-5 py-4">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.isRead ? 'bg-[#E0E0E0] text-[#666]' : 'bg-[#E8F4F8] text-[#077E9E]'}`}>
@@ -2574,7 +2585,7 @@ function AdminOrdersPage({ setPage }) {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
           {orders.length === 0 && (
@@ -2608,6 +2619,14 @@ function AdminOrdersPage({ setPage }) {
                 {parsed.phone && <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Số điện thoại</strong> <p className="text-sm font-medium">{parsed.phone}</p></div>}
                 <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tên Ấn phẩm</strong> <p className="text-sm font-medium">{parsed.artworkTitle || '—'}</p></div>
                 <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tác giả (Student)</strong> <p className="text-sm font-medium">{selectedOrder.recipient?.fullName || '—'}</p></div>
+                {parsed.artworkId && (
+                  <div>
+                    <strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Link liên kết</strong> 
+                    <button onClick={() => setPage("detail", { artworkId: parsed.artworkId })} className="text-sm font-medium text-[#077E9E] hover:underline flex items-center gap-1">
+                      Chuyển đến ấn phẩm <ExternalLink size={14} />
+                    </button>
+                  </div>
+                )}
                 <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Nội dung order</strong> <p className="text-sm font-medium bg-gray-50 p-3 rounded-lg border">{parsed.description || selectedOrder.content}</p></div>
               </div>
             </div>
