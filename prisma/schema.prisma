@@ -11,6 +11,8 @@ enum Role {
   student
   lecturer
   admin
+  employer
+  guest
 }
 
 enum ReactionType {
@@ -54,6 +56,16 @@ model User {
   role              Role                @default(student)
   avatarUrl         String?             @map("avatar_url")
   bio               String?
+  phone             String?
+  address           String?
+  major             String?
+  cohort            String?
+  department        String?
+  managedClasses    String[]            @map("managed_classes")
+  title             String?
+  company           String?
+  position          String?
+  industry          String?
   isActive          Boolean             @default(true) @map("is_active")
   emailVerified     DateTime?           @map("email_verified")
   verificationCode  String?             @map("verification_code")
