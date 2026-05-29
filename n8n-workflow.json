@@ -1,0 +1,120 @@
+{
+  "name": "UEF Design Gallery Chatbot",
+  "nodes": [
+    {
+      "id": "webhook-in",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [250, 300],
+      "parameters": {
+        "path": "uef-chatbot",
+        "responseMode": "lastNode",
+        "responseData": "allEntries",
+        "options": {}
+      },
+      "webhookId": "uef-chatbot"
+    },
+    {
+      "id": "set-input",
+      "name": "Format Input",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "chatInput", "value": "={{ $json.body.message }}" },
+            { "name": "sessionId", "value": "={{ $json.body.sessionId }}" },
+            { "name": "userRole", "value": "={{ $json.body.role }}" },
+            { "name": "userInfo", "value": "={{ $json.body.user ? JSON.stringify($json.body.user) : '{}' }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "agent",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.1,
+      "position": [680, 300],
+      "parameters": {
+        "agentType": "toolsAgent",
+        "systemMessage": "Bạn là trợ lý AI của hệ thống UEF Design Gallery - E-Portfolio Khoa Thiết kế Đồ họa, Trường Đại học Kinh tế - Tài chính TP.HCM (UEF).\n\n== KIẾN THỨC VỀ HỆ THỐNG ==\nUEF Design Gallery là nền tảng E-Portfolio cho sinh viên thiết kế đồ họa. Sinh viên upload ấn phẩm (Poster, Branding, UI/UX, Illustration, 3D, Typography, Photography...), giảng viên chấm điểm, nhà tuyển dụng tìm kiếm tài năng.\n\n== NGƯỜI DÙNG ==\n- Nhà tuyển dụng (employer): cần tư vấn hệ thống, đề xuất sinh viên\n- Sinh viên (student): cần xu hướng thiết kế, kiến thức chuyên ngành\n\n== HƯỚNG DẪN TRẢ LỜI ==\n- Trả lời bằng tiếng Việt, giọng thân thiện, dùng emoji phù hợp\n- Với câu hỏi về hệ thống, giải thích ngắn gọn các tính năng chính\n- Với câu hỏi về xu hướng thiết kế, hãy dùng kiến thức của bạn về design trends 2024-2026:\n  • UI/UX: Glassmorphism, Neubrutalism, Micro-interactions, Dark mode, AI-assisted design\n  • Typography: Variable fonts, Oversized type, Kinetic typography\n  • Color: Vibrant gradients, Muted palettes, Color contrast for accessibility\n  • Branding: Minimalist logos, Dynamic identities, Sustainable design\n  • 3D/Illustration: 3D in web, Isometric design, AI-generated assets\n- Khi được hỏi về feedback portfolio, đưa ra gợi ý cụ thể về bố cục, màu sắc, typography\n- KHÔNG tự ý query database, chỉ reply dựa trên kiến thức có sẵn\n- Nếu người dùng muốn xem dữ liệu thực (top sinh viên, viral...), hướng dẫn họ dùng các câu lệnh có sẵn trong giao diện\n- Format câu trả lời rõ ràng, xuống dòng hợp lý",
+        "options": {},
+        "promptType": "define",
+        "maxIterations": 3
+      }
+    },
+    {
+      "id": "llm",
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [680, 100],
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "temperature": 0.7,
+          "maxTokens": 800
+        }
+      },
+      "credentials": {
+        "openAiApi": { "id": "OPENAI_CREDENTIAL_PLACEHOLDER" }
+      }
+    },
+    {
+      "id": "memory",
+      "name": "Session Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryManager",
+      "typeVersion": 1,
+      "position": [680, 500],
+      "parameters": {
+        "sessionKeyType": "auto",
+        "contextKey": "sessionId",
+        "sessionKey": "={{ $json.sessionId }}",
+        "memory": {
+          "maxSize": 15,
+          "sessionId": "={{ $json.sessionId }}",
+          "prependChatHistory": true
+        }
+      }
+    },
+    {
+      "id": "set-output",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [920, 300],
+      "parameters": {
+        "values": {
+          "string": [
+            { "name": "reply", "value": "={{ $json.output || $json.text || JSON.stringify($json) }}" }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "webhook-in": {
+      "main": [[ { "node": "set-input", "type": "main", "index": 0 } ]]
+    },
+    "set-input": {
+      "main": [[ { "node": "agent", "type": "main", "index": 0 } ]]
+    },
+    "llm": {
+      "ai_languageModel": [[ { "node": "agent", "type": "ai_languageModel", "index": 0 } ]]
+    },
+    "memory": {
+      "ai_memory": [[ { "node": "agent", "type": "ai_memory", "index": 0 } ]]
+    },
+    "agent": {
+      "main": [[ { "node": "set-output", "type": "main", "index": 0 } ]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [],
+  "active": false
+}
