@@ -183,28 +183,52 @@ export async function POST(request: NextRequest) {
 
     // ==================== FALLBACK: GỌI AI ====================
 
-    // Ưu tiên OpenAI
-    if (OPENAI_API_KEY) {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: message },
-          ],
-          temperature: 0.7,
-          max_tokens: 800,
-        }),
-        signal: AbortSignal.timeout(15000),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const reply = data.choices?.[0]?.message?.content;
-        if (reply) return NextResponse.json({ reply });
-      }
+    let aiReply = null;
+
+    // Thử Gemini (free) trước
+    const GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+    if (GEMINI_KEY) {
+      try {
+        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `${SYSTEM_PROMPT}\n\nUser: ${message}\n\nAssistant:` }] }],
+            generationConfig: { temperature: 0.8, maxOutputTokens: 800 },
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          aiReply = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+        } else {
+          const err = await geminiRes.text();
+          console.error('Gemini error:', geminiRes.status, err.slice(0, 200));
+        }
+      } catch (e) { console.error('Gemini fetch error:', e.message); }
     }
+
+    // Fallback OpenAI (nếu Gemini fail)
+    if (!aiReply && OPENAI_API_KEY) {
+      try {
+        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENAI_API_KEY}` },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'system', content: SYSTEM_PROMPT }, { role: 'user', content: message }],
+            temperature: 0.7, max_tokens: 800,
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (openaiRes.ok) {
+          const data = await openaiRes.json();
+          aiReply = data.choices?.[0]?.message?.content;
+        }
+      } catch {}
+    }
+
+    if (aiReply) return NextResponse.json({ reply: aiReply });
 
     // Fallback N8N (nếu có config)
     if (N8N_WEBHOOK_URL) {
@@ -217,8 +241,8 @@ export async function POST(request: NextRequest) {
         });
         if (n8nRes.ok) {
           const data = await n8nRes.json();
-          const reply = data.output || data.reply || data.response;
-          if (reply) return NextResponse.json({ reply });
+          aiReply = data.output || data.reply || data.response;
+          if (aiReply) return NextResponse.json({ reply: aiReply });
         }
       } catch {}
     }
