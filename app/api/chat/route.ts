@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
           const err = await geminiRes.text();
           console.error('Gemini error:', geminiRes.status, err.slice(0, 200));
         }
-      } catch (e) { console.error('Gemini fetch error:', e.message); }
+      } catch (e) { console.error('Gemini fetch error:', e instanceof Error ? e.message : e); }
     }
 
     // Fallback OpenAI (nếu Gemini fail)
