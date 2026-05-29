@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "vite build && cp -r dist/* public/ && DATABASE_URL=postgresql://d:d@localhost:5432/d npx prisma generate && next build",
+  "buildCommand": "npx vite build && cp -r dist/. public/ && npm run build",
   "installCommand": "npm install",
   "outputDirectory": ".next"
 }
