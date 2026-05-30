@@ -183,7 +183,6 @@ export default function ChatBot({ userRole = "employer" }) {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ message: userMsg, sessionId, role: userRole, history }),
       });
 

@@ -118,12 +118,26 @@ async function getSystemStats() {
   };
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+function jsonResponse(data: Record<string, unknown>, init?: ResponseInit) {
+  return NextResponse.json(data, { ...init, headers: { ...corsHeaders, ...init?.headers } });
+}
+
+export async function OPTIONS() {
+  return jsonResponse({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { message, sessionId, role: clientRole } = body;
     if (!message) {
-      return NextResponse.json({ error: 'Vui lòng nhập câu hỏi' }, { status: 400 });
+      return jsonResponse({ error: 'Vui lòng nhập câu hỏi' }, { status: 400 });
     }
 
     const session = await auth();
@@ -137,7 +151,7 @@ export async function POST(request: NextRequest) {
     // Thống kê hệ thống
     if (msg.includes('thống') && (msg.includes('gì') || msg.includes('mục đích') || msg.includes('làm'))) {
       const s = await getSystemStats();
-      return NextResponse.json({
+      return jsonResponse({
         reply: `**UEF Design Gallery** - Hệ thống E-Portfolio Khoa Thiết kế Đồ họa\n\nNền tảng trưng bày ấn phẩm thiết kế, kết nối sinh viên với nhà tuyển dụng, quản lý đánh giá và giám tuyển bộ sưu tập.\n\n📊 Sinh viên: ${s.totalStudents}\n🖼️ Ấn phẩm: ${s.totalArtworks}\n👨‍🏫 Giảng viên: ${s.totalLecturers}${s.topArtwork ? `\n🔥 Top: ${s.topArtwork.title} (${s.topArtwork.student}) - ${s.topArtwork.likes} ❤️` : ''}`
       });
     }
@@ -146,8 +160,8 @@ export async function POST(request: NextRequest) {
     if ((msg.includes('top') || msg.includes('giỏi') || msg.includes('xuất sắc') || msg.includes('đề xuất') || msg.includes('nổi bật')) &&
         (msg.includes('sinh viên') || msg.includes('student'))) {
       const students = await getTopStudents();
-      if (!students.length) return NextResponse.json({ reply: 'Chưa có dữ liệu sinh viên.' });
-      return NextResponse.json({
+      if (!students.length) return jsonResponse({ reply: 'Chưa có dữ liệu sinh viên.' });
+      return jsonResponse({
         reply: '🏆 **Top sinh viên nổi bật:**\n\n' +
           students.map((s, i) =>
             `${i + 1}. **${s.studentName}**${s.studentMajor ? ` (${s.studentMajor})` : ''}\n  📌 ${s.title} | ❤️ ${s.likeCount} 👁️ ${s.viewCount}${s.avgScore ? ` ⭐ ${s.avgScore}/10` : ''}`
@@ -158,8 +172,8 @@ export async function POST(request: NextRequest) {
     // Viral
     if (msg.includes('viral') || msg.includes('hot') || (msg.includes('nhiều') && msg.includes('thích'))) {
       const viral = await getViralArtworks();
-      if (!viral.length) return NextResponse.json({ reply: 'Chưa có dữ liệu.' });
-      return NextResponse.json({
+      if (!viral.length) return jsonResponse({ reply: 'Chưa có dữ liệu.' });
+      return jsonResponse({
         reply: '🔥 **Ấn phẩm viral nhất:**\n\n' +
           viral.map((a, i) =>
             `${i + 1}. **${a.title}** - ${a.studentName}\n  ❤️ ${a.likeCount} likes | 👁️ ${a.viewCount} views`
@@ -172,8 +186,8 @@ export async function POST(request: NextRequest) {
     const matched = subjects.find(s => msg.includes(s));
     if (matched) {
       const students = await getStudentsBySubject(matched);
-      if (!students.length) return NextResponse.json({ reply: `Chưa có sinh viên nào chuyên ${matched}.` });
-      return NextResponse.json({
+      if (!students.length) return jsonResponse({ reply: `Chưa có sinh viên nào chuyên ${matched}.` });
+      return jsonResponse({
         reply: `🎨 **Sinh viên chuyên ${matched.toUpperCase()}:**\n\n` +
           students.map((s, i) =>
             `${i + 1}. **${s.studentName}**${s.major ? ` (${s.major})` : ''}\n  🖼️ ${s.artworks.join(', ')} | ❤️ ${s.totalLikes}${s.avgScore ? ` ⭐ ${s.avgScore}/10` : ''}`
@@ -228,7 +242,7 @@ export async function POST(request: NextRequest) {
       } catch {}
     }
 
-    if (aiReply) return NextResponse.json({ reply: aiReply });
+    if (aiReply) return jsonResponse({ reply: aiReply });
 
     // Fallback N8N (nếu có config)
     if (N8N_WEBHOOK_URL) {
@@ -242,19 +256,19 @@ export async function POST(request: NextRequest) {
         if (n8nRes.ok) {
           const data = await n8nRes.json();
           aiReply = data.output || data.reply || data.response;
-          if (aiReply) return NextResponse.json({ reply: aiReply });
+          if (aiReply) return jsonResponse({ reply: aiReply });
         }
       } catch {}
     }
 
     // Final fallback
     const s = await getSystemStats();
-    return NextResponse.json({
+    return jsonResponse({
       reply: `Xin chào! Mình là trợ lý của UEF Design Gallery 👋\n\nMình có thể giúp bạn:\n- Tra cứu sinh viên theo chuyên môn: "Sinh viên chuyên Poster"\n- Top sinh viên: "Đề xuất sinh viên giỏi nhất"\n- Bài viết viral: "Top bài viết hot"\n- Kiến thức thiết kế: "Xu hướng UI/UX 2025?"\n\nHiện tại hệ thống có ${s.totalStudents} sinh viên và ${s.totalArtworks} ấn phẩm. Bạn muốn tìm hiểu gì trước?`
     });
 
   } catch (error) {
     console.error('Chat error:', error);
-    return NextResponse.json({ reply: 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau!' });
+    return jsonResponse({ reply: 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau!' });
   }
 }
