@@ -115,66 +115,97 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
       </section>
 
       {/* Features Section */}
-      <section className="px-8 py-20 bg-gray-50/50">
+      <section className="px-8 py-24 bg-gradient-to-b from-white to-gray-50/80">
         <div className="max-w-7xl mx-auto">
-          <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
-            <span className="w-6 h-px bg-[#1a4ba8]"></span> {t("coreFeatures")}
-          </p>
-          <h2 className="text-3xl font-extrabold mb-12">{t("everythingInOnePlatform")}</h2>
+          <div className="mb-16 text-center animate-[fadeUp_0.5s_ease-out]">
+            <p className="text-[#DA291C] font-semibold text-xs tracking-[0.15em] uppercase mb-3 flex items-center gap-2 justify-center">
+              <span className="w-6 h-px bg-[#DA291C]"></span> {t("coreFeatures")}
+              <span className="w-6 h-px bg-[#DA291C]"></span>
+            </p>
+            <h2 className="text-3xl md:text-4xl font-black text-[#212121] leading-tight">
+              <span className="text-[#1a4ba8]">Mọi thứ</span> bạn cần trong{' '}
+              <span className="text-[#DA291C]">một nền tảng</span>
+            </h2>
+            <p className="text-gray-500 mt-4 max-w-xl mx-auto text-[15px]">Hệ thống E-Portfolio toàn diện cho sinh viên Thiết kế Đồ họa UEF</p>
+          </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] hover:shadow-md transition-all cursor-default">
-              <div className="w-10 h-10 bg-gray-100 text-gray-600 group-hover:bg-[#e0eaff] group-hover:text-[#1a4ba8] rounded-lg flex items-center justify-center mb-6">
-                <ImageIcon size={20} />
-              </div>
-              <h3 className="font-bold text-lg mb-3">{t("exhibitionGallery")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed mb-6">Hiển thị toàn bộ ấn phẩm theo Masonry Layout, lọc theo môn học, năm học, công cụ và thể loại.</p>
-              <div className="flex items-center gap-2 text-xs font-medium text-[#1a4ba8] bg-[#e0eaff] w-fit px-3 py-1.5 rounded-md">
-                <ImageIcon size={14} /> gallery
-              </div>
-            </div>
-            
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
-              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
-                <User size={20} />
-              </div>
-              <h3 className="font-bold text-lg mb-3">{t("personalPortfolio")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed mb-6">Mỗi sinh viên có trang portfolio riêng với URL chia sẻ, phù hợp gửi cho nhà tuyển dụng.</p>
-              <div className="flex items-center gap-2 text-xs font-medium text-[#1a4ba8] bg-[#e0eaff] w-fit px-3 py-1.5 rounded-md">
-                <User size={14} /> portfolio cá nhân
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* 🟦 BLUE — Card 1 */}
+            <div className="group bg-white rounded-2xl border border-gray-200 hover:border-[#1a4ba8]/30 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden animate-[fadeUp_0.6s_ease-out]">
+              <div className="h-1.5 bg-[#1a4ba8] w-full"></div>
+              <div className="p-7">
+                <div className="w-12 h-12 rounded-xl bg-[#1a4ba8]/10 text-[#1a4ba8] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#1a4ba8] group-hover:text-white transition-all duration-300">
+                  <ImageIcon size={22} />
+                </div>
+                <h3 className="font-extrabold text-[17px] text-[#212121] mb-2.5">{t("exhibitionGallery")}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed mb-5">Hiển thị toàn bộ ấn phẩm theo Masonry Layout, lọc theo môn học, năm học, công cụ và thể loại.</p>
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#1a4ba8]">
+                  <span className="w-5 h-[2px] bg-[#1a4ba8]"></span> gallery
+                </div>
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
-              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
-                <Star size={20} />
+            {/* 🟥 RED — Card 2 */}
+            <div className="group bg-white rounded-2xl border border-gray-200 hover:border-[#DA291C]/30 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden animate-[fadeUp_0.7s_ease-out]">
+              <div className="h-1.5 bg-[#DA291C] w-full"></div>
+              <div className="p-7">
+                <div className="w-12 h-12 rounded-xl bg-[#DA291C]/10 text-[#DA291C] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#DA291C] group-hover:text-white transition-all duration-300">
+                  <User size={22} />
+                </div>
+                <h3 className="font-extrabold text-[17px] text-[#212121] mb-2.5">{t("personalPortfolio")}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed mb-5">Mỗi sinh viên có trang portfolio riêng với URL chia sẻ, phù hợp gửi cho nhà tuyển dụng.</p>
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#DA291C]">
+                  <span className="w-5 h-[2px] bg-[#DA291C]"></span> portfolio cá nhân
+                </div>
               </div>
-              <h3 className="font-bold text-lg mb-3">{t("scoresAndFeedback")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">Giảng viên chấm điểm trực tiếp trên hệ thống. Sinh viên nhận thông báo và xem kết quả công khai hoặc ẩn.</p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
-              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
-                <Monitor size={20} />
+            {/* ⬜ WHITE/GRAY — Card 3 */}
+            <div className="group bg-gray-50 rounded-2xl border border-gray-200 hover:border-gray-300 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden animate-[fadeUp_0.8s_ease-out]">
+              <div className="h-1.5 bg-gray-300 w-full"></div>
+              <div className="p-7">
+                <div className="w-12 h-12 rounded-xl bg-gray-200 text-[#555] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#212121] group-hover:text-white transition-all duration-300">
+                  <Star size={22} />
+                </div>
+                <h3 className="font-extrabold text-[17px] text-[#212121] mb-2.5">{t("scoresAndFeedback")}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">Giảng viên chấm điểm trực tiếp trên hệ thống. Sinh viên nhận thông báo và xem kết quả công khai hoặc ẩn.</p>
               </div>
-              <h3 className="font-bold text-lg mb-3">{t("multiDevice")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">Giao diện responsive, hiển thị hoàn hảo trên desktop, tablet và điện thoại di động.</p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
-              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
-                <Heart size={20} />
+            {/* 🟦 BLUE — Card 4 */}
+            <div className="group bg-white rounded-2xl border border-gray-200 hover:border-[#1a4ba8]/30 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden animate-[fadeUp_0.9s_ease-out]">
+              <div className="h-1.5 bg-[#1a4ba8] w-full"></div>
+              <div className="p-7">
+                <div className="w-12 h-12 rounded-xl bg-[#1a4ba8]/10 text-[#1a4ba8] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#1a4ba8] group-hover:text-white transition-all duration-300">
+                  <Monitor size={22} />
+                </div>
+                <h3 className="font-extrabold text-[17px] text-[#212121] mb-2.5">{t("multiDevice")}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">Giao diện responsive, hiển thị hoàn hảo trên desktop, tablet và điện thoại di động.</p>
               </div>
-              <h3 className="font-bold text-lg mb-3">{t("highlightAndInteract")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">Like, Bookmark ấn phẩm. Giảng viên highlight {t("artwork")} xuất sắc lên đầu Gallery.</p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
-              <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
-                <Users size={20} />
+            {/* 🟥 RED — Card 5 */}
+            <div className="group bg-white rounded-2xl border border-gray-200 hover:border-[#DA291C]/30 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden animate-[fadeUp_1.0s_ease-out]">
+              <div className="h-1.5 bg-[#DA291C] w-full"></div>
+              <div className="p-7">
+                <div className="w-12 h-12 rounded-xl bg-[#DA291C]/10 text-[#DA291C] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#DA291C] group-hover:text-white transition-all duration-300">
+                  <Heart size={22} />
+                </div>
+                <h3 className="font-extrabold text-[17px] text-[#212121] mb-2.5">{t("highlightAndInteract")}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">Like, Bookmark ấn phẩm. Giảng viên highlight {t("artwork")} xuất sắc lên đầu Gallery.</p>
               </div>
-              <h3 className="font-bold text-lg mb-3">{t("recruitmentConnection")}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">Nhà tuyển dụng liên hệ sinh viên qua form -> email chuyển tiếp thẳng đến @uef.edu.vn.</p>
+            </div>
+
+            {/* ⬜ WHITE/GRAY — Card 6 */}
+            <div className="group bg-gray-50 rounded-2xl border border-gray-200 hover:border-gray-300 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden animate-[fadeUp_1.1s_ease-out]">
+              <div className="h-1.5 bg-gray-300 w-full"></div>
+              <div className="p-7">
+                <div className="w-12 h-12 rounded-xl bg-gray-200 text-[#555] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#212121] group-hover:text-white transition-all duration-300">
+                  <Users size={22} />
+                </div>
+                <h3 className="font-extrabold text-[17px] text-[#212121] mb-2.5">{t("recruitmentConnection")}</h3>
+                <p className="text-sm text-gray-500 leading-relaxed">Nhà tuyển dụng liên hệ sinh viên qua form -> email chuyển tiếp thẳng đến @uef.edu.vn.</p>
+              </div>
             </div>
           </div>
         </div>
