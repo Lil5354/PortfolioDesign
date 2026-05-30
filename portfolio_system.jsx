@@ -102,6 +102,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
     <header className="flex items-center justify-between px-8 py-3 border-b border-gray-100 bg-white sticky top-0 z-50">
       <div className="flex items-center cursor-pointer" onClick={() => setPage("home")}>
         <img src="/logo-uef.png" alt="UEF" className="h-11 object-contain" />
+      </div>
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
         {navItems.map((item) => (
           <button key={item.id} onClick={() => setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#1a4ba8] border-b-2 border-[#1a4ba8]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
