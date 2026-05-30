@@ -4657,7 +4657,12 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
     ? featuredArtworks.filter(a => a.subject === activeCategory)
     : featuredArtworks;
 
-  const gridArtworks = filtered.length >= 6 ? filtered : (featuredArtworks.length >= 6 ? featuredArtworks : []);
+  const gridArtworks = (() => {
+    if (filtered.length >= 6) return filtered.slice(0, 6);
+    const usedIds = new Set(filtered.map(a => a.id));
+    const extras = featuredArtworks.filter(a => !usedIds.has(a.id));
+    return [...filtered, ...extras].slice(0, 6);
+  })();
 
   return (
     <div className="min-h-screen bg-white font-sans text-[#212121]">
@@ -4690,11 +4695,11 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
           
           <div className="flex flex-wrap items-center gap-8 border-t border-gray-100 pt-8">
             <div>
-              <p className="text-3xl font-bold mb-1">{t("fiveHundred")}</p>
+              <p className="text-3xl font-bold mb-1">500+</p>
               <p className="text-xs text-gray-500">{t("displayedArtworks")}</p>
             </div>
             <div>
-              <p className="text-3xl font-bold mb-1">{t("oneHundredTwenty")}</p>
+              <p className="text-3xl font-bold mb-1">120+</p>
               <p className="text-xs text-gray-500">{t("participatingLecturers")}</p>
             </div>
             <div>
@@ -4709,30 +4714,28 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
         </div>
         <div className="flex-1 w-full relative">
           <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-1 space-y-3">
-              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-[3/4]">
-                <img src={gridArtworks[0]?.coverImageUrl || "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
-              </div>
-              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-square">
-                <img src={gridArtworks[2]?.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
-              </div>
-            </div>
-            <div className="col-span-1 space-y-3 pt-8">
-              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-square">
-                <img src={gridArtworks[1]?.coverImageUrl || "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg"} alt="Artwork" className="w-full h-full object-cover" />
-              </div>
-              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-[3/4]">
-                <img src={gridArtworks[3]?.coverImageUrl || "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
-              </div>
-            </div>
-            <div className="col-span-1 space-y-3">
-              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-[3/4]">
-                <img src={gridArtworks[4]?.coverImageUrl || "https://images.unsplash.com/photo-1541462608143-67571c6738dd?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
-              </div>
-              <div className="bg-gray-100 rounded-xl overflow-hidden aspect-square">
-                <img src={gridArtworks[5]?.coverImageUrl || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
-              </div>
-            </div>
+            {[0, 1, 2, 3, 4, 5].map(i => {
+              const art = gridArtworks[i];
+              const slot = i < 2 ? 0 : i < 4 ? 1 : 2;
+              const isTall = (i % 2 === 0 && i < 2) || (i % 2 !== 0 && i >= 4);
+              const colClass = [
+                "col-span-1 space-y-3",
+                "col-span-1 space-y-3 pt-8",
+                "col-span-1 space-y-3"
+              ][slot];
+              const aspectClass = isTall ? "aspect-[3/4]" : "aspect-square";
+              return (
+                <div key={i} className={colClass}>
+                  <div className={`bg-gray-100 rounded-xl overflow-hidden ${aspectClass} ${art ? 'cursor-pointer' : ''}`} onClick={() => { if (art) { setActiveArtworkId?.(art.id); setPage("detail"); } }}>
+                    {art ? (
+                      <img src={art.coverImageUrl} alt={art.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300"><Image size={32} /></div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <div className="absolute -bottom-6 -right-6 flex gap-2">
             {categories.map(cat => (
