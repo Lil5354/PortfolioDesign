@@ -134,8 +134,9 @@ export async function OPTIONS() {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('Chat request:', { hasGemini: !!process.env.GEMINI_API_KEY, hasOpenAi: !!process.env.OPENAI_API_KEY, hasN8N: !!process.env.N8N_WEBHOOK_URL });
     const body = await request.json();
-    const { message, sessionId, role: clientRole } = body;
+    const { message, sessionId, role: clientRole, history } = body;
     if (!message) {
       return jsonResponse({ error: 'Vui lòng nhập câu hỏi' }, { status: 400 });
     }
@@ -238,8 +239,11 @@ export async function POST(request: NextRequest) {
         if (openaiRes.ok) {
           const data = await openaiRes.json();
           aiReply = data.choices?.[0]?.message?.content;
+        } else {
+          const errText = await openaiRes.text();
+          console.error('OpenAI error:', openaiRes.status, errText.slice(0, 300));
         }
-      } catch {}
+      } catch (e) { console.error('OpenAI fetch error:', e instanceof Error ? e.message : e); }
     }
 
     if (aiReply) return jsonResponse({ reply: aiReply });
@@ -257,8 +261,11 @@ export async function POST(request: NextRequest) {
           const data = await n8nRes.json();
           aiReply = data.output || data.reply || data.response;
           if (aiReply) return jsonResponse({ reply: aiReply });
+        } else {
+          const errText = await n8nRes.text();
+          console.error('N8N error:', n8nRes.status, errText.slice(0, 300));
         }
-      } catch {}
+      } catch (e) { console.error('N8N fetch error:', e instanceof Error ? e.message : e); }
     }
 
     // Final fallback
