@@ -4889,35 +4889,84 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
       </section>
 
       {/* CTA Footer */}
-      <section className="bg-[#1A1A1A] text-white px-8 py-20">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+      <section className="bg-gradient-to-r from-[#1a4ba8] to-[#0d2e6e] text-white px-8 py-20 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div>
             <h2 className="text-3xl font-extrabold mb-3">{t("readyToShowcase")}</h2>
-            <p className="text-gray-400">{t("forStudents")}</p>
+            <p className="text-white/70">{t("forStudents")}</p>
           </div>
           <div className="flex gap-4">
-            <button onClick={() => setPage("auth")} className="bg-[#1a4ba8] hover:bg-[#1642a6] text-white px-8 py-3 rounded-lg font-bold transition-colors">{t("loginNow")}</button>
-            <button onClick={() => setPage("gallery")} className="border border-gray-600 hover:border-gray-400 text-white px-8 py-3 rounded-lg font-bold transition-colors">{t("viewGallery")}</button>
+            <button onClick={() => setPage("auth")} className="bg-white text-[#1a4ba8] hover:bg-gray-100 px-8 py-3 rounded-lg font-bold transition-colors shadow-lg">{t("loginNow")}</button>
+            <button onClick={() => setPage("gallery")} className="border-2 border-white/40 hover:border-white text-white px-8 py-3 rounded-lg font-bold transition-colors">{t("viewGallery")}</button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#111111] text-gray-400 py-10 px-8 text-sm">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-3">
-            <div className="bg-gray-800 text-white font-serif font-bold w-8 h-8 flex items-center justify-center rounded">UEF</div>
-            <div>
-              <p className="font-bold text-white">{t("footerTitle")}</p>
-              <p className="text-xs mt-1">{t("footerCopyright")}</p>
+      <footer className="bg-white text-[#212121] py-16 px-8 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
+          <div className="md:col-span-1">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1a4ba8, #DA291C)' }}>
+                <span className="text-white font-bold text-sm">UEF</span>
+              </div>
+              <div>
+                <p className="font-bold text-[#212121]">Design Gallery</p>
+                <p className="text-xs text-[#666]">Khoa Thiết kế Đồ họa</p>
+              </div>
+            </div>
+            <p className="text-sm text-[#666] leading-relaxed mb-4">Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.</p>
+            <div className="flex gap-3">
+              <a href="mailto:khoathietke@uef.edu.vn" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Mail size={15} /></a>
+              <a href="https://facebook.com/uef.edu.vn" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Globe size={15} /></a>
+              <a href="https://youtube.com/@uefmedia" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#fff1f0] text-[#DA291C] flex items-center justify-center hover:bg-[#DA291C] hover:text-white transition-all"><Eye size={15} /></a>
+              <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><ExternalLink size={15} /></a>
             </div>
           </div>
-          <div className="flex gap-6">
-            <button onClick={() => setPage("gallery")} className="hover:text-white">Gallery</button>
-            <button onClick={() => setPage("about")} className="hover:text-white">{t("aboutFaculty")}</button>
-            <a href="#" className="hover:text-white">{t("contact")}</a>
-            <a href="#" className="hover:text-white">{t("policy")}</a>
+          <div>
+            <h4 className="font-bold text-sm text-[#1a4ba8] uppercase tracking-wider mb-5">{t("contact")}</h4>
+            <ul className="space-y-3 text-sm text-[#666]">
+              <li className="flex items-start gap-2.5">
+                <MapPin size={15} className="text-[#DA291C] shrink-0 mt-0.5" />
+                <span>141 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Phone size={15} className="text-[#DA291C] shrink-0" />
+                <span>(028) 5422 5555</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Mail size={15} className="text-[#DA291C] shrink-0" />
+                <a href="mailto:khoathietke@uef.edu.vn" className="hover:text-[#1a4ba8] transition-colors">khoathietke@uef.edu.vn</a>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Globe size={15} className="text-[#DA291C] shrink-0" />
+                <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="hover:text-[#1a4ba8] transition-colors">uef.edu.vn</a>
+              </li>
+            </ul>
           </div>
+          <div>
+            <h4 className="font-bold text-sm text-[#1a4ba8] uppercase tracking-wider mb-5">Liên kết</h4>
+            <ul className="space-y-3 text-sm">
+              <li><button onClick={() => setPage("gallery")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">Gallery</button></li>
+              <li><button onClick={() => setPage("about")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">{t("aboutFaculty")}</button></li>
+              <li><button onClick={() => setPage("auth")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">{t("login")}</button></li>
+              <li><a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="text-[#666] hover:text-[#1a4ba8] transition-colors">Trường UEF</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-bold text-sm text-[#1a4ba8] uppercase tracking-wider mb-5">{t("socialMedia")}</h4>
+            <ul className="space-y-3 text-sm">
+              <li><a href="https://facebook.com/uef.edu.vn" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[#666] hover:text-[#1a4ba8] transition-colors"><div className="w-7 h-7 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center"><Globe size={13} /></div> Facebook</a></li>
+              <li><a href="https://youtube.com/@uefmedia" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[#666] hover:text-[#DA291C] transition-colors"><div className="w-7 h-7 rounded-full bg-[#fff1f0] text-[#DA291C] flex items-center justify-center"><Eye size={13} /></div> Youtube</a></li>
+              <li><a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[#666] hover:text-[#1a4ba8] transition-colors"><div className="w-7 h-7 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center"><ExternalLink size={13} /></div> Website</a></li>
+              <li><a href="mailto:khoathietke@uef.edu.vn" className="flex items-center gap-2.5 text-[#666] hover:text-[#1a4ba8] transition-colors"><div className="w-7 h-7 rounded-full bg-[#fff1f0] text-[#DA291C] flex items-center justify-center"><Mail size={13} /></div> Email</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-4">
+          <p>{t("footerCopyright")}</p>
+          <p>{t("footerBrand")}</p>
         </div>
       </footer>
     </div>
@@ -5476,25 +5525,74 @@ function AboutPage({ setPage }) {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-[#05070a] text-white/50 py-16 px-6 lg:px-12 text-[15px]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
-          <div className="flex items-center gap-5">
-            <div className="bg-[#1a4ba8] text-white font-black w-12 h-12 flex items-center justify-center rounded-xl text-sm shadow-[0_0_20px_rgba(26,75,168,0.3)]">UEF</div>
-            <div>
-              <p className="font-black text-white text-lg tracking-tight mb-1">Khoa Thiết kế Đồ họa</p>
-              <p className="text-sm opacity-80">Trường Đại học Kinh tế - Tài chính TP.HCM</p>
+      <footer className="bg-white text-[#212121] py-16 px-6 lg:px-12 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
+
+          <div className="md:col-span-1">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1a4ba8, #DA291C)' }}>
+                <span className="text-white font-bold text-sm">UEF</span>
+              </div>
+              <div>
+                <p className="font-bold text-[#212121]">Design Gallery</p>
+                <p className="text-xs text-[#666]">Khoa Thiết kế Đồ họa</p>
+              </div>
+            </div>
+            <p className="text-sm text-[#666] leading-relaxed mb-4">Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.</p>
+            <div className="flex gap-3">
+              <a href="mailto:khoathietke@uef.edu.vn" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Mail size={15} /></a>
+              <a href="https://facebook.com/uef.edu.vn" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Globe size={15} /></a>
+              <a href="https://youtube.com/@uefmedia" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#fff1f0] text-[#DA291C] flex items-center justify-center hover:bg-[#DA291C] hover:text-white transition-all"><Eye size={15} /></a>
+              <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><ExternalLink size={15} /></a>
             </div>
           </div>
-          <div className="flex flex-wrap gap-8 font-bold text-sm uppercase tracking-wider">
-            <button onClick={() => setPage("gallery")} className="hover:text-white transition-colors hover:-translate-y-0.5 duration-300">Gallery</button>
-            <a href="#about" className="hover:text-white transition-colors hover:-translate-y-0.5 duration-300">Giới thiệu</a>
-            <a href="#audience" className="hover:text-white transition-colors hover:-translate-y-0.5 duration-300">Nền tảng</a>
-            <a href="#faq" className="hover:text-white transition-colors hover:-translate-y-0.5 duration-300">FAQ</a>
+
+          <div>
+            <h4 className="font-bold text-sm text-[#1a4ba8] uppercase tracking-wider mb-5">{t("contact")}</h4>
+            <ul className="space-y-3 text-sm text-[#666]">
+              <li className="flex items-start gap-2.5">
+                <MapPin size={15} className="text-[#DA291C] shrink-0 mt-0.5" />
+                <span>141 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Phone size={15} className="text-[#DA291C] shrink-0" />
+                <span>(028) 5422 5555</span>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Mail size={15} className="text-[#DA291C] shrink-0" />
+                <a href="mailto:khoathietke@uef.edu.vn" className="hover:text-[#1a4ba8] transition-colors">khoathietke@uef.edu.vn</a>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <Globe size={15} className="text-[#DA291C] shrink-0" />
+                <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="hover:text-[#1a4ba8] transition-colors">uef.edu.vn</a>
+              </li>
+            </ul>
           </div>
+
+          <div>
+            <h4 className="font-bold text-sm text-[#1a4ba8] uppercase tracking-wider mb-5">Liên kết</h4>
+            <ul className="space-y-3 text-sm">
+              <li><button onClick={() => setPage("gallery")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">Gallery</button></li>
+              <li><button onClick={() => setPage("about")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">{t("aboutFaculty")}</button></li>
+              <li><button onClick={() => setPage("auth")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">{t("login")}</button></li>
+              <li><a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="text-[#666] hover:text-[#1a4ba8] transition-colors">Trường UEF</a></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="font-bold text-sm text-[#1a4ba8] uppercase tracking-wider mb-5">{t("socialMedia")}</h4>
+            <ul className="space-y-3 text-sm">
+              <li><a href="https://facebook.com/uef.edu.vn" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[#666] hover:text-[#1a4ba8] transition-colors"><div className="w-7 h-7 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center"><Globe size={13} /></div> Facebook</a></li>
+              <li><a href="https://youtube.com/@uefmedia" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[#666] hover:text-[#DA291C] transition-colors"><div className="w-7 h-7 rounded-full bg-[#fff1f0] text-[#DA291C] flex items-center justify-center"><Eye size={13} /></div> Youtube</a></li>
+              <li><a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="flex items-center gap-2.5 text-[#666] hover:text-[#1a4ba8] transition-colors"><div className="w-7 h-7 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center"><ExternalLink size={13} /></div> Website</a></li>
+              <li><a href="mailto:khoathietke@uef.edu.vn" className="flex items-center gap-2.5 text-[#666] hover:text-[#1a4ba8] transition-colors"><div className="w-7 h-7 rounded-full bg-[#fff1f0] text-[#DA291C] flex items-center justify-center"><Mail size={13} /></div> Email</a></li>
+            </ul>
+          </div>
+
         </div>
-        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-white/10 text-center md:text-left text-sm flex flex-col md:flex-row justify-between items-center gap-4">
-           <p>© 2026 UEF Design Gallery. Tất cả bản quyền được bảo hộ.</p>
-           <p>{t("aboutFooterDev")} <Heart size={14} className="inline text-red-500 mx-1" /></p>
+        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-4">
+          <p>© 2026 UEF Design Gallery. Tất cả bản quyền được bảo hộ.</p>
+          <p>{t("aboutFooterDev")} <Heart size={14} className="inline text-[#DA291C] mx-1" /></p>
         </div>
       </footer>
     </div>
