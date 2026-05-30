@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get('sort') || 'newest';
     const userId = searchParams.get('userId');
     const collaboratorId = searchParams.get('collaboratorId');
+    const q = searchParams.get('q');
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '12', 10);
 
@@ -24,6 +25,13 @@ export async function GET(request: NextRequest) {
       where.collaboratorIds = { has: collaboratorId };
     } else {
       where.isPublic = true;
+    }
+
+    if (q) {
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { description: { contains: q, mode: 'insensitive' } },
+      ];
     }
 
     if (category) {
