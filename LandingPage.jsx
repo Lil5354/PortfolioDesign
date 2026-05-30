@@ -216,32 +216,47 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
       </section>
 
       {/* Quotes Ticker */}
-      <div className="bg-[#0d2e6e] py-6 overflow-hidden border-y border-white/10 shadow-inner">
-        <div className="flex gap-8 whitespace-nowrap animate-[ticker_48s_linear_infinite] w-max">
+      <div className="bg-[#0d2e6e] py-8 overflow-hidden border-y border-white/10 shadow-inner">
+        <div className="flex gap-10 whitespace-nowrap animate-[ticker_55s_linear_infinite] w-max">
           {[...Array(2)].map((_, i) => (
             <>
-              <div className="inline-flex items-center gap-5 px-8 text-white/90 border-r border-white/20 mx-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a4ba8] to-[#DA291C] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg">NV</div>
-                <div className="flex flex-col whitespace-normal text-left max-w-md">
-                  <span className="text-[12px] font-bold text-[#c9a227] tracking-wide uppercase">Đại diện Doanh nghiệp — FPT Software</span>
-                  <span className="text-[13px] font-semibold text-white/95 mt-0.5">Bà NGUYỄN THỊ VỌNG — Giám đốc vận hành EBS</span>
-                  <span className="text-[12px] text-white/70 mt-1 leading-relaxed italic">"Đại diện doanh nghiệp, tôi đánh giá cao khung chương trình đào tạo của UEF. Chúng tôi luôn săn đón những nguồn lực vững chuyên môn, giỏi thực hành và tốt ngoại ngữ."</span>
+              <div className="inline-flex items-center gap-8 px-8 text-white/90 border-r border-white/20 mx-4">
+                <img
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=280&q=80&fit=crop&crop=face&auto=format"
+                  alt="Bà Nguyễn Thị Vọng"
+                  className="w-[140px] h-[140px] rounded-xl object-cover shadow-lg shrink-0 ring-2 ring-white/20"
+                />
+                <div className="flex flex-col whitespace-normal text-left max-w-sm">
+                  <span className="text-[11px] font-bold text-[#c9a227] tracking-[0.12em] uppercase">Đại diện Doanh nghiệp — FPT Software</span>
+                  <span className="text-[14px] font-bold text-white mt-1.5">Bà NGUYỄN THỊ VỌNG</span>
+                  <span className="text-[12px] text-white/60 mb-1.5">Giám đốc vận hành đơn vị EBS</span>
+                  <span className="text-[12.5px] text-white/80 leading-relaxed italic border-l-2 border-[#c9a227] pl-3">"Đại diện doanh nghiệp, tôi đánh giá cao khung chương trình đào tạo của UEF. Chúng tôi luôn săn đón những nguồn lực vững chuyên môn, giỏi thực hành và tốt ngoại ngữ."</span>
                 </div>
               </div>
-              <div className="inline-flex items-center gap-5 px-8 text-white/90 border-r border-white/20 mx-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a4ba8] to-[#DA291C] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg">TĐ</div>
-                <div className="flex flex-col whitespace-normal text-left max-w-md">
-                  <span className="text-[12px] font-bold text-[#c9a227] tracking-wide uppercase">Đại diện Sinh viên</span>
-                  <span className="text-[13px] font-semibold text-white/95 mt-0.5">TRẦN TẤN ĐẠT — Khóa 2020</span>
-                  <span className="text-[12px] text-white/70 mt-1 leading-relaxed italic">"Em hoàn toàn hài lòng khi lựa chọn học Công nghệ thông tin ở UEF. Ngoài kỹ năng chuyên môn, em được trau dồi về kỹ năng tiếng Anh chuyên ngành."</span>
+              <div className="inline-flex items-center gap-8 px-8 text-white/90 border-r border-white/20 mx-4">
+                <img
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=280&q=80&fit=crop&crop=face&auto=format"
+                  alt="Trần Tấn Đạt"
+                  className="w-[140px] h-[140px] rounded-xl object-cover shadow-lg shrink-0 ring-2 ring-white/20"
+                />
+                <div className="flex flex-col whitespace-normal text-left max-w-sm">
+                  <span className="text-[11px] font-bold text-[#c9a227] tracking-[0.12em] uppercase">Đại diện Sinh viên</span>
+                  <span className="text-[14px] font-bold text-white mt-1.5">TRẦN TẤN ĐẠT</span>
+                  <span className="text-[12px] text-white/60 mb-1.5">Sinh viên khóa 2020</span>
+                  <span className="text-[12.5px] text-white/80 leading-relaxed italic border-l-2 border-[#c9a227] pl-3">"Em hoàn toàn hài lòng khi lựa chọn học Công nghệ thông tin ở UEF. Ngoài kỹ năng chuyên môn, em được trau dồi về kỹ năng tiếng Anh chuyên ngành, tăng cường khả năng ghi nhớ, lập luận logic cùng các kỹ năng mềm cần thiết."</span>
                 </div>
               </div>
-              <div className="inline-flex items-center gap-5 px-8 text-white/90 border-r border-white/20 mx-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a4ba8] to-[#DA291C] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg">VT</div>
-                <div className="flex flex-col whitespace-normal text-left max-w-md">
-                  <span className="text-[12px] font-bold text-[#c9a227] tracking-wide uppercase">Đại diện Giảng viên — Khoa CNTT</span>
-                  <span className="text-[13px] font-semibold text-white/95 mt-0.5">Cô VĂN THỊ THIÊN TRANG — Phó khoa</span>
-                  <span className="text-[12px] text-white/70 mt-1 leading-relaxed italic">"Ở UEF, ngành Công nghệ thông tin được đào tạo bài bản với sự kết hợp giữa lý thuyết và thực tiễn. Sinh viên có thời lượng lớn tham quan thực tế tại doanh nghiệp."</span>
+              <div className="inline-flex items-center gap-8 px-8 text-white/90 border-r border-white/20 mx-4">
+                <img
+                  src="https://images.unsplash.com/photo-1580489944761-15a19d654956?w=280&q=80&fit=crop&crop=face&auto=format"
+                  alt="Cô Văn Thị Thiên Trang"
+                  className="w-[140px] h-[140px] rounded-xl object-cover shadow-lg shrink-0 ring-2 ring-white/20"
+                />
+                <div className="flex flex-col whitespace-normal text-left max-w-sm">
+                  <span className="text-[11px] font-bold text-[#c9a227] tracking-[0.12em] uppercase">Đại diện Giảng viên — Khoa CNTT</span>
+                  <span className="text-[14px] font-bold text-white mt-1.5">Cô VĂN THỊ THIÊN TRANG</span>
+                  <span className="text-[12px] text-white/60 mb-1.5">Phó khoa, khoa Công nghệ thông tin</span>
+                  <span className="text-[12.5px] text-white/80 leading-relaxed italic border-l-2 border-[#c9a227] pl-3">"Ở UEF, ngành Công nghệ thông tin được đào tạo bài bản với sự kết hợp giữa lý thuyết và thực tiễn. Sinh viên có thời lượng lớn tham quan thực tế tại doanh nghiệp, công ty để hình dung được công việc trong tương lai."</span>
                 </div>
               </div>
             </>
