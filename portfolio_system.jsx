@@ -4634,13 +4634,30 @@ function RegisterPage({ setPage }) {
   );
 }
 
-function LandingPage({ setPage, isLoggedIn }) {
-    const artworks = [
-    { id: 1, img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", title: "Kỷ niệm UEF", student: "Nguyễn Lê Minh Anh", likes: 142 },
-    { id: 2, img: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg", title: "Poster Design", student: "Trần Bảo Long", likes: 89 },
-    { id: 3, img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80", title: "Typography", student: "Lê Thị Hương", likes: 203 },
-    { id: 4, img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80", title: "Packaging", student: "Phạm Quốc Việt", likes: 56 },
+function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
+  const [featuredArtworks, setFeaturedArtworks] = useState([]);
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const categories = [
+    { key: "3D Art", label: "3d art" },
+    { key: "Branding", label: "branding" },
+    { key: "Poster", label: "poster" },
+    { key: "Packaging", label: "packaging" },
   ];
+
+  useEffect(() => {
+    api.artworks.list({ limit: "16", sort: "newest" }).then(res => {
+      setFeaturedArtworks(res.artworks || []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  const filtered = activeCategory
+    ? featuredArtworks.filter(a => a.subject === activeCategory)
+    : featuredArtworks;
+
+  const gridArtworks = filtered.length >= 6 ? filtered : (featuredArtworks.length >= 6 ? featuredArtworks : []);
 
   return (
     <div className="min-h-screen bg-white font-sans text-[#212121]">
@@ -4673,11 +4690,11 @@ function LandingPage({ setPage, isLoggedIn }) {
           
           <div className="flex flex-wrap items-center gap-8 border-t border-gray-100 pt-8">
             <div>
-              <p className="text-3xl font-bold mb-1">500+</p>
+              <p className="text-3xl font-bold mb-1">{t("fiveHundred")}</p>
               <p className="text-xs text-gray-500">{t("displayedArtworks")}</p>
             </div>
             <div>
-              <p className="text-3xl font-bold mb-1">120+</p>
+              <p className="text-3xl font-bold mb-1">{t("oneHundredTwenty")}</p>
               <p className="text-xs text-gray-500">{t("participatingLecturers")}</p>
             </div>
             <div>
@@ -4694,34 +4711,43 @@ function LandingPage({ setPage, isLoggedIn }) {
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-1 space-y-3">
               <div className="bg-gray-100 rounded-xl overflow-hidden aspect-[3/4]">
-                <img src={artworks[0].img} alt="Artwork" className="w-full h-full object-cover" />
+                <img src={gridArtworks[0]?.coverImageUrl || "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
               </div>
               <div className="bg-gray-100 rounded-xl overflow-hidden aspect-square">
-                <img src={artworks[2].img} alt="Artwork" className="w-full h-full object-cover" />
+                <img src={gridArtworks[2]?.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
               </div>
             </div>
             <div className="col-span-1 space-y-3 pt-8">
               <div className="bg-gray-100 rounded-xl overflow-hidden aspect-square">
-                <img src={artworks[1].img} alt="Artwork" className="w-full h-full object-cover" />
+                <img src={gridArtworks[1]?.coverImageUrl || "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg"} alt="Artwork" className="w-full h-full object-cover" />
               </div>
               <div className="bg-gray-100 rounded-xl overflow-hidden aspect-[3/4]">
-                <img src={artworks[3].img} alt="Artwork" className="w-full h-full object-cover" />
+                <img src={gridArtworks[3]?.coverImageUrl || "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
               </div>
             </div>
             <div className="col-span-1 space-y-3">
               <div className="bg-gray-100 rounded-xl overflow-hidden aspect-[3/4]">
-                <img src="https://images.unsplash.com/photo-1541462608143-67571c6738dd?w=800&q=80" alt="Artwork" className="w-full h-full object-cover" />
+                <img src={gridArtworks[4]?.coverImageUrl || "https://images.unsplash.com/photo-1541462608143-67571c6738dd?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
               </div>
               <div className="bg-gray-100 rounded-xl overflow-hidden aspect-square">
-                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" alt="Artwork" className="w-full h-full object-cover" />
+                <img src={gridArtworks[5]?.coverImageUrl || "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80"} alt="Artwork" className="w-full h-full object-cover" />
               </div>
             </div>
           </div>
           <div className="absolute -bottom-6 -right-6 flex gap-2">
-            <span className="bg-[#1a4ba8] text-white text-[10px] px-3 py-1.5 rounded-full font-medium">3d art</span>
-            <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] px-3 py-1.5 rounded-full font-medium">branding</span>
-            <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] px-3 py-1.5 rounded-full font-medium">poster</span>
-            <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] px-3 py-1.5 rounded-full font-medium">packaging</span>
+            {categories.map(cat => (
+              <button
+                key={cat.key}
+                onClick={() => setActiveCategory(activeCategory === cat.key ? null : cat.key)}
+                className={`text-[10px] px-3 py-1.5 rounded-full font-medium transition-all cursor-pointer ${
+                  activeCategory === cat.key
+                    ? "bg-[#1a4ba8] text-white"
+                    : "bg-gray-100 text-gray-600 border border-gray-200 hover:bg-[#1a4ba8]/10 hover:text-[#1a4ba8]"
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
         </div>
       </section>
@@ -4808,18 +4834,18 @@ function LandingPage({ setPage, isLoggedIn }) {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {artworks.map((work, idx) => (
-              <div key={work.id} className="group cursor-pointer">
+            {featuredArtworks.slice(0, 8).map((work, idx) => (
+              <div key={work.id} className="group cursor-pointer" onClick={() => { setActiveArtworkId && setActiveArtworkId(work.id); setPage("detail"); }}>
                 <div className={`rounded-xl overflow-hidden mb-4 relative ${idx % 2 === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
-                  <img src={work.img} alt={work.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={work.coverImageUrl} alt={work.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   {idx === 0 && (
                     <div className="absolute top-3 left-3 bg-[#1a4ba8] text-white text-[10px] font-bold px-2 py-1 rounded">{t("featured")}</div>
                   )}
                 </div>
                 <h4 className="font-bold text-[15px] mb-1">{work.title}</h4>
                 <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{work.student}</span>
-                  <span className="flex items-center gap-1"><Heart size={12} /> {work.likes}</span>
+                  <span>{work.user?.fullName || "Sinh viên UEF"}</span>
+                  <span className="flex items-center gap-1"><Heart size={12} /> {work.likeCount || 0}</span>
                 </div>
               </div>
             ))}
@@ -6921,8 +6947,8 @@ export default function App() {
         <AppHeader activePage={page} setPage={setPage} isLoggedIn={isLoggedIn} userRole={userRole} onLogout={handleLogout} userData={userData} />
       )}
       {page === "portal" && <PortalPage setPage={setPage} />}
-      {page === "home" && <LandingPage setPage={setPage} isLoggedIn={isLoggedIn} />}
-      {page === "landing" && <LandingPage setPage={setPage} isLoggedIn={isLoggedIn} />}
+      {page === "home" && <LandingPage setPage={setPage} isLoggedIn={isLoggedIn} setActiveArtworkId={setActiveArtworkId} />}
+      {page === "landing" && <LandingPage setPage={setPage} isLoggedIn={isLoggedIn} setActiveArtworkId={setActiveArtworkId} />}
       {page === "gallery" && (
         <GalleryPage
           setPage={setPage}
