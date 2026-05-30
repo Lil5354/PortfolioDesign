@@ -49,7 +49,7 @@ function SortableSection({ id, item, isSelected, onToggle }) {
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, zIndex: isDragging ? 10 : 1 };
 
   return (
-    <div ref={setNodeRef} style={style} className={`flex items-center gap-3 p-3 rounded-xl border ${isSelected ? "border-[#077E9E] bg-[#F0F8FB] shadow-sm" : "border-[#E0E0E0] bg-white"} transition-colors mb-2`}>
+    <div ref={setNodeRef} style={style} className={`flex items-center gap-3 p-3 rounded-xl border ${isSelected ? "border-[#1a4ba8] bg-[#eef4ff] shadow-sm" : "border-[#E0E0E0] bg-white"} transition-colors mb-2`}>
       <button {...attributes} {...listeners} className="cursor-grab text-[#666666] hover:text-[#212121] p-1"><GripVertical size={16} /></button>
       <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
         {item.coverImageUrl ? <img src={item.coverImageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">IMG</div>}
@@ -58,7 +58,7 @@ function SortableSection({ id, item, isSelected, onToggle }) {
         <p className="text-sm font-semibold text-[#212121] truncate">{item.title}</p>
         <p className="text-xs text-[#666666] truncate">{item.student} - {item.category}</p>
       </div>
-      <input type="checkbox" checked={isSelected} onChange={() => onToggle(item.id)} className="w-4 h-4 accent-[#077E9E] cursor-pointer" />
+      <input type="checkbox" checked={isSelected} onChange={() => onToggle(item.id)} className="w-4 h-4 accent-[#1a4ba8] cursor-pointer" />
     </div>
   );
 }
@@ -74,7 +74,7 @@ const STEPS = [
 const InputRow = ({ label, value, onChange, placeholder }) => (
   <div className="mb-4">
     {label && <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">{label}</label>}
-    <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-xl text-sm outline-none focus:border-[#077E9E] focus:ring-2 focus:ring-[#077E9E]/20 transition-all bg-[#F8F8F8] focus:bg-white" />
+    <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-xl text-sm outline-none focus:border-[#1a4ba8] focus:ring-2 focus:ring-[#1a4ba8]/20 transition-all bg-[#F8F8F8] focus:bg-white" />
   </div>
 );
 
@@ -178,7 +178,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
           } else {
             el.contentEditable = true;
             el.focus();
-            el.style.outline = "2px dashed #077E9E";
+            el.style.outline = "2px dashed #1a4ba8";
             el.addEventListener('blur', function() {
               el.contentEditable = false;
               el.style.outline = "none";
@@ -258,7 +258,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
         return (
           <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div>
-              <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><AlignLeft className="text-[#077E9E]" /> Tiêu đề & Thông tin bìa</h3>
+              <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><AlignLeft className="text-[#1a4ba8]" /> Tiêu đề & Thông tin bìa</h3>
               <div className="grid grid-cols-2 gap-x-6">
                 <InputRow label="Tên tập san" value={payload.journalTitle} onChange={v => update({ journalTitle: v })} />
                 <InputRow label="Phụ đề" value={payload.journalSubtitle} onChange={v => update({ journalSubtitle: v })} />
@@ -285,7 +285,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
         return (
           <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div>
-              <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><Layout className="text-[#077E9E]" /> Bố cục tổng thể (Theme)</h3>
+              <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><Layout className="text-[#1a4ba8]" /> Bố cục tổng thể (Theme)</h3>
               <div className="grid grid-cols-3 gap-4">
                 {[
                   { id: "classic", label: "Classic", desc: "Cổ điển, đối xứng, sang trọng." },
@@ -304,7 +304,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
                         update({ backgroundColor: presets[0].bg, textColor: presets[0].text, primaryColor: presets[0].primary, secondaryColor: presets[0].secondary, headingFont: presets[0].head, bodyFont: presets[0].body });
                       }
                     }} 
-                    className={`p-5 rounded-2xl border-2 text-left transition-all ${payload.layoutTheme === t.id ? "border-[#077E9E] bg-[#F0F8FB]" : "border-[#E0E0E0] hover:border-[#B3D9E8] bg-white"}`}>
+                    className={`p-5 rounded-2xl border-2 text-left transition-all ${payload.layoutTheme === t.id ? "border-[#1a4ba8] bg-[#eef4ff]" : "border-[#E0E0E0] hover:border-[#a8bce0] bg-white"}`}>
                     <div className="text-sm font-bold text-[#212121] mb-1">{t.label}</div>
                     <div className="text-xs text-[#666]">{t.desc}</div>
                   </button>
@@ -340,14 +340,14 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       case 2:
         return (
           <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><Palette className="text-[#077E9E]" /> Thiết kế Visual</h3>
+            <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><Palette className="text-[#1a4ba8]" /> Thiết kế Visual</h3>
             
             <div className="bg-[#F8F8F8] p-5 rounded-2xl border border-[#E0E0E0]">
               <h4 className="text-sm font-bold text-[#212121] mb-4">Color Presets (Phù hợp với Layout {payload.layoutTheme})</h4>
               <div className="flex gap-3 mb-6">
                 {getThemePresets().map(theme => (
                   <button key={theme.name} onClick={() => update({ backgroundColor: theme.bg, textColor: theme.text, primaryColor: theme.primary, secondaryColor: theme.secondary, headingFont: theme.head, bodyFont: theme.body })} 
-                    className="flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border border-[#E0E0E0] bg-white hover:border-[#077E9E] transition-all">
+                    className="flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border border-[#E0E0E0] bg-white hover:border-[#1a4ba8] transition-all">
                     <div className="w-full h-8 rounded-lg flex overflow-hidden border border-gray-200">
                       <div className="flex-1" style={{ background: theme.bg }}></div>
                       <div className="flex-1" style={{ background: theme.primary }}></div>
@@ -408,7 +408,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
         return (
           <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><FileText className="text-[#077E9E]" /> Cấu trúc & Thứ tự trang</h3>
+              <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><FileText className="text-[#1a4ba8]" /> Cấu trúc & Thứ tự trang</h3>
               <div className="bg-[#F8F8F8] px-3 py-1.5 rounded-full text-xs font-bold text-[#666]">
                 {payload.enabledArtworkIds.length} / {items.length} tác phẩm xuất bản
               </div>
@@ -416,8 +416,8 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
             
             <div className="bg-white border border-[#E0E0E0] rounded-2xl p-6">
               <div className="mb-4 space-y-2">
-                <div className="p-3 bg-[#F0F8FB] border border-[#B3D9E8] rounded-xl text-sm font-bold text-[#077E9E] flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#077E9E]"></div> [TRANG BÌA] Cố định</div>
-                <div className="p-3 bg-[#F0F8FB] border border-[#B3D9E8] rounded-xl text-sm font-bold text-[#077E9E] flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#077E9E]"></div> [LỜI MỞ ĐẦU & MỤC LỤC] Cố định</div>
+                <div className="p-3 bg-[#eef4ff] border border-[#a8bce0] rounded-xl text-sm font-bold text-[#1a4ba8] flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#1a4ba8]"></div> [TRANG BÌA] Cố định</div>
+                <div className="p-3 bg-[#eef4ff] border border-[#a8bce0] rounded-xl text-sm font-bold text-[#1a4ba8] flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#1a4ba8]"></div> [LỜI MỞ ĐẦU & MỤC LỤC] Cố định</div>
               </div>
               
               <p className="text-xs font-bold text-[#666] mb-3 uppercase tracking-wide">Danh sách Tác phẩm (Kéo thả để sắp xếp)</p>
@@ -435,7 +435,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
               </DndContext>
               
               <div className="mt-4 pt-4 border-t border-[#E0E0E0] space-y-2">
-                <div className="p-3 bg-[#F0F8FB] border border-[#B3D9E8] rounded-xl text-sm font-bold text-[#077E9E] flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#077E9E]"></div> [LỜI KẾT] Cố định</div>
+                <div className="p-3 bg-[#eef4ff] border border-[#a8bce0] rounded-xl text-sm font-bold text-[#1a4ba8] flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#1a4ba8]"></div> [LỜI KẾT] Cố định</div>
               </div>
             </div>
           </div>
@@ -467,7 +467,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
                  </div>
                </div>
                <div className="p-4 border-t border-[#E0E0E0]">
-                 <button onClick={handleExport} disabled={exporting} className="w-full py-3 rounded-xl bg-[#077E9E] text-white font-bold shadow hover:bg-[#055F78] transition-all flex items-center justify-center gap-2">
+                 <button onClick={handleExport} disabled={exporting} className="w-full py-3 rounded-xl bg-[#1a4ba8] text-white font-bold shadow hover:bg-[#0d2e6e] transition-all flex items-center justify-center gap-2">
                    <FileDown size={18} /> {exporting ? "Đang xử lý..." : "Print to PDF"}
                  </button>
                </div>
@@ -494,7 +494,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
           <button onClick={onClose} className="w-10 h-10 rounded-full hover:bg-[#F8F8F8] text-[#666] flex items-center justify-center transition-colors"><X size={20} /></button>
           <div>
             <h2 className="text-xl font-bold text-[#212121]">Thiết lập Xuất Tập San</h2>
-            <p className="text-sm text-[#077E9E] font-semibold">{collection?.name || "Bộ sưu tập"}</p>
+            <p className="text-sm text-[#1a4ba8] font-semibold">{collection?.name || "Bộ sưu tập"}</p>
           </div>
         </div>
         
@@ -502,7 +502,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
         <div className="flex items-center gap-2">
           {STEPS.map((s, i) => (
             <div key={s.key} className="flex items-center">
-              <button onClick={() => setStep(i)} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${i === step ? "bg-[#212121] text-white shadow-md" : i < step ? "bg-[#E8F4F8] text-[#077E9E]" : "bg-transparent text-[#999] hover:bg-[#F8F8F8]"}`}>
+              <button onClick={() => setStep(i)} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${i === step ? "bg-[#212121] text-white shadow-md" : i < step ? "bg-[#e0eaff] text-[#1a4ba8]" : "bg-transparent text-[#999] hover:bg-[#F8F8F8]"}`}>
                 {i < step ? <Check size={16} /> : <s.icon size={16} />}
                 <span className="hidden md:inline">{s.label}</span>
               </button>
@@ -525,7 +525,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
           <ChevronLeft size={18} /> Quay lại
         </button>
         <div className="flex gap-2">
-          {STEPS.map((_, i) => <div key={i} className={`w-2.5 h-2.5 rounded-full ${i === step ? "bg-[#077E9E]" : "bg-[#E0E0E0]"}`} />)}
+          {STEPS.map((_, i) => <div key={i} className={`w-2.5 h-2.5 rounded-full ${i === step ? "bg-[#1a4ba8]" : "bg-[#E0E0E0]"}`} />)}
         </div>
         {step < STEPS.length - 1 ? (
           <button onClick={() => setStep(step + 1)} className="px-8 py-3 rounded-xl bg-[#212121] text-white font-bold shadow-md hover:opacity-90 hover:shadow-lg transition-all flex items-center gap-2">

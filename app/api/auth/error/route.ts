@@ -92,12 +92,12 @@ export async function GET(request: NextRequest) {
       transition: all 0.15s;
     }
     .btn-primary {
-      background: #077E9E;
+      background: #1a4ba8;
       color: #fff;
       border: none;
     }
     .btn-primary:hover {
-      background: #055F78;
+      background: #0d2e6e;
     }
     .btn-secondary {
       background: #fff;

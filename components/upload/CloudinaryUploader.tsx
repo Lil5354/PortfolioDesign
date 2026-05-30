@@ -42,16 +42,16 @@ export default function CloudinaryUploader({
             palette: {
               window: "#FFFFFF",
               windowBorder: "#E0E0E0",
-              tabIcon: "#077E9E",
-              menuIcons: "#077E9E",
+              tabIcon: "#1a4ba8",
+              menuIcons: "#1a4ba8",
               textDark: "#212121",
               textLight: "#FFFFFF",
-              link: "#077E9E",
-              action: "#077E9E",
+              link: "#1a4ba8",
+              action: "#1a4ba8",
               inactiveTabIcon: "#666666",
               error: "#8B1A1A",
-              inProgress: "#077E9E",
-              complete: "#077E9E",
+              inProgress: "#1a4ba8",
+              complete: "#1a4ba8",
               sourceBg: "#F8F8F8",
             },
           },
@@ -89,7 +89,7 @@ export default function CloudinaryUploader({
       type="button"
       onClick={openCloudinaryWidget}
       disabled={disabled || uploading}
-      className="px-6 py-3 bg-[#077E9E] text-white rounded-lg font-medium hover:bg-[#055F78] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      className="px-6 py-3 bg-[#1a4ba8] text-white rounded-lg font-medium hover:bg-[#0d2e6e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
     >
       {uploading ? "Đang mở..." : "Chọn ảnh để tải lên"}
     </button>

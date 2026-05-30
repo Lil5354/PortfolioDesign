@@ -10,7 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const BRAND_COLOR = "#077E9E";
+const BRAND_COLOR = "#1a4ba8";
 const BG_COLOR = "#F8F8F8";
 const TEXT_COLOR = "#212121";
 const MUTED_COLOR = "#666666";

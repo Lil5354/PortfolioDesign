@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Bell, X, Check, Heart, MessageSquare, Star, ShieldAlert, Eye, EyeOff, Users, Mail, FileText, ShoppingCart } from "lucide-react";
 import { api } from "../lib/api-client";
 
-const CERULEAN = "#077E9E";
+const CERULEAN = "#1a4ba8";
 
 const TYPE_ICONS = {
   new_like: Heart,
@@ -20,8 +20,8 @@ const TYPE_ICONS = {
 
 const TYPE_COLORS = {
   new_like: "#E53E3E",
-  new_comment: "#077E9E",
-  new_message: "#077E9E",
+  new_comment: "#1a4ba8",
+  new_message: "#1a4ba8",
   grade_updated: "#D69E2E",
   artwork_approved: "#38A169",
   artwork_hidden: "#A0AEC0",
@@ -156,7 +156,7 @@ export default function NotificationBell({ setPage }) {
               {unreadCount > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  className="text-xs font-semibold text-[#077E9E] hover:text-[#055F78] cursor-pointer"
+                  className="text-xs font-semibold text-[#1a4ba8] hover:text-[#0d2e6e] cursor-pointer"
                 >
                   Đã đọc tất cả
                 </button>
@@ -180,7 +180,7 @@ export default function NotificationBell({ setPage }) {
                   <div
                     key={n.id}
                     onClick={() => handleNotificationClick(n)}
-                    className={`flex items-start gap-3 px-5 py-3.5 border-b border-[#E0E0E0] cursor-pointer hover:bg-[#F8F8F8] transition-colors ${!n.isRead ? "bg-[#F0F8FB]" : ""}`}
+                    className={`flex items-start gap-3 px-5 py-3.5 border-b border-[#E0E0E0] cursor-pointer hover:bg-[#F8F8F8] transition-colors ${!n.isRead ? "bg-[#eef4ff]" : ""}`}
                   >
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
@@ -195,7 +195,7 @@ export default function NotificationBell({ setPage }) {
                       <p className="text-[11px] text-[#999] mt-1">{timeAgo(n.createdAt)}</p>
                     </div>
                     {!n.isRead && (
-                      <div className="w-2 h-2 rounded-full bg-[#077E9E] flex-shrink-0 mt-2" />
+                      <div className="w-2 h-2 rounded-full bg-[#1a4ba8] flex-shrink-0 mt-2" />
                     )}
                   </div>
                 );

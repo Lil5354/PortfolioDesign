@@ -103,9 +103,9 @@ function TypingIndicator() {
       </div>
       <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
         <div className="flex gap-1.5">
-          <span className="w-2 h-2 bg-[#077E9E] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-          <span className="w-2 h-2 bg-[#077E9E] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-          <span className="w-2 h-2 bg-[#077E9E] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+          <span className="w-2 h-2 bg-[#1a4ba8] rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+          <span className="w-2 h-2 bg-[#1a4ba8] rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+          <span className="w-2 h-2 bg-[#1a4ba8] rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
         </div>
       </div>
     </div>
@@ -118,7 +118,7 @@ function ChatMessage({ msg }) {
     <div className={`flex items-start gap-2.5 ${isUser ? "flex-row-reverse" : ""} ${isUser ? "ml-auto" : "mr-auto"} animate-fade-in`}>
       {/* Avatar */}
       {isUser ? (
-        <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-[#077E9E] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-[#1a4ba8] flex items-center justify-center">
           <User size={14} className="text-white" />
         </div>
       ) : (
@@ -130,7 +130,7 @@ function ChatMessage({ msg }) {
       {/* Bubble */}
       <div className={
         isUser
-          ? "bg-[#077E9E] text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[85%] shadow-sm"
+          ? "bg-[#1a4ba8] text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[85%] shadow-sm"
           : "bg-white border border-gray-100 text-gray-800 rounded-2xl rounded-tl-sm px-4 py-2.5 max-w-[85%] shadow-sm"
       }>
         {renderMessage(msg.content)}
@@ -205,7 +205,7 @@ export default function ChatBot({ userRole = "employer" }) {
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-[90] w-[380px] h-[560px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-slide-up">
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#077E9E] to-[#055F78] px-4 py-3 flex items-center gap-3 shrink-0">
+          <div className="bg-gradient-to-r from-[#1a4ba8] to-[#0d2e6e] px-4 py-3 flex items-center gap-3 shrink-0">
             <div className="w-10 h-10 rounded-full shrink-0 overflow-hidden border-2 border-white/40 shadow-md">
               <img src={BOT_AVATAR} alt="" className="w-full h-full object-cover" />
             </div>
@@ -238,7 +238,7 @@ export default function ChatBot({ userRole = "employer" }) {
                   <button
                     key={action}
                     onClick={() => sendMessage(action)}
-                    className="text-xs bg-gray-50 hover:bg-[#077E9E]/10 hover:text-[#077E9E] hover:border-[#077E9E]/30 text-gray-500 px-3 py-1.5 rounded-full transition-all border border-gray-200"
+                    className="text-xs bg-gray-50 hover:bg-[#1a4ba8]/10 hover:text-[#1a4ba8] hover:border-[#1a4ba8]/30 text-gray-500 px-3 py-1.5 rounded-full transition-all border border-gray-200"
                   >
                     {action}
                   </button>
@@ -249,7 +249,7 @@ export default function ChatBot({ userRole = "employer" }) {
 
           {/* Input */}
           <form onSubmit={(e) => { e.preventDefault(); sendMessage(input); }} className="p-3 border-t border-gray-200 bg-white shrink-0">
-            <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-1 border border-gray-200 focus-within:border-[#077E9E] focus-within:ring-1 focus-within:ring-[#077E9E]/20 transition-all">
+            <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-1 border border-gray-200 focus-within:border-[#1a4ba8] focus-within:ring-1 focus-within:ring-[#1a4ba8]/20 transition-all">
               <input
                 ref={inputRef}
                 value={input}
@@ -261,7 +261,7 @@ export default function ChatBot({ userRole = "employer" }) {
               <button
                 type="submit"
                 disabled={!input.trim() || isLoading}
-                className="w-8 h-8 rounded-lg bg-[#077E9E] text-white flex items-center justify-center hover:bg-[#066a85] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                className="w-8 h-8 rounded-lg bg-[#1a4ba8] text-white flex items-center justify-center hover:bg-[#1642a6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
               >
                 <Send size={14} />
               </button>
@@ -273,8 +273,8 @@ export default function ChatBot({ userRole = "employer" }) {
       {/* FAB */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-[90] w-14 h-14 rounded-full bg-gradient-to-r from-[#077E9E] to-[#055F78] text-white shadow-lg hover:scale-105 transition-all flex items-center justify-center"
-        style={{ boxShadow: "0 4px 20px rgba(7,126,158,0.4)" }}
+        className="fixed bottom-6 right-6 z-[90] w-14 h-14 rounded-full bg-gradient-to-r from-[#1a4ba8] to-[#0d2e6e] text-white shadow-lg hover:scale-105 transition-all flex items-center justify-center"
+        style={{ boxShadow: "0 4px 20px rgba(26,75,168,0.4)" }}
       >
         {isOpen ? (
           <X size={24} />

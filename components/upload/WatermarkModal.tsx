@@ -122,7 +122,7 @@ export default function WatermarkModal({
                   setError("");
                 }}
                 placeholder="VD: Nguyễn Văn A - 21DGR00042"
-                className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-lg text-[#212121] focus:outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
+                className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-lg text-[#212121] focus:outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]"
               />
               {error && (
                 <p className="text-[#8B1A1A] text-sm mt-1">{error}</p>
@@ -143,8 +143,8 @@ export default function WatermarkModal({
                     }
                     className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
                       config.position === pos.value
-                        ? "border-[#077E9E] bg-[#077E9E]/10 text-[#077E9E] font-medium"
-                        : "border-[#E0E0E0] text-[#666666] hover:border-[#077E9E]"
+                        ? "border-[#1a4ba8] bg-[#1a4ba8]/10 text-[#1a4ba8] font-medium"
+                        : "border-[#E0E0E0] text-[#666666] hover:border-[#1a4ba8]"
                     }`}
                   >
                     {pos.label}
@@ -166,7 +166,7 @@ export default function WatermarkModal({
                 onChange={(e) =>
                   setConfig({ ...config, fontSize: Number(e.target.value) })
                 }
-                className="w-full accent-[#077E9E]"
+                className="w-full accent-[#1a4ba8]"
               />
             </div>
 
@@ -183,7 +183,7 @@ export default function WatermarkModal({
                 onChange={(e) =>
                   setConfig({ ...config, opacity: Number(e.target.value) })
                 }
-                className="w-full accent-[#077E9E]"
+                className="w-full accent-[#1a4ba8]"
               />
             </div>
           </div>
@@ -233,7 +233,7 @@ export default function WatermarkModal({
               type="button"
               onClick={handleConfirm}
               disabled={!config.text.trim()}
-              className="px-6 py-2.5 bg-[#077E9E] text-white rounded-lg font-medium hover:bg-[#055F78] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2.5 bg-[#1a4ba8] text-white rounded-lg font-medium hover:bg-[#0d2e6e] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Xác nhận & Áp dụng
             </button>

@@ -41,7 +41,9 @@ export function GlobalLoading() {
   );
 }
 
-const CERULEAN = "#077E9E";
+const CERULEAN = "#1a4ba8";
+const ACCENT_BLUE = "#1a4ba8";
+const DARK_BLUE = "#0d2e6e";
 const CRIMSON = "#8B1A1A";
 const BLACK = "#212121";
 const GRAY_BG = "#F8F8F8";
@@ -107,7 +109,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
       </div>
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
         {navItems.map((item) => (
-          <button key={item.id} onClick={() => setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#077E9E] border-b-2 border-[#077E9E]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
+          <button key={item.id} onClick={() => setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#1a4ba8] border-b-2 border-[#1a4ba8]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
         ))}
       </nav>
       <button className="md:hidden flex items-center cursor-pointer text-[#666666] hover:text-[#212121]" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
@@ -125,11 +127,11 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
           {isLangOpen && (
             <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
               <button onClick={() => { if (lang !== 'vi') toggleLang(); setIsLangOpen(false); }}
-                className={`w-full text-left px-4 py-2 text-sm ${lang === 'vi' ? 'text-[#077E9E] font-bold bg-[#F0F8FB]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
+                className={`w-full text-left px-4 py-2 text-sm ${lang === 'vi' ? 'text-[#1a4ba8] font-bold bg-[#eef4ff]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
                 {t("tiengViet")}
               </button>
               <button onClick={() => { if (lang !== 'en') toggleLang(); setIsLangOpen(false); }}
-                className={`w-full text-left px-4 py-2 text-sm ${lang === 'en' ? 'text-[#077E9E] font-bold bg-[#F0F8FB]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
+                className={`w-full text-left px-4 py-2 text-sm ${lang === 'en' ? 'text-[#1a4ba8] font-bold bg-[#eef4ff]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
                 {t("tiengAnh")}
               </button>
             </div>
@@ -171,7 +173,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
         ) : (
           <>
             <button onClick={() => setPage("register")} className="text-gray-500 hover:text-[#212121] px-4 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">{t("register")}</button>
-            <button onClick={() => setPage("auth")} className="bg-[#077E9E] text-white px-5 py-1.5 rounded-lg hover:bg-[#066a85] transition-colors">{t("login")}</button>
+            <button onClick={() => setPage("auth")} className="bg-[#1a4ba8] text-white px-5 py-1.5 rounded-lg hover:bg-[#1642a6] transition-colors">{t("login")}</button>
           </>
         )}
       </div>
@@ -179,7 +181,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
         <div ref={mobileMenuRef} className="fixed top-14 left-0 right-0 bg-white border-b border-[#E0E0E0] shadow-lg z-40 md:hidden">
           <div className="flex flex-col py-2">
             {navItems.map((item) => (
-              <button key={item.id} onClick={() => { setPage(item.id); setIsMobileMenuOpen(false); }} className={`px-6 py-3 text-sm font-medium text-left transition-colors ${isActive(item.id) ? "text-[#077E9E] bg-[#F0F8FB]" : "text-gray-600 hover:bg-[#F8F8F8]"}`}>{item.label}</button>
+              <button key={item.id} onClick={() => { setPage(item.id); setIsMobileMenuOpen(false); }} className={`px-6 py-3 text-sm font-medium text-left transition-colors ${isActive(item.id) ? "text-[#1a4ba8] bg-[#eef4ff]" : "text-gray-600 hover:bg-[#F8F8F8]"}`}>{item.label}</button>
             ))}
             {isLoggedIn && (
               <>
@@ -203,7 +205,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
             {!isLoggedIn && (
               <>
                 <div className="border-t border-[#E0E0E0] my-1" />
-                <button onClick={() => { setPage("auth"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#077E9E] hover:bg-[#F0F8FB]">{t("login")}</button>
+                <button onClick={() => { setPage("auth"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#1a4ba8] hover:bg-[#eef4ff]">{t("login")}</button>
                 <button onClick={() => { setPage("register"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]">{t("register")}</button>
               </>
             )}
@@ -261,7 +263,7 @@ function MasonryGrid({
                         height: 34,
                         borderRadius: 10,
                         border: "1px solid rgba(255,255,255,0.18)",
-                        background: isBookmarked && isBookmarked(art.id) ? "rgba(7,126,158,0.92)" : "rgba(255,255,255,0.14)",
+                        background: isBookmarked && isBookmarked(art.id) ? "rgba(26,75,168,0.92)" : "rgba(255,255,255,0.14)",
                         backdropFilter: "blur(10px)",
                         display: "flex",
                         alignItems: "center",
@@ -538,8 +540,8 @@ function PortfolioPage({ setPage, pageParams }) {
       {/* HERO SECTION (Flow #1 — UI tĩnh) */}
       <section className="relative overflow-hidden border-b border-[#E0E0E0]">
         {/* background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#077E9E]/10 via-white to-white" />
-        <div className="absolute -top-24 -right-24 w-[520px] h-[520px] rounded-full bg-[#077E9E]/10 blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a4ba8]/10 via-white to-white" />
+        <div className="absolute -top-24 -right-24 w-[520px] h-[520px] rounded-full bg-[#1a4ba8]/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-40 -left-28 w-[520px] h-[520px] rounded-full bg-black/5 blur-3xl pointer-events-none" />
 
         <div className="relative max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 pt-14 pb-10">
@@ -551,7 +553,7 @@ function PortfolioPage({ setPage, pageParams }) {
                   <img src={profile.avatarUrl} alt={profile.fullName} className="w-full h-full object-cover" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-1">
+                  <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-1">
                     {t("publicPortfolio")}
                   </p>
                   <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#212121] leading-[1.05]">
@@ -571,9 +573,9 @@ function PortfolioPage({ setPage, pageParams }) {
               <div className="flex flex-wrap gap-2.5 mt-6">
                 {socialLinks.map((l) => {
                   const iconMap = {
-                    globe: <Globe size={16} className="text-[#077E9E]" />,
-                    link: <Link size={16} className="text-[#077E9E]" />,
-                    mail: <Mail size={16} className="text-[#077E9E]" />,
+                    globe: <Globe size={16} className="text-[#1a4ba8]" />,
+                    link: <Link size={16} className="text-[#1a4ba8]" />,
+                    mail: <Mail size={16} className="text-[#1a4ba8]" />,
                   };
                   return (
                     <a
@@ -581,7 +583,7 @@ function PortfolioPage({ setPage, pageParams }) {
                       href={l.href}
                       target={l.href.startsWith("http") ? "_blank" : undefined}
                       rel={l.href.startsWith("http") ? "noreferrer" : undefined}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:border-[#077E9E] hover:shadow-sm transition-all"
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:border-[#1a4ba8] hover:shadow-sm transition-all"
                     >
                       {iconMap[l.icon]}
                       <span>{l.label}</span>
@@ -594,7 +596,7 @@ function PortfolioPage({ setPage, pageParams }) {
               {/* CTA */}
               <div className="flex flex-wrap gap-3 mt-8">
                 <button
-                  className="px-5 py-2.5 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors"
+                  className="px-5 py-2.5 rounded-xl bg-[#1a4ba8] text-white text-sm font-bold hover:bg-[#0d2e6e] transition-colors"
                   onClick={() => setIsContactModalOpen(true)}
                 >
                   {t("contact")}
@@ -640,7 +642,7 @@ function PortfolioPage({ setPage, pageParams }) {
         <section className="pt-12">
           <div className="flex items-end justify-between gap-6 mb-6">
             <div>
-              <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2">Featured Case Studies</p>
+              <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2">Featured Case Studies</p>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#212121] tracking-tight">{t("featuredProjects")}</h2>
               <p className="text-sm text-[#666666] mt-2 max-w-2xl">
                 {t("bentoDescription")}
@@ -725,8 +727,8 @@ function PortfolioPage({ setPage, pageParams }) {
             </div>
             {contactState === "success" ? (
               <div className="p-8 flex flex-col items-center justify-center text-center">
-                <div className="w-16 h-16 bg-[#E8F4F8] rounded-full flex items-center justify-center mb-4">
-                  <Check size={32} className="text-[#077E9E]" />
+                <div className="w-16 h-16 bg-[#e0eaff] rounded-full flex items-center justify-center mb-4">
+                  <Check size={32} className="text-[#1a4ba8]" />
                 </div>
                 <h4 className="text-xl font-bold text-[#212121] mb-2">{t("sentSuccessfully")}</h4>
                 <p className="text-sm text-[#666666] mb-6">{t("messageSentTo")}{profile.fullName}.</p>
@@ -736,15 +738,15 @@ function PortfolioPage({ setPage, pageParams }) {
               <div className="p-6 flex flex-col gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("fullNameOrOrg")}</label>
-                  <input value={contactName} onChange={e => setContactName(e.target.value)} type="text" placeholder={t("enterYourName")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  <input value={contactName} onChange={e => setContactName(e.target.value)} type="text" placeholder={t("enterYourName")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("contactEmail")}</label>
-                  <input value={contactEmail} onChange={e => setContactEmail(e.target.value)} type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                  <input value={contactEmail} onChange={e => setContactEmail(e.target.value)} type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("purpose")}</label>
-                  <select value={contactPurpose} onChange={e => setContactPurpose(e.target.value)} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white cursor-pointer">
+                  <select value={contactPurpose} onChange={e => setContactPurpose(e.target.value)} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] bg-white cursor-pointer">
                     <option value={t("recruitmentInternship")}>{t("recruitmentInternship")}</option>
                     <option value={t("freelanceCollaboration")}>{t("freelanceCollaboration")}</option>
                     <option value={t("other")}>{t("other")}</option>
@@ -752,9 +754,9 @@ function PortfolioPage({ setPage, pageParams }) {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("content")}</label>
-                  <textarea value={contactContent} onChange={e => setContactContent(e.target.value)} placeholder={t("enterMessageContent")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] min-h-[100px] resize-y" />
+                  <textarea value={contactContent} onChange={e => setContactContent(e.target.value)} placeholder={t("enterMessageContent")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] min-h-[100px] resize-y" />
                 </div>
-                <button onClick={handleContactSubmit} disabled={contactState === "loading"} className={`mt-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all flex justify-center items-center gap-2 ${contactState === "loading" ? "bg-[#666666] cursor-wait" : "bg-[#077E9E] hover:opacity-90 cursor-pointer"}`}>
+                <button onClick={handleContactSubmit} disabled={contactState === "loading"} className={`mt-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all flex justify-center items-center gap-2 ${contactState === "loading" ? "bg-[#666666] cursor-wait" : "bg-[#1a4ba8] hover:opacity-90 cursor-pointer"}`}>
                   {contactState === "loading" ? t("sending") : <><Send size={16} /> {t("sendMessage")}</>}
                 </button>
               </div>
@@ -800,7 +802,7 @@ function DashboardSidebar({ activePage, setPage, userData }) {
         {items.map(item => {
           const isActive = activePage === item.page;
           return (
-            <div key={item.page} onClick={() => setPage(item.page)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", cursor: "pointer", background: isActive ? "#F0F8FB" : "transparent", borderRight: isActive ? `3px solid ${CERULEAN}` : "3px solid transparent" }}>
+            <div key={item.page} onClick={() => setPage(item.page)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", cursor: "pointer", background: isActive ? "#eef4ff" : "transparent", borderRight: isActive ? `3px solid ${CERULEAN}` : "3px solid transparent" }}>
               <span style={{ color: isActive ? CERULEAN : MUTED, display: "flex" }}>{item.icon}</span>
               <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isActive ? CERULEAN : BLACK }}>{item.label}</span>
             </div>
@@ -882,7 +884,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                   <div style={{ position: "relative", background: GRAY_BG }}>
                     <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
                     <div style={{ position: "absolute", top: 8, left: 8 }}>
-                      <span style={{ background: art.isPublic ? "#E8F4F8" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#B3D9E8" : GRAY_LIGHT}` }}>{art.isPublic ? t("public") : t("private")}</span>
+                      <span style={{ background: art.isPublic ? "#e0eaff" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#a8bce0" : GRAY_LIGHT}` }}>{art.isPublic ? t("public") : t("private")}</span>
                     </div>
                   </div>
                   <div style={{ padding: "12px 14px" }}>
@@ -1062,8 +1064,8 @@ function UploadPage({ setPage, setActiveArtworkId }) {
           <div style={{ background: "#fff", borderRadius: 16, padding: "36px 40px", width: 480, boxShadow: "0 24px 64px rgba(0,0,0,0.35)" }}>
             {uploadState === "success" ? (
               <div className="flex flex-col items-center justify-center text-center py-4">
-                <div className="w-16 h-16 bg-[#E8F4F8] rounded-full flex items-center justify-center mb-4">
-                  <Check size={32} className="text-[#077E9E]" />
+                <div className="w-16 h-16 bg-[#e0eaff] rounded-full flex items-center justify-center mb-4">
+                  <Check size={32} className="text-[#1a4ba8]" />
                 </div>
                 <h4 className="text-xl font-bold text-[#212121] mb-2">{t("uploadSuccess")}</h4>
                 <p className="text-sm text-[#666666]">{t("artworkSubmitted")}</p>
@@ -1149,14 +1151,14 @@ function UploadPage({ setPage, setActiveArtworkId }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("courseName")}</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Design Graphic - Flowers Garden" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("projectType")}</label>
-              <div style={{ display: "flex", gap: 6 }}>{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${projectYear === y ? CERULEAN : GRAY_LIGHT}`, background: projectYear === y ? "#F0F8FB" : GRAY_BG, color: projectYear === y ? CERULEAN : MUTED, fontSize: 12, fontWeight: projectYear === y ? 600 : 400, cursor: "pointer" }}>{y}</button>))}</div>
+              <div style={{ display: "flex", gap: 6 }}>{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${projectYear === y ? CERULEAN : GRAY_LIGHT}`, background: projectYear === y ? "#eef4ff" : GRAY_BG, color: projectYear === y ? CERULEAN : MUTED, fontSize: 12, fontWeight: projectYear === y ? 600 : 400, cursor: "pointer" }}>{y}</button>))}</div>
             </div>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("projectCategory")}</label>
               <div style={{ display: "flex", gap: 10 }}>
-                {[{ key: false, label: t("individual"), desc: t("selfPerformed"), icon: <User size={16} /> }, { key: true, label: t("group"), desc: t("teamwork"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#F0F8FB" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
+                {[{ key: false, label: t("individual"), desc: t("selfPerformed"), icon: <User size={16} /> }, { key: true, label: t("group"), desc: t("teamwork"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#eef4ff" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
               </div>
             </div>
-            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("addTeamMembers")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
+            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("addTeamMembers")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#e0eaff", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("describeYourArtwork")} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("category")} *</label>
@@ -1167,12 +1169,12 @@ function UploadPage({ setPage, setActiveArtworkId }) {
               </div>
               <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("tools")}</label>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>
-                  {tools.map(t => (<span key={t} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTools(tools.filter(x => x !== t))} style={{ cursor: "pointer", marginLeft: 4 }} /></span>))}
+                  {tools.map(t => (<span key={t} style={{ background: "#e0eaff", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTools(tools.filter(x => x !== t))} style={{ cursor: "pointer", marginLeft: 4 }} /></span>))}
                   <input value={toolInput} onChange={e => setToolInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && toolInput.trim()) { setTools([...tools, toolInput.trim()]); setToolInput(""); } }} placeholder="Add tool..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} />
                 </div>
               </div>
             </div>
-            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("tags")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{tags.map(tag => (<span key={tag} style={{ background: "#E8F4F8", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>{tag}<X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== tag))} style={{ cursor: "pointer" }} /></span>))}<input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder={t("addTagPlaceholder")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} /></div></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("tags")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{tags.map(tag => (<span key={tag} style={{ background: "#e0eaff", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>{tag}<X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== tag))} style={{ cursor: "pointer" }} /></span>))}<input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder={t("addTagPlaceholder")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} /></div></div>
             <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
                 <div onClick={() => setAgreedToTerms(!agreedToTerms)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${agreedToTerms ? CERULEAN : GRAY_LIGHT}`, background: agreedToTerms ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>{agreedToTerms && <Check size={12} color="#fff" strokeWidth={3} />}</div>
@@ -1652,19 +1654,19 @@ if (mins < 1) return t("justNow");
                       { key: "pdf", label: "PDF", desc: t("pdfDescription") },
                     ].map(opt => (
                       <button key={opt.key} onClick={() => { setDownloadFormat(opt.key); handleDownload(opt.key); }}
-                        className="flex items-center justify-between w-full px-4 py-3 rounded-lg border border-[#E0E0E0] hover:border-[#077E9E] hover:bg-[#F0F8FB] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-between w-full px-4 py-3 rounded-lg border border-[#E0E0E0] hover:border-[#1a4ba8] hover:bg-[#eef4ff] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={downloading}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-[#E8F4F8] flex items-center justify-center text-[#077E9E] font-bold text-xs uppercase">{opt.key}</div>
+                          <div className="w-8 h-8 rounded-lg bg-[#e0eaff] flex items-center justify-center text-[#1a4ba8] font-bold text-xs uppercase">{opt.key}</div>
                           <div className="text-left">
                             <p className="text-sm font-semibold text-[#212121]">{opt.label}</p>
                             <p className="text-xs text-[#666666]">{opt.desc}</p>
                           </div>
                         </div>
                         {downloading && downloadFormat === opt.key ? (
-                          <span className="inline-block w-4 h-4 border-2 border-[#077E9E] border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span>
-                        ) : <FileDown size={16} className="text-[#077E9E]" />}
+                          <span className="inline-block w-4 h-4 border-2 border-[#1a4ba8] border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span>
+                        ) : <FileDown size={16} className="text-[#1a4ba8]" />}
                       </button>
                     ))}
                   </div>
@@ -1677,7 +1679,7 @@ if (mins < 1) return t("justNow");
         <div className="detail-info-panel" style={{ borderLeft: `1px solid ${GRAY_LIGHT}`, padding: "32px 28px", overflow: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-              <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.subject}</span>
+              <span style={{ background: "#eef4ff", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.subject}</span>
               <span style={{ fontSize: 12, color: MUTED }}>{new Date(art.createdAt).toLocaleDateString("vi-VN")}</span>
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px", color: BLACK, lineHeight: 1.3 }}>{art.title}</h1>
@@ -1719,7 +1721,7 @@ if (mins < 1) return t("justNow");
           {art.subject && <div style={{ marginBottom: 12 }}>
             <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t("category")}</span>
             <div style={{ marginTop: 4 }}>
-              <span style={{ background: "#F0F8FB", color: CERULEAN, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 8, border: `1px solid #B3D9E8` }}>{art.subject}</span>
+              <span style={{ background: "#eef4ff", color: CERULEAN, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 8, border: `1px solid #a8bce0` }}>{art.subject}</span>
             </div>
           </div>}
 
@@ -1770,8 +1772,8 @@ if (mins < 1) return t("justNow");
                  style={{
                    padding: "8px 14px",
                    borderRadius: 8,
-                   border: `1px solid ${isBookmarked && isBookmarked(art.id) ? "#B3D9E8" : GRAY_LIGHT}`,
-                   background: isBookmarked && isBookmarked(art.id) ? "#F0F8FB" : "#fff",
+                   border: `1px solid ${isBookmarked && isBookmarked(art.id) ? "#a8bce0" : GRAY_LIGHT}`,
+                   background: isBookmarked && isBookmarked(art.id) ? "#eef4ff" : "#fff",
                    fontSize: 13,
                    cursor: "pointer",
                    color: isBookmarked && isBookmarked(art.id) ? CERULEAN : BLACK,
@@ -1800,7 +1802,7 @@ if (mins < 1) return t("justNow");
           {canGrade && (
             <div style={{ background: GRAY_BG, borderRadius: 12, padding: "20px", border: `1px solid ${GRAY_LIGHT}`, marginBottom: 20 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <div style={{ width: 28, height: 28, background: "#E8F4F8", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ width: 28, height: 28, background: "#e0eaff", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Check size={16} color={CERULEAN} strokeWidth={2} />
                 </div>
                 <div>
@@ -1921,11 +1923,11 @@ if (mins < 1) return t("justNow");
               <label className="block text-sm font-semibold text-[#666666] mb-3">{t("violationType")}</label>
               <div className="flex flex-wrap gap-2 mb-5">
                 {[t("plagiarism"), t("inappropriateContent"), t("falseInformation"), t("copyrightInfringement"), t("spam"), t("other")].map(type => (
-                  <button key={type} onClick={() => setReportType(type)} className={`px-3.5 py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${reportType === type ? "bg-[#077E9E] text-white border-[#077E9E]" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8]"}`}>{type}</button>
+                  <button key={type} onClick={() => setReportType(type)} className={`px-3.5 py-2 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${reportType === type ? "bg-[#1a4ba8] text-white border-[#1a4ba8]" : "bg-white text-[#666666] border-[#E0E0E0] hover:bg-[#F8F8F8]"}`}>{type}</button>
                 ))}
               </div>
               <label className="block text-sm font-semibold text-[#666666] mb-2">{t("violationDetails")}</label>
-              <textarea value={reportDetail} onChange={e => setReportDetail(e.target.value)} placeholder={t("describeViolation")} className="w-full p-3 rounded-lg border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] resize-vertical min-h-[120px] font-inherit text-[#212121] box-border" style={{ fontFamily: "inherit" }} />
+              <textarea value={reportDetail} onChange={e => setReportDetail(e.target.value)} placeholder={t("describeViolation")} className="w-full p-3 rounded-lg border border-[#E0E0E0] text-sm outline-none focus:border-[#1a4ba8] resize-vertical min-h-[120px] font-inherit text-[#212121] box-border" style={{ fontFamily: "inherit" }} />
               <button onClick={async () => {
                 if (!reportType) return;
                 setSendingReport(true);
@@ -2219,7 +2221,7 @@ function ForgotPasswordPage({ setPage }) {
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
         <img src="https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=1200&q=80" alt="bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(7,126,158,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(26,75,168,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
         <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
           <img src="/logo-uef.png" alt="UEF" style={{ height: 32, filter: "brightness(0) invert(1)" }} />
           <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
@@ -2355,7 +2357,7 @@ function ResetPasswordPage({ setPage, pageParams }) {
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
         <img src="https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=1200&q=80" alt="bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(7,126,158,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(26,75,168,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
         <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
           <img src="/logo-uef.png" alt="UEF" style={{ height: 32, filter: "brightness(0) invert(1)" }} />
           <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
@@ -2461,7 +2463,7 @@ function EmailVerificationPage({ setPage }) {
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
         <img src="https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=1200&q=80" alt="bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(7,126,158,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(26,75,168,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
         <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
           <img src="/logo-uef.png" alt="UEF" style={{ height: 32, filter: "brightness(0) invert(1)" }} />
           <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
@@ -2581,7 +2583,7 @@ function AdminOrdersPage({ setPage }) {
                   </td>
                   <td className="px-5 py-4 text-[#666666]">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
                   <td className="px-5 py-4">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.isRead ? 'bg-[#E0E0E0] text-[#666]' : 'bg-[#E8F4F8] text-[#077E9E]'}`}>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${order.isRead ? 'bg-[#E0E0E0] text-[#666]' : 'bg-[#e0eaff] text-[#1a4ba8]'}`}>
                       {order.isRead ? 'Đã xem' : 'Mới'}
                     </span>
                   </td>
@@ -2623,7 +2625,7 @@ function AdminOrdersPage({ setPage }) {
                 {parsed.artworkId && (
                   <div>
                     <strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Link liên kết</strong> 
-                    <button onClick={() => setPage("detail", { artworkId: parsed.artworkId })} className="text-sm font-medium text-[#077E9E] hover:underline flex items-center gap-1">
+                    <button onClick={() => setPage("detail", { artworkId: parsed.artworkId })} className="text-sm font-medium text-[#1a4ba8] hover:underline flex items-center gap-1">
                       Chuyển đến ấn phẩm <ExternalLink size={14} />
                     </button>
                   </div>
@@ -2656,22 +2658,22 @@ function AdminDashboardPage({ setPage }) {
   }, []);
 
   const stats = [
-    { label: t("publishedArtworks"), value: adminStats.publishedArtworks || 0, hint: t("totalPublishedArtworks"), accent: "#077E9E" },
+    { label: t("publishedArtworks"), value: adminStats.publishedArtworks || 0, hint: t("totalPublishedArtworks"), accent: "#1a4ba8" },
     { label: t("reportedArtworks"), value: adminStats.reportedArtworks || 0, hint: t("needsProcessing"), accent: "#8B1A1A" },
     { label: t("totalAccounts"), value: adminStats.totalAccounts || 0, hint: "SV + GV + Admin", accent: "#212121" },
-    { label: t("interactions"), value: (adminStats.totalInteractions || 0).toLocaleString(), hint: t("likesAndComments"), accent: "#055F78" },
+    { label: t("interactions"), value: (adminStats.totalInteractions || 0).toLocaleString(), hint: t("likesAndComments"), accent: "#0d2e6e" },
   ];
 
   const categoryCounts = [];
   const recent = recentActivity.slice(0, 4).map(a => ({
-    color: a.isPublic ? "#077E9E" : "#8B1A1A",
+    color: a.isPublic ? "#1a4ba8" : "#8B1A1A",
     text: `${a.user?.fullName || "User"} ${a.isPublic ? t("approvedArtwork") : t("justPosted")} "${(a.title || "").slice(0, 30)}"`,
   }));
 
   const statusBadge = (s) => {
     if (s === "Bị báo cáo") return "bg-red-50 text-[#8B1A1A] border border-[#F5C5C5]";
     if (s === "Đã ẩn") return "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]";
-    if (s === "Nổi bật") return "bg-blue-50 text-[#077E9E] border border-[#B3D9E8]";
+    if (s === "Nổi bật") return "bg-blue-50 text-[#1a4ba8] border border-[#a8bce0]";
     return "bg-white text-[#212121] border border-[#E0E0E0]";
   };
 
@@ -2711,7 +2713,7 @@ function AdminDashboardPage({ setPage }) {
               });
               
               doc.save("Bao_Cao_Tong_Quan.pdf");
-            }} className="px-4 py-2.5 bg-[#077E9E] text-white rounded-lg text-sm font-semibold hover:bg-[#055F78] transition-colors flex items-center gap-2">
+            }} className="px-4 py-2.5 bg-[#1a4ba8] text-white rounded-lg text-sm font-semibold hover:bg-[#0d2e6e] transition-colors flex items-center gap-2">
             <FileDown size={16} /> {t("pdfReport")}
           </button>
         </div>
@@ -2739,7 +2741,7 @@ function AdminDashboardPage({ setPage }) {
                 <h3 className="text-sm font-bold text-[#212121]">{t("artworksToReview")}</h3>
                 <p className="text-xs text-[#666666] mt-1">{t("artworksToReviewDesc")}</p>
               </div>
-              <button onClick={() => setPage("admin_artworks")} className="text-sm font-semibold text-[#077E9E] hover:text-[#055F78] transition-colors">
+              <button onClick={() => setPage("admin_artworks")} className="text-sm font-semibold text-[#1a4ba8] hover:text-[#0d2e6e] transition-colors">
                 {t("openProcessingPage")} →
               </button>
             </div>
@@ -2822,7 +2824,7 @@ function AdminDashboardPage({ setPage }) {
                   </div>
                 </button>
                 <button onClick={() => setPage("admin_users")} className="w-full flex items-center gap-3 px-4 py-3 rounded-lg border border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors text-left">
-                  <Users size={16} className="text-[#077E9E]" />
+                  <Users size={16} className="text-[#1a4ba8]" />
                   <div>
                     <p className="text-sm font-semibold text-[#212121]">{t("manageAccounts")}</p>
                     <p className="text-xs text-[#666666]">{t("permissionsAndLock")}</p>
@@ -2892,7 +2894,7 @@ function MessagesPage({ setPage, userData }) {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {messages.map(msg => (
-              <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#F0F8FB", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#B3D9E8"}`, overflow: "hidden" }}>
+              <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#eef4ff", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#a8bce0"}`, overflow: "hidden" }}>
                 <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
                   <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
                     {msg.senderName?.charAt(0) || "?"}
@@ -3010,8 +3012,8 @@ function AdminSidebar({ active, setPage }) {
       </div>
       <div className="py-4">
         {items.map(item => (
-          <div key={item.label} onClick={() => setPage(item.page)} className={`flex items-center gap-3 px-6 py-3 cursor-pointer border-r-4 ${active === item.page ? 'bg-[#E8F4F8] border-[#077E9E] text-[#077E9E]' : 'border-transparent text-[#212121] hover:bg-white'}`}>
-            <span className={active === item.page ? 'text-[#077E9E]' : 'text-[#666666]'}>{item.icon}</span>
+          <div key={item.label} onClick={() => setPage(item.page)} className={`flex items-center gap-3 px-6 py-3 cursor-pointer border-r-4 ${active === item.page ? 'bg-[#e0eaff] border-[#1a4ba8] text-[#1a4ba8]' : 'border-transparent text-[#212121] hover:bg-white'}`}>
+            <span className={active === item.page ? 'text-[#1a4ba8]' : 'text-[#666666]'}>{item.icon}</span>
             <span className={`text-sm ${active === item.page ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
           </div>
         ))}
@@ -3184,38 +3186,38 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
                   </div>
                 ))}
                 {additionalImages.length < 9 && (
-                  <button onClick={() => document.getElementById("editAdditionalInput")?.click()} className="w-[90px] h-[72px] rounded-lg border-2 border-dashed border-[#E0E0E0] flex items-center justify-center text-[#666666] hover:border-[#077E9E] hover:text-[#077E9E] transition-colors cursor-pointer"><Plus size={22} /></button>
+                  <button onClick={() => document.getElementById("editAdditionalInput")?.click()} className="w-[90px] h-[72px] rounded-lg border-2 border-dashed border-[#E0E0E0] flex items-center justify-center text-[#666666] hover:border-[#1a4ba8] hover:text-[#1a4ba8] transition-colors cursor-pointer"><Plus size={22} /></button>
                 )}
               </div>
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("courseName")}</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("projectType")}</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#F0F8FB] border-[#077E9E] text-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("assignmentType")}</label><div className="flex gap-3">{[{ key: false, label: t("individual"), icon: <User size={16} /> }, { key: true, label: t("group"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#F0F8FB] border-[#077E9E]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#077E9E]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
-            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
-            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#077E9E] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("courseName")}</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#1a4ba8] focus:bg-white transition-colors" /></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("projectType")}</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#eef4ff] border-[#1a4ba8] text-[#1a4ba8]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("assignmentType")}</label><div className="flex gap-3">{[{ key: false, label: t("individual"), icon: <User size={16} /> }, { key: true, label: t("group"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#eef4ff] border-[#1a4ba8]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#1a4ba8]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#1a4ba8]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
+            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#e0eaff] text-[#1a4ba8] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
+            <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#1a4ba8] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("category")}</label>
-              <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:bg-white transition-colors cursor-pointer">
+              <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#1a4ba8] focus:bg-white transition-colors cursor-pointer">
                 <option value="">{t("selectOption")}</option>
                 {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("tools")}</label>
               <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">
-                {tools.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTools(tools.filter(x => x !== t))} /></span>))}
+                {tools.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#e0eaff] text-[#1a4ba8] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTools(tools.filter(x => x !== t))} /></span>))}
                 <input value={toolInput} onChange={e => setToolInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && toolInput.trim()) { setTools([...tools, toolInput.trim()]); setToolInput(""); } }} placeholder="Add tool..." className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
               </div>
             </div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("tags")}</label>
               <div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">
-                {tags.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#E8F4F8] text-[#077E9E] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTags(tags.filter(x => x !== t))} /></span>))}
+                {tags.map(t => (<span key={t} className="inline-flex items-center gap-1 bg-[#e0eaff] text-[#1a4ba8] text-xs px-2.5 py-1 rounded-full">{t}<X size={10} className="cursor-pointer" onClick={() => setTags(tags.filter(x => x !== t))} /></span>))}
                 <input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder={t("addTag")} className="border-none bg-transparent outline-none text-sm min-w-[80px] text-[#212121]" />
               </div>
             </div>
             <div className="mt-auto pt-4 border-t border-[#E0E0E0] flex gap-3">
               <button onClick={handleDelete} className="flex-1 py-3 rounded-lg border border-[#8B1A1A] text-[#8B1A1A] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 transition-colors cursor-pointer"><Trash2 size={16} /> {t("deleteArtwork")}</button>
-              <button onClick={handleSave} disabled={saving} className="flex-[2] py-3 rounded-lg border-none bg-[#077E9E] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50"><Check size={16} /> {saving ? t("saving") : t("saveChanges")}</button>
+              <button onClick={handleSave} disabled={saving} className="flex-[2] py-3 rounded-lg border-none bg-[#1a4ba8] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50"><Check size={16} /> {saving ? t("saving") : t("saveChanges")}</button>
             </div>
           </div>
         </div>
@@ -3324,24 +3326,24 @@ function AdminUsersPage({ setPage }) {
               className="hidden"
               onChange={handleImportFile}
             />
-            <button onClick={handleExportExcel} className="px-4 py-2 border border-[#077E9E] text-[#077E9E] rounded-lg text-sm font-semibold hover:bg-[#E8F4F8] transition-colors flex items-center gap-2">
+            <button onClick={handleExportExcel} className="px-4 py-2 border border-[#1a4ba8] text-[#1a4ba8] rounded-lg text-sm font-semibold hover:bg-[#e0eaff] transition-colors flex items-center gap-2">
               <ArrowDownCircle size={16} />
               Export Excel
             </button>
-            <button onClick={() => importInputRef.current?.click()} className="px-4 py-2 bg-[#077E9E] text-white rounded-lg text-sm font-semibold hover:bg-[#055F78] transition-colors flex items-center gap-2">
+            <button onClick={() => importInputRef.current?.click()} className="px-4 py-2 bg-[#1a4ba8] text-white rounded-lg text-sm font-semibold hover:bg-[#0d2e6e] transition-colors flex items-center gap-2">
               <ArrowDownCircle size={16} className="-rotate-90" />
               Import Excel
             </button>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" size={16} />
-              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t("searchUser")} className="pl-10 pr-4 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm w-64 outline-none focus:border-[#077E9E]" />
+              <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t("searchUser")} className="pl-10 pr-4 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm w-64 outline-none focus:border-[#1a4ba8]" />
             </div>
           </div>
         </div>
         {importFileName && (
-          <div className="mb-5 bg-[#E8F4F8] border border-[#B3D9E8] text-[#077E9E] rounded-lg px-4 py-3 text-sm flex items-center justify-between">
+          <div className="mb-5 bg-[#e0eaff] border border-[#a8bce0] text-[#1a4ba8] rounded-lg px-4 py-3 text-sm flex items-center justify-between">
             <span className="font-medium">{t("selectedFile")}: {importFileName}</span>
-            <button onClick={() => setImportFileName("")} className="text-[#077E9E] hover:text-[#055F78] font-semibold text-sm">{t("deselect")}</button>
+            <button onClick={() => setImportFileName("")} className="text-[#1a4ba8] hover:text-[#0d2e6e] font-semibold text-sm">{t("deselect")}</button>
           </div>
         )}
 
@@ -3375,7 +3377,7 @@ function AdminUsersPage({ setPage }) {
                       <select
                         value={u.role}
                         onChange={(e) => setRole(u.id, e.target.value)}
-                        className="w-full appearance-none px-3 py-2 rounded-lg border border-[#E0E0E0] bg-white text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] cursor-pointer pr-9 hover:bg-[#F8F8F8] transition-colors"
+                        className="w-full appearance-none px-3 py-2 rounded-lg border border-[#E0E0E0] bg-white text-sm text-[#212121] outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8] cursor-pointer pr-9 hover:bg-[#F8F8F8] transition-colors"
                       >
                         {Object.entries(roleLabel).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                       </select>
@@ -3385,7 +3387,7 @@ function AdminUsersPage({ setPage }) {
                   <td className="px-4 py-3 text-sm text-[#666666]">{u.createdAt ? new Date(u.createdAt).toLocaleDateString("vi-VN") : "—"}</td>
                   <td className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center">
-                      <button onClick={() => locked ? toggleLockUser(u) : setConfirmModal({ isOpen: true, user: u })} className={`px-3 py-1.5 flex items-center gap-2 rounded-md border transition-colors cursor-pointer ${locked ? 'border-[#077E9E] text-[#077E9E] hover:bg-[#077E9E] hover:text-white' : 'border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white'}`} title={locked ? t("unlock") : t("lockAccount")}>
+                      <button onClick={() => locked ? toggleLockUser(u) : setConfirmModal({ isOpen: true, user: u })} className={`px-3 py-1.5 flex items-center gap-2 rounded-md border transition-colors cursor-pointer ${locked ? 'border-[#1a4ba8] text-[#1a4ba8] hover:bg-[#1a4ba8] hover:text-white' : 'border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white'}`} title={locked ? t("unlock") : t("lockAccount")}>
                         {locked ? <Unlock size={14} /> : <Lock size={14} />}
                         <span className="text-xs font-semibold">{locked ? t("unlock") : t("lockAccount")}</span>
                       </button>
@@ -3428,7 +3430,7 @@ function AdminUsersPage({ setPage }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Cột 1: Thông tin cơ bản */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-[#077E9E] border-b pb-2">Thông tin cơ bản</h4>
+                <h4 className="font-semibold text-[#1a4ba8] border-b pb-2">Thông tin cơ bản</h4>
                 <div className="flex items-center gap-4 mb-4">
                   <img src={editModal.user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(editModal.user.fullName || "User")}&background=random`} alt="Avatar" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
                   <div>
@@ -3458,7 +3460,7 @@ function AdminUsersPage({ setPage }) {
               {/* Cột 2: Thông tin định danh theo Role */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center border-b pb-2">
-                  <h4 className="font-semibold text-[#077E9E]">Thông tin định danh</h4>
+                  <h4 className="font-semibold text-[#1a4ba8]">Thông tin định danh</h4>
                   <div className="text-xs font-semibold px-2 py-1 bg-gray-100 rounded-md uppercase tracking-wider">{roleLabel[editModal.user.role] || editModal.user.role}</div>
                 </div>
 
@@ -3518,7 +3520,7 @@ function AdminUsersPage({ setPage }) {
 
             <div className="mt-8 flex justify-end gap-3 border-t pt-4">
               <button onClick={() => setEditModal({ isOpen: false, user: null })} className="px-5 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50">Hủy</button>
-              <button onClick={handleSaveUser} className="px-5 py-2 bg-[#077E9E] rounded-lg text-sm font-semibold text-white hover:bg-[#055F78]">Lưu thay đổi</button>
+              <button onClick={handleSaveUser} className="px-5 py-2 bg-[#1a4ba8] rounded-lg text-sm font-semibold text-white hover:bg-[#0d2e6e]">Lưu thay đổi</button>
             </div>
           </div>
         </div>
@@ -3623,7 +3625,7 @@ function AdminArtworksPage({ setPage }) {
     if (s === t("violation")) return "bg-red-50 text-[#8B1A1A] border border-[#F5C5C5]";
     if (s === "Bị báo cáo") return "bg-red-50 text-[#8B1A1A] border border-[#F5C5C5]";
     if (s === "Đã ẩn") return "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]";
-    if (s === "Nổi bật") return "bg-blue-50 text-[#077E9E] border border-[#B3D9E8]";
+    if (s === "Nổi bật") return "bg-blue-50 text-[#1a4ba8] border border-[#a8bce0]";
     return "bg-white text-[#212121] border border-[#E0E0E0]";
   };
 
@@ -3658,7 +3660,7 @@ function AdminArtworksPage({ setPage }) {
       <select
         value={value}
         onChange={onChange}
-        className="appearance-none px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm text-[#212121] outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] cursor-pointer pr-9 hover:bg-[#F8F8F8] transition-colors"
+        className="appearance-none px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm text-[#212121] outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8] cursor-pointer pr-9 hover:bg-[#F8F8F8] transition-colors"
       >
         {children}
       </select>
@@ -3702,7 +3704,7 @@ function AdminArtworksPage({ setPage }) {
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[260px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" size={16} />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchArtworkStudentTags")} className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t("searchArtworkStudentTags")} className="w-full pl-10 pr-4 py-2.5 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
             </div>
             <FilterSelect value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
               <option value="Tất cả">{t("subjectAll")}</option>
@@ -3740,7 +3742,7 @@ function AdminArtworksPage({ setPage }) {
                 onClick={() => toggleHighlight(selectedIds)}
                 disabled={selectedIds.length === 0}
                 className={`px-3.5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
-                  selectedIds.length === 0 ? "bg-[#F8F8F8] text-[#999999] border-[#E0E0E0] cursor-not-allowed" : "bg-[#E8F4F8] text-[#077E9E] border-[#B3D9E8] hover:bg-[#D9EEF6]"
+                  selectedIds.length === 0 ? "bg-[#F8F8F8] text-[#999999] border-[#E0E0E0] cursor-not-allowed" : "bg-[#e0eaff] text-[#1a4ba8] border-[#a8bce0] hover:bg-[#d0daf0]"
                 }`}
               >
                 Highlight
@@ -3791,7 +3793,7 @@ function AdminArtworksPage({ setPage }) {
                     <tr>
                       <td colSpan="5" className="px-4 py-16 text-center">
                         <div className="flex flex-col items-center justify-center text-[#666]">
-                          <div className="w-8 h-8 border-4 border-[#077E9E]/20 border-t-[#077E9E] rounded-full animate-spin mb-4"></div>
+                          <div className="w-8 h-8 border-4 border-[#1a4ba8]/20 border-t-[#1a4ba8] rounded-full animate-spin mb-4"></div>
                           <p className="font-semibold">{t("loadingData") || "Đang tải..."}</p>
                         </div>
                       </td>
@@ -3807,7 +3809,7 @@ function AdminArtworksPage({ setPage }) {
                       key={a.id}
                       onClick={() => setSelectedId(a.id)}
                       className={`border-b transition-colors cursor-pointer ${
-                        selectedId === a.id ? "bg-[#E8F4F8]" : (a._count?.reports || 0) > 0 ? "bg-red-50" : a.isPending ? "bg-amber-50" : "bg-white"
+                        selectedId === a.id ? "bg-[#e0eaff]" : (a._count?.reports || 0) > 0 ? "bg-red-50" : a.isPending ? "bg-amber-50" : "bg-white"
                       } ${
                         (a._count?.reports || 0) > 0 ? "border-l-4 border-l-[#8B1A1A]" : "border-[#E0E0E0]"
                       } hover:bg-[#F8F8F8]`}
@@ -3885,7 +3887,7 @@ function AdminArtworksPage({ setPage }) {
                   {(selected.fileUrls || []).length > 0 && (
                     <div className="flex gap-2 mt-3 flex-wrap">
                       {[selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean).map((url, idx) => (
-                        <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#077E9E] transition-colors" onClick={() => handleOpenGallery(idx)}>
+                        <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#1a4ba8] transition-colors" onClick={() => handleOpenGallery(idx)}>
                           <img src={url} alt="" className="w-full h-full object-cover" />
                         </div>
                       ))}
@@ -3915,7 +3917,7 @@ function AdminArtworksPage({ setPage }) {
                   </div>
 
                   <div className="mt-4">
-                    <a href={`${window.location.origin}/#/detail/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[#077E9E] hover:text-[#055F78] font-semibold flex items-center gap-1.5 transition-colors">
+                    <a href={`${window.location.origin}/#/detail/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[#1a4ba8] hover:text-[#0d2e6e] font-semibold flex items-center gap-1.5 transition-colors">
                       <ExternalLink size={14} /> {t("viewDetails")}: {selected.title}
                     </a>
                   </div>
@@ -3958,7 +3960,7 @@ function AdminArtworksPage({ setPage }) {
 
                   <div className="mt-5 grid grid-cols-3 gap-3">
                     {!selected.isPublic ? (
-                      <button onClick={() => approveArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#077E9E] bg-white text-[#077E9E] text-sm font-semibold hover:bg-[#F0F8FB] transition-colors">
+                      <button onClick={() => approveArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#1a4ba8] bg-white text-[#1a4ba8] text-sm font-semibold hover:bg-[#eef4ff] transition-colors">
                         <Check size={14} className="inline mr-1" /> {t("approveArtwork")}
                       </button>
                     ) : (
@@ -3972,7 +3974,7 @@ function AdminArtworksPage({ setPage }) {
                   </div>
 
                   <button onClick={() => toggleHighlight(selected.id, !selected.isHighlighted)} className={`mt-3 w-full py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
-                    selected.isHighlighted ? "bg-[#212121] text-white border-[#212121]" : "bg-[#E8F4F8] text-[#077E9E] border-[#B3D9E8] hover:bg-[#D9EEF6]"
+                    selected.isHighlighted ? "bg-[#212121] text-white border-[#212121]" : "bg-[#e0eaff] text-[#1a4ba8] border-[#a8bce0] hover:bg-[#d0daf0]"
                   }`}>
                     {selected.isHighlighted ? t("removeHighlight") : t("highlightArtwork")}
                   </button>
@@ -4030,7 +4032,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
           </div>
           <button
             onClick={() => onQuickCreateCollection && onQuickCreateCollection()}
-            className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#077E9E] text-white rounded-xl font-bold hover:bg-[#055F78] transition-colors shadow-sm cursor-pointer w-full lg:w-auto"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#1a4ba8] text-white rounded-xl font-bold hover:bg-[#0d2e6e] transition-colors shadow-sm cursor-pointer w-full lg:w-auto"
           >
             <Plus size={18} />
             {t("createNewCollection")}
@@ -4040,14 +4042,14 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {collections.length === 0 && (
             <div className="col-span-full py-20 text-center border-2 border-dashed border-[#E0E0E0] rounded-2xl bg-[#F8F8F8]">
-              <Folder className="mx-auto text-[#077E9E] mb-4 opacity-50" size={48} />
+              <Folder className="mx-auto text-[#1a4ba8] mb-4 opacity-50" size={48} />
               <h3 className="text-lg font-bold text-[#212121] mb-2">{t("noCollectionsYet", "Chưa có bộ sưu tập nào")}</h3>
               <p className="text-[#666666] mb-6 max-w-md mx-auto">
                 {t("createCollectionPrompt", "Hãy tạo bộ sưu tập mới để lưu trữ và xuất file báo cáo tổng hợp các ấn phẩm.")}
               </p>
               <button
                 onClick={() => onQuickCreateCollection && onQuickCreateCollection()}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#077E9E] text-white rounded-xl font-bold hover:bg-[#055F78] transition-colors shadow-sm cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1a4ba8] text-white rounded-xl font-bold hover:bg-[#0d2e6e] transition-colors shadow-sm cursor-pointer"
               >
                 <Plus size={18} />
                 {t("createNewCollection", "Tạo Bộ Sưu Tập Mới")}
@@ -4060,7 +4062,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
               <div
                 key={c.id}
                 onClick={() => onOpenExportConfig && onOpenExportConfig(c.id)}
-                className="bg-white border border-[#E0E0E0] rounded-2xl p-5 hover:shadow-lg hover:border-[#077E9E] transition-all cursor-pointer"
+                className="bg-white border border-[#E0E0E0] rounded-2xl p-5 hover:shadow-lg hover:border-[#1a4ba8] transition-all cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -4068,7 +4070,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
                     <h3 className="text-lg font-bold text-[#212121] truncate">{c.name}</h3>
                     <p className="text-sm text-[#666666] mt-1">{c.items.length} {t("artworks")} · {t("theme")}: <span className="font-semibold text-[#212121]">{c.theme}</span></p>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-[#E8F4F8] border border-[#B3D9E8] flex items-center justify-center text-[#077E9E] flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-[#e0eaff] border border-[#a8bce0] flex items-center justify-center text-[#1a4ba8] flex-shrink-0">
                     <FileDown size={18} />
                   </div>
                 </div>
@@ -4091,7 +4093,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
                     <span className="text-[11px] text-[#666666]">
                     {t("curatorNotePriority")}
                   </span>
-                  <span className="text-sm font-bold text-[#077E9E]">{t("openConfig")} →</span>
+                  <span className="text-sm font-bold text-[#1a4ba8]">{t("openConfig")} →</span>
                 </div>
                 <button
                   onClick={(e) => { e.stopPropagation(); onOpenCatalogBuilder && onOpenCatalogBuilder(c); }}
@@ -4128,7 +4130,7 @@ function SortableArtworkCard({ item, id, onClick, deleteMode, isSelected, onTogg
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative bg-white border rounded-xl overflow-hidden transition-all cursor-pointer ${isSelected ? "border-[#077E9E] shadow-md ring-2 ring-[#077E9E]/20" : "border-[#E0E0E0] hover:shadow-md hover:border-[#077E9E]"}`}
+      className={`group relative bg-white border rounded-xl overflow-hidden transition-all cursor-pointer ${isSelected ? "border-[#1a4ba8] shadow-md ring-2 ring-[#1a4ba8]/20" : "border-[#E0E0E0] hover:shadow-md hover:border-[#1a4ba8]"}`}
       onClick={onClick}
     >
       <div className="aspect-[4/3] bg-[#F8F8F8] overflow-hidden relative">
@@ -4274,7 +4276,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
             <button onClick={() => setPage("admin_export")} className="px-4 py-2.5 rounded-xl border border-[#E0E0E0] text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] transition-colors cursor-pointer">
               {t("goBack")}
             </button>
-            <button onClick={() => { onOpenCatalogBuilder && onOpenCatalogBuilder(collection); }} className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 cursor-pointer bg-[#077E9E] text-white hover:bg-[#055F78]`}>
+            <button onClick={() => { onOpenCatalogBuilder && onOpenCatalogBuilder(collection); }} className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 cursor-pointer bg-[#1a4ba8] text-white hover:bg-[#0d2e6e]`}>
               <Settings size={16} /> Thiết lập Xuất Tập San
             </button>
           </div>
@@ -4347,7 +4349,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                     type="text"
                     value={detailArtwork.category || detailArtwork.artwork?.category || ""}
                     onChange={(e) => updateDetailArtwork({ category: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]"
+                    className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]"
                     placeholder="VD: Brand Identity, Typography..."
                   />
                 </div>
@@ -4357,7 +4359,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                   <select
                     value={detailArtwork.award || "Không có"}
                     onChange={(e) => updateDetailArtwork({ award: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]"
+                    className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]"
                   >
                     <option value="Không có">Không có</option>
                     <option value="Vàng">Vàng</option>
@@ -4372,7 +4374,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                     value={detailArtwork.note || ""}
                     onChange={(e) => updateDetailArtwork({ note: e.target.value })}
                     rows={4}
-                    className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] resize-none"
+                    className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] resize-none"
                     placeholder="Nhận xét ngắn gọn về tác phẩm..."
                   />
                 </div>
@@ -4476,7 +4478,7 @@ function RegisterPage({ setPage }) {
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
         <img src="https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=1200&q=80" alt="register-bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(7,126,158,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(26,75,168,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
         <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
           <img src="/logo-uef.png" alt="UEF" style={{ height: 32, filter: "brightness(0) invert(1)" }} />
           <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
@@ -4591,12 +4593,12 @@ function LandingPage({ setPage, isLoggedIn }) {
       {/* Hero Section */}
       <section className="px-8 py-20 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
         <div className="flex-1">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
-            <span className="w-8 h-px bg-[#077E9E]"></span> {t("facultyName")}
+          <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
+            <span className="w-8 h-px bg-[#1a4ba8]"></span> {t("facultyName")}
           </p>
           <h2 className="text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6">
             {t("heroTitle1")}<br />
-            <span className="text-[#077E9E]">{t("heroTitle2")}</span> {t("heroTitle3")}<br />
+            <span className="text-[#1a4ba8]">{t("heroTitle2")}</span> {t("heroTitle3")}<br />
             {t("heroTitle4")}
           </h2>
           <div className="space-y-1 mb-10 max-w-sm">
@@ -4605,7 +4607,7 @@ function LandingPage({ setPage, isLoggedIn }) {
             <div className="h-0.5 bg-gray-200 w-3/5"></div>
           </div>
           <div className="flex flex-wrap gap-4 mb-4">
-            <button onClick={() => setPage("gallery")} className="bg-[#077E9E] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#066a85] transition-colors">
+            <button onClick={() => setPage("gallery")} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
               {t("exploreGallery")} <ArrowRight size={18} />
             </button>
             <button onClick={() => setPage("auth")} className="bg-white text-[#212121] border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
@@ -4661,7 +4663,7 @@ function LandingPage({ setPage, isLoggedIn }) {
             </div>
           </div>
           <div className="absolute -bottom-6 -right-6 flex gap-2">
-            <span className="bg-[#077E9E] text-white text-[10px] px-3 py-1.5 rounded-full font-medium">3d art</span>
+            <span className="bg-[#1a4ba8] text-white text-[10px] px-3 py-1.5 rounded-full font-medium">3d art</span>
             <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] px-3 py-1.5 rounded-full font-medium">branding</span>
             <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] px-3 py-1.5 rounded-full font-medium">poster</span>
             <span className="bg-gray-100 text-gray-600 border border-gray-200 text-[10px] px-3 py-1.5 rounded-full font-medium">packaging</span>
@@ -4672,35 +4674,35 @@ function LandingPage({ setPage, isLoggedIn }) {
       {/* Features Section */}
       <section className="px-8 py-20 bg-gray-50/50">
         <div className="max-w-7xl mx-auto">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
-            <span className="w-6 h-px bg-[#077E9E]"></span> {t("coreFeatures")}
+          <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
+            <span className="w-6 h-px bg-[#1a4ba8]"></span> {t("coreFeatures")}
           </p>
           <h2 className="text-3xl font-extrabold mb-12">{t("everythingInOnePlatform")}</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-white p-8 rounded-2xl border border-[#077E9E] shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 bg-[#E8F4F8] text-[#077E9E] rounded-lg flex items-center justify-center mb-6">
+            <div className="bg-white p-8 rounded-2xl border border-[#1a4ba8] shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-10 h-10 bg-[#e0eaff] text-[#1a4ba8] rounded-lg flex items-center justify-center mb-6">
                 <Image size={20} />
               </div>
               <h3 className="font-bold text-lg mb-3">{t("exhibitGallery")}</h3>
               <p className="text-sm text-gray-500 leading-relaxed mb-6">{t("exhibitGalleryDesc")}</p>
-              <div className="flex items-center gap-2 text-xs font-medium text-[#077E9E] bg-[#E8F4F8] w-fit px-3 py-1.5 rounded-md">
+              <div className="flex items-center gap-2 text-xs font-medium text-[#1a4ba8] bg-[#e0eaff] w-fit px-3 py-1.5 rounded-md">
                 <Image size={14} /> gallery
               </div>
             </div>
             
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <User size={20} />
               </div>
               <h3 className="font-bold text-lg mb-3">{t("personalPortfolio")}</h3>
               <p className="text-sm text-gray-500 leading-relaxed mb-6">{t("portfolioFeatureDesc")}</p>
-              <div className="flex items-center gap-2 text-xs font-medium text-[#077E9E] bg-[#E8F4F8] w-fit px-3 py-1.5 rounded-md">
+              <div className="flex items-center gap-2 text-xs font-medium text-[#1a4ba8] bg-[#e0eaff] w-fit px-3 py-1.5 rounded-md">
                 <User size={14} /> {t("personalPortfolioLabel")}
               </div>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <Star size={20} />
               </div>
@@ -4708,7 +4710,7 @@ function LandingPage({ setPage, isLoggedIn }) {
               <p className="text-sm text-gray-500 leading-relaxed">{t("gradingFeatureDesc")}</p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <Monitor size={20} />
               </div>
@@ -4716,7 +4718,7 @@ function LandingPage({ setPage, isLoggedIn }) {
               <p className="text-sm text-gray-500 leading-relaxed">{t("responsiveDesc")}</p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <Heart size={20} />
               </div>
@@ -4724,7 +4726,7 @@ function LandingPage({ setPage, isLoggedIn }) {
               <p className="text-sm text-gray-500 leading-relaxed">{t("interactionDesc")}</p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#077E9E] transition-colors cursor-default">
+            <div className="bg-white p-8 rounded-2xl border border-gray-200 hover:border-[#1a4ba8] transition-colors cursor-default">
               <div className="w-10 h-10 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center mb-6">
                 <Users size={20} />
               </div>
@@ -4740,8 +4742,8 @@ function LandingPage({ setPage, isLoggedIn }) {
         <div className="max-w-7xl mx-auto border-t border-gray-100 pt-16">
           <div className="flex justify-between items-end mb-12">
             <div>
-              <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
-                <span className="w-6 h-px bg-[#077E9E]"></span> {t("featuredProducts")}
+              <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
+                <span className="w-6 h-px bg-[#1a4ba8]"></span> {t("featuredProducts")}
               </p>
               <h2 className="text-3xl font-extrabold">{t("exploreNewestArtworks")}</h2>
             </div>
@@ -4756,7 +4758,7 @@ function LandingPage({ setPage, isLoggedIn }) {
                 <div className={`rounded-xl overflow-hidden mb-4 relative ${idx % 2 === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
                   <img src={work.img} alt={work.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   {idx === 0 && (
-                    <div className="absolute top-3 left-3 bg-[#077E9E] text-white text-[10px] font-bold px-2 py-1 rounded">{t("featured")}</div>
+                    <div className="absolute top-3 left-3 bg-[#1a4ba8] text-white text-[10px] font-bold px-2 py-1 rounded">{t("featured")}</div>
                   )}
                 </div>
                 <h4 className="font-bold text-[15px] mb-1">{work.title}</h4>
@@ -4773,8 +4775,8 @@ function LandingPage({ setPage, isLoggedIn }) {
       {/* Steps Section */}
       <section className="px-8 py-20 bg-gray-50/50">
         <div className="max-w-7xl mx-auto border-t border-gray-100 pt-16">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2 justify-center">
-            <span className="w-6 h-px bg-[#077E9E]"></span> {t("guide")}
+          <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2 justify-center">
+            <span className="w-6 h-px bg-[#1a4ba8]"></span> {t("guide")}
           </p>
           <h2 className="text-3xl font-extrabold text-center mb-16">{t("startInThreeSteps")}</h2>
           
@@ -4782,19 +4784,19 @@ function LandingPage({ setPage, isLoggedIn }) {
             <div className="hidden md:block absolute top-6 left-[15%] right-[15%] h-px bg-gray-300 z-0 border-t border-dashed border-gray-300"></div>
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
-              <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">1</div>
+              <div className="w-12 h-12 bg-[#1a4ba8] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">1</div>
               <h3 className="font-bold mb-2">{t("login")}</h3>
               <p className="text-sm text-gray-500">{t("step1Desc")}</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
-              <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">2</div>
+              <div className="w-12 h-12 bg-[#1a4ba8] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">2</div>
               <h3 className="font-bold mb-2">{t("uploadArtworkStep")}</h3>
               <p className="text-sm text-gray-500">{t("step2Desc")}</p>
             </div>
             
             <div className="flex-1 flex flex-col items-center text-center z-10">
-              <div className="w-12 h-12 bg-[#077E9E] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">3</div>
+              <div className="w-12 h-12 bg-[#1a4ba8] text-white rounded-full flex items-center justify-center font-bold text-lg mb-6 border-4 border-gray-50 shadow-sm">3</div>
               <h3 className="font-bold mb-2">{t("sharePortfolio")}</h3>
               <p className="text-sm text-gray-500">{t("step3Desc")}</p>
             </div>
@@ -4810,7 +4812,7 @@ function LandingPage({ setPage, isLoggedIn }) {
             <p className="text-gray-400">{t("forStudents")}</p>
           </div>
           <div className="flex gap-4">
-            <button onClick={() => setPage("auth")} className="bg-[#077E9E] hover:bg-[#066a85] text-white px-8 py-3 rounded-lg font-bold transition-colors">{t("loginNow")}</button>
+            <button onClick={() => setPage("auth")} className="bg-[#1a4ba8] hover:bg-[#1642a6] text-white px-8 py-3 rounded-lg font-bold transition-colors">{t("loginNow")}</button>
             <button onClick={() => setPage("gallery")} className="border border-gray-600 hover:border-gray-400 text-white px-8 py-3 rounded-lg font-bold transition-colors">{t("viewGallery")}</button>
           </div>
         </div>
@@ -5496,7 +5498,7 @@ function SaveToCollectionModal({
               {collections.map((c) => (
                 <label
                   key={c.id}
-                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl border border-[#E0E0E0] hover:border-[#B3D9E8] hover:bg-[#F0F8FB] transition-colors cursor-pointer"
+                  className="flex items-center justify-between gap-3 px-3 py-2 rounded-xl border border-[#E0E0E0] hover:border-[#a8bce0] hover:bg-[#eef4ff] transition-colors cursor-pointer"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-[#212121] truncate">{c.name}</p>
@@ -5506,7 +5508,7 @@ function SaveToCollectionModal({
                     type="checkbox"
                     checked={selectedIds.includes(c.id)}
                     onChange={() => toggle(c.id)}
-                    className="w-4 h-4 accent-[#077E9E]"
+                    className="w-4 h-4 accent-[#1a4ba8]"
                   />
                 </label>
               ))}
@@ -5517,7 +5519,7 @@ function SaveToCollectionModal({
               {!creating ? (
                 <button
                   onClick={() => setCreating(true)}
-                  className="text-sm font-semibold text-[#077E9E] hover:opacity-80 transition-opacity inline-flex items-center gap-2"
+                  className="text-sm font-semibold text-[#1a4ba8] hover:opacity-80 transition-opacity inline-flex items-center gap-2"
                 >
                   <Plus size={16} /> {t("createNewCollection")}
                 </button>
@@ -5528,11 +5530,11 @@ function SaveToCollectionModal({
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && submitCreate()}
                     placeholder={t("collectionNamePlaceholder")}
-                    className="flex-1 px-3 py-2 rounded-xl border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]"
+                    className="flex-1 px-3 py-2 rounded-xl border border-[#E0E0E0] text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]"
                   />
                   <button
                     onClick={submitCreate}
-                    className="px-3 py-2 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors"
+                    className="px-3 py-2 rounded-xl bg-[#1a4ba8] text-white text-sm font-bold hover:bg-[#0d2e6e] transition-colors"
                   >
                     {t("create")}
                   </button>
@@ -5559,7 +5561,7 @@ function SaveToCollectionModal({
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={t("curatorNotePlaceholder")}
-              className="w-full min-h-[110px] px-4 py-3 rounded-2xl border border-[#E0E0E0] text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] resize-y"
+              className="w-full min-h-[110px] px-4 py-3 rounded-2xl border border-[#E0E0E0] text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8] resize-y"
             />
           </div>
         </div>
@@ -5574,7 +5576,7 @@ function SaveToCollectionModal({
           </button>
           <button
             onClick={() => onSave && onSave({ artworkId: artwork.id, selectedCollectionIds: selectedIds, note })}
-            className="px-4 py-2.5 rounded-xl bg-[#077E9E] text-white text-sm font-bold hover:bg-[#055F78] transition-colors"
+            className="px-4 py-2.5 rounded-xl bg-[#1a4ba8] text-white text-sm font-bold hover:bg-[#0d2e6e] transition-colors"
           >
             {t("saveChanges")}
           </button>
@@ -5727,16 +5729,16 @@ function PortfolioSettingsPage({ setPage, userData }) {
                 <label className="block text-sm font-medium text-[#212121] mb-2">{t("portfolioSlug")}</label>
                 <div className="flex items-center">
                   <span className="px-4 py-2 bg-[#F8F8F8] border border-r-0 border-[#E0E0E0] rounded-l-lg text-[#666666] text-sm">portfoliohub.uef.edu.vn/</span>
-                  <input type="text" value={settings.portfolioSlug} onChange={(e) => setSettings({ ...settings, portfolioSlug: e.target.value })} className="flex-1 px-4 py-2 border border-[#E0E0E0] rounded-r-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={settings.portfolioSlug} onChange={(e) => setSettings({ ...settings, portfolioSlug: e.target.value })} className="flex-1 px-4 py-2 border border-[#E0E0E0] rounded-r-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">{t("profileHeadline")}</label>
-                <input type="text" value={settings.profileHeadline} onChange={(e) => setSettings({ ...settings, profileHeadline: e.target.value })} placeholder="Graphic Designer & Visual Artist" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                <input type="text" value={settings.profileHeadline} onChange={(e) => setSettings({ ...settings, profileHeadline: e.target.value })} placeholder="Graphic Designer & Visual Artist" className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">{t("major")}</label>
-                <select value={settings.major || ""} onChange={(e) => setSettings({ ...settings, major: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] bg-white">
+                <select value={settings.major || ""} onChange={(e) => setSettings({ ...settings, major: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8] bg-white">
                   <option value="">{t("selectMajor")}</option>
                   <option value={t("graphicDesign")}>Thiết kế Đồ họa</option>
                   <option value="Thiết kế Truyền thông">Thiết kế Truyền thông</option>
@@ -5751,7 +5753,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">{t("schoolYear")}</label>
-                <select value={settings.yearLevel} onChange={(e) => setSettings({ ...settings, yearLevel: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E] bg-white">
+                <select value={settings.yearLevel} onChange={(e) => setSettings({ ...settings, yearLevel: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8] bg-white">
                   <option value="Năm 1">Năm 1</option>
                   <option value="Năm 2">Năm 2</option>
                   <option value="Năm 3">Năm 3</option>
@@ -5769,14 +5771,14 @@ function PortfolioSettingsPage({ setPage, userData }) {
                 <label className="block text-sm font-medium text-[#212121] mb-2">Behance</label>
                 <div className="relative">
                   <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" />
-                  <input type="text" value={settings.socialLinks.behance || ""} onChange={(e) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, behance: e.target.value } })} placeholder="https://behance.net/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={settings.socialLinks.behance || ""} onChange={(e) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, behance: e.target.value } })} placeholder="https://behance.net/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">LinkedIn</label>
                 <div className="relative">
                   <Link size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" />
-                  <input type="text" value={settings.socialLinks.linkedin || ""} onChange={(e) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, linkedin: e.target.value } })} placeholder="https://linkedin.com/in/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={settings.socialLinks.linkedin || ""} onChange={(e) => setSettings({ ...settings, socialLinks: { ...settings.socialLinks, linkedin: e.target.value } })} placeholder="https://linkedin.com/in/" className="w-full pl-10 pr-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]" />
                 </div>
               </div>
             </div>
@@ -5808,15 +5810,15 @@ function PortfolioSettingsPage({ setPage, userData }) {
               </div>
               <p className="text-sm text-[#666666] mb-4">{t("selectMaxFour")} ({(settings.featuredArtworkIds || []).length}/4)</p>
               {myArtworks.length === 0 ? (
-                <div className="text-center py-10 text-[#666666] text-sm">{t("noPublicArtworks")} <a href="/#/upload" className="text-[#077E9E] hover:underline font-semibold">{t("uploadNewArtwork")}</a></div>
+                <div className="text-center py-10 text-[#666666] text-sm">{t("noPublicArtworks")} <a href="/#/upload" className="text-[#1a4ba8] hover:underline font-semibold">{t("uploadNewArtwork")}</a></div>
               ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {myArtworks.slice(0, 20).map(a => {
                   const selected = (settings.featuredArtworkIds || []).includes(a.id);
                   return (
-                    <div key={a.id} onClick={() => toggleFeatured(a.id)} className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-[4/3] ${selected ? 'border-[#077E9E] ring-2 ring-[#077E9E] ring-offset-1' : 'border-[#E0E0E0] hover:border-[#999]'}`}>
+                    <div key={a.id} onClick={() => toggleFeatured(a.id)} className={`relative rounded-xl overflow-hidden border-2 cursor-pointer transition-all aspect-[4/3] ${selected ? 'border-[#1a4ba8] ring-2 ring-[#1a4ba8] ring-offset-1' : 'border-[#E0E0E0] hover:border-[#999]'}`}>
                       <img src={a.coverImageUrl} alt={a.title} className="w-full h-full object-cover" />
-                      {selected && <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-[#077E9E] text-white flex items-center justify-center text-xs font-bold"><Check size={14} /></div>}
+                      {selected && <div className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-[#1a4ba8] text-white flex items-center justify-center text-xs font-bold"><Check size={14} /></div>}
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
                         <p className="text-white text-xs font-semibold truncate">{a.title}</p>
                       </div>
@@ -5825,7 +5827,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
                 })}
               </div>
               )}
-              <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="mt-4 w-full py-2.5 rounded-lg bg-[#077E9E] text-white font-semibold cursor-pointer">{t("confirm")}</button>
+              <button onClick={() => document.getElementById('featPicker')?.classList.add('hidden')} className="mt-4 w-full py-2.5 rounded-lg bg-[#1a4ba8] text-white font-semibold cursor-pointer">{t("confirm")}</button>
             </div>
           </div>
 
@@ -5833,7 +5835,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-bold text-[#212121]">{t("timelineAchievements")}</h3>
-              <button onClick={openAddTimeline} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#077E9E] text-white text-sm font-semibold hover:bg-opacity-90 transition-opacity cursor-pointer"><Plus size={15} />{t("add")}</button>
+              <button onClick={openAddTimeline} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1a4ba8] text-white text-sm font-semibold hover:bg-opacity-90 transition-opacity cursor-pointer"><Plus size={15} />{t("add")}</button>
             </div>
             <p className="text-sm text-[#666666] mb-4">{t("manageTimeline")}</p>
 
@@ -5874,14 +5876,14 @@ function PortfolioSettingsPage({ setPage, userData }) {
                   <div className="flex gap-3">
                     <div className="flex-1">
                       <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("month")}</label>
-                      <select value={timelineForm.month} onChange={e => setTimelineForm({...timelineForm, month: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white">
+                      <select value={timelineForm.month} onChange={e => setTimelineForm({...timelineForm, month: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] bg-white">
                         <option value="">{t("selectMonth")}</option>
                         {monthOptions.map(m => <option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
                     <div className="flex-1">
                       <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("year")}</label>
-                      <select value={timelineForm.year} onChange={e => setTimelineForm({...timelineForm, year: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] bg-white">
+                      <select value={timelineForm.year} onChange={e => setTimelineForm({...timelineForm, year: e.target.value})} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] bg-white">
                         <option value="">{t("selectYear")}</option>
                         {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
                       </select>
@@ -5889,30 +5891,30 @@ function PortfolioSettingsPage({ setPage, userData }) {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("title")}</label>
-                    <input type="text" value={timelineForm.title} onChange={e => setTimelineForm({...timelineForm, title: e.target.value})} placeholder={t("timelineTitlePlaceholder")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                    <input type="text" value={timelineForm.title} onChange={e => setTimelineForm({...timelineForm, title: e.target.value})} placeholder={t("timelineTitlePlaceholder")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("description")}</label>
-                    <textarea value={timelineForm.description} onChange={e => setTimelineForm({...timelineForm, description: e.target.value})} rows={3} placeholder={t("timelineDescPlaceholder")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] resize-none" />
+                    <textarea value={timelineForm.description} onChange={e => setTimelineForm({...timelineForm, description: e.target.value})} rows={3} placeholder={t("timelineDescPlaceholder")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] resize-none" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("tagsCommaSeparated")}</label>
-                    <input type="text" value={timelineForm.tags} onChange={e => setTimelineForm({...timelineForm, tags: e.target.value})} placeholder={t("tagsPlaceholder")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                    <input type="text" value={timelineForm.tags} onChange={e => setTimelineForm({...timelineForm, tags: e.target.value})} placeholder={t("tagsPlaceholder")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("linkPaperCert")}</label>
                     <div className="flex gap-2">
-                      <input type="text" value={timelineForm.linkUrl} onChange={e => setTimelineForm({...timelineForm, linkUrl: e.target.value})} placeholder="https://..." className="flex-1 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
-                      <input type="text" value={timelineForm.linkLabel} onChange={e => setTimelineForm({...timelineForm, linkLabel: e.target.value})} placeholder={t("linkLabelPlaceholder")} className="w-1/3 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                      <input type="text" value={timelineForm.linkUrl} onChange={e => setTimelineForm({...timelineForm, linkUrl: e.target.value})} placeholder="https://..." className="flex-1 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
+                      <input type="text" value={timelineForm.linkLabel} onChange={e => setTimelineForm({...timelineForm, linkLabel: e.target.value})} placeholder={t("linkLabelPlaceholder")} className="w-1/3 px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#212121] mb-1.5">{t("bgImageUrl")}</label>
-                    <input type="text" value={timelineForm.imageUrl} onChange={e => setTimelineForm({...timelineForm, imageUrl: e.target.value})} placeholder="https://images.unsplash.com/..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E]" />
+                    <input type="text" value={timelineForm.imageUrl} onChange={e => setTimelineForm({...timelineForm, imageUrl: e.target.value})} placeholder="https://images.unsplash.com/..." className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
                   </div>
                 </div>
                 <div className="flex gap-3 mt-6">
-                  <button onClick={saveTimelineEntry} disabled={savingTimeline || !timelineForm.title || !timelineForm.month || !timelineForm.year} className="flex-1 py-2.5 rounded-lg bg-[#077E9E] text-white text-sm font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{savingTimeline ? t("savingDots") : editingTimelineId ? t("update") : t("addNew")}</button>
+                  <button onClick={saveTimelineEntry} disabled={savingTimeline || !timelineForm.title || !timelineForm.month || !timelineForm.year} className="flex-1 py-2.5 rounded-lg bg-[#1a4ba8] text-white text-sm font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{savingTimeline ? t("savingDots") : editingTimelineId ? t("update") : t("addNew")}</button>
                   <button onClick={() => setShowTimelineForm(false)} className="px-6 py-2.5 rounded-lg border border-[#E0E0E0] text-sm font-medium text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer">{t("cancel")}</button>
                 </div>
               </div>
@@ -5924,7 +5926,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
             <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6 overflow-hidden">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-[#212121]">{t("previewTimeline")}</h3>
-                <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#077E9E] font-semibold hover:underline">{t("viewOnPortfolio")} →</a>
+                <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#1a4ba8] font-semibold hover:underline">{t("viewOnPortfolio")} →</a>
               </div>
               <div className="relative">
                 <div className="relative overflow-hidden rounded-xl" style={{ minHeight: 260, backgroundImage: `url(${timelineEntries[0]?.imageUrl || ''})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
@@ -5941,7 +5943,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
                 </div>
                 <div className="flex items-center justify-center gap-2 mt-3">
                   {timelineEntries.slice(0, 6).map((e, i) => (
-                    <div key={e.id} className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-[#077E9E]' : 'bg-[#E0E0E0]'}`} />
+                    <div key={e.id} className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-[#1a4ba8]' : 'bg-[#E0E0E0]'}`} />
                   ))}
                   {timelineEntries.length > 6 && <span className="text-[10px] text-[#666666]">+{timelineEntries.length - 6}</span>}
                 </div>
@@ -5959,13 +5961,13 @@ function PortfolioSettingsPage({ setPage, userData }) {
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" className="sr-only peer" checked={settings.isPortfolioPublic} onChange={(e) => setSettings({ ...settings, isPortfolioPublic: e.target.checked })} />
-              <div className="w-11 h-6 bg-[#E0E0E0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#077E9E]"></div>
+              <div className="w-11 h-6 bg-[#E0E0E0] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#1a4ba8]"></div>
             </label>
           </div>
 
             <div className="flex items-center gap-4">
-              <button onClick={save} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{saving ? t("saving") : t("saveSettings")}</button>
-              <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="px-6 py-2 border border-[#077E9E] text-[#077E9E] rounded-lg font-bold hover:bg-[#F0F8FB] transition-colors">
+              <button onClick={save} disabled={saving} className="px-6 py-2 bg-[#1a4ba8] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">{saving ? t("saving") : t("saveSettings")}</button>
+              <a href={`${window.location.origin}/#/portfolio${settings.portfolioSlug ? '/' + settings.portfolioSlug : ''}`} target="_blank" rel="noopener noreferrer" className="px-6 py-2 border border-[#1a4ba8] text-[#1a4ba8] rounded-lg font-bold hover:bg-[#eef4ff] transition-colors">
                 <ExternalLink size={16} className="inline mr-1.5" />{t("viewPortfolio")}
               </a>
             </div>
@@ -6117,7 +6119,7 @@ function SettingsPage({ setPage, userData }) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">{t("fullNameLabel")}</label>
-                  <input type="text" value={profile.fullName} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="text" value={profile.fullName} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">{t("studentId")}</label>
@@ -6136,26 +6138,26 @@ function SettingsPage({ setPage, userData }) {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">{t("currentPassword")}</label>
-                <input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}  className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                <input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}  className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">{t("newPassword")}</label>
-                  <input type="password" value={passwords.newPass} onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })}  className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="password" value={passwords.newPass} onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })}  className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">{t("resetConfirmNewPassword")}</label>
-                  <input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}  className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#077E9E] focus:ring-1 focus:ring-[#077E9E]" />
+                  <input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}  className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]" />
                 </div>
               </div>
-              <button onClick={changePassword} disabled={changingPass} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
+              <button onClick={changePassword} disabled={changingPass} className="px-6 py-2 bg-[#1a4ba8] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
                 {changingPass ? "Đang xử lý..." : t("changePassword")}
               </button>
             </div>
           </div>
 
           <div className="flex gap-3">
-            <button onClick={saveProfile} disabled={saving} className="px-6 py-2 bg-[#077E9E] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
+            <button onClick={saveProfile} disabled={saving} className="px-6 py-2 bg-[#1a4ba8] text-white rounded-lg font-bold hover:bg-opacity-90 transition-opacity cursor-pointer disabled:opacity-50">
               {saving ? t("saving") : t("saveChanges")}
             </button>
           </div>
@@ -6175,53 +6177,53 @@ function PortalPage({ setPage }) {
           {/* Column 1 */}
           <div className="flex flex-col gap-4">
             <h2 className="text-lg font-bold text-[#212121] mb-2 flex items-center gap-2">
-              <Globe size={20} className="text-[#077E9E]" /> Public Views
+              <Globe size={20} className="text-[#1a4ba8]" /> Public Views
             </h2>
-            <div onClick={() => setPage("landing")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("landing")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Globe size={20} className="text-[#077E9E]" />
+                <Globe size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Trang Chủ (Landing Page)</h3>
               </div>
               <p className="text-[#666666] text-xs">Trang đón khách giới thiệu nền tảng</p>
             </div>
-            <div onClick={() => setPage("auth")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("auth")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Lock size={20} className="text-[#077E9E]" />
+                <Lock size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Trang Đăng nhập</h3>
               </div>
               <p className="text-[#666666] text-xs">Màn hình đăng nhập sinh viên / giảng viên</p>
             </div>
-            <div onClick={() => setPage("gallery")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("gallery")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <LayoutDashboard size={20} className="text-[#077E9E]" />
+                <LayoutDashboard size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Trang Gallery Tổng hợp</h3>
               </div>
               <p className="text-[#666666] text-xs">Hiển thị toàn bộ tác phẩm trên hệ thống</p>
             </div>
-            <div onClick={() => setPage("about")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("about")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Globe size={20} className="text-[#077E9E]" />
+                <Globe size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Trang Giới thiệu (About)</h3>
               </div>
               <p className="text-[#666666] text-xs">Trang thông tin về Khoa và giảng viên</p>
             </div>
-            <div onClick={() => setPage("portfolio")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("portfolio")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <User size={20} className="text-[#077E9E]" />
+                <User size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Trang Portfolio Cá nhân</h3>
               </div>
               <p className="text-[#666666] text-xs">Hồ sơ cá nhân và các tác phẩm của sinh viên</p>
             </div>
-            <div onClick={() => setPage("detail")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("detail")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Image size={20} className="text-[#077E9E]" />
+                <Image size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Trang Chi tiết Ấn phẩm</h3>
               </div>
               <p className="text-[#666666] text-xs">Xem chi tiết, bình luận và thả tim tác phẩm</p>
             </div>
-            <div onClick={() => setPage("about")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("about")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Briefcase size={20} className="text-[#077E9E]" />
+                <Briefcase size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Trang Giới thiệu Khoa</h3>
               </div>
               <p className="text-[#666666] text-xs">Thông tin đội ngũ giảng viên và liên hệ</p>
@@ -6231,46 +6233,46 @@ function PortalPage({ setPage }) {
           {/* Column 2 */}
           <div className="flex flex-col gap-4">
             <h2 className="text-lg font-bold text-[#212121] mb-2 flex items-center gap-2">
-              <PenTool size={20} className="text-[#077E9E]" /> Student Dashboard
+              <PenTool size={20} className="text-[#1a4ba8]" /> Student Dashboard
             </h2>
-            <div onClick={() => setPage("dashboard")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("dashboard")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Folder size={20} className="text-[#077E9E]" />
+                <Folder size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">{t("studentDashboard")}</h3>
               </div>
               <p className="text-[#666666] text-xs">Quản lý các ấn phẩm đã tải lên của sinh viên</p>
             </div>
-            <div onClick={() => setPage("upload")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("upload")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Plus size={20} className="text-[#077E9E]" />
+                <Plus size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Form Upload Tác phẩm</h3>
               </div>
               <p className="text-[#666666] text-xs">Giao diện đăng tải tác phẩm mới</p>
             </div>
-            <div onClick={() => setPage("edit_artwork")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("edit_artwork")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Edit2 size={20} className="text-[#077E9E]" />
+                <Edit2 size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Form Chỉnh sửa Ấn phẩm</h3>
               </div>
               <p className="text-[#666666] text-xs">Giao diện cập nhật thông tin tác phẩm</p>
             </div>
-            <div onClick={() => setPage("settings")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("settings")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Settings size={20} className="text-[#077E9E]" />
+                <Settings size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">{t("accountSettings")}</h3>
               </div>
               <p className="text-[#666666] text-xs">Tùy chỉnh thông tin cá nhân và bảo mật</p>
             </div>
-            <div onClick={() => setPage("portfolio_settings")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("portfolio_settings")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Briefcase size={20} className="text-[#077E9E]" />
+                <Briefcase size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">{t("portfolioSettings")}</h3>
               </div>
               <p className="text-[#666666] text-xs">Trạng thái công khai và link mạng xã hội</p>
             </div>
-            <div onClick={() => setPage("messages")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("messages")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <MessageSquare size={20} className="text-[#077E9E]" />
+                <MessageSquare size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">{t("inboxTitle")}</h3>
               </div>
               <p className="text-[#666666] text-xs">Quản lý tin nhắn liên hệ từ nhà tuyển dụng</p>
@@ -6282,30 +6284,30 @@ function PortalPage({ setPage }) {
             <h2 className="text-lg font-bold text-[#212121] mb-2 flex items-center gap-2">
               <ShieldAlert size={20} className="text-[#8B1A1A]" /> Admin & Lecturer
             </h2>
-            <div onClick={() => setPage("admin")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("admin")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <LayoutDashboard size={20} className="text-[#077E9E]" />
+                <LayoutDashboard size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Admin Dashboard</h3>
               </div>
               <p className="text-[#666666] text-xs">Màn hình tổng quan của hệ thống quản trị</p>
             </div>
-            <div onClick={() => setPage("admin_users")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("admin_users")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Users size={20} className="text-[#077E9E]" />
+                <Users size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Quản lý Tài khoản (Users)</h3>
               </div>
               <p className="text-[#666666] text-xs">Phân quyền, khóa/mở khóa tài khoản sinh viên</p>
             </div>
-            <div onClick={() => setPage("admin_artworks")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("admin_artworks")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <Trash2 size={20} className="text-[#077E9E]" />
+                <Trash2 size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Quản lý & Cảnh cáo Ấn phẩm</h3>
               </div>
               <p className="text-[#666666] text-xs">Kiểm duyệt post-moderation và xử lý vi phạm</p>
             </div>
-            <div onClick={() => setPage("admin_export")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#077E9E] transition-all cursor-pointer">
+            <div onClick={() => setPage("admin_export")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
-                <FileDown size={20} className="text-[#077E9E]" />
+                <FileDown size={20} className="text-[#1a4ba8]" />
                 <h3 className="text-[#212121] font-medium text-base">Quản lý Bộ sưu tập & Xuất PDF</h3>
               </div>
               <p className="text-[#666666] text-xs">Giao diện kéo thả sắp xếp ấn phẩm để xuất tập san</p>
@@ -6580,7 +6582,7 @@ function TimelineSection({ entries: propEntries, slug }) {
           </span>
           <button onClick={goNext}
             className="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-            style={{ background: CERULEAN, border: 'none', color: '#fff', boxShadow: '0 4px 12px rgba(7,126,158,0.3)' }}
+            style={{ background: CERULEAN, border: 'none', color: '#fff', boxShadow: '0 4px 12px rgba(26,75,168,0.3)' }}
             onMouseEnter={e => e.currentTarget.style.background = '#065d75'}
             onMouseLeave={e => e.currentTarget.style.background = CERULEAN}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -6601,7 +6603,7 @@ function TimelineSection({ entries: propEntries, slug }) {
                   <div className="w-3 h-3 rounded-full transition-all duration-[400ms]" style={{
                     background: i === activeIndex ? CERULEAN : GRAY_LIGHT,
                     transform: i === activeIndex ? 'scale(1.6)' : 'scale(1)',
-                    boxShadow: i === activeIndex ? `0 0 0 4px rgba(7,126,158,0.2)` : 'none',
+                    boxShadow: i === activeIndex ? `0 0 0 4px rgba(26,75,168,0.2)` : 'none',
                   }}></div>
                   <span className="text-xs transition-colors" style={{ color: i === activeIndex ? CERULEAN : '#999', fontWeight: i === activeIndex ? 700 : 400 }}>
                     {item.year}

@@ -10,8 +10,8 @@ const C = {
   border:    "#E0E0E0",
   text:      "#212121",
   muted:     "#666666",
-  cta:       "#077E9E",
-  ctaDark:   "#055F78",
+  cta:       "#1a4ba8",
+  ctaDark:   "#0d2e6e",
   danger:    "#8B1A1A",
   dangerBg:  "#FFF5F5",
 };
@@ -146,7 +146,7 @@ function AuthPage() {
         {/* gradient overlay */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(135deg, rgba(7,126,158,0.55) 0%, rgba(0,0,0,0.5) 100%)",
+          background: "linear-gradient(135deg, rgba(26,75,168,0.55) 0%, rgba(0,0,0,0.5) 100%)",
         }} />
         {/* quote */}
         <div style={{ position: "absolute", bottom: 48, left: 48, right: 48 }}>
@@ -631,7 +631,7 @@ function AboutPage() {
   return (
     <div className="bg-white min-h-[calc(100vh-58px)] font-sans w-full">
       {/* Hero Section */}
-      <section className="bg-[#077E9E] text-white pt-20 pb-24 relative overflow-hidden">
+      <section className="bg-[#1a4ba8] text-white pt-20 pb-24 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
           <p className="text-white/80 font-semibold text-sm tracking-wider uppercase mb-4">
             Khoa Thiết Kế Đồ Họa
@@ -674,12 +674,12 @@ function AboutPage() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`whitespace-nowrap px-6 py-4 text-sm font-semibold transition-colors relative ${
-                activeTab === tab ? "text-[#077E9E]" : "text-gray-500 hover:text-gray-900"
+                activeTab === tab ? "text-[#1a4ba8]" : "text-gray-500 hover:text-gray-900"
               }`}
             >
               {tab}
               {activeTab === tab && (
-                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#077E9E] rounded-t-full"></span>
+                <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#1a4ba8] rounded-t-full"></span>
               )}
             </button>
           ))}
@@ -691,7 +691,7 @@ function AboutPage() {
         
         {/* Chương trình đào tạo Section */}
         <section id="chuong-trinh-dao-tao" className="mb-24 pt-8">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Về Chương Trình</p>
+          <p className="text-[#1a4ba8] font-semibold text-xs tracking-wider uppercase mb-3">Về Chương Trình</p>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 max-w-2xl leading-tight">Đào tạo Nhà thiết kế Chuyên nghiệp Thế kỷ 21</h2>
           <p className="text-gray-600 mb-12 max-w-3xl leading-relaxed text-[15px]">
             Khoa Thiết kế Đồ họa trực thuộc Trường Đại học Kinh tế - Tài chính TP. Hồ Chí Minh (UEF), được thành lập với sứ mệnh đào tạo nguồn nhân lực chất lượng cao cho ngành công nghiệp sáng tạo tại Việt Nam và khu vực Đông Nam Á.<br/><br/>
@@ -720,7 +720,7 @@ function AboutPage() {
 
         {/* Đội ngũ giảng viên Section */}
         <section id="doi-ngu-giang-vien" className="mb-24 pt-8">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Đội ngũ giảng viên</p>
+          <p className="text-[#1a4ba8] font-semibold text-xs tracking-wider uppercase mb-3">Đội ngũ giảng viên</p>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Những Người Thầy Dẫn Đường Sáng Tạo</h2>
           <p className="text-gray-600 mb-12 max-w-3xl leading-relaxed text-[15px]">
             Đội ngũ giảng viên Khoa Thiết kế Đồ họa UEF bao gồm các chuyên gia với nhiều năm kinh nghiệm thực tiễn trong ngành và nền tảng học thuật vững chắc.
@@ -741,14 +741,14 @@ function AboutPage() {
 
         {/* Highlight Colorful Block */}
         <section className="mb-24 pt-8">
-          <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Ấn phẩm sinh viên nổi bật</p>
+          <p className="text-[#1a4ba8] font-semibold text-xs tracking-wider uppercase mb-3">Ấn phẩm sinh viên nổi bật</p>
           <div className="rounded-2xl overflow-hidden mb-8 border border-gray-100 shadow-sm flex flex-col">
             <div className="h-20 bg-[#F9A8D4]"></div>
             <div className="h-20 bg-[#93C5FD]"></div>
             <div className="h-20 bg-[#86EFAC]"></div>
             <div className="h-20 bg-[#FDE047]"></div>
           </div>
-          <button className="w-full py-4 bg-[#077E9E] hover:bg-[#055F78] text-white rounded-xl font-semibold text-[15px] transition-colors">
+          <button className="w-full py-4 bg-[#1a4ba8] hover:bg-[#0d2e6e] text-white rounded-xl font-semibold text-[15px] transition-colors">
             Xem Gallery đầy đủ
           </button>
         </section>
@@ -759,13 +759,13 @@ function AboutPage() {
             
             {/* Liên hệ */}
             <div>
-              <p className="text-[#077E9E] font-semibold text-xs tracking-wider uppercase mb-3">Thông tin liên hệ</p>
+              <p className="text-[#1a4ba8] font-semibold text-xs tracking-wider uppercase mb-3">Thông tin liên hệ</p>
               <h2 className="text-3xl font-bold text-gray-900 mb-8">Kết nối với chúng tôi</h2>
               
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-5 h-5 text-[#077E9E]" />
+                    <MapPin className="w-5 h-5 text-[#1a4ba8]" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-900 mb-1">Địa chỉ</p>
@@ -775,17 +775,17 @@ function AboutPage() {
                 
                 <div className="flex items-start gap-4">
                   <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Mail className="w-5 h-5 text-[#077E9E]" />
+                    <Mail className="w-5 h-5 text-[#1a4ba8]" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-900 mb-1">Email</p>
-                    <a href="mailto:khoathietke@uef.edu.vn" className="text-sm text-gray-600 hover:text-[#077E9E]">khoathietke@uef.edu.vn</a>
+                    <a href="mailto:khoathietke@uef.edu.vn" className="text-sm text-gray-600 hover:text-[#1a4ba8]">khoathietke@uef.edu.vn</a>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-4">
                   <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Phone className="w-5 h-5 text-[#077E9E]" />
+                    <Phone className="w-5 h-5 text-[#1a4ba8]" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-900 mb-1">Điện thoại</p>
@@ -795,24 +795,24 @@ function AboutPage() {
                 
                 <div className="flex items-start gap-4">
                   <div className="mt-1 w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-5 h-5 text-[#077E9E]" />
+                    <Globe className="w-5 h-5 text-[#1a4ba8]" />
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-900 mb-1">Website</p>
-                    <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="text-sm text-gray-600 hover:text-[#077E9E]">uef.edu.vn</a>
+                    <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="text-sm text-gray-600 hover:text-[#1a4ba8]">uef.edu.vn</a>
                   </div>
                 </div>
               </div>
             </div>
             
             {/* CTA */}
-            <div className="bg-[#055F78] rounded-2xl p-8 md:p-10 text-white flex flex-col justify-center relative overflow-hidden">
+            <div className="bg-[#0d2e6e] rounded-2xl p-8 md:p-10 text-white flex flex-col justify-center relative overflow-hidden">
               <div className="relative z-10">
                 <h3 className="text-2xl font-bold mb-4">Bạn là Nhà tuyển dụng?</h3>
                 <p className="text-white/80 mb-8 text-[15px] leading-relaxed">
                   Tìm kiếm tài năng thiết kế trẻ? Khám phá ngay portfolio các sản phẩm sinh viên xuất sắc nhất để tìm kiếm ứng viên tiềm năng cho doanh nghiệp của bạn.
                 </p>
-                <button className="bg-white text-[#055F78] px-6 py-3.5 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 w-max">
+                <button className="bg-white text-[#0d2e6e] px-6 py-3.5 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 w-max">
                   Khám phá Portfolio <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
