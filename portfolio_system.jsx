@@ -305,23 +305,45 @@ function MasonryGrid({
 }
 
 function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
-    const [category, setCategory] = useState("Tất cả");
+  const [tempCategory, setTempCategory] = useState("Tất cả");
+  const [tempYear, setTempYear] = useState("Tất cả");
+  const [tempTool, setTempTool] = useState("Tất cả");
+  const [category, setCategory] = useState("Tất cả");
   const [year, setYear] = useState("Tất cả");
   const [tool, setTool] = useState("Tất cả");
   const [sort, setSort] = useState("newest");
   const [page, setPageNum] = useState(1);
   const [data, setData] = useState({ artworks: [], total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
   const limit = 20;
+  const filterRef = useRef(null);
 
   const categories = ["Tất cả", "Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
   const years = ["Tất cả", "2022-2023", "2023-2024", "2024-2025"];
   const tools = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate", "After Effects", "InDesign", "Lightroom", "Cinema 4D"];
 
   useEffect(() => {
+    function handleClickOutside(e) {
+      if (filterRef.current && !filterRef.current.contains(e.target)) {
+        setShowFilterPanel(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setTempCategory(category);
+    setTempYear(year);
+    setTempTool(tool);
+  }, [showFilterPanel]);
+
+  useEffect(() => {
     setLoading(true);
     setPageNum(1);
-  }, [category, year, tool, sort]);
+  }, [category, year, tool, sort, searchQuery]);
 
   useEffect(() => {
     setLoading(true);
@@ -329,11 +351,21 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
     if (category !== "Tất cả") params.category = category;
     if (year !== "Tất cả") params.year = year;
     if (tool !== "Tất cả") params.tool = tool;
+    if (searchQuery.trim()) params.q = searchQuery.trim();
     api.artworks.list(params).then(res => {
       setData(res);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [category, year, tool, sort, page]);
+  }, [category, year, tool, sort, searchQuery, page]);
+
+  const applyFilters = () => {
+    setCategory(tempCategory);
+    setYear(tempYear);
+    setTool(tempTool);
+    setShowFilterPanel(false);
+  };
+
+  const activeFilterCount = [category !== "Tất cả", year !== "Tất cả", tool !== "Tất cả"].filter(Boolean).length;
 
   const mapped = (data.artworks || []).map((a, i) => ({
     id: a.id,
@@ -355,35 +387,57 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-1px" }}>{t("artworkLibrary")}</h1>
           <p style={{ color: MUTED, fontSize: 15, marginTop: 6 }}>{t("gallerySubtitle")}</p>
         </div>
-        <div style={{ display: "flex", gap: 24, marginBottom: 28, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-          <div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("category")}</span>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {categories.map(c => (
-                <button key={c} onClick={() => { setCategory(c); }} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: category === c ? "none" : `1px solid ${GRAY_LIGHT}`, background: category === c ? BLACK : "#fff", color: category === c ? "#fff" : BLACK, transition: "all .15s" }}>{c}</button>
-              ))}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}`, position: "relative" }} ref={filterRef}>
+          <button
+            onClick={() => setShowFilterPanel(!showFilterPanel)}
+            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${showFilterPanel || activeFilterCount > 0 ? CERULEAN : GRAY_LIGHT}`, background: showFilterPanel || activeFilterCount > 0 ? `${CERULEAN}12` : "#fff", color: CERULEAN, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .15s", whiteSpace: "nowrap" }}
+          >
+            <Filter size={15} />
+            {t("filter")}
+            {activeFilterCount > 0 && <span style={{ marginLeft: 2, background: CERULEAN, color: "#fff", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{activeFilterCount}</span>}
+          </button>
+
+          {showFilterPanel && (
+            <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 8, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 12, padding: 20, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 480, display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("category")}</span>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {categories.map(c => (
+                    <button key={c} onClick={() => setTempCategory(c)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: tempCategory === c ? "none" : `1px solid ${GRAY_LIGHT}`, background: tempCategory === c ? BLACK : "#fff", color: tempCategory === c ? "#fff" : BLACK, transition: "all .15s" }}>{c}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("schoolYear")}</span>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {years.map(y => (
+                    <button key={y} onClick={() => setTempYear(y)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: tempYear === y ? "none" : `1px solid ${GRAY_LIGHT}`, background: tempYear === y ? BLACK : "#fff", color: tempYear === y ? "#fff" : BLACK, transition: "all .15s" }}>{y}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("tools")}</span>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {tools.map(t => (
+                    <button key={t} onClick={() => setTempTool(t)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: tempTool === t ? "none" : `1px solid ${GRAY_LIGHT}`, background: tempTool === t ? BLACK : "#fff", color: tempTool === t ? "#fff" : BLACK, transition: "all .15s" }}>{t}</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", borderTop: `1px solid ${GRAY_LIGHT}`, paddingTop: 12, marginTop: 4 }}>
+                <button onClick={() => { setTempCategory("Tất cả"); setTempYear("Tất cả"); setTempTool("Tất cả"); }} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer" }}>{t("reset")}</button>
+                <button onClick={applyFilters} style={{ padding: "7px 20px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{t("apply")}</button>
+              </div>
             </div>
+          )}
+
+          <div style={{ position: "relative", flex: 1 }}>
+            <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: MUTED, pointerEvents: "none" }} />
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "9px 12px 9px 36px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: "#fff", color: BLACK, boxSizing: "border-box" }} onFocus={e => { e.target.style.borderColor = CERULEAN; }} onBlur={e => { e.target.style.borderColor = GRAY_LIGHT; }} />
           </div>
-          <div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("schoolYear")}</span>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {years.map(y => (
-                <button key={y} onClick={() => setYear(y)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: year === y ? "none" : `1px solid ${GRAY_LIGHT}`, background: year === y ? BLACK : "#fff", color: year === y ? "#fff" : BLACK, transition: "all .15s" }}>{y}</button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("tools")}</span>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {tools.map(t => (
-                <button key={t} onClick={() => setTool(t)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: tool === t ? "none" : `1px solid ${GRAY_LIGHT}`, background: tool === t ? BLACK : "#fff", color: tool === t ? "#fff" : BLACK, transition: "all .15s" }}>{t}</button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <span style={{ fontSize: 13, color: MUTED }}>{data.total} {t("artworksFound")}</span>
-          <div style={{ display: "flex", gap: 8 }}>
+
+          <span style={{ fontSize: 13, color: MUTED, whiteSpace: "nowrap" }}>{data.total} {t("artworksFound")}</span>
+
+          <div style={{ display: "flex", gap: 6 }}>
             <button onClick={() => setSort("newest")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "newest" ? CERULEAN : GRAY_LIGHT}`, background: sort === "newest" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "newest" ? CERULEAN : BLACK, fontWeight: sort === "newest" ? 600 : 400 }}>{t("newest")}</button>
             <button onClick={() => setSort("most_likes")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "most_likes" ? CERULEAN : GRAY_LIGHT}`, background: sort === "most_likes" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "most_likes" ? CERULEAN : BLACK, fontWeight: sort === "most_likes" ? 600 : 400 }}>{t("mostLiked")}</button>
           </div>
