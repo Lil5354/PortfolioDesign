@@ -5365,57 +5365,63 @@ function AboutPage({ setPage }) {
       </section>
 
       {/* PILLARS SECTION */}
-      <section className="bg-[#0a0c0f] py-28 px-6 lg:px-12 text-white relative overflow-hidden">
-        {/* Subtle decorative glow */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#1a4ba8] rounded-full blur-[150px] opacity-20 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#c0392b] rounded-full blur-[150px] opacity-10 pointer-events-none"></div>
+      <section className="bg-white py-28 px-6 lg:px-12 text-[#212121] relative overflow-hidden">
+        {/* Subtle decorative glows — ĐỎ + XANH DƯƠNG */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#1a4ba8] rounded-full blur-[150px] opacity-[0.06] pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#DA291C] rounded-full blur-[150px] opacity-[0.05] pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="max-w-[700px] mb-20 text-center mx-auto animate-[fadeUp_0.5s_ease-out]">
-            <div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-white/60 mb-5">
-              <span className="w-7 h-[2px] bg-white/40"></span> {t("aboutValuesPreTitle")}
+            <div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#1a4ba8] mb-5">
+              <span className="w-7 h-[2px] bg-[#1a4ba8]"></span> {t("aboutValuesPreTitle")}
             </div>
-            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight tracking-tight">{t("aboutValuesTitle1")}<br/>{t("aboutValuesTitle2")}</h2>
+            <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight tracking-tight text-[#212121]">
+              <span className="text-[#1a4ba8]">Thiết kế</span> vì sự phát triển<br/>
+              <span className="text-[#DA291C]">toàn diện</span> của sinh viên
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-            <div className="bg-white/5 border border-white/10 p-10 rounded-3xl hover:bg-white/10 hover:border-white/20 transition-all border-t-[4px] border-t-[#60afff] group hover:shadow-[0_0_30px_rgba(96,175,255,0.15)] hover:-translate-y-2 duration-300 animate-[fadeUp_0.7s_ease-out]">
-              <div className="w-14 h-14 rounded-2xl bg-[#60afff]/10 text-[#60afff] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+            {/* XANH DƯƠNG — Pillar 1 */}
+            <div className="bg-white border border-[#1a4ba8]/20 p-10 rounded-3xl hover:shadow-[0_0_30px_rgba(26,75,168,0.12)] transition-all border-t-[4px] border-t-[#1a4ba8] group hover:-translate-y-2 duration-300 animate-[fadeUp_0.7s_ease-out]">
+              <div className="w-14 h-14 rounded-2xl bg-[#1a4ba8]/10 text-[#1a4ba8] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <LayoutGrid size={28} />
               </div>
-              <h3 className="font-extrabold text-2xl mb-4 text-white">Portfolio Driven</h3>
-              <p className="text-[15px] text-white/60 leading-relaxed">{t("aboutValue1Desc")}</p>
+              <h3 className="font-extrabold text-2xl mb-4 text-[#212121]">Portfolio Driven</h3>
+              <p className="text-[15px] text-[#555] leading-relaxed">{t("aboutValue1Desc")}</p>
             </div>
-            <div className="bg-white/5 border border-white/10 p-10 rounded-3xl hover:bg-white/10 hover:border-white/20 transition-all border-t-[4px] border-t-[#ff7b6e] group hover:shadow-[0_0_30px_rgba(255,123,110,0.15)] hover:-translate-y-2 duration-300 animate-[fadeUp_0.9s_ease-out]">
-              <div className="w-14 h-14 rounded-2xl bg-[#ff7b6e]/10 text-[#ff7b6e] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+            {/* ĐỎ — Pillar 2 */}
+            <div className="bg-white border border-[#DA291C]/20 p-10 rounded-3xl hover:shadow-[0_0_30px_rgba(218,41,28,0.12)] transition-all border-t-[4px] border-t-[#DA291C] group hover:-translate-y-2 duration-300 animate-[fadeUp_0.9s_ease-out]">
+              <div className="w-14 h-14 rounded-2xl bg-[#DA291C]/10 text-[#DA291C] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <ShieldCheck size={28} />
               </div>
-              <h3 className="font-extrabold text-2xl mb-4 text-white">Academic Integrity</h3>
-              <p className="text-[15px] text-white/60 leading-relaxed">{t("aboutValue2Desc")}</p>
+              <h3 className="font-extrabold text-2xl mb-4 text-[#212121]">Academic Integrity</h3>
+              <p className="text-[15px] text-[#555] leading-relaxed">{t("aboutValue2Desc")}</p>
             </div>
-            <div className="bg-white/5 border border-white/10 p-10 rounded-3xl hover:bg-white/10 hover:border-white/20 transition-all border-t-[4px] border-t-[#f5d87e] group hover:shadow-[0_0_30px_rgba(245,216,126,0.15)] hover:-translate-y-2 duration-300 animate-[fadeUp_1.1s_ease-out]">
-              <div className="w-14 h-14 rounded-2xl bg-[#f5d87e]/10 text-[#f5d87e] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+            {/* TRẮNG (với chữ đen) — Pillar 3 */}
+            <div className="bg-gray-50 border border-gray-200 p-10 rounded-3xl hover:shadow-[0_0_30px_rgba(0,0,0,0.08)] transition-all border-t-[4px] border-t-gray-300 group hover:-translate-y-2 duration-300 animate-[fadeUp_1.1s_ease-out]">
+              <div className="w-14 h-14 rounded-2xl bg-gray-200 text-[#555] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <Building2 size={28} />
               </div>
-              <h3 className="font-extrabold text-2xl mb-4 text-white">Industry Ready</h3>
-              <p className="text-[15px] text-white/60 leading-relaxed">{t("aboutValue3Desc")}</p>
+              <h3 className="font-extrabold text-2xl mb-4 text-[#212121]">Industry Ready</h3>
+              <p className="text-[15px] text-[#555] leading-relaxed">{t("aboutValue3Desc")}</p>
             </div>
           </div>
           
-          <div className="bg-white/5 border border-white/10 rounded-3xl p-10 flex flex-col md:flex-row items-center justify-evenly gap-10 text-center animate-[fadeUp_1.3s_ease-out]">
+          <div className="bg-white border border-gray-200 rounded-3xl p-10 flex flex-col md:flex-row items-center justify-evenly gap-10 text-center animate-[fadeUp_1.3s_ease-out] shadow-sm">
              <div>
-                <div className="font-black text-5xl md:text-6xl text-white mb-2 tracking-tight">350+</div>
-                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#60afff]">{t("aboutStats1Title")}</div>
+                <div className="font-black text-5xl md:text-6xl text-[#212121] mb-2 tracking-tight">350+</div>
+                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#1a4ba8]">{t("aboutStats1Title")}</div>
              </div>
-             <div className="w-full md:w-px h-px md:h-20 bg-white/10"></div>
+             <div className="w-full md:w-px h-px md:h-20 bg-gray-200"></div>
              <div>
-                <div className="font-black text-5xl md:text-6xl text-white mb-2 tracking-tight">98%</div>
-                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#ff7b6e]">{t("aboutStats2Title")}</div>
+                <div className="font-black text-5xl md:text-6xl text-[#212121] mb-2 tracking-tight">98%</div>
+                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#DA291C]">{t("aboutStats2Title")}</div>
              </div>
-             <div className="w-full md:w-px h-px md:h-20 bg-white/10"></div>
+             <div className="w-full md:w-px h-px md:h-20 bg-gray-200"></div>
              <div>
-                <div className="font-black text-5xl md:text-6xl text-white mb-2 tracking-tight">45+</div>
-                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#f5d87e]">{t("aboutStats3Title")}</div>
+                <div className="font-black text-5xl md:text-6xl text-[#212121] mb-2 tracking-tight">45+</div>
+                <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#555]">{t("aboutStats3Title")}</div>
              </div>
           </div>
         </div>
