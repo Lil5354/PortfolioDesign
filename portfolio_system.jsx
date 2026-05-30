@@ -317,6 +317,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilterPanel, setShowFilterPanel] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
   const limit = 20;
   const filterRef = useRef(null);
 
@@ -424,7 +425,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                 </div>
               </div>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", borderTop: `1px solid ${GRAY_LIGHT}`, paddingTop: 12, marginTop: 4 }}>
-                <button onClick={() => { setTempCategory("Tất cả"); setTempYear("Tất cả"); setTempTool("Tất cả"); }} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer" }}>{t("reset")}</button>
+                <button onClick={() => { setCategory("Tất cả"); setYear("Tất cả"); setTool("Tất cả"); setShowFilterPanel(false); }} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer" }}>{t("reset")}</button>
                 <button onClick={applyFilters} style={{ padding: "7px 20px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{t("apply")}</button>
               </div>
             </div>
@@ -432,7 +433,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 
           <div style={{ position: "relative", flex: 1 }}>
             <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: MUTED, pointerEvents: "none" }} />
-            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "9px 12px 9px 36px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: "#fff", color: BLACK, boxSizing: "border-box" }} onFocus={e => { e.target.style.borderColor = CERULEAN; }} onBlur={e => { e.target.style.borderColor = GRAY_LIGHT; }} />
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "9px 12px 9px 36px", borderRadius: 8, border: searchFocused ? `1px solid ${CERULEAN}` : `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: "#fff", color: BLACK, boxSizing: "border-box" }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
           </div>
 
           <span style={{ fontSize: 13, color: MUTED, whiteSpace: "nowrap" }}>{data.total} {t("artworksFound")}</span>
