@@ -175,11 +175,16 @@ export default function ChatBot({ userRole = "employer" }) {
     setIsLoading(true);
 
     try {
+      const history = messages
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .slice(-20)
+        .map((m) => ({ role: m.role, content: m.content }));
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ message: userMsg, sessionId, role: userRole }),
+        body: JSON.stringify({ message: userMsg, sessionId, role: userRole, history }),
       });
 
       const data = await res.json();
