@@ -15,13 +15,7 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
     <div className="min-h-screen bg-white font-sans text-[#212121]">
       {/* Header */}
       <header className="flex items-center justify-between px-8 py-4 border-b border-gray-100 bg-white sticky top-0 z-50">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#212121] text-white font-serif font-bold text-xl px-3 py-1 rounded-md">UEF</div>
-          <div>
-            <h1 className="font-bold text-sm leading-tight">Design Gallery</h1>
-            <p className="text-[10px] text-gray-500 uppercase tracking-wide">{t("facultyOfGraphicDesign")}</p>
-          </div>
-        </div>
+        <img src="/logo-uef.png" alt="UEF" className="h-11 object-contain" />
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
           <button className="text-[#1a4ba8] border-b-2 border-[#1a4ba8] pb-1">{t("home")}</button>
           <button onClick={() => setPage("gallery")} className="text-gray-500 hover:text-[#212121]">Gallery</button>

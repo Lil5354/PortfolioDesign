@@ -836,11 +836,11 @@ export default function App() {
   const [page, setPage] = useState("auth");
 
   return (
-    <div style={{ fontFamily: "'DM Sans', 'Inter', 'Helvetica Neue', sans-serif", minHeight: "100vh", background: C.bgLight }}>
+    <div style={{ fontFamily: "'Noto Serif', Georgia, 'Times New Roman', serif", minHeight: "100vh", background: C.bgLight }}>
       <style>{`
         * { box-sizing: border-box; margin: 0; padding: 0; }
         input, select, textarea, button { font-family: inherit; }
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;500;600;700;800;900&display=swap');
         body { background: ${C.bgLight}; }
         input:focus, textarea:focus { box-shadow: 0 0 0 3px ${C.cta}22; }
       `}</style>

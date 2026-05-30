@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -8,12 +9,13 @@
   --color-graylight: #E0E0E0;
   --color-black: #212121;
   --color-muted: #666666;
+  --font-sans: 'Noto Serif', Georgia, 'Times New Roman', serif;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'Noto Serif', Georgia, 'Times New Roman', serif;
   background-color: var(--color-graybg);
   color: var(--color-black);
 }
