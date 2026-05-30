@@ -4856,6 +4856,40 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
         </div>
       </section>
 
+      {/* Quotes Ticker */}
+      <div className="bg-[#0d2e6e] py-6 overflow-hidden border-y border-white/10 shadow-inner">
+        <div className="flex gap-8 whitespace-nowrap animate-[ticker_48s_linear_infinite] w-max">
+          {[...Array(2)].map((_, i) => (
+            <React.Fragment key={i}>
+              <div className="inline-flex items-center gap-5 px-8 text-white/90 border-r border-white/20 mx-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a4ba8] to-[#DA291C] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg">NV</div>
+                <div className="flex flex-col whitespace-normal text-left max-w-md">
+                  <span className="text-[12px] font-bold text-[#c9a227] tracking-wide uppercase">Đại diện Doanh nghiệp — FPT Software</span>
+                  <span className="text-[13px] font-semibold text-white/95 mt-0.5">Bà NGUYỄN THỊ VỌNG — Giám đốc vận hành EBS</span>
+                  <span className="text-[12px] text-white/70 mt-1 leading-relaxed italic">"Đại diện doanh nghiệp, tôi đánh giá cao khung chương trình đào tạo của UEF. Chúng tôi luôn săn đón những nguồn lực vững chuyên môn, giỏi thực hành và tốt ngoại ngữ."</span>
+                </div>
+              </div>
+              <div className="inline-flex items-center gap-5 px-8 text-white/90 border-r border-white/20 mx-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a4ba8] to-[#DA291C] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg">TĐ</div>
+                <div className="flex flex-col whitespace-normal text-left max-w-md">
+                  <span className="text-[12px] font-bold text-[#c9a227] tracking-wide uppercase">Đại diện Sinh viên</span>
+                  <span className="text-[13px] font-semibold text-white/95 mt-0.5">TRẦN TẤN ĐẠT — Khóa 2020</span>
+                  <span className="text-[12px] text-white/70 mt-1 leading-relaxed italic">"Em hoàn toàn hài lòng khi lựa chọn học Công nghệ thông tin ở UEF. Ngoài kỹ năng chuyên môn, em được trau dồi về kỹ năng tiếng Anh chuyên ngành."</span>
+                </div>
+              </div>
+              <div className="inline-flex items-center gap-5 px-8 text-white/90 border-r border-white/20 mx-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a4ba8] to-[#DA291C] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg">VT</div>
+                <div className="flex flex-col whitespace-normal text-left max-w-md">
+                  <span className="text-[12px] font-bold text-[#c9a227] tracking-wide uppercase">Đại diện Giảng viên — Khoa CNTT</span>
+                  <span className="text-[13px] font-semibold text-white/95 mt-0.5">Cô VĂN THỊ THIÊN TRANG — Phó khoa</span>
+                  <span className="text-[12px] text-white/70 mt-1 leading-relaxed italic">"Ở UEF, ngành Công nghệ thông tin được đào tạo bài bản với sự kết hợp giữa lý thuyết và thực tiễn. Sinh viên có thời lượng lớn tham quan thực tế tại doanh nghiệp."</span>
+                </div>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
       {/* Steps Section */}
       <section className="px-8 py-20 bg-gray-50/50">
         <div className="max-w-7xl mx-auto border-t border-gray-100 pt-16">
@@ -4908,9 +4942,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1a4ba8, #DA291C)' }}>
-                <span className="text-white font-bold text-sm">UEF</span>
-              </div>
+              <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
               <div>
                 <p className="font-bold text-[#212121]">Design Gallery</p>
                 <p className="text-xs text-[#666]">Khoa Thiết kế Đồ họa</p>
@@ -5530,9 +5562,7 @@ function AboutPage({ setPage }) {
 
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #1a4ba8, #DA291C)' }}>
-                <span className="text-white font-bold text-sm">UEF</span>
-              </div>
+              <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
               <div>
                 <p className="font-bold text-[#212121]">Design Gallery</p>
                 <p className="text-xs text-[#666]">Khoa Thiết kế Đồ họa</p>
