@@ -2107,10 +2107,9 @@ function AuthPage({ setPage, onLoginSuccess }) {
       <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: 420, margin: "0 16px" }}>
         <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.15)", padding: "40px 36px 32px" }}>
           
-          {/* Logo + title */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 28 }}>
-            <img src="/logo-uef.png" alt="UEF" style={{ height: 52, marginBottom: 8 }} />
-            <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: 0, textAlign: "center", letterSpacing: "-0.3px" }}>{t("designGallery")}</h1>
+          {/* Logo */}
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+            <img src="/logo-uef.png" alt="UEF" style={{ height: 80 }} />
           </div>
 
           {/* SSO login prompt */}
