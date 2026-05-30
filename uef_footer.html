@@ -1,0 +1,509 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  .uef-footer {
+    font-family: 'Inter', sans-serif;
+    background: #1a3a6b;
+    color: #ffffff;
+    width: 100%;
+  }
+
+  .footer-top {
+    background: linear-gradient(135deg, #1a3a6b 0%, #1e4585 100%);
+    padding: 56px 48px 48px;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 40px;
+    border-bottom: 3px solid #D0121B;
+  }
+
+  .brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .logo-box {
+    width: 52px;
+    height: 52px;
+    background: #ffffff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 2px solid #D0121B;
+  }
+
+  .logo-box img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+  }
+
+  .brand-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .brand-sub {
+    font-size: 12px;
+    color: #a8c4e8;
+    margin: 2px 0 0;
+    letter-spacing: 0.3px;
+  }
+
+  .brand-desc {
+    font-size: 13.5px;
+    color: #c8d9ef;
+    line-height: 1.75;
+    margin: 0 0 22px;
+  }
+
+  .social-icons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .social-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    text-decoration: none;
+  }
+
+  .social-btn:hover { transform: translateY(-2px); }
+  .s-mail  { background: rgba(208,18,27,0.25); color: #ff8a8f; border: 1px solid rgba(208,18,27,0.4); }
+  .s-web   { background: rgba(255,255,255,0.1); color: #a8c4e8; border: 1px solid rgba(255,255,255,0.2); }
+  .s-eye   { background: rgba(255,255,255,0.1); color: #a8c4e8; border: 1px solid rgba(255,255,255,0.2); }
+  .s-ext   { background: rgba(255,255,255,0.1); color: #a8c4e8; border: 1px solid rgba(255,255,255,0.2); }
+
+  .footer-col-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: #D0121B;
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    position: relative;
+  }
+
+  .footer-col-title::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 32px;
+    height: 2px;
+    background: #D0121B;
+  }
+
+  .contact-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+  }
+
+  .contact-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .contact-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #a8c4e8;
+    font-size: 14px;
+    margin-top: 1px;
+  }
+
+  .contact-text {
+    font-size: 13px;
+    color: #c8d9ef;
+    line-height: 1.5;
+  }
+
+  .contact-text a {
+    color: #7fb8f0;
+    text-decoration: none;
+  }
+
+  .contact-text a:hover { text-decoration: underline; color: #fff; }
+
+  .nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+
+  .nav-item a {
+    font-size: 13.5px;
+    color: #c8d9ef;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    transition: color 0.15s;
+  }
+
+  .nav-item a::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #D0121B;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  .nav-item a:hover { color: #ffffff; }
+  .nav-item a:hover::before { opacity: 1; }
+
+  .social-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .social-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .social-row:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  .social-icon-circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .ic-fb   { background: #1877F2; color: #fff; }
+  .ic-yt   { background: #D0121B; color: #fff; }
+  .ic-web  { background: #1a5fa8; color: #fff; }
+  .ic-mail { background: #2e7d32; color: #fff; }
+
+  .social-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #dce9f8;
+  }
+
+  .social-arrow {
+    margin-left: auto;
+    font-size: 12px;
+    color: #6a8fb5;
+  }
+
+  .footer-mid {
+    background: #142f5c;
+    padding: 28px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .accred-badges {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .badge-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+  }
+
+  .badge-icon {
+    font-size: 18px;
+    color: #D0121B;
+  }
+
+  .badge-label {
+    font-size: 11.5px;
+    color: #a8c4e8;
+    line-height: 1.3;
+  }
+
+  .badge-label strong {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #dce9f8;
+  }
+
+  .newsletter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .newsletter-label {
+    font-size: 13px;
+    color: #a8c4e8;
+    white-space: nowrap;
+  }
+
+  .newsletter-input {
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(255,255,255,0.18) !important;
+    color: #ffffff !important;
+    font-size: 13px !important;
+    padding: 8px 14px !important;
+    border-radius: 7px !important;
+    width: 200px !important;
+    height: auto !important;
+    outline: none;
+  }
+
+  .newsletter-input::placeholder { color: #6a8fb5; }
+
+  .newsletter-btn {
+    background: #D0121B !important;
+    border: none !important;
+    color: #fff !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    padding: 8px 18px !important;
+    border-radius: 7px !important;
+    cursor: pointer !important;
+    white-space: nowrap;
+    height: auto !important;
+    letter-spacing: 0.3px;
+  }
+
+  .newsletter-btn:hover { background: #b80f17 !important; }
+
+  .footer-bottom {
+    background: #0f2347;
+    padding: 20px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .copyright {
+    font-size: 12.5px;
+    color: #6a8fb5;
+  }
+
+  .copyright strong {
+    color: #a8c4e8;
+    font-weight: 500;
+  }
+
+  .footer-links-bottom {
+    display: flex;
+    gap: 20px;
+  }
+
+  .footer-links-bottom a {
+    font-size: 12px;
+    color: #6a8fb5;
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .footer-links-bottom a:hover { color: #a8c4e8; }
+
+  .dev-credit {
+    font-size: 12px;
+    color: #6a8fb5;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .heart { color: #D0121B; font-style: normal; }
+
+  .divider-stripe {
+    height: 4px;
+    background: linear-gradient(90deg, #D0121B 0%, #D0121B 33%, #ffffff 33%, #ffffff 66%, #1a3a6b 66%, #1a3a6b 100%);
+    width: 100%;
+  }
+</style>
+
+<footer class="uef-footer" role="contentinfo">
+  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Footer trang UEF Design Gallery – thông tin liên hệ, liên kết và mạng xã hội</h2>
+
+  <div class="divider-stripe"></div>
+
+  <div class="footer-top">
+
+    <div>
+      <div class="brand-logo">
+        <div class="logo-box">
+          <img src="/logo-uef.png" alt="UEF Logo" />
+        </div>
+        <div>
+          <p class="brand-name">Design Gallery</p>
+          <p class="brand-sub">Khoa Thiết kế Đồ họa</p>
+        </div>
+      </div>
+      <p class="brand-desc">Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.</p>
+      <div class="social-icons">
+        <a class="social-btn s-mail" href="mailto:khoathietke@uef.edu.vn" title="Email" aria-label="Gửi email">
+          <i class="ti ti-mail" aria-hidden="true"></i>
+        </a>
+        <a class="social-btn s-web" href="https://uef.edu.vn" title="Website" aria-label="Website UEF">
+          <i class="ti ti-world" aria-hidden="true"></i>
+        </a>
+        <a class="social-btn s-eye" href="#" title="Portfolio" aria-label="Xem portfolio">
+          <i class="ti ti-eye" aria-hidden="true"></i>
+        </a>
+        <a class="social-btn s-ext" href="#" title="Liên kết ngoài" aria-label="Liên kết ngoài">
+          <i class="ti ti-external-link" aria-hidden="true"></i>
+        </a>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="footer-col-title">Liên hệ</h3>
+      <ul class="contact-list">
+        <li class="contact-item">
+          <div class="contact-icon"><i class="ti ti-map-pin" aria-hidden="true"></i></div>
+          <span class="contact-text">141 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM</span>
+        </li>
+        <li class="contact-item">
+          <div class="contact-icon"><i class="ti ti-phone" aria-hidden="true"></i></div>
+          <span class="contact-text"><a href="tel:02854225555">(028) 5422 5555</a></span>
+        </li>
+        <li class="contact-item">
+          <div class="contact-icon"><i class="ti ti-mail" aria-hidden="true"></i></div>
+          <span class="contact-text"><a href="mailto:khoathietke@uef.edu.vn">khoathietke@uef.edu.vn</a></span>
+        </li>
+        <li class="contact-item">
+          <div class="contact-icon"><i class="ti ti-world" aria-hidden="true"></i></div>
+          <span class="contact-text"><a href="https://uef.edu.vn" target="_blank">uef.edu.vn</a></span>
+        </li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="footer-col-title">Liên kết</h3>
+      <ul class="nav-list">
+        <li class="nav-item"><a href="#">Gallery sinh viên</a></li>
+        <li class="nav-item"><a href="#">Giới thiệu Khoa</a></li>
+        <li class="nav-item"><a href="#">Đăng nhập hệ thống</a></li>
+        <li class="nav-item"><a href="#">Trường Đại học UEF</a></li>
+        <li class="nav-item"><a href="#">Chương trình đào tạo</a></li>
+        <li class="nav-item"><a href="#">Tuyển dụng & Thực tập</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="footer-col-title">Mạng xã hội</h3>
+      <div class="social-grid">
+        <a class="social-row" href="#" aria-label="Facebook UEF">
+          <div class="social-icon-circle ic-fb"><i class="ti ti-brand-facebook" aria-hidden="true"></i></div>
+          <span class="social-label">Facebook</span>
+          <span class="social-arrow"><i class="ti ti-arrow-right" aria-hidden="true"></i></span>
+        </a>
+        <a class="social-row" href="#" aria-label="Youtube UEF">
+          <div class="social-icon-circle ic-yt"><i class="ti ti-brand-youtube" aria-hidden="true"></i></div>
+          <span class="social-label">Youtube</span>
+          <span class="social-arrow"><i class="ti ti-arrow-right" aria-hidden="true"></i></span>
+        </a>
+        <a class="social-row" href="https://uef.edu.vn" aria-label="Website UEF">
+          <div class="social-icon-circle ic-web"><i class="ti ti-world" aria-hidden="true"></i></div>
+          <span class="social-label">Website chính thức</span>
+          <span class="social-arrow"><i class="ti ti-arrow-right" aria-hidden="true"></i></span>
+        </a>
+        <a class="social-row" href="mailto:khoathietke@uef.edu.vn" aria-label="Email Khoa">
+          <div class="social-icon-circle ic-mail"><i class="ti ti-mail" aria-hidden="true"></i></div>
+          <span class="social-label">Email</span>
+          <span class="social-arrow"><i class="ti ti-arrow-right" aria-hidden="true"></i></span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer-mid">
+    <div class="accred-badges">
+      <div class="badge-item">
+        <i class="ti ti-award badge-icon" aria-hidden="true"></i>
+        <span class="badge-label"><strong>Kiểm định AUN-QA</strong>Chất lượng giáo dục</span>
+      </div>
+      <div class="badge-item">
+        <i class="ti ti-shield-check badge-icon" aria-hidden="true"></i>
+        <span class="badge-label"><strong>Bộ GD&ĐT</strong>Cấp phép hoạt động</span>
+      </div>
+      <div class="badge-item">
+        <i class="ti ti-certificate badge-icon" aria-hidden="true"></i>
+        <span class="badge-label"><strong>ISO 9001:2015</strong>Hệ thống quản lý chất lượng</span>
+      </div>
+    </div>
+
+    <div class="newsletter">
+      <span class="newsletter-label"><i class="ti ti-send" aria-hidden="true" style="margin-right:5px;"></i>Nhận thông báo:</span>
+      <input class="newsletter-input" type="email" placeholder="Email của bạn..." aria-label="Địa chỉ email đăng ký nhận thông báo" />
+      <button class="newsletter-btn">Đăng ký</button>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p class="copyright">© 2026 <strong>UEF Design Gallery</strong>. Tất cả bản quyền được bảo hộ.</p>
+    <div class="footer-links-bottom">
+      <a href="#">Chính sách bảo mật</a>
+      <a href="#">Điều khoản sử dụng</a>
+      <a href="#">Sitemap</a>
+    </div>
+    <p class="dev-credit">Phát triển bởi sinh viên UEF <em class="heart">♥</em></p>
+  </div>
+</footer>
