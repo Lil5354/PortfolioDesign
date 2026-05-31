@@ -8,7 +8,11 @@
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:ui\"",
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:seed": "node prisma/seed.mjs"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.mjs"
   },
   "dependencies": {
     "@auth/core": "^0.37.2",
