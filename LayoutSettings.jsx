@@ -81,7 +81,7 @@ export default function LayoutSettings({ setPage }) {
       }
       setEditingItem(null);
       await loadData();
-      fetchSiteContent();
+      await fetchSiteContent();
     } catch (e) {
       setError('Failed to save item');
     }
