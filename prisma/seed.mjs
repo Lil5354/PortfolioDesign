@@ -18,24 +18,24 @@ const ARTWORK_IMAGES = [
 
 async function main() {
   console.log('Seeding database...');
-  await prisma.$transaction(async (tx) => {
-    // Cleanup existing data
-    await tx.collectionItem.deleteMany();
-    await tx.timelineEntry.deleteMany();
-    await tx.portfolioSetting.deleteMany();
-    await tx.notification.deleteMany();
-    await tx.message.deleteMany();
-    await tx.report.deleteMany();
-    await tx.comment.deleteMany();
-    await tx.like.deleteMany();
-    await tx.grade.deleteMany();
-    await tx.artwork.deleteMany();
-    await tx.user.deleteMany();
+
+  // Cleanup existing data (sequential deletes to avoid transaction issues)
+  await prisma.collectionItem.deleteMany();
+  await prisma.timelineEntry.deleteMany();
+  await prisma.portfolioSetting.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.message.deleteMany();
+  await prisma.report.deleteMany();
+  await prisma.comment.deleteMany();
+  await prisma.like.deleteMany();
+  await prisma.grade.deleteMany();
+  await prisma.artwork.deleteMany();
+  await prisma.user.deleteMany();
 
     // Create users
     const password = await bcrypt.hash('test123', 10);
 
-    const student = await tx.user.create({
+    const student = await prisma.user.create({
       data: {
         email: 'sv@uef.edu.vn',
         passwordHash: password,
@@ -50,7 +50,7 @@ async function main() {
       },
     });
 
-    const lecturer = await tx.user.create({
+    const lecturer = await prisma.user.create({
       data: {
         email: 'gv@uef.edu.vn',
         passwordHash: password,
@@ -65,7 +65,7 @@ async function main() {
       },
     });
 
-    const admin = await tx.user.create({
+    const admin = await prisma.user.create({
       data: {
         email: 'admin@uef.edu.vn',
         passwordHash: password,
@@ -83,7 +83,7 @@ async function main() {
     const artworks = [];
     for (let i = 0; i < ARTWORK_IMAGES.length; i++) {
       const img = ARTWORK_IMAGES[i];
-      const artwork = await tx.artwork.create({
+      const artwork = await prisma.artwork.create({
         data: {
           userId: student.id,
           title: img.title,
@@ -107,7 +107,7 @@ async function main() {
 
     // Create grades for first 5 artworks
     for (let i = 0; i < Math.min(5, artworks.length); i++) {
-      await tx.grade.create({
+      await prisma.grade.create({
         data: {
           artworkId: artworks[i].id,
           lecturerId: lecturer.id,
@@ -127,7 +127,7 @@ async function main() {
       'Sản phẩm có tính ứng dụng cao trong thực tế.',
     ];
     for (let i = 0; i < Math.min(3, artworks.length); i++) {
-      await tx.comment.create({
+      await prisma.comment.create({
         data: {
           artworkId: artworks[i].id,
           userId: lecturer.id,
@@ -138,16 +138,16 @@ async function main() {
 
     // Create likes
     for (let i = 0; i < artworks.length; i++) {
-      await tx.like.create({
+      await prisma.like.create({
         data: { artworkId: artworks[i].id, userId: student.id, reactionType: 'like' },
       });
-      await tx.like.create({
+      await prisma.like.create({
         data: { artworkId: artworks[i].id, userId: lecturer.id, reactionType: 'heart' },
       });
     }
 
     // Create portfolio settings for student
-    await tx.portfolioSetting.create({
+    await prisma.portfolioSetting.create({
       data: {
         userId: student.id,
         portfolioSlug: 'nguyen-van-an',
@@ -171,7 +171,7 @@ async function main() {
       { month: '03', year: '2025', title: 'Thực tập tại công ty ABC', description: 'Thực tập vị trí Junior Graphic Designer tại công ty quảng cáo ABC.', tags: ['thực tập'] },
     ];
     for (let i = 0; i < timelineEntries.length; i++) {
-      await tx.timelineEntry.create({
+      await prisma.timelineEntry.create({
         data: {
           userId: student.id,
           month: timelineEntries[i].month,
@@ -192,7 +192,6 @@ async function main() {
     console.log('  Admin:    admin@uef.edu.vn');
     console.log('---');
     console.log(`Created: 3 users, ${artworks.length} artworks, 5 grades, 3 comments, 20 likes`);
-  });
 }
 
 main()
