@@ -2029,6 +2029,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
   const [loginError, setLoginError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [logging, setLogging] = useState(false);
+  const [showUefLogin, setShowUefLogin] = useState(false);
 
   const handleEmailLogin = async () => {
     if (!email || !password) {
@@ -2085,12 +2086,180 @@ function AuthPage({ setPage, onLoginSuccess }) {
     }
   };
 
+  if (showUefLogin) {
+    const UEF_BLUE = '#0072bc';
+    return (
+      <div style={{ position: "relative", width: "100%", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Montserrat, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif", background: "#1a1a2e url(/background-login.jpg) center/cover no-repeat" }}>
+        <div style={{ width: "100%", maxWidth: 448, margin: "0 16px" }}>
+          <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 20px 60px rgba(0,0,0,0.3)", padding: "32px 32px 24px" }}>
+
+            {/* Logo row: UEF + QS Stars */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
+              <img src="/logo-uef.png" alt="UEF" style={{ height: 72 }} />
+              <img src="/qs-stars.png" alt="QS Stars" style={{ height: 40 }} />
+            </div>
+
+            {/* UEF ID heading */}
+            <h4 style={{ margin: "20px 0 6px", fontWeight: 700, fontSize: 19, fontFamily: "'Public Sans', sans-serif", color: "rgba(0,114,188,0.78)", textTransform: "uppercase", textAlign: "center" }}>UEF ID</h4>
+
+            {/* Info box */}
+            <p style={{ margin: "0 0 24px", fontSize: 15, fontWeight: 400, color: "rgba(47,43,61,0.68)", background: "#e3efff", padding: "12px 16px", borderRadius: 6, textAlign: "center", lineHeight: 1.5 }}>
+              Đăng nhập vào tài khoản UEF ID của bạn để truy cập
+              <a href="#" onClick={(e) => { e.preventDefault(); setPage("home"); }} style={{ color: UEF_BLUE, marginLeft: 4 }}>UEF Portfolio</a>
+            </p>
+
+            {/* Email input */}
+            <div style={{ marginBottom: 16 }}>
+              <input
+                type="text"
+                value={email}
+                placeholder="Tên người dùng hoặc email"
+                onChange={(e) => { setEmail(e.target.value); setLoginError(""); }}
+                onKeyDown={handleKeyDown}
+                disabled={logging}
+                style={{ width: "100%", padding: "10px 12px", border: `1px solid ${loginError ? "#E53E3E" : "#d1d5db"}`, borderRadius: 6, fontSize: 14, outline: "none", boxSizing: "border-box", color: "#212121", background: "#fff", transition: "border-color 0.15s, box-shadow 0.15s" }}
+                onFocus={(e) => { e.target.style.borderColor = UEF_BLUE; e.target.style.boxShadow = `0 0 0 1px ${UEF_BLUE}` }}
+                onBlur={(e) => { if (!loginError) { e.target.style.borderColor = "#d1d5db"; e.target.style.boxShadow = "none" } }}
+              />
+            </div>
+
+            {/* Password input */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  placeholder="Mật khẩu"
+                  onChange={(e) => { setPassword(e.target.value); setLoginError(""); }}
+                  onKeyDown={handleKeyDown}
+                  disabled={logging}
+                  style={{ width: "100%", padding: "10px 44px 10px 12px", border: `1px solid ${loginError ? "#E53E3E" : "#d1d5db"}`, borderRadius: 6, fontSize: 14, outline: "none", boxSizing: "border-box", color: "#212121", background: "#fff", transition: "border-color 0.15s, box-shadow 0.15s" }}
+                  onFocus={(e) => { e.target.style.borderColor = UEF_BLUE; e.target.style.boxShadow = `0 0 0 1px ${UEF_BLUE}` }}
+                  onBlur={(e) => { if (!loginError) { e.target.style.borderColor = "#d1d5db"; e.target.style.boxShadow = "none" } }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", justifyContent: "center", color: "#9ca3af" }}
+                >
+                  {showPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path clipRule="evenodd" d="M3.28033 2.21967C2.98744 1.92678 2.51256 1.92678 2.21967 2.21967C1.92678 2.51256 1.92678 2.98744 2.21967 3.28033L16.7197 17.7803C17.0126 18.0732 17.4874 18.0732 17.7803 17.7803C18.0732 17.4874 18.0732 17.0126 17.7803 16.7197L16.0352 14.9745C17.5064 13.8594 18.6595 12.3465 19.3344 10.5959C19.4814 10.2144 19.4816 9.79127 19.3347 9.40962C17.892 5.66051 14.256 3 9.99859 3C8.28207 3 6.66657 3.43249 5.2551 4.19444L3.28033 2.21967ZM7.75194 6.69128L8.84367 7.78301C9.18951 7.60223 9.58291 7.5 10.0002 7.5C11.3809 7.5 12.5002 8.61929 12.5002 10C12.5002 10.4173 12.398 10.8107 12.2172 11.1565L13.3091 12.2484C13.7454 11.6077 14.0004 10.8336 14.0004 10C14.0004 7.79086 12.2095 6 10.0004 6C9.16675 6 8.39268 6.25501 7.75194 6.69128Z" fill="currentColor" />
+                      <path d="M10.7484 13.9302L13.2711 16.4529C12.2462 16.8074 11.1458 17 10.0004 17C5.74298 17 2.10698 14.3395 0.664255 10.5904C0.517392 10.2087 0.517518 9.78563 0.66461 9.40408C1.15603 8.12932 1.90108 6.98057 2.83791 6.01969L6.0702 9.25198C6.02436 9.4943 6.00037 9.74435 6.00037 10C6.00037 12.2091 7.79123 14 10.0004 14C10.256 14 10.5061 13.976 10.7484 13.9302Z" fill="currentColor" />
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61929 7.5 7.5 8.61929 7.5 10C7.5 11.3807 8.61929 12.5 10 12.5Z" fill="currentColor" />
+                      <path clipRule="evenodd" d="M0.664255 10.5904C0.517392 10.2087 0.517518 9.78563 0.66461 9.40408C2.10878 5.65788 5.7433 3 9.99859 3C14.256 3 17.892 5.66051 19.3347 9.40962C19.4816 9.79127 19.4814 10.2144 19.3344 10.5959C17.8902 14.3421 14.2557 17 10.0004 17C5.74298 17 2.10698 14.3395 0.664255 10.5904ZM14.0004 10C14.0004 12.2091 12.2095 14 10.0004 14C7.79123 14 6.00037 12.2091 6.00037 10C6.00037 7.79086 7.79123 6 10.0004 6C12.2095 6 14.0004 7.79086 14.0004 10Z" fillRule="evenodd" fill="currentColor" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Error message */}
+            {loginError && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#FFF5F5", border: "1px solid #FED7D7", borderRadius: 6, padding: "10px 14px", marginBottom: 16 }}>
+                <ShieldAlert size={16} color="#E53E3E" style={{ flexShrink: 0 }} />
+                <p style={{ color: "#C53030", fontSize: 13, margin: 0, lineHeight: 1.4 }}>{loginError}</p>
+              </div>
+            )}
+
+            {/* Remember me + Forgot password */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14, color: "rgba(47,43,61,0.78)", cursor: "pointer" }}>
+                <input type="checkbox" style={{ width: 16, height: 16, borderRadius: 4, border: "1px solid #d1d5db", accentColor: UEF_BLUE }} />
+                Ghi nhớ tôi
+              </label>
+              <button
+                onClick={() => setPage("forgot_password")}
+                style={{ background: "none", border: "none", fontSize: 14, color: "#009900", cursor: "pointer", padding: 0 }}
+              >
+                Quên mật khẩu?
+              </button>
+            </div>
+
+            {/* Login button */}
+            <button
+              onClick={handleEmailLogin}
+              disabled={logging || !email || !password}
+              style={{ width: "100%", padding: "16px 4px", borderRadius: 6, border: "none", background: logging ? "#d1d5db" : UEF_BLUE, color: "#fff", fontSize: 15, fontWeight: 500, letterSpacing: "0.43px", textTransform: "uppercase", cursor: logging ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "rgba(47, 43, 61, 0.14) 0 2px 6px 0", marginBottom: 24, transition: "background 0.15s" }}
+              onMouseEnter={(e) => { if (!logging) e.currentTarget.style.background = "#005a9e" }}
+              onMouseLeave={(e) => { if (!logging) e.currentTarget.style.background = UEF_BLUE }}
+            >
+              {logging ? (
+                <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> ĐANG ĐĂNG NHẬP...</>
+              ) : "ĐĂNG NHẬP"}
+            </button>
+
+            {/* OR divider */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
+              <span style={{ fontSize: 14, color: "rgba(47,43,61,0.68)", whiteSpace: "nowrap" }}>Hoặc đăng nhập bằng</span>
+              <div style={{ flex: 1, height: 1, background: "#e5e7eb" }} />
+            </div>
+
+            {/* Google login button */}
+            <a
+              onClick={handleGoogleLogin}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "10px 0", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", fontSize: 15, color: "rgba(47,43,61,0.78)", cursor: "pointer", textDecoration: "none", marginBottom: 24 }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#f9fafb" }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff" }}
+            >
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M23.76 12.2727C23.76 11.4218 23.6836 10.6036 23.5418 9.81818H12.24V14.46H18.6982C18.42 15.96 17.5745 17.2309 16.3036 18.0818L18.2427 19.5873L20.1818 21.0927C22.4509 19.0036 23.76 15.9273 23.76 12.2727Z" fill="#4285F4" />
+                <path d="M12.24 24C15.48 24 18.1964 22.9255 20.1818 21.0927L16.3036 18.0818C15.2291 18.8018 13.8545 19.2273 12.24 19.2273C9.11455 19.2273 6.46909 17.1164 5.52545 14.28L3.52091 15.8345L1.51636 17.3891C3.49091 21.3109 7.54909 24 12.24 24Z" fill="#34A853" />
+                <path d="M5.52545 14.28C5.28545 13.56 5.14909 12.7909 5.14909 12C5.14909 11.2091 5.28545 10.44 5.52545 9.72L3.52091 8.16546L1.51636 6.61091C0.703637 8.23091 0.240001 10.0636 0.240001 12C0.240001 13.9364 0.703637 15.7691 1.51636 17.3891L5.52545 14.28Z" fill="#FBBC05" />
+                <path d="M12.24 4.77273C14.0018 4.77273 15.5836 5.37818 16.8273 6.56727L20.2691 3.12545C18.1909 1.18909 15.4745 0 12.24 0C7.54909 0 3.49091 2.68909 1.51636 6.61091L5.52545 9.72C6.46909 6.88364 9.11455 4.77273 12.24 4.77273Z" fill="#EA4335" />
+              </svg>
+              <span>Google</span>
+            </a>
+
+            {/* Help section */}
+            <div style={{ background: "#ededed", padding: "8px 16px", borderRadius: 6, textAlign: "center", fontSize: 15, color: "rgba(47,43,61,0.78)", marginBottom: 16 }}>
+              Nếu bạn cần trợ giúp, truy cập <a href="https://help.uef.edu.vn/sso/#howto" target="_blank" style={{ color: UEF_BLUE }}>help.uef.edu.vn</a>
+            </div>
+
+            {/* Back to other login methods */}
+            <div style={{ textAlign: "center" }}>
+              <button
+                onClick={() => setShowUefLogin(false)}
+                style={{ background: "none", border: "none", color: "rgba(47,43,61,0.58)", fontSize: 14, cursor: "pointer", padding: "4px 8px" }}
+              >
+                ← Các phương thức đăng nhập khác
+              </button>
+            </div>
+          </div>
+
+          {/* Language selector */}
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
+            <div style={{ background: "#fff", borderRadius: 6, padding: "8px 12px", display: "flex", alignItems: "center", gap: 6, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M7.99998 3H8.99998C6.99998 8 6.99998 16 8.99998 21H7.99998" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M15 3C17 8 17 16 15 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 16V15C8 17 16 17 21 15V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 9.00004C8 7.00004 16 7.00004 21 9.00004" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span style={{ fontSize: 14, color: "rgba(47,43,61,0.78)" }}>Tiếng Việt</span>
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                <path clipRule="evenodd" d="M5.23017 7.20938C5.52875 6.92228 6.00353 6.93159 6.29063 7.23017L10 11.1679L13.7094 7.23017C13.9965 6.93159 14.4713 6.92228 14.7698 7.20938C15.0684 7.49647 15.0777 7.97125 14.7906 8.26983L10.5406 12.7698C10.3992 12.9169 10.204 13 10 13C9.79599 13 9.60078 12.9169 9.45938 12.7698L5.20938 8.26983C4.92228 7.97125 4.93159 7.49647 5.23017 7.20938Z" fillRule="evenodd" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ position: "relative", width: "100%", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f0f2f5" }}>
       {/* Background image */}
       <div style={{ position: "absolute", inset: 0, zIndex: 0 }}>
         <img
-          src="https://cdn-media.sforum.vn/storage/app/media/wp-content/uploads/2023/08/hoc-phi-uef-.jpg"
+          src="/background-login.jpg"
           alt="UEF Campus"
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
@@ -2119,11 +2288,10 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
           {/* SSO button — Đăng nhập với UEF ID (Google) */}
           <button
-            onClick={handleGoogleLogin}
-            disabled={logging}
-            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "11px 0", borderRadius: 10, border: `1px solid ${GRAY_LIGHT}`, background: "#f8f9fa", fontSize: 14, fontWeight: 500, color: "#333", cursor: logging ? "not-allowed" : "pointer", opacity: logging ? 0.5 : 1, transition: "all 0.15s" }}
-            onMouseEnter={(e) => { if (!logging) { e.currentTarget.style.background = "#f0f1f3"; e.currentTarget.style.borderColor = "#d0d0d0"; } }}
-            onMouseLeave={(e) => { if (!logging) { e.currentTarget.style.background = "#f8f9fa"; e.currentTarget.style.borderColor = GRAY_LIGHT; } }}
+            onClick={() => setShowUefLogin(true)}
+            style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "11px 0", borderRadius: 10, border: `1px solid ${GRAY_LIGHT}`, background: "#f8f9fa", fontSize: 14, fontWeight: 500, color: "#333", cursor: "pointer", transition: "all 0.15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#f0f1f3"; e.currentTarget.style.borderColor = "#d0d0d0"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#f8f9fa"; e.currentTarget.style.borderColor = GRAY_LIGHT; }}
           >
             <img src="/logo-uef.png" alt="" style={{ height: 20 }} />
             <span>Đăng nhập với UEF ID</span>
@@ -4565,7 +4733,7 @@ function RegisterPage({ setPage }) {
   return (
     <div style={{ display: "flex", height: "100vh", width: "100%" }}>
       <div style={{ flex: 1, position: "relative" }}>
-        <img src="https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=1200&q=80" alt="register-bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src="/background-login.jpg" alt="register-bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(26,75,168,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
         <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
           <img src="/logo-uef.png" alt="UEF" style={{ height: 32, filter: "brightness(0) invert(1)" }} />
