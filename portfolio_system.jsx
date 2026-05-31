@@ -2090,7 +2090,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
     const UEF_BLUE = '#0072bc';
     return (
       <div style={{ position: "relative", width: "100%", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Montserrat, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif", background: "#1a1a2e url(/background-login.jpg) center/cover no-repeat" }}>
-        <div style={{ width: "100%", maxWidth: 448, margin: "0 16px" }}>
+        <div style={{ width: "100%", maxWidth: 448, margin: "32px 16px" }}>
           <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 20px 60px rgba(0,0,0,0.3)", padding: "32px 32px 24px" }}>
 
             {/* Logo row: UEF + QS Stars */}
@@ -2278,9 +2278,10 @@ function AuthPage({ setPage, onLoginSuccess }) {
       <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: 420, margin: "0 16px" }}>
         <div style={{ background: "#fff", borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.15)", padding: "40px 36px 32px" }}>
           
-          {/* Logo */}
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: 32 }}>
+          {/* Logo row: UEF + QS Stars */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 32 }}>
             <img src="/logo-uef.png" alt="UEF" style={{ height: 80 }} />
+            <img src="/qs-stars.png" alt="QS Stars" style={{ height: 44 }} />
           </div>
 
           {/* SSO login prompt */}
@@ -4735,13 +4736,6 @@ function RegisterPage({ setPage }) {
       <div style={{ flex: 1, position: "relative" }}>
         <img src="/background-login.jpg" alt="register-bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(26,75,168,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
-        <div style={{ position: "absolute", top: 40, left: 40, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => setPage("home")}>
-          <img src="/logo-uef.png" alt="UEF" style={{ height: 32, filter: "brightness(0) invert(1)" }} />
-          <span style={{ fontWeight: 700, fontSize: 18, color: "#fff" }}>Design Gallery</span>
-        </div>
-        <div style={{ position: "absolute", bottom: 48, left: 48, right: 48 }}>
-          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: 22, fontWeight: 300, lineHeight: 1.55, letterSpacing: "-0.3px", margin: "0 0 14px" }}>{t("creativityQuote")}<br /><span style={{ fontSize: 16, opacity: 0.8 }}>{t("joinUefCreative")}</span></p>
-        </div>
       </div>
       <div className="auth-form-panel" style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 56px", overflow: "auto" }}>
         <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
