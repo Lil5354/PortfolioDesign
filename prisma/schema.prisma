@@ -291,3 +291,41 @@ model CollectionItem {
 
   @@map("collection_items")
 }
+
+model SiteSetting {
+  id    String @id @default(uuid()) @map("setting_id")
+  key   String @unique
+  value String
+  type  String @default("text")
+
+  @@map("site_settings")
+}
+
+model SiteSection {
+  id        String   @id @default(uuid()) @map("section_id")
+  page      String
+  section   String
+  label     String
+  sortOrder Int      @default(0) @map("sort_order")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items SiteSectionItem[]
+
+  @@map("site_sections")
+}
+
+model SiteSectionItem {
+  id        String   @id @default(uuid()) @map("item_id")
+  sectionId String   @map("section_id")
+  sortOrder Int      @default(0) @map("sort_order")
+  content   Json     @db.JsonB
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  section SiteSection @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@map("site_section_items")
+}

@@ -3,6 +3,7 @@ import { useAuth } from "./lib/AuthContext";
 import { LecturerCard } from "./components/ui/LecturerCard";
 import { MajorCard } from "./components/ui/MajorCard";
 import { api } from "./lib/api-client";
+import LayoutSettings from "./LayoutSettings.jsx";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import NotificationBell from "./components/NotificationBell";
 import { TranslationProvider, useI18n } from "./lib/i18n.jsx";
@@ -1601,7 +1602,8 @@ if (mins < 1) return t("justNow");
       `3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${pw} ${ph}]/Contents 4 0 R/Resources<</XObject<</Im0 5 0 R>>>>>>endobj\n`,
       `4 0 obj<</Length ${40 + iw + ih}>>stream\nq ${iw} 0 0 ${ih} ${(pw - iw) / 2} ${(ph - ih) / 2} cm /Im0 Do Q\nendstream\nendobj\n`,
       `5 0 obj<</Type/XObject/Subtype/Image/Width ${width}/Height ${height}/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${imgBytes.length}>>stream\n`,
-    ];
+    { icon: <Settings size={18} />, label: "Layout Settings", page: "admin_layout" },
+  ];
     const offsets = [0];
     const enc = new TextEncoder();
     const all = [];
@@ -6606,6 +6608,13 @@ function PortalPage({ setPage }) {
               </div>
               <p className="text-[#666666] text-xs">Giao diện kéo thả sắp xếp ấn phẩm để xuất tập san</p>
             </div>
+            <div onClick={() => setPage("admin_layout")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
+              <div className="flex items-center gap-3 mb-2">
+                <Settings size={20} className="text-[#1a4ba8]" />
+                <h3 className="text-[#212121] font-medium text-base">Layout Settings</h3>
+              </div>
+              <p className="text-[#666666] text-xs">Tùy chỉnh nội dung trang chủ, giới thiệu & footer</p>
+            </div>
           </div>
         </div>
       </div>
@@ -7228,11 +7237,13 @@ export default function App() {
             onOpenExportConfig={openExportConfig}
             onQuickCreateCollection={() => {
               const id = createCollection(`Bộ sưu tập mới`);
-              openExportConfig(id);
+              if (id !== null) setCurrentExportCollection(id);
             }}
-            onOpenCatalogBuilder={(c) => setCatalogCollection(c)}
           />
         ) : <AccessDenied setPage={setPage} />
+      )}
+      {page === "admin_layout" && (
+        (userRole === "admin" || userRole === "lecturer") ? <LayoutSettings setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "collection_export_config" && (
         (userRole === "admin" || userRole === "lecturer") ? (
