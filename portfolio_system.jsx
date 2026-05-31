@@ -4732,19 +4732,20 @@ function RegisterPage({ setPage }) {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%" }}>
-      <div style={{ flex: 1, position: "relative" }}>
-        <img src="/background-login.jpg" alt="register-bg" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(26,75,168,0.6) 0%, rgba(0,0,0,0.55) 100%)" }} />
-      </div>
-      <div className="auth-form-panel" style={{ width: 480, background: "#fff", display: "flex", flexDirection: "column", justifyContent: "center", padding: "48px 56px", overflow: "auto" }}>
-        <div style={{ width: "100%", maxWidth: 340, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}><img src="/logo-uef.png" alt="UEF" style={{ height: 30 }} /><span style={{ fontWeight: 700, fontSize: 16, color: BLACK }}>Design Gallery</span></div>
+    <div style={{ position: "relative", width: "100%", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Montserrat, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif", background: "#1a1a2e url(/background-login.jpg) center/cover no-repeat" }}>
+      <div style={{ width: "100%", maxWidth: 448, margin: "32px 16px" }}>
+        <div style={{ background: "#fff", borderRadius: 8, boxShadow: "0 20px 60px rgba(0,0,0,0.3)", padding: "32px 32px 24px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
+            <img src="/logo-uef.png" alt="UEF" style={{ height: 72 }} />
+            <img src="/qs-stars.png" alt="QS Stars" style={{ height: 40 }} />
+          </div>
+          <h4 style={{ margin: "20px 0 6px", fontWeight: 700, fontSize: 19, fontFamily: "'Public Sans', sans-serif", color: "rgba(0,114,188,0.78)", textTransform: "uppercase", textAlign: "center" }}>UEF PORTFOLIO</h4>
+          <p style={{ margin: "0 0 24px", fontSize: 15, fontWeight: 400, color: "rgba(47,43,61,0.68)", background: "#e3efff", padding: "12px 16px", borderRadius: 6, textAlign: "center", lineHeight: 1.5 }}>
+            Tạo tài khoản để bắt đầu trưng bày tác phẩm của bạn trên UEF Portfolio
+          </p>
 
           {step === "form" && (
             <>
-              <h1 style={{ fontSize: 24, fontWeight: 700, color: BLACK, margin: "0 0 6px", letterSpacing: "-0.6px" }}>{t("createNewAccount")}</h1>
-              <p style={{ fontSize: 13, color: MUTED, marginBottom: 24 }}>{t("registerDescription")}</p>
               <form onSubmit={handleSubmit}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
