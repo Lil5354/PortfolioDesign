@@ -1602,8 +1602,7 @@ if (mins < 1) return t("justNow");
       `3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${pw} ${ph}]/Contents 4 0 R/Resources<</XObject<</Im0 5 0 R>>>>>>endobj\n`,
       `4 0 obj<</Length ${40 + iw + ih}>>stream\nq ${iw} 0 0 ${ih} ${(pw - iw) / 2} ${(ph - ih) / 2} cm /Im0 Do Q\nendstream\nendobj\n`,
       `5 0 obj<</Type/XObject/Subtype/Image/Width ${width}/Height ${height}/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${imgBytes.length}>>stream\n`,
-    { icon: <Settings size={18} />, label: "Layout Settings", page: "admin_layout" },
-  ];
+    ];
     const offsets = [0];
     const enc = new TextEncoder();
     const all = [];
@@ -3089,6 +3088,7 @@ function AdminSidebar({ active, setPage }) {
     { icon: <ShoppingCart size={18} />, label: t("orders"), page: "admin_orders" },
     { icon: <ShieldAlert size={18} />, label: t("artworkWarnings"), page: "admin_artworks" },
     { icon: <Folder size={18} />, label: t("collectionManagement"), page: "admin_export" },
+    { icon: <Settings size={18} />, label: "Layout Settings", page: "admin_layout" },
   ];
 
   return (
