@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { t } from './lib/i18n.jsx';
+import { fetchSiteContent } from './lib/site-content.js';
 
 const CERULEAN = '#1a4ba8';
 const BLACK = '#212121';
@@ -80,6 +81,7 @@ export default function LayoutSettings({ setPage }) {
       }
       setEditingItem(null);
       await loadData();
+      fetchSiteContent();
     } catch (e) {
       setError('Failed to save item');
     }

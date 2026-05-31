@@ -184,35 +184,54 @@ async function main() {
       });
     }
 
+    // Clear existing layout sections
+    await prisma.siteSectionItem.deleteMany();
+    await prisma.siteSection.deleteMany();
+    await prisma.siteSetting.deleteMany();
+
     // Create default layout sections
     const sections = [
       { page: 'home', section: 'hero', label: 'Hero Banner', items: [
-        { title: 'Nơi trưng bày ấn phẩm thiết kế của sinh viên UEF', description: 'Nền tảng E-Portfolio tích hợp đánh giá học thuật — nơi sinh viên trưng bày tác phẩm, giảng viên chấm điểm chuyên nghiệp, và nhà tuyển dụng tìm kiếm nhân tài', imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200', ctaText: 'Khám phá Gallery', ctaLink: 'gallery' },
+        { preTitle: 'Khoa Thiết kế Đồ họa', title1: 'Khám phá', title2: 'Những đồ án xuất sắc nhất', title3: 'từ sinh viên UEF', primaryCta: 'Khám phá Gallery', primaryCtaLink: 'gallery', secondaryCta: 'Đăng nhập sinh viên', secondaryCtaLink: 'auth', note: 'Dành cho sinh viên đăng nhập bằng email của bạn', bgImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200' },
+      ]},
+      { page: 'home', section: 'stats', label: 'Statistics Bar', items: [
+        { value: '500+', label: 'Ấn phẩm trưng bày' },
+        { value: '120+', label: 'Giảng viên tham gia' },
+        { value: '18', label: 'Môn học' },
+        { value: '4', label: 'Khóa' },
+      ]},
+      { page: 'home', section: 'creativeJourney', label: 'Creative Journey', items: [
+        { title: 'Hành trình sáng tạo', subtitle: 'Khám phá hành trình học tập và sáng tạo của sinh viên Thiết kế Đồ họa' },
       ]},
       { page: 'home', section: 'features', label: 'Feature Cards', items: [
-        { title: 'Gallery Triển lãm', description: 'Hiển thị toàn bộ ấn phẩm theo Masonry Layout, lọc theo môn học, năm học, công cụ và thể loại.', imageUrl: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400', tag: 'gallery' },
-        { title: 'Portfolio Cá nhân', description: 'Mỗi sinh viên có trang portfolio riêng với URL chia sẻ, phù hợp gửi cho nhà tuyển dụng.', imageUrl: 'https://images.unsplash.com/photo-1542744094-3a31f272c490?w=400', tag: 'portfolio' },
-        { title: 'Điểm số & Nhận xét', description: 'Giảng viên chấm điểm trực tiếp trên hệ thống. Sinh viên nhận thông báo và xem kết quả công khai hoặc ẩn.', imageUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400', tag: 'feedback' },
+        { title: 'Gallery Triển lãm', description: 'Hiển thị toàn bộ ấn phẩm theo Masonry Layout, lọc theo môn học, năm học, công cụ và thể loại.', icon: 'layoutGrid', tag: 'gallery' },
+        { title: 'Portfolio Cá nhân', description: 'Mỗi sinh viên có trang portfolio riêng với URL chia sẻ, phù hợp gửi cho nhà tuyển dụng.', icon: 'user', tag: 'portfolio' },
+        { title: 'Điểm số & Nhận xét', description: 'Giảng viên chấm điểm trực tiếp trên hệ thống. Sinh viên nhận thông báo và xem kết quả công khai hoặc ẩn.', icon: 'star', tag: 'feedback' },
+        { title: 'Đa thiết bị', description: 'Giao diện responsive, hiển thị hoàn hảo trên desktop, tablet và điện thoại di động.', icon: 'monitor', tag: 'responsive' },
+        { title: 'Nổi bật & Tương tác', description: 'Like, Bookmark ấn phẩm. Giảng viên highlight tác phẩm xuất sắc lên đầu Gallery.', icon: 'heart', tag: 'interact' },
+        { title: 'Kết nối Tuyển dụng', description: 'Nhà tuyển dụng liên hệ sinh viên qua form → email chuyển tiếp thẳng đến @uef.edu.vn.', icon: 'users', tag: 'recruitment' },
+      ]},
+      { page: 'home', section: 'featuresHeading', label: 'Features Section Heading', items: [
+        { preTitle: 'Tính năng cốt lõi', title: 'Mọi thứ bạn cần trong một nền tảng', description: 'Hệ thống E-Portfolio toàn diện cho sinh viên Thiết kế Đồ họa UEF' },
       ]},
       { page: 'home', section: 'steps', label: 'Step Guide', items: [
         { step: 1, title: 'Đăng nhập', description: 'Dùng email của bạn để đăng nhập vào hệ thống' },
         { step: 2, title: 'Đăng tải ấn phẩm', description: 'Upload ảnh/PDF kèm thông tin môn học, công cụ và mô tả' },
         { step: 3, title: 'Chia sẻ Portfolio', description: 'Nhận link portfolio cá nhân để gửi cho nhà tuyển dụng' },
       ]},
-      { page: 'home', section: 'stats', label: 'Statistics', items: [
-        { value: '350+', label: 'Dự án Kiểm định' },
-        { value: '98%', label: 'Hài lòng về UI/UX' },
-        { value: '45+', label: 'Doanh nghiệp Đối tác' },
+      { page: 'home', section: 'stepsHeading', label: 'Steps Section Heading', items: [
+        { preTitle: 'Hướng dẫn', title: 'Bắt đầu chỉ trong 3 bước' },
       ]},
-      { page: 'home', section: 'testimonials', label: 'Testimonials', items: [
-        { name: 'Bà NGUYỄN THỊ VỌNG', role: 'Giám đốc vận hành EBS - FPT Software', quote: 'Đại diện doanh nghiệp, tôi đánh giá cao khung chương trình đào tạo của UEF. Chúng tôi luôn săn đón những nguồn lực vững chuyên môn, giỏi thực hành và tốt ngoại ngữ.', imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200' },
-        { name: 'TRẦN TẤN ĐẠT', role: 'Sinh viên khóa 2020', quote: 'Em hoàn toàn hài lòng khi lựa chọn học Công nghệ thông tin ở UEF. Ngoài kỹ năng chuyên môn, em được trau dồi về kỹ năng tiếng Anh chuyên ngành.', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200' },
+      { page: 'home', section: 'testimonials', label: 'Testimonials / Quotes', items: [
+        { name: 'Bà NGUYỄN THỊ VỌNG', role: 'Giám đốc vận hành đơn vị EBS - FPT Software', type: 'Doanh nghiệp', quote: 'Đại diện doanh nghiệp, tôi đánh giá cao khung chương trình đào tạo của UEF. Chúng tôi luôn săn đón những nguồn lực vững chuyên môn, giỏi thực hành và tốt ngoại ngữ.', imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200' },
+        { name: 'TRẦN TẤN ĐẠT', role: 'Sinh viên khóa 2020', type: 'Sinh viên', quote: 'Em hoàn toàn hài lòng khi lựa chọn học Công nghệ thông tin ở UEF. Ngoài kỹ năng chuyên môn, em được trau dồi về kỹ năng tiếng Anh chuyên ngành, tăng cường khả năng ghi nhớ, lập luận logic.', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200' },
+        { name: 'Cô VĂN THỊ THIÊN TRANG', role: 'Phó khoa, khoa Công nghệ thông tin', type: 'Giảng viên', quote: 'Ở UEF, ngành Công nghệ thông tin được đào tạo bài bản với sự kết hợp giữa lý thuyết và thực tiễn. Sinh viên có thời lượng lớn tham quan thực tế tại doanh nghiệp.', imageUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200' },
       ]},
       { page: 'home', section: 'cta', label: 'Call to Action', items: [
-        { title: 'Sẵn sàng trưng bày tác phẩm của bạn?', subtitle: 'Dành cho sinh viên Thiết kế Đồ họa UEF — đăng nhập ngay hôm nay', ctaText: 'Đăng nhập ngay', ctaLink: 'auth', secondaryText: 'Khám phá Gallery', secondaryLink: 'gallery' },
+        { title: 'Sẵn sàng trưng bày tác phẩm của bạn?', subtitle: 'Dành cho sinh viên Thiết kế Đồ họa UEF — đăng nhập ngay hôm nay', primaryCta: 'Đăng nhập ngay', primaryCtaLink: 'auth', secondaryCta: 'Xem Gallery', secondaryCtaLink: 'gallery' },
       ]},
       { page: 'about', section: 'aboutHero', label: 'About Hero', items: [
-        { title: 'Khoa Thiết Kế Đồ Họa — UEF', subtitle: 'Nơi Sáng Tạo Được Triển Lãm', description: 'Khoa Thiết kế Đồ họa UEF đào tạo thế hệ nhà thiết kế chuyên nghiệp với chương trình cập nhật xu hướng toàn cầu.', stats: JSON.stringify([{ value: '1200+', label: 'Ấn phẩm trưng bày' }, { value: '48', label: 'Giảng viên chuyên môn' }, { value: '340', label: 'Sinh viên theo học' }]), imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200' },
+        { title: 'Khoa Thiết Kế Đồ Họa — UEF', subtitle: 'Nơi Sáng Tạo Được Triển Lãm', description: 'Khoa Thiết kế Đồ họa UEF đào tạo thế hệ nhà thiết kế chuyên nghiệp với chương trình cập nhật xu hướng toàn cầu.', stats: '[{"value":"1200+","label":"Ấn phẩm trưng bày"},{"value":"48","label":"Giảng viên chuyên môn"},{"value":"340","label":"Sinh viên theo học"}]', imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200' },
       ]},
       { page: 'footer', section: 'footerInfo', label: 'Footer Info', items: [
         { brand: 'UEF Design Gallery', copyright: '© 2024 Trương Vĩnh Ký - Khóa 21 - Tài chính TP.HCM', address: '141 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM', phone: '(028) 5422 5555', email: 'khoathietke@uef.edu.vn' },
@@ -220,13 +239,13 @@ async function main() {
       { page: 'footer', section: 'footerLinks', label: 'Footer Links', items: [
         { label: 'Gallery', link: 'gallery' },
         { label: 'Giới thiệu Khoa', link: 'about' },
-        { label: 'Liên hệ', link: 'contact' },
-        { label: 'Chính sách', link: '#' },
+        { label: 'Đăng nhập', link: 'auth' },
+        { label: 'Trường UEF', link: 'https://uef.edu.vn' },
       ]},
       { page: 'footer', section: 'footerSocial', label: 'Social Media', items: [
-        { platform: 'Facebook', url: 'https://facebook.com/uef.edu.vn', icon: 'facebook' },
-        { platform: 'Youtube', url: 'https://youtube.com/@uefmedia', icon: 'youtube' },
-        { platform: 'Website', url: 'https://uef.edu.vn', icon: 'website' },
+        { platform: 'Facebook', url: 'https://facebook.com/uef.edu.vn' },
+        { platform: 'Youtube', url: 'https://youtube.com/@uefmedia' },
+        { platform: 'Website', url: 'https://uef.edu.vn' },
       ]},
     ];
 
