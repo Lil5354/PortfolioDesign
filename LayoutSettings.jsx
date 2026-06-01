@@ -102,6 +102,7 @@ export default function LayoutSettings({ setPage }) {
     try {
       await fetch(`/api/site-section-items/${id}`, { method: 'DELETE' });
       await loadData();
+      await fetchSiteContent();
     } catch (e) {
       setError('Failed to delete');
     }
@@ -123,6 +124,7 @@ export default function LayoutSettings({ setPage }) {
       }
       setSettings((prev) => ({ ...prev, [key]: value }));
       setSavedKey(key);
+      await fetchSiteContent();
       setTimeout(() => setSavedKey(null), 2000);
     } catch (e) {
       setError(`Failed to save "${key}": ${e.message}`);
