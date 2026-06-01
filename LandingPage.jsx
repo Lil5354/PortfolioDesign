@@ -4,7 +4,7 @@ import { ArrowRight, Image as ImageIcon, User, Star, Monitor, Heart, Users, Mail
 
 export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
   const { t, currentLang, setLang: setLanguage } = useI18n();
-  const { getContentBySection, getContentItems } = useSiteContent();
+  const { getContentBySection, getContentItems, getSetting } = useSiteContent();
   const hero = getContentBySection('home', 'hero');
   const stats = getContentItems('home', 'stats');
   const journey = getContentBySection('home', 'creativeJourney');
@@ -249,7 +249,7 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
             <img src="/logo-uef.png" alt="UEF" className="h-7 object-contain" />
             <div>
               <p className="font-bold text-white">{footerInfo?.brand || `UEF Design Gallery - ${t("facultyOfGraphicDesign")}`}</p>
-              <p className="text-xs mt-1">{footerInfo?.copyright || ''}</p>
+              <p className="text-xs mt-1">{footerInfo?.copyright || getSetting('footerCopyright') || ''}</p>
             </div>
           </div>
           <div className="flex gap-6">

@@ -4835,7 +4835,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
   const [activeCategory, setActiveCategory] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const { getContentBySection, getContentItems } = useSiteContent();
+  const { getContentBySection, getContentItems, getSetting } = useSiteContent();
   const hero = getContentBySection('home', 'hero');
   const stats = getContentItems('home', 'stats');
   const features = getContentItems('home', 'features');
@@ -5277,7 +5277,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>{footerInfo?.copyright || t("footerCopyright")}</p>
+          <p>{footerInfo?.copyright || getSetting('footerCopyright') || t("footerCopyright")}</p>
           <p>{footerInfo?.footerBrand || t("footerBrand")}</p>
         </div>
       </footer>
@@ -5369,7 +5369,7 @@ const softwareStack = [
 function AboutPage({ setPage }) {
   const [activeTab, setActiveTab] = useState("student");
   const [openFaq, setOpenFaq] = useState(null);
-  const { getContentBySection, getContentItems } = useSiteContent();
+  const { getContentBySection, getContentItems, getSetting } = useSiteContent();
   const aboutHero = getContentBySection('about', 'aboutHero');
   const aboutValues = getContentItems('about', 'aboutValues');
   const aboutProcess = getContentItems('about', 'aboutProcess');
@@ -5943,7 +5943,7 @@ function AboutPage({ setPage }) {
 
         </div>
         <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>{footerInfo?.copyright || '© 2026 UEF Design Gallery. Tất cả bản quyền được bảo hộ.'}</p>
+          <p>{footerInfo?.copyright || getSetting('footerCopyright') || '© 2026 UEF Design Gallery. Tất cả bản quyền được bảo hộ.'}</p>
           <p>{footerInfo?.footerBrand || t("aboutFooterDev")} <Heart size={14} className="inline text-[#DA291C] mx-1" /></p>
         </div>
       </footer>
