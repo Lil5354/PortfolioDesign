@@ -41,6 +41,8 @@ export default function LayoutSettings({ setPage }) {
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [savingKey, setSavingKey] = useState(null);
+  const [savedKey, setSavedKey] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => { loadData(); }, [activePage]);
@@ -106,6 +108,9 @@ export default function LayoutSettings({ setPage }) {
   }
 
   async function saveSetting(key, value) {
+    setSavingKey(key);
+    setError('');
+    setSavedKey(null);
     try {
       const res = await fetch('/api/site-settings', {
         method: 'PUT',
@@ -117,9 +122,12 @@ export default function LayoutSettings({ setPage }) {
         throw new Error(errData.error || `Save failed (${res.status})`);
       }
       setSettings((prev) => ({ ...prev, [key]: value }));
+      setSavedKey(key);
+      setTimeout(() => setSavedKey(null), 2000);
     } catch (e) {
-      setError('Failed to save setting');
+      setError(`Failed to save "${key}": ${e.message}`);
     }
+    setSavingKey(null);
   }
 
   function renderContentEditor(content, onChange) {
@@ -257,15 +265,31 @@ export default function LayoutSettings({ setPage }) {
           {Object.keys(settings).length === 0 && (
             <p style={{ color: MUTED, fontSize: 12, gridColumn: 'span 2' }}>No site settings yet.</p>
           )}
-          {Object.entries(settings).map(([key, val]) => (
+          {Object.entries(settings).map(([key, val]) => {
+            const isSaving = savingKey === key;
+            const isSaved = savedKey === key;
+            return (
             <div key={key}>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: MUTED, marginBottom: 3 }}>{key}</label>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input value={val} onChange={(e) => setSettings((p) => ({ ...p, [key]: e.target.value }))} style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: 'none' }} />
-                <button onClick={() => saveSetting(key, settings[key])} style={{ padding: '8px 12px', borderRadius: 6, border: 'none', background: CERULEAN, color: '#fff', fontSize: 11, cursor: 'pointer' }}>Save</button>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <input value={val} onChange={(e) => { setSavedKey(null); setSettings((p) => ({ ...p, [key]: e.target.value })); }} style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: 'none' }} />
+                <button
+                  onClick={() => saveSetting(key, settings[key])}
+                  disabled={isSaving}
+                  style={{
+                    padding: '8px 12px', borderRadius: 6, border: 'none',
+                    background: isSaved ? '#38A169' : isSaving ? GRAY_LIGHT : CERULEAN,
+                    color: isSaving ? MUTED : '#fff', fontSize: 11,
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    minWidth: 60, transition: 'background 0.2s',
+                  }}
+                >
+                  {isSaving ? '...' : isSaved ? 'Saved!' : 'Save'}
+                </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
