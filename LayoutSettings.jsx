@@ -52,8 +52,10 @@ export default function LayoutSettings({ setPage }) {
         fetch('/api/site-sections'),
         fetch('/api/site-settings'),
       ]);
+      if (!secRes.ok || !setRes.ok) throw new Error('API error');
       const allSections = await secRes.json();
       const allSettings = await setRes.json();
+      if (!Array.isArray(allSections)) throw new Error('Invalid sections data');
       setSections(allSections.filter((s) => s.page === activePage));
       setSettings(allSettings);
     } catch (e) {
@@ -66,18 +68,23 @@ export default function LayoutSettings({ setPage }) {
     setSaving(true);
     setError('');
     try {
+      let res;
       if (item.id) {
-        await fetch(`/api/site-section-items/${item.id}`, {
+        res = await fetch(`/api/site-section-items/${item.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(item),
         });
       } else {
-        await fetch(`/api/site-sections/${item.sectionId}/items`, {
+        res = await fetch(`/api/site-sections/${item.sectionId}/items`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(item),
         });
+      }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Save failed (${res.status})`);
       }
       setEditingItem(null);
       await loadData();
@@ -100,11 +107,15 @@ export default function LayoutSettings({ setPage }) {
 
   async function saveSetting(key, value) {
     try {
-      await fetch('/api/site-settings', {
+      const res = await fetch('/api/site-settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, value }),
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Save failed (${res.status})`);
+      }
       setSettings((prev) => ({ ...prev, [key]: value }));
     } catch (e) {
       setError('Failed to save setting');

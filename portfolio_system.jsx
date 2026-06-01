@@ -5369,6 +5369,13 @@ const softwareStack = [
 function AboutPage({ setPage }) {
   const [activeTab, setActiveTab] = useState("student");
   const [openFaq, setOpenFaq] = useState(null);
+  const { getContentBySection, getContentItems } = useSiteContent();
+  const aboutHero = getContentBySection('about', 'aboutHero');
+  const aboutValues = getContentItems('about', 'aboutValues');
+  const aboutProcess = getContentItems('about', 'aboutProcess');
+  const aboutCta = getContentBySection('about', 'aboutCta');
+  const footerInfo = getContentBySection('footer', 'footerInfo');
+  const footerLinks = getContentItems('footer', 'footerLinks');
 
   const toggleFaq = (idx) => {
     setOpenFaq(openFaq === idx ? null : idx);
@@ -5400,12 +5407,16 @@ function AboutPage({ setPage }) {
             {t("aboutFacultyUef")}
           </div>
           <h1 className="text-5xl lg:text-7xl font-extrabold leading-[1.1] text-[#0a0c0f] mb-4 tracking-tight animate-[fadeUp_0.7s_ease-out]">
-            {t("aboutHeroExplore")}<br/>
-            <span className="text-[#1a4ba8]">{t("aboutHeroExcellentProjects")}</span><br/>
-            {t("aboutHeroFromUefStudents")}
+            {aboutHero?.title ? (
+              aboutHero.title.split('\n').map((line, i) => (
+                <React.Fragment key={i}>{i > 0 && <br/>}{line}</React.Fragment>
+              ))
+            ) : (
+              <>{t("aboutHeroExplore")}<br/><span className="text-[#1a4ba8]">{t("aboutHeroExcellentProjects")}</span><br/>{t("aboutHeroFromUefStudents")}</>
+            )}
           </h1>
           <p className="text-[#666] text-base leading-relaxed max-w-[460px] mb-10 animate-[fadeUp_0.9s_ease-out]">
-            {t("aboutHeroDesc1")} <strong className="text-[#1a4ba8]">{t("aboutHeroDesc2")}</strong>
+            {aboutHero?.description || <>{t("aboutHeroDesc1")} <strong className="text-[#1a4ba8]">{t("aboutHeroDesc2")}</strong></>}
           </p>
           <div className="flex flex-wrap gap-3 mb-4 animate-[fadeUp_1.1s_ease-out]">
             <a href="#audience" className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#0d2e6e] text-white rounded-xl font-bold text-[15px] hover:bg-[#1a4ba8] hover:-translate-y-1 transition-all shadow-lg shadow-[#0d2e6e]/20 hover:shadow-[#1a4ba8]/40 duration-300">
@@ -5416,14 +5427,28 @@ function AboutPage({ setPage }) {
             </button>
           </div>
           <div className="flex gap-8 pt-7 mt-10 border-t border-[#e2e6ec] animate-[fadeUp_1.3s_ease-out]">
-            <div>
-              <div className="text-[28px] font-black text-[#0d2e6e] leading-none">500+</div>
-              <div className="text-[11px] text-[#8b96a8] mt-1.5 font-bold uppercase tracking-wider">{t("aboutArtworksOnDisplay")}</div>
-            </div>
-            <div>
-              <div className="text-[28px] font-black text-[#0d2e6e] leading-none">120+</div>
-              <div className="text-[11px] text-[#8b96a8] mt-1.5 font-bold uppercase tracking-wider">{t("aboutLecturersParticipating")}</div>
-            </div>
+            {aboutHero?.stats ? (() => {
+              try {
+                const statsArr = JSON.parse(aboutHero.stats);
+                return statsArr.slice(0, 4).map((s, i) => (
+                  <div key={i}>
+                    <div className="text-[28px] font-black text-[#0d2e6e] leading-none">{s.value}</div>
+                    <div className="text-[11px] text-[#8b96a8] mt-1.5 font-bold uppercase tracking-wider">{s.label}</div>
+                  </div>
+                ));
+              } catch { return null; }
+            })() : (
+              <>
+                <div>
+                  <div className="text-[28px] font-black text-[#0d2e6e] leading-none">500+</div>
+                  <div className="text-[11px] text-[#8b96a8] mt-1.5 font-bold uppercase tracking-wider">{t("aboutArtworksOnDisplay")}</div>
+                </div>
+                <div>
+                  <div className="text-[28px] font-black text-[#0d2e6e] leading-none">120+</div>
+                  <div className="text-[11px] text-[#8b96a8] mt-1.5 font-bold uppercase tracking-wider">{t("aboutLecturersParticipating")}</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -5850,16 +5875,16 @@ function AboutPage({ setPage }) {
             <div className="flex items-center gap-3 mb-4">
               <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
               <div>
-                <p className="font-bold text-[#212121]">Design Gallery</p>
-                <p className="text-xs text-[#666]">Khoa Thiết kế Đồ họa</p>
+                <p className="font-bold text-[#212121]">{footerInfo?.brand || 'Design Gallery'}</p>
+                <p className="text-xs text-[#666]">{footerInfo?.subtitle || 'Khoa Thiết kế Đồ họa'}</p>
               </div>
             </div>
-            <p className="text-sm text-[#666] leading-relaxed mb-4">Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.</p>
+            <p className="text-sm text-[#666] leading-relaxed mb-4">{footerInfo?.description || 'Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.'}</p>
             <div className="flex gap-3">
-              <a href="mailto:khoathietke@uef.edu.vn" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Mail size={15} /></a>
-              <a href="https://facebook.com/uef.edu.vn" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Globe size={15} /></a>
-              <a href="https://youtube.com/@uefmedia" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#fff1f0] text-[#DA291C] flex items-center justify-center hover:bg-[#DA291C] hover:text-white transition-all"><Eye size={15} /></a>
-              <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><ExternalLink size={15} /></a>
+              <a href={footerInfo?.emailUrl || "mailto:khoathietke@uef.edu.vn"} className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Mail size={15} /></a>
+              <a href={footerInfo?.facebookUrl || "https://facebook.com/uef.edu.vn"} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Globe size={15} /></a>
+              <a href={footerInfo?.youtubeUrl || "https://youtube.com/@uefmedia"} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#fff1f0] text-[#DA291C] flex items-center justify-center hover:bg-[#DA291C] hover:text-white transition-all"><Eye size={15} /></a>
+              <a href={footerInfo?.websiteUrl || "https://uef.edu.vn"} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><ExternalLink size={15} /></a>
             </div>
           </div>
 
@@ -5868,19 +5893,19 @@ function AboutPage({ setPage }) {
             <ul className="space-y-3 text-sm text-[#666]">
               <li className="flex items-start gap-2.5">
                 <MapPin size={15} className="text-[#DA291C] shrink-0 mt-0.5" />
-                <span>141 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM</span>
+                <span>{footerInfo?.address || '141 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM'}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Phone size={15} className="text-[#DA291C] shrink-0" />
-                <span>(028) 5422 5555</span>
+                <span>{footerInfo?.phone || '(028) 5422 5555'}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail size={15} className="text-[#DA291C] shrink-0" />
-                <a href="mailto:khoathietke@uef.edu.vn" className="hover:text-[#1a4ba8] transition-colors">khoathietke@uef.edu.vn</a>
+                <a href={`mailto:${footerInfo?.email || 'khoathietke@uef.edu.vn'}`} className="hover:text-[#1a4ba8] transition-colors">{footerInfo?.email || 'khoathietke@uef.edu.vn'}</a>
               </li>
               <li className="flex items-center gap-2.5">
                 <Globe size={15} className="text-[#DA291C] shrink-0" />
-                <a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="hover:text-[#1a4ba8] transition-colors">uef.edu.vn</a>
+                <a href={footerInfo?.websiteUrl || "https://uef.edu.vn"} target="_blank" rel="noreferrer" className="hover:text-[#1a4ba8] transition-colors">{footerInfo?.websiteLabel || 'uef.edu.vn'}</a>
               </li>
             </ul>
           </div>
@@ -5888,10 +5913,21 @@ function AboutPage({ setPage }) {
           <div>
             <h4 className="font-bold text-sm text-[#1a4ba8] uppercase tracking-wider mb-5">Liên kết</h4>
             <ul className="space-y-3 text-sm">
-              <li><button onClick={() => setPage("gallery")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">Gallery</button></li>
-              <li><button onClick={() => setPage("about")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">{t("aboutFaculty")}</button></li>
-              <li><button onClick={() => setPage("auth")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">{t("login")}</button></li>
-              <li><a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="text-[#666] hover:text-[#1a4ba8] transition-colors">Trường UEF</a></li>
+              {footerLinks.length > 0 ? footerLinks.map((item, idx) => {
+                const c = item.content;
+                return (
+                  <li key={item.id || idx}>
+                    <button onClick={() => setPage(c.link)} className="text-[#666] hover:text-[#1a4ba8] transition-colors">{c.label}</button>
+                  </li>
+                );
+              }) : (
+                <>
+                  <li><button onClick={() => setPage("gallery")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">Gallery</button></li>
+                  <li><button onClick={() => setPage("about")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">{t("aboutFaculty")}</button></li>
+                  <li><button onClick={() => setPage("auth")} className="text-[#666] hover:text-[#1a4ba8] transition-colors">{t("login")}</button></li>
+                  <li><a href="https://uef.edu.vn" target="_blank" rel="noreferrer" className="text-[#666] hover:text-[#1a4ba8] transition-colors">Trường UEF</a></li>
+                </>
+              )}
             </ul>
           </div>
 
@@ -5907,8 +5943,8 @@ function AboutPage({ setPage }) {
 
         </div>
         <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-4">
-          <p>© 2026 UEF Design Gallery. Tất cả bản quyền được bảo hộ.</p>
-          <p>{t("aboutFooterDev")} <Heart size={14} className="inline text-[#DA291C] mx-1" /></p>
+          <p>{footerInfo?.copyright || '© 2026 UEF Design Gallery. Tất cả bản quyền được bảo hộ.'}</p>
+          <p>{footerInfo?.footerBrand || t("aboutFooterDev")} <Heart size={14} className="inline text-[#DA291C] mx-1" /></p>
         </div>
       </footer>
     </div>
