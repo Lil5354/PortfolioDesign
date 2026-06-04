@@ -303,14 +303,10 @@ function MasonryGrid({
 }
 
 function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
-  const [category, setCategory] = useState("Tất cả");
-  const [year, setYear] = useState("Tất cả");
-  const [tool, setTool] = useState("Tất cả");
-  const [sort, setSort] = useState("newest");
+  const [filters, setFilters] = useState({ category: "Tất cả", year: "Tất cả", tool: "Tất cả", sort: "newest", q: "" });
   const [page, setPageNum] = useState(1);
   const [data, setData] = useState({ artworks: [], total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [showYearTool, setShowYearTool] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
@@ -324,36 +320,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 
   const categories = ["Tất cả", "Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
   const years = ["Tất cả", "2022-2023", "2023-2024", "2024-2025"];
-  const tools = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate", "After Effects", "InDesign", "Lightroom", "Cinema 4D"];
-
-  const fetchArtworks = useCallback((pageNum, cat, yr, tl, s, q) => {
-    const id = ++fetchId.current;
-    setLoading(true);
-    const params = { page: String(pageNum), limit: String(limit), sort: s };
-    if (cat !== "Tất cả") params.category = cat;
-    if (yr !== "Tất cả") params.year = yr;
-    if (tl !== "Tất cả") params.tool = tl;
-    if (q.trim()) params.q = q.trim();
-    api.artworks.list(params).then(res => {
-      if (id === fetchId.current) {
-        setData(res);
-        setLoading(false);
-      }
-    }).catch(() => {
-      if (id === fetchId.current) setLoading(false);
-    });
-  }, []);
-
-  const filtersRef = useRef({ category: "Tất cả", year: "Tất cả", tool: "Tất cả", sort: "newest", searchQuery: "" });
-
-  useEffect(() => {
-    const prev = filtersRef.current;
-    const changed = prev.category !== category || prev.year !== year || prev.tool !== tool || prev.sort !== sort || prev.searchQuery !== searchQuery;
-    filtersRef.current = { category, year, tool, sort, searchQuery };
-    const targetPage = changed ? 1 : page;
-    if (changed) setPageNum(1);
-    fetchArtworks(targetPage, category, year, tool, sort, searchQuery);
-  }, [category, year, tool, sort, searchQuery, page]);
+  const toolsList = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate", "After Effects", "InDesign", "Lightroom", "Cinema 4D"];
 
   useEffect(() => {
     fetch("/api/artworks/category-covers")
@@ -361,6 +328,26 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       .then(setCategoryCovers)
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const id = ++fetchId.current;
+    setLoading(true);
+    const params = { page: String(page), limit: String(limit), sort: filters.sort };
+    if (filters.category !== "Tất cả") params.category = filters.category;
+    if (filters.year !== "Tất cả") params.year = filters.year;
+    if (filters.tool !== "Tất cả") params.tool = filters.tool;
+    if (filters.q.trim()) params.q = filters.q.trim();
+    api.artworks.list(params).then(res => {
+      if (id === fetchId.current) { setData(res); setLoading(false); }
+    }).catch(() => { if (id === fetchId.current) setLoading(false); });
+  }, [filters, page]);
+
+  const setFilter = (key, val) => {
+    setFilters(prev => ({ ...prev, [key]: val }));
+    setPageNum(1);
+  };
+
+  const activeFilterCount = [filters.year !== "Tất cả", filters.tool !== "Tất cả"].filter(Boolean).length;
 
   const mapped = (data.artworks || []).map(a => ({
     id: a.id,
@@ -377,51 +364,78 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
-      <div style={{ padding: "32px 48px 0" }}>
-        <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-0.5px" }}>{t("artworkLibrary")}</h1>
-          <p style={{ color: MUTED, fontSize: 14, marginTop: 4 }}>{t("gallerySubtitle")}</p>
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "32px 48px 0" }}>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 16 }}>
+          <div>
+            <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-0.5px" }}>{t("artworkLibrary")}</h1>
+            <p style={{ color: MUTED, fontSize: 14, marginTop: 2, marginBottom: 0 }}>{t("gallerySubtitle")}</p>
+          </div>
+          <button style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
+            <Image size={14} /> Search by image
+          </button>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-          <div style={{ position: "relative", flex: 1, maxWidth: 480 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+          <button
+            onClick={() => setShowYearTool(v => !v)}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "7px 14px", borderRadius: 8, border: `1px solid ${showYearTool || activeFilterCount > 0 ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || activeFilterCount > 0 ? `${UEF_BLUE}12` : "#fff", color: UEF_BLUE, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
+          >
+            <Filter size={14} />
+            {t("filter")}
+            {activeFilterCount > 0 && (
+              <span style={{ marginLeft: 2, background: UEF_BLUE, color: "#fff", fontSize: 10, fontWeight: 700, width: 17, height: 17, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{activeFilterCount}</span>
+            )}
+          </button>
+
+          <div style={{ position: "relative", flex: 1 }}>
             <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: MUTED, pointerEvents: "none" }} />
-            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "8px 12px 8px 34px", borderRadius: 20, border: searchFocused ? `1px solid ${UEF_BLUE}` : `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: GRAY_BG, color: BLACK, boxSizing: "border-box", transition: "all .15s" }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+            <input value={filters.q} onChange={e => setFilter("q", e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "8px 36px 8px 36px", borderRadius: 8, border: searchFocused ? `1px solid ${UEF_BLUE}` : `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: GRAY_BG, color: BLACK, boxSizing: "border-box", transition: "all .15s" }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+            {filters.q && (
+              <button onClick={() => setFilter("q", "")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: MUTED, padding: 4 }}><X size={14} /></button>
+            )}
           </div>
+
           <div style={{ display: "flex", gap: 4 }}>
-            <button onClick={() => setSort("newest")} style={{ padding: "6px 14px", borderRadius: 20, border: `1px solid ${sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: sort === "newest" ? UEF_BLUE : "#fff", fontSize: 12, cursor: "pointer", color: sort === "newest" ? "#fff" : BLACK, fontWeight: sort === "newest" ? 600 : 400, transition: "all .15s" }}>{t("newest")}</button>
-            <button onClick={() => setSort("most_likes")} style={{ padding: "6px 14px", borderRadius: 20, border: `1px solid ${sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 12, cursor: "pointer", color: sort === "most_likes" ? "#fff" : BLACK, fontWeight: sort === "most_likes" ? 600 : 400, transition: "all .15s" }}>{t("mostLiked")}</button>
+            <button onClick={() => setFilter("sort", "newest")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${filters.sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "newest" ? UEF_BLUE : "#fff", fontSize: 12, cursor: "pointer", color: filters.sort === "newest" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("newest")}</button>
+            <button onClick={() => setFilter("sort", "most_likes")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${filters.sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 12, cursor: "pointer", color: filters.sort === "most_likes" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("mostLiked")}</button>
           </div>
-          <span style={{ fontSize: 13, color: MUTED, whiteSpace: "nowrap" }}>{data.total} {t("artworksFound")}</span>
+
+          <span style={{ fontSize: 13, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}>{data.total} {t("artworksFound")}</span>
         </div>
 
-        <div style={{ marginBottom: 16, position: "relative" }}>
+        {showYearTool && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+            <select value={filters.year} onChange={e => setFilter("year", e.target.value)} style={{ padding: "5px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 12, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
+              {years.map(y => <option key={y} value={y}>{y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}</option>)}
+            </select>
+            <select value={filters.tool} onChange={e => setFilter("tool", e.target.value)} style={{ padding: "5px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 12, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
+              {toolsList.map(t => <option key={t} value={t}>{t === "Tất cả" ? `${t("tools")}: ${t("all")}` : t}</option>)}
+            </select>
+            {activeFilterCount > 0 && (
+              <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); }} style={{ padding: "4px 10px", borderRadius: 8, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
+            )}
+          </div>
+        )}
+
+        <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            <style>{`.category-scroll::-webkit-scrollbar { display: none; }`}</style>
-            <div className="category-scroll" style={{ display: "flex", gap: 8, minWidth: "100%" }}>
+            <style>{`.gallery-cat-scroll::-webkit-scrollbar { display: none; }`}</style>
+            <div className="gallery-cat-scroll" style={{ display: "flex", gap: 8, minWidth: "100%" }}>
               {categories.map(cat => {
                 const coverUrl = cat !== "Tất cả" ? categoryCovers[cat] : null;
-                const isActive = category === cat;
+                const isActive = filters.category === cat;
                 return (
                   <button
                     key={cat}
-                    onClick={() => setCategory(cat)}
+                    onClick={() => setFilter("category", cat)}
                     style={{
-                      position: "relative",
-                      padding: "7px 20px",
-                      borderRadius: 10,
+                      position: "relative", padding: "7px 20px", borderRadius: 10,
                       border: isActive ? `2px solid ${UEF_BLUE}` : "2px solid transparent",
-                      cursor: "pointer",
-                      fontWeight: isActive ? 700 : 500,
-                      fontSize: 13,
-                      color: UEF_WHITE,
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      transition: "all .2s",
-                      textShadow: "0 1px 4px rgba(0,0,0,0.5)",
-                      boxShadow: isActive ? `0 4px 14px rgba(26,75,168,0.25)` : "0 1px 3px rgba(0,0,0,0.08)",
-                      transform: isActive ? "scale(1.04)" : "scale(1)",
-                      letterSpacing: "0.3px",
+                      cursor: "pointer", fontWeight: isActive ? 700 : 500, fontSize: 13,
+                      color: UEF_WHITE, whiteSpace: "nowrap", flexShrink: 0,
+                      transition: "all .2s", textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+                      boxShadow: isActive ? "0 4px 14px rgba(26,75,168,0.25)" : "0 1px 3px rgba(0,0,0,0.08)",
+                      transform: isActive ? "scale(1.04)" : "scale(1)", letterSpacing: "0.3px",
                       overflow: "hidden",
                       background: coverUrl ? "#1a1a2e" : (isActive ? UEF_BLUE : "#333"),
                     }}
@@ -439,38 +453,9 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             </div>
           </div>
         </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-          <button
-            onClick={() => setShowYearTool(!showYearTool)}
-            style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 12px", borderRadius: 20, border: `1px solid ${showYearTool || year !== "Tất cả" || tool !== "Tất cả" ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || year !== "Tất cả" || tool !== "Tất cả" ? `${UEF_BLUE}12` : "#fff", color: UEF_BLUE, fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all .15s" }}
-          >
-            <Filter size={12} />
-            {t("filter")}
-            {(year !== "Tất cả" || tool !== "Tất cả") && (
-              <span style={{ marginLeft: 2, background: UEF_BLUE, color: "#fff", fontSize: 10, fontWeight: 700, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {[year !== "Tất cả", tool !== "Tất cả"].filter(Boolean).length}
-              </span>
-            )}
-          </button>
-
-          {showYearTool && (
-            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-              <select value={year} onChange={e => setYear(e.target.value)} style={{ padding: "5px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 12, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
-                {years.map(y => <option key={y} value={y}>{y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}</option>)}
-              </select>
-              <select value={tool} onChange={e => setTool(e.target.value)} style={{ padding: "5px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 12, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
-                {tools.map(t => <option key={t} value={t}>{t === "Tất cả" ? `${t("tools")}: ${t("all")}` : t}</option>)}
-              </select>
-              {(year !== "Tất cả" || tool !== "Tất cả") && (
-                <button onClick={() => { setYear("Tất cả"); setTool("Tất cả"); }} style={{ padding: "4px 10px", borderRadius: 8, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
-      <div style={{ padding: "0 48px 64px" }}>
+      <div style={{ padding: "0 48px 64px", maxWidth: 1400, margin: "0 auto" }}>
         {loading ? (
           <GlobalLoading />
         ) : mapped.length === 0 ? (
