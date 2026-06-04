@@ -364,21 +364,11 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
-      <div style={{ maxWidth: 1400, margin: "0 auto", padding: "32px 48px 0" }}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 16 }}>
-          <div>
-            <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-0.5px" }}>{t("artworkLibrary")}</h1>
-            <p style={{ color: MUTED, fontSize: 14, marginTop: 2, marginBottom: 0 }}>{t("gallerySubtitle")}</p>
-          </div>
-          <button style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
-            <Image size={14} /> Search by image
-          </button>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
+      <div style={{ padding: "20px 24px 0", maxWidth: 1480, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
           <button
             onClick={() => setShowYearTool(v => !v)}
-            style={{ display: "flex", alignItems: "center", gap: 4, padding: "7px 14px", borderRadius: 8, border: `1px solid ${showYearTool || activeFilterCount > 0 ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || activeFilterCount > 0 ? `${UEF_BLUE}12` : "#fff", color: UEF_BLUE, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s" }}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "7px 12px", borderRadius: 8, border: `1px solid ${showYearTool || activeFilterCount > 0 ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || activeFilterCount > 0 ? `${UEF_BLUE}08` : "#fff", color: UEF_BLUE, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s", flexShrink: 0 }}
           >
             <Filter size={14} />
             {t("filter")}
@@ -388,39 +378,39 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           </button>
 
           <div style={{ position: "relative", flex: 1 }}>
-            <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: MUTED, pointerEvents: "none" }} />
-            <input value={filters.q} onChange={e => setFilter("q", e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "8px 36px 8px 36px", borderRadius: 8, border: searchFocused ? `1px solid ${UEF_BLUE}` : `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: GRAY_BG, color: BLACK, boxSizing: "border-box", transition: "all .15s" }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: MUTED, pointerEvents: "none" }} />
+            <input value={filters.q} onChange={e => setFilter("q", e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "7px 32px 7px 32px", borderRadius: 8, border: searchFocused ? `1px solid ${UEF_BLUE}` : `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: GRAY_BG, color: BLACK, boxSizing: "border-box", transition: "all .15s" }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
             {filters.q && (
-              <button onClick={() => setFilter("q", "")} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: MUTED, padding: 4 }}><X size={14} /></button>
+              <button onClick={() => setFilter("q", "")} style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: MUTED, padding: 4, display: "flex" }}><X size={13} /></button>
             )}
           </div>
 
-          <div style={{ display: "flex", gap: 4 }}>
-            <button onClick={() => setFilter("sort", "newest")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${filters.sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "newest" ? UEF_BLUE : "#fff", fontSize: 12, cursor: "pointer", color: filters.sort === "newest" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("newest")}</button>
-            <button onClick={() => setFilter("sort", "most_likes")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${filters.sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 12, cursor: "pointer", color: filters.sort === "most_likes" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("mostLiked")}</button>
+          <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+            <button onClick={() => setFilter("sort", "newest")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "newest" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "newest" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("newest")}</button>
+            <button onClick={() => setFilter("sort", "most_likes")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "most_likes" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("mostLiked")}</button>
           </div>
 
-          <span style={{ fontSize: 13, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}>{data.total} {t("artworksFound")}</span>
+          <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}>{data.total} {t("artworksFound")}</span>
         </div>
 
         {showYearTool && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
-            <select value={filters.year} onChange={e => setFilter("year", e.target.value)} style={{ padding: "5px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 12, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+            <select value={filters.year} onChange={e => setFilter("year", e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
               {years.map(y => <option key={y} value={y}>{y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}</option>)}
             </select>
-            <select value={filters.tool} onChange={e => setFilter("tool", e.target.value)} style={{ padding: "5px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 12, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
+            <select value={filters.tool} onChange={e => setFilter("tool", e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
               {toolsList.map(t => <option key={t} value={t}>{t === "Tất cả" ? `${t("tools")}: ${t("all")}` : t}</option>)}
             </select>
             {activeFilterCount > 0 && (
-              <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); }} style={{ padding: "4px 10px", borderRadius: 8, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
+              <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); }} style={{ padding: "3px 8px", borderRadius: 6, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
             )}
           </div>
         )}
 
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", msOverflowStyle: "none" }}>
             <style>{`.gallery-cat-scroll::-webkit-scrollbar { display: none; }`}</style>
-            <div className="gallery-cat-scroll" style={{ display: "flex", gap: 8, minWidth: "100%" }}>
+            <div className="gallery-cat-scroll" style={{ display: "flex", gap: 6, minWidth: "100%" }}>
               {categories.map(cat => {
                 const coverUrl = cat !== "Tất cả" ? categoryCovers[cat] : null;
                 const isActive = filters.category === cat;
@@ -429,9 +419,9 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                     key={cat}
                     onClick={() => setFilter("category", cat)}
                     style={{
-                      position: "relative", padding: "7px 20px", borderRadius: 10,
+                      position: "relative", padding: "5px 16px", borderRadius: 8,
                       border: isActive ? `2px solid ${UEF_BLUE}` : "2px solid transparent",
-                      cursor: "pointer", fontWeight: isActive ? 700 : 500, fontSize: 13,
+                      cursor: "pointer", fontWeight: isActive ? 700 : 500, fontSize: 12,
                       color: UEF_WHITE, whiteSpace: "nowrap", flexShrink: 0,
                       transition: "all .2s", textShadow: "0 1px 4px rgba(0,0,0,0.5)",
                       boxShadow: isActive ? "0 4px 14px rgba(26,75,168,0.25)" : "0 1px 3px rgba(0,0,0,0.08)",
@@ -455,11 +445,11 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
         </div>
       </div>
 
-      <div style={{ padding: "0 48px 64px", maxWidth: 1400, margin: "0 auto" }}>
+      <div style={{ padding: "0 24px 48px", maxWidth: 1480, margin: "0 auto" }}>
         {loading ? (
           <GlobalLoading />
         ) : mapped.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>{t("noArtworksFound")}</div>
+          <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>{t("noArtworksFound")}</div>
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
