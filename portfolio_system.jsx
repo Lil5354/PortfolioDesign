@@ -311,7 +311,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const [showYearTool, setShowYearTool] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
   const [categoryCovers, setCategoryCovers] = useState({});
-  const limit = 25;
+  const limit = 100;
   const fetchId = useRef(0);
 
   const UEF_RED = "#DA291C";
@@ -364,9 +364,10 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
-      <div style={{ padding: "20px 24px 0", maxWidth: 1480, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <button
+      <div style={{ position: "sticky", top: 0, background: "#fff", zIndex: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
+        <div style={{ padding: "12px 24px 0", maxWidth: 1480, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <button
             onClick={() => setShowYearTool(v => !v)}
             style={{ display: "flex", alignItems: "center", gap: 4, padding: "7px 12px", borderRadius: 8, border: `1px solid ${showYearTool || activeFilterCount > 0 ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || activeFilterCount > 0 ? `${UEF_BLUE}08` : "#fff", color: UEF_BLUE, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s", flexShrink: 0 }}
           >
@@ -391,7 +392,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           </div>
 
           <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}>{data.total} {t("artworksFound")}</span>
-        </div>
+          </div>
 
         {showYearTool && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
@@ -443,6 +444,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       <div style={{ padding: "0 24px 48px", maxWidth: 1480, margin: "0 auto" }}>
