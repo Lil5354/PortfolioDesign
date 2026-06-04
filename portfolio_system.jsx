@@ -447,55 +447,52 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       </div>
       </div>
 
-      <div style={{ padding: "0 24px 48px", maxWidth: 1480, margin: "0 auto" }}>
+      <div style={{ padding: "120px 24px 64px", maxWidth: 1480, margin: "0 auto" }}>
         {loading ? (
           <GlobalLoading />
         ) : mapped.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>{t("noArtworksFound")}</div>
         ) : (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 }}>
               {mapped.map(art => (
                 <div
                   key={art.id}
                   onClick={() => { setActiveArtworkId && setActiveArtworkId(art.id); setPage("detail"); }}
-                  style={{ borderRadius: 4, overflow: "hidden", cursor: "pointer", background: "#fff", border: `1px solid ${GRAY_LIGHT}`, transition: "box-shadow .2s, transform .2s", boxShadow: hoveredId === art.id ? "0 4px 16px rgba(0,0,0,0.1)" : "none", transform: hoveredId === art.id ? "translateY(-2px)" : "none" }}
+                  style={{ cursor: "pointer", transition: "transform .15s", transform: hoveredId === art.id ? "translateY(-2px)" : "none" }}
                   onMouseEnter={() => setHoveredId(art.id)}
                   onMouseLeave={() => setHoveredId(null)}
                 >
-                  <div style={{ position: "relative", background: GRAY_BG, aspectRatio: "4/3", overflow: "hidden" }}>
-                    {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 12 }}>{t("noImage")}</div>
+                  <div style={{ position: "relative", borderRadius: 4, overflow: "hidden", background: GRAY_BG, transition: "filter .2s", filter: hoveredId === art.id ? "brightness(0.85)" : "none" }}>
+                    {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }} /> : (
+                      <div style={{ width: "100%", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 12 }}>{t("noImage")}</div>
                     )}
                     {!art.isPublic && (
-                      <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(255,255,255,0.92)", borderRadius: 4, padding: "2px 6px", display: "flex", alignItems: "center", gap: 3, zIndex: 2 }}>
-                        <Lock size={9} color={BLACK} />
-                        <span style={{ color: BLACK, fontSize: 10, fontWeight: 500 }}>{t("private")}</span>
+                      <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
+                        <Lock size={10} color="#fff" />
+                        <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
                       </div>
                     )}
                     {onBookmarkClick && hoveredId === art.id && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onBookmarkClick(art); }}
-                        style={{ position: "absolute", top: 6, right: 6, width: 30, height: 30, borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: isBookmarked && isBookmarked(art.id) ? "rgba(26,75,168,0.85)" : "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 3, transition: "all .15s" }}
+                        style={{ position: "absolute", top: 8, right: 8, width: 32, height: 32, borderRadius: 8, border: "none", background: isBookmarked && isBookmarked(art.id) ? "rgba(26,75,168,0.9)" : "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 3, transition: "all .15s" }}
                       >
-                        <Bookmark size={13} color={isBookmarked && isBookmarked(art.id) ? "#fff" : "rgba(255,255,255,0.85)"} fill={isBookmarked && isBookmarked(art.id) ? "#fff" : "none"} />
+                        <Bookmark size={14} color="#fff" fill={isBookmarked && isBookmarked(art.id) ? "#fff" : "none"} />
                       </button>
                     )}
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)", opacity: hoveredId === art.id ? 1 : 0, transition: "opacity .25s", pointerEvents: "none" }}>
-                      <p style={{ position: "absolute", bottom: 8, left: 10, right: 10, color: "#fff", fontWeight: 600, fontSize: 13, margin: 0, lineHeight: 1.3 }}>{art.title}</p>
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)", padding: "24px 12px 10px", opacity: hoveredId === art.id ? 1 : 0, transition: "opacity .2s", pointerEvents: "none" }}>
+                      <p style={{ margin: 0, color: "#fff", fontWeight: 600, fontSize: 13, lineHeight: 1.3, textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>{art.title}</p>
                     </div>
                   </div>
-                  <div style={{ padding: "8px 10px 10px" }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 3 }}>
-                      <span style={{ fontSize: 11, color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
-                      <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
-                        <Eye size={10} color={MUTED} />
-                        <span style={{ fontSize: 11, color: MUTED }}>{art.views}</span>
-                        <span style={{ width: 1, height: 10, background: GRAY_LIGHT, margin: "0 2px" }} />
-                        <Heart size={10} color="#ff6b6b" fill="#ff6b6b" />
-                        <span style={{ fontSize: 11, color: MUTED }}>{art.likes}</span>
-                      </div>
+                  <p style={{ margin: "8px 0 2px", fontSize: 14, fontWeight: 600, color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 13, color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                      <Eye size={13} color="#999" />
+                      <span style={{ fontSize: 12, color: MUTED }}>{art.views}</span>
+                      <Heart size={12} color="#ccc" />
+                      <span style={{ fontSize: 12, color: MUTED }}>{art.likes}</span>
                     </div>
                   </div>
                 </div>
