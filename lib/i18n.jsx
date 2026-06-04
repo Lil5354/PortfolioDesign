@@ -317,6 +317,7 @@ const translations = {
     schoolYear: "Năm học",
     tools: "Công cụ",
     artworksFound: "tác phẩm được tìm thấy",
+    all: "Tất cả",
     newest: "Mới nhất",
     mostLiked: "Nhiều like nhất",
     all: "Tất cả",
@@ -387,6 +388,8 @@ const translations = {
     public: "Công khai",
     private: "Riêng tư",
     coAuthor: "Đồng tác giả",
+
+    noImage: "Không có ảnh",
 
     // Upload
     shareWithCommunity: "Chia sẻ tác phẩm sáng tạo của bạn với cộng đồng UEF",
@@ -689,6 +692,15 @@ const translations = {
     savedToCollection: "Đã lưu vào bộ sưu tập",
     curatorNoteUpdated: "Đã cập nhật ghi chú giám tuyển.",
     curatorNoteHint: "Ghi chú giám tuyển (note) sẽ ưu tiên in kèm khi export.",
+
+    // Watermark Settings
+    watermarkSettings: "Cài đặt Watermark",
+    watermarkSettingsDesc: "Quản lý nội dung watermark mặc định cho ấn phẩm mới",
+    watermarkText: "Nội dung Watermark",
+    watermarkTextPlaceholder: "Nhập nội dung watermark mặc định",
+    watermarkTextHint: "Nội dung này sẽ được áp dụng cho các ấn phẩm đăng tải sau khi lưu. Các ấn phẩm trước đó không bị ảnh hưởng.",
+    watermarkSaved: "Đã lưu cài đặt watermark!",
+    watermarkSaveFailed: "Lưu thất bại",
 
     // About
     aboutFacultySubtitle: "Khoa Thiết Kế Đồ Họa — UEF",
@@ -1073,6 +1085,7 @@ const translations = {
     schoolYear: "School Year",
     tools: "Tools",
     artworksFound: "artworks found",
+    all: "All",
     newest: "Newest",
     mostLiked: "Most liked",
     all: "All",
@@ -1140,6 +1153,8 @@ const translations = {
     public: "Public",
     private: "Private",
     coAuthor: "Co-author",
+
+    noImage: "No image",
 
     // Upload
     shareWithCommunity: "Share your creative work with the UEF community",
@@ -1479,6 +1494,15 @@ const translations = {
     title: "Title",
     addNew: "Add New",
     update: "Update",
+    // Watermark Settings
+    watermarkSettings: "Watermark Settings",
+    watermarkSettingsDesc: "Manage default watermark content for new artworks",
+    watermarkText: "Watermark Text",
+    watermarkTextPlaceholder: "Enter default watermark text",
+    watermarkTextHint: "This text will be applied to artworks uploaded after saving. Previous artworks are not affected.",
+    watermarkSaved: "Watermark settings saved!",
+    watermarkSaveFailed: "Save failed",
+
     portfolioSettingsSaved: "Portfolio settings saved!",
 
     // Settings

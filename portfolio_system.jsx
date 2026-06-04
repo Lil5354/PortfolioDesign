@@ -303,9 +303,6 @@ function MasonryGrid({
 }
 
 function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
-  const [tempCategory, setTempCategory] = useState("Tất cả");
-  const [tempYear, setTempYear] = useState("Tất cả");
-  const [tempTool, setTempTool] = useState("Tất cả");
   const [category, setCategory] = useState("Tất cả");
   const [year, setYear] = useState("Tất cả");
   const [tool, setTool] = useState("Tất cả");
@@ -314,65 +311,64 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const [data, setData] = useState({ artworks: [], total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  const limit = 20;
-  const filterRef = useRef(null);
+  const [showYearTool, setShowYearTool] = useState(false);
+  const [hoveredId, setHoveredId] = useState(null);
+  const [categoryCovers, setCategoryCovers] = useState({});
+  const limit = 25;
+  const fetchId = useRef(0);
+
+  const UEF_RED = "#DA291C";
+  const UEF_BLUE = "#1a4ba8";
+  const UEF_WHITE = "#FFFFFF";
 
   const categories = ["Tất cả", "Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
   const years = ["Tất cả", "2022-2023", "2023-2024", "2024-2025"];
   const tools = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate", "After Effects", "InDesign", "Lightroom", "Cinema 4D"];
 
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (filterRef.current && !filterRef.current.contains(e.target)) {
-        setShowFilterPanel(false);
+  const fetchArtworks = useCallback((pageNum, cat, yr, tl, s, q) => {
+    const id = ++fetchId.current;
+    setLoading(true);
+    const params = { page: String(pageNum), limit: String(limit), sort: s };
+    if (cat !== "Tất cả") params.category = cat;
+    if (yr !== "Tất cả") params.year = yr;
+    if (tl !== "Tất cả") params.tool = tl;
+    if (q.trim()) params.q = q.trim();
+    api.artworks.list(params).then(res => {
+      if (id === fetchId.current) {
+        setData(res);
+        setLoading(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    }).catch(() => {
+      if (id === fetchId.current) setLoading(false);
+    });
   }, []);
 
-  useEffect(() => {
-    setTempCategory(category);
-    setTempYear(year);
-    setTempTool(tool);
-  }, [showFilterPanel]);
+  const filtersRef = useRef({ category: "Tất cả", year: "Tất cả", tool: "Tất cả", sort: "newest", searchQuery: "" });
 
   useEffect(() => {
-    setLoading(true);
-    setPageNum(1);
-  }, [category, year, tool, sort, searchQuery]);
-
-  useEffect(() => {
-    setLoading(true);
-    const params = { page: String(page), limit: String(limit), sort };
-    if (category !== "Tất cả") params.category = category;
-    if (year !== "Tất cả") params.year = year;
-    if (tool !== "Tất cả") params.tool = tool;
-    if (searchQuery.trim()) params.q = searchQuery.trim();
-    api.artworks.list(params).then(res => {
-      setData(res);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    const prev = filtersRef.current;
+    const changed = prev.category !== category || prev.year !== year || prev.tool !== tool || prev.sort !== sort || prev.searchQuery !== searchQuery;
+    filtersRef.current = { category, year, tool, sort, searchQuery };
+    const targetPage = changed ? 1 : page;
+    if (changed) setPageNum(1);
+    fetchArtworks(targetPage, category, year, tool, sort, searchQuery);
   }, [category, year, tool, sort, searchQuery, page]);
 
-  const applyFilters = () => {
-    setCategory(tempCategory);
-    setYear(tempYear);
-    setTool(tempTool);
-    setShowFilterPanel(false);
-  };
+  useEffect(() => {
+    fetch("/api/artworks/category-covers")
+      .then(r => r.json())
+      .then(setCategoryCovers)
+      .catch(() => {});
+  }, []);
 
-  const activeFilterCount = [category !== "Tất cả", year !== "Tất cả", tool !== "Tất cả"].filter(Boolean).length;
-
-  const mapped = (data.artworks || []).map((a, i) => ({
+  const mapped = (data.artworks || []).map(a => ({
     id: a.id,
     title: a.title,
     student: a.user?.fullName || t("student"),
     img: a.coverImageUrl,
     likes: a.likeCount || 0,
-    h: [240, 300, 350, 270, 320, 380][i % 6],
+    views: a.viewCount || 0,
     isPublic: a.isPublic,
     category: a.subject,
   }));
@@ -382,66 +378,98 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
       <div style={{ padding: "32px 48px 0" }}>
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-1px" }}>{t("artworkLibrary")}</h1>
-          <p style={{ color: MUTED, fontSize: 15, marginTop: 6 }}>{t("gallerySubtitle")}</p>
+        <div style={{ marginBottom: 20 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, color: BLACK, letterSpacing: "-0.5px" }}>{t("artworkLibrary")}</h1>
+          <p style={{ color: MUTED, fontSize: 14, marginTop: 4 }}>{t("gallerySubtitle")}</p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}`, position: "relative" }} ref={filterRef}>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+          <div style={{ position: "relative", flex: 1, maxWidth: 480 }}>
+            <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: MUTED, pointerEvents: "none" }} />
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "8px 12px 8px 34px", borderRadius: 20, border: searchFocused ? `1px solid ${UEF_BLUE}` : `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: GRAY_BG, color: BLACK, boxSizing: "border-box", transition: "all .15s" }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+          </div>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button onClick={() => setSort("newest")} style={{ padding: "6px 14px", borderRadius: 20, border: `1px solid ${sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: sort === "newest" ? UEF_BLUE : "#fff", fontSize: 12, cursor: "pointer", color: sort === "newest" ? "#fff" : BLACK, fontWeight: sort === "newest" ? 600 : 400, transition: "all .15s" }}>{t("newest")}</button>
+            <button onClick={() => setSort("most_likes")} style={{ padding: "6px 14px", borderRadius: 20, border: `1px solid ${sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 12, cursor: "pointer", color: sort === "most_likes" ? "#fff" : BLACK, fontWeight: sort === "most_likes" ? 600 : 400, transition: "all .15s" }}>{t("mostLiked")}</button>
+          </div>
+          <span style={{ fontSize: 13, color: MUTED, whiteSpace: "nowrap" }}>{data.total} {t("artworksFound")}</span>
+        </div>
+
+        <div style={{ marginBottom: 16, position: "relative" }}>
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            <style>{`.category-scroll::-webkit-scrollbar { display: none; }`}</style>
+            <div className="category-scroll" style={{ display: "flex", gap: 8, minWidth: "100%" }}>
+              {categories.map(cat => {
+                const coverUrl = cat !== "Tất cả" ? categoryCovers[cat] : null;
+                const isActive = category === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    style={{
+                      position: "relative",
+                      padding: "7px 20px",
+                      borderRadius: 10,
+                      border: isActive ? `2px solid ${UEF_BLUE}` : "2px solid transparent",
+                      cursor: "pointer",
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: 13,
+                      color: UEF_WHITE,
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      transition: "all .2s",
+                      textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+                      boxShadow: isActive ? `0 4px 14px rgba(26,75,168,0.25)` : "0 1px 3px rgba(0,0,0,0.08)",
+                      transform: isActive ? "scale(1.04)" : "scale(1)",
+                      letterSpacing: "0.3px",
+                      overflow: "hidden",
+                      background: coverUrl ? "#1a1a2e" : (isActive ? UEF_BLUE : "#333"),
+                    }}
+                  >
+                    {coverUrl && (
+                      <>
+                        <img src={coverUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35 }} />
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }} />
+                      </>
+                    )}
+                    <span style={{ position: "relative", zIndex: 1 }}>{cat}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
           <button
-            onClick={() => setShowFilterPanel(!showFilterPanel)}
-            style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${showFilterPanel || activeFilterCount > 0 ? CERULEAN : GRAY_LIGHT}`, background: showFilterPanel || activeFilterCount > 0 ? `${CERULEAN}12` : "#fff", color: CERULEAN, fontSize: 13, fontWeight: 600, cursor: "pointer", transition: "all .15s", whiteSpace: "nowrap" }}
+            onClick={() => setShowYearTool(!showYearTool)}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 12px", borderRadius: 20, border: `1px solid ${showYearTool || year !== "Tất cả" || tool !== "Tất cả" ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || year !== "Tất cả" || tool !== "Tất cả" ? `${UEF_BLUE}12` : "#fff", color: UEF_BLUE, fontSize: 12, fontWeight: 500, cursor: "pointer", transition: "all .15s" }}
           >
-            <Filter size={15} />
+            <Filter size={12} />
             {t("filter")}
-            {activeFilterCount > 0 && <span style={{ marginLeft: 2, background: CERULEAN, color: "#fff", fontSize: 10, fontWeight: 700, width: 18, height: 18, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{activeFilterCount}</span>}
+            {(year !== "Tất cả" || tool !== "Tất cả") && (
+              <span style={{ marginLeft: 2, background: UEF_BLUE, color: "#fff", fontSize: 10, fontWeight: 700, width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {[year !== "Tất cả", tool !== "Tất cả"].filter(Boolean).length}
+              </span>
+            )}
           </button>
 
-          {showFilterPanel && (
-            <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 8, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 12, padding: 20, boxShadow: "0 8px 32px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 480, display: "flex", flexDirection: "column", gap: 16 }}>
-              <div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("category")}</span>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {categories.map(c => (
-                    <button key={c} onClick={() => setTempCategory(c)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: "pointer", border: tempCategory === c ? "none" : `1px solid ${GRAY_LIGHT}`, background: tempCategory === c ? BLACK : "#fff", color: tempCategory === c ? "#fff" : BLACK, transition: "all .15s" }}>{c}</button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("schoolYear")}</span>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {years.map(y => (
-                    <button key={y} onClick={() => setTempYear(y)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: tempYear === y ? "none" : `1px solid ${GRAY_LIGHT}`, background: tempYear === y ? BLACK : "#fff", color: tempYear === y ? "#fff" : BLACK, transition: "all .15s" }}>{y}</button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>{t("tools")}</span>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {tools.map(t => (
-                    <button key={t} onClick={() => setTempTool(t)} style={{ padding: "5px 12px", borderRadius: 20, fontSize: 12, cursor: "pointer", border: tempTool === t ? "none" : `1px solid ${GRAY_LIGHT}`, background: tempTool === t ? BLACK : "#fff", color: tempTool === t ? "#fff" : BLACK, transition: "all .15s" }}>{t}</button>
-                  ))}
-                </div>
-              </div>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", borderTop: `1px solid ${GRAY_LIGHT}`, paddingTop: 12, marginTop: 4 }}>
-                <button onClick={() => { setCategory("Tất cả"); setYear("Tất cả"); setTool("Tất cả"); setShowFilterPanel(false); }} style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer" }}>{t("reset")}</button>
-                <button onClick={applyFilters} style={{ padding: "7px 20px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>{t("apply")}</button>
-              </div>
+          {showYearTool && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <select value={year} onChange={e => setYear(e.target.value)} style={{ padding: "5px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 12, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
+                {years.map(y => <option key={y} value={y}>{y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}</option>)}
+              </select>
+              <select value={tool} onChange={e => setTool(e.target.value)} style={{ padding: "5px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 12, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
+                {tools.map(t => <option key={t} value={t}>{t === "Tất cả" ? `${t("tools")}: ${t("all")}` : t}</option>)}
+              </select>
+              {(year !== "Tất cả" || tool !== "Tất cả") && (
+                <button onClick={() => { setYear("Tất cả"); setTool("Tất cả"); }} style={{ padding: "4px 10px", borderRadius: 8, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
+              )}
             </div>
           )}
-
-          <div style={{ position: "relative", flex: 1 }}>
-            <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: MUTED, pointerEvents: "none" }} />
-            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "9px 12px 9px 36px", borderRadius: 8, border: searchFocused ? `1px solid ${CERULEAN}` : `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: "#fff", color: BLACK, boxSizing: "border-box" }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
-          </div>
-
-          <span style={{ fontSize: 13, color: MUTED, whiteSpace: "nowrap" }}>{data.total} {t("artworksFound")}</span>
-
-          <div style={{ display: "flex", gap: 6 }}>
-            <button onClick={() => setSort("newest")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "newest" ? CERULEAN : GRAY_LIGHT}`, background: sort === "newest" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "newest" ? CERULEAN : BLACK, fontWeight: sort === "newest" ? 600 : 400 }}>{t("newest")}</button>
-            <button onClick={() => setSort("most_likes")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${sort === "most_likes" ? CERULEAN : GRAY_LIGHT}`, background: sort === "most_likes" ? `${CERULEAN}12` : "#fff", fontSize: 12, cursor: "pointer", color: sort === "most_likes" ? CERULEAN : BLACK, fontWeight: sort === "most_likes" ? 600 : 400 }}>{t("mostLiked")}</button>
-          </div>
         </div>
       </div>
+
       <div style={{ padding: "0 48px 64px" }}>
         {loading ? (
           <GlobalLoading />
@@ -449,23 +477,60 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           <div style={{ textAlign: "center", padding: "80px 0", color: MUTED, fontSize: 14 }}>{t("noArtworksFound")}</div>
         ) : (
           <>
-            <MasonryGrid
-              items={mapped}
-              onArtworkClick={(art) => {
-                setActiveArtworkId && setActiveArtworkId(art.id);
-                setPage("detail");
-              }}
-              showBookmarkAction={true}
-              isBookmarked={isBookmarked}
-              onBookmarkClick={onBookmarkClick}
-            />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 16 }}>
+              {mapped.map(art => (
+                <div
+                  key={art.id}
+                  onClick={() => { setActiveArtworkId && setActiveArtworkId(art.id); setPage("detail"); }}
+                  style={{ borderRadius: 4, overflow: "hidden", cursor: "pointer", background: "#fff", border: `1px solid ${GRAY_LIGHT}`, transition: "box-shadow .2s, transform .2s", boxShadow: hoveredId === art.id ? "0 4px 16px rgba(0,0,0,0.1)" : "none", transform: hoveredId === art.id ? "translateY(-2px)" : "none" }}
+                  onMouseEnter={() => setHoveredId(art.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                >
+                  <div style={{ position: "relative", background: GRAY_BG, aspectRatio: "4/3", overflow: "hidden" }}>
+                    {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : (
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 12 }}>{t("noImage")}</div>
+                    )}
+                    {!art.isPublic && (
+                      <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(255,255,255,0.92)", borderRadius: 4, padding: "2px 6px", display: "flex", alignItems: "center", gap: 3, zIndex: 2 }}>
+                        <Lock size={9} color={BLACK} />
+                        <span style={{ color: BLACK, fontSize: 10, fontWeight: 500 }}>{t("private")}</span>
+                      </div>
+                    )}
+                    {onBookmarkClick && hoveredId === art.id && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onBookmarkClick(art); }}
+                        style={{ position: "absolute", top: 6, right: 6, width: 30, height: 30, borderRadius: 8, border: "1px solid rgba(255,255,255,0.2)", background: isBookmarked && isBookmarked(art.id) ? "rgba(26,75,168,0.85)" : "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 3, transition: "all .15s" }}
+                      >
+                        <Bookmark size={13} color={isBookmarked && isBookmarked(art.id) ? "#fff" : "rgba(255,255,255,0.85)"} fill={isBookmarked && isBookmarked(art.id) ? "#fff" : "none"} />
+                      </button>
+                    )}
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)", opacity: hoveredId === art.id ? 1 : 0, transition: "opacity .25s", pointerEvents: "none" }}>
+                      <p style={{ position: "absolute", bottom: 8, left: 10, right: 10, color: "#fff", fontWeight: 600, fontSize: 13, margin: 0, lineHeight: 1.3 }}>{art.title}</p>
+                    </div>
+                  </div>
+                  <div style={{ padding: "8px 10px 10px" }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 3 }}>
+                      <span style={{ fontSize: 11, color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
+                      <div style={{ display: "flex", alignItems: "center", gap: 3, flexShrink: 0 }}>
+                        <Eye size={10} color={MUTED} />
+                        <span style={{ fontSize: 11, color: MUTED }}>{art.views}</span>
+                        <span style={{ width: 1, height: 10, background: GRAY_LIGHT, margin: "0 2px" }} />
+                        <Heart size={10} color="#ff6b6b" fill="#ff6b6b" />
+                        <span style={{ fontSize: 11, color: MUTED }}>{art.likes}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
             {data.totalPages > 1 && (
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 40 }}>
-                <button onClick={() => paginate(page - 1)} disabled={page <= 1} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page <= 1 ? GRAY_BG : "#fff", color: page <= 1 ? MUTED : BLACK, fontSize: 13, cursor: page <= 1 ? "not-allowed" : "pointer" }}>{t("previous")}</button>
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 36 }}>
+                <button onClick={() => paginate(page - 1)} disabled={page <= 1} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: page <= 1 ? GRAY_BG : "#fff", color: page <= 1 ? MUTED : BLACK, fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer" }}>{t("previous")}</button>
                 {Array.from({ length: data.totalPages }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => paginate(p)} style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: p === page ? CERULEAN : GRAY_BG, color: p === page ? "#fff" : MUTED, fontSize: 13, fontWeight: p === page ? 600 : 400, cursor: "pointer" }}>{p}</button>
+                  <button key={p} onClick={() => paginate(p)} style={{ width: 32, height: 32, borderRadius: 6, border: "none", background: p === page ? UEF_BLUE : GRAY_BG, color: p === page ? "#fff" : MUTED, fontSize: 12, fontWeight: p === page ? 600 : 400, cursor: "pointer" }}>{p}</button>
                 ))}
-                <button onClick={() => paginate(page + 1)} disabled={page >= data.totalPages} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: page >= data.totalPages ? GRAY_BG : "#fff", color: page >= data.totalPages ? MUTED : BLACK, fontSize: 13, cursor: page >= data.totalPages ? "not-allowed" : "pointer" }}>{t("next")}</button>
+                <button onClick={() => paginate(page + 1)} disabled={page >= data.totalPages} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: page >= data.totalPages ? GRAY_BG : "#fff", color: page >= data.totalPages ? MUTED : BLACK, fontSize: 12, cursor: page >= data.totalPages ? "not-allowed" : "pointer" }}>{t("next")}</button>
               </div>
             )}
           </>
@@ -1025,6 +1090,16 @@ function UploadPage({ setPage, setActiveArtworkId }) {
   const [coverImage, setCoverImage] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]);
   const [error, setError] = useState("");
+  const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
+
+  useEffect(() => {
+    fetch("/api/site-settings")
+      .then(r => r.json())
+      .then(data => {
+        if (data.watermark_text) setDefaultWatermarkText(data.watermark_text);
+      })
+      .catch(() => {});
+  }, []);
 
   const yearToSemester = { "Năm 1": "HK1", "Năm 2": "HK2", "Năm 3": "HK3", "Năm 4": "HK1", "Tốt nghiệp": "HK2" };
   const yearToAcademic = { "Năm 1": "2024-2025", "Năm 2": "2023-2024", "Năm 3": "2022-2023", "Năm 4": "2021-2022", "Tốt nghiệp": "2021-2022" };
@@ -1091,7 +1166,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: allFileUrls,
         coverImageUrl: coverImage,
-        watermarkText: "UEF",
+        watermarkText: defaultWatermarkText || "UEF",
         watermarkPosition: "bottom-right",
         isPublic: false,
         isAiConfirmed: checked1,
@@ -1467,6 +1542,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     setLoading(true);
     setActiveImageIdx(0);
       setLoadError(false);
+      api.artworks.incrementView(activeArtworkId).catch(() => {});
       api.artworks.get(activeArtworkId).then(res => {
       setArt({
         ...res,
@@ -3258,6 +3334,7 @@ function AdminSidebar({ active, setPage }) {
     { icon: <ShoppingCart size={18} />, label: t("orders"), page: "admin_orders" },
     { icon: <ShieldAlert size={18} />, label: t("artworkWarnings"), page: "admin_artworks" },
     { icon: <Folder size={18} />, label: t("collectionManagement"), page: "admin_export" },
+    { icon: <FileBadge size={18} />, label: t("watermarkSettings"), page: "admin_watermark" },
     { icon: <Settings size={18} />, label: "Layout Settings", page: "admin_layout" },
   ];
 
@@ -3301,6 +3378,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
   const [coverImage, setCoverImage] = useState(null);
   const [originalCover, setOriginalCover] = useState("");
   const [additionalImages, setAdditionalImages] = useState([]);
+  const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
 
   const allSubjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
   const semesterToYear = { HK1: "Năm 1", HK2: "Năm 2", HK3: "Năm 3" };
@@ -3328,6 +3406,15 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     }).catch(() => setLoading(false));
   }, [activeArtworkId]);
 
+  useEffect(() => {
+    fetch("/api/site-settings")
+      .then(r => r.json())
+      .then(data => {
+        if (data.watermark_text) setDefaultWatermarkText(data.watermark_text);
+      })
+      .catch(() => {});
+  }, []);
+
   const handleSave = async () => {
     if (!title.trim()) { setMessage({ type: "error", text: t("pleaseEnterCourseName") }); return; }
     setSaving(true);
@@ -3343,7 +3430,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: [coverImage || originalCover, ...additionalImages].filter(Boolean),
         coverImageUrl: coverImage || originalCover,
-        watermarkText: "UEF",
+        watermarkText: defaultWatermarkText || "UEF",
         watermarkPosition: "bottom-right",
         semester: yearToSemester[projectYear] || "HK1",
         academicYear: yearToAcademic[projectYear] || "2024-2025",
@@ -4642,6 +4729,94 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
               </div>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminWatermarkPage({ setPage }) {
+  const [watermarkText, setWatermarkText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+
+  useEffect(() => {
+    fetch("/api/site-settings")
+      .then(r => r.json())
+      .then(data => {
+        setWatermarkText(data.watermark_text || "UEF");
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+    try {
+      const res = await fetch("/api/site-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "watermark_text", value: watermarkText.trim() || "UEF" }),
+      });
+      if (!res.ok) throw new Error("Save failed");
+      setMessage({ type: "success", text: t("watermarkSaved") });
+    } catch {
+      setMessage({ type: "error", text: t("watermarkSaveFailed") });
+    }
+    setSaving(false);
+  };
+
+  if (loading) {
+    return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}><p style={{ color: MUTED }}>{t("loading")}</p></div>;
+  }
+
+  return (
+    <div style={{ display: "flex", height: "100%" }}>
+      <AdminSidebar active="admin_watermark" setPage={setPage} />
+      <div style={{ flex: 1, padding: 32, overflowY: "auto" }}>
+        <div style={{ maxWidth: 600 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 8, background: "#e0eaff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ color: CERULEAN, fontSize: 18, fontWeight: 700 }}>W</span>
+            </div>
+            <div>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: BLACK, margin: 0 }}>{t("watermarkSettings")}</h2>
+              <p style={{ fontSize: 13, color: MUTED, margin: "2px 0 0" }}>{t("watermarkSettingsDesc")}</p>
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}`, padding: 24, marginTop: 20 }}>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BLACK, marginBottom: 6 }}>
+              {t("watermarkText")}
+            </label>
+            <input
+              type="text"
+              value={watermarkText}
+              onChange={e => setWatermarkText(e.target.value)}
+              placeholder={t("watermarkTextPlaceholder")}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box" }}
+            />
+            <p style={{ fontSize: 12, color: MUTED, margin: "8px 0 0", lineHeight: 1.5 }}>
+              {t("watermarkTextHint")}
+            </p>
+          </div>
+
+          <div style={{ marginTop: 20, display: "flex", alignItems: "center", gap: 12 }}>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{ padding: "10px 28px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.6 : 1 }}
+            >
+              {saving ? t("saving") : t("saveSettings")}
+            </button>
+            {message.text && (
+              <span style={{ fontSize: 13, color: message.type === "success" ? "#166534" : CRIMSON, fontWeight: 500 }}>
+                {message.text}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -7479,6 +7654,9 @@ export default function App() {
             }}
           />
         ) : <AccessDenied setPage={setPage} />
+      )}
+      {page === "admin_watermark" && (
+        (userRole === "admin" || userRole === "lecturer") ? <AdminWatermarkPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "admin_layout" && (
         (userRole === "admin" || userRole === "lecturer") ? <LayoutSettings setPage={setPage} /> : <AccessDenied setPage={setPage} />
