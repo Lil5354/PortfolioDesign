@@ -374,7 +374,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const paginate = (p) => setPageNum(Math.max(1, Math.min(p, data.totalPages || 1)));
 
   return (
-    <div style={{ background: "#fff", minHeight: "100vh" }}>
+    <div style={{ background: "#fff" }}>
       <div style={{ position: "sticky", top: navbarHeight, background: "#fff", zIndex: 40, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
         <div style={{ padding: "12px 24px 0", maxWidth: 1480, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
@@ -458,7 +458,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       </div>
       </div>
 
-      <div style={{ padding: "120px 24px 64px", maxWidth: 1480, margin: "0 auto" }}>
+      <div style={{ padding: "16px 24px 64px", maxWidth: 1480, margin: "0 auto" }}>
         {loading ? (
           <GlobalLoading />
         ) : mapped.length === 0 ? (
@@ -5034,7 +5034,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
     <div className="min-h-screen bg-white font-sans text-[#212121]">
 
       {/* Hero Section */}
-      <section className="px-8 py-20 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
+      <section className="px-6 py-10 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-8">
         <div className="flex-1">
           <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-4 flex items-center gap-2">
             <span className="w-8 h-px bg-[#1a4ba8]"></span> {hero?.preTitle || t("facultyName")}
@@ -5044,12 +5044,12 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             <span className="text-[#1a4ba8]">{hero?.title2 || t("heroTitle2")}</span> {hero?.title3 || t("heroTitle3")}<br />
             {hero?.title4 || t("heroTitle4")}
           </h2>
-          <div className="space-y-1 mb-10 max-w-sm">
+          <div className="space-y-1 mb-4 max-w-sm">
             <div className="h-0.5 bg-gray-200 w-full"></div>
             <div className="h-0.5 bg-gray-200 w-4/5"></div>
             <div className="h-0.5 bg-gray-200 w-3/5"></div>
           </div>
-          <div className="flex flex-wrap gap-4 mb-4">
+          <div className="flex flex-wrap gap-3 mb-3">
             <button onClick={() => setPage(hero?.primaryCtaLink || "gallery")} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
               {hero?.primaryCta || t("exploreGallery")} <ArrowRight size={18} />
             </button>
@@ -5096,7 +5096,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
               const isTall = (i % 2 === 0 && i < 2) || (i % 2 !== 0 && i >= 4);
               const colClass = [
                 "col-span-1 space-y-3",
-                "col-span-1 space-y-3 pt-8",
+                "col-span-1 space-y-3 pt-4",
                 "col-span-1 space-y-3"
               ][slot];
               const aspectClass = isTall ? "aspect-[3/4]" : "aspect-square";
@@ -5132,9 +5132,9 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
       </section>
 
       {/* Features Section */}
-      <section className="px-8 py-24 bg-gradient-to-b from-white to-gray-50/80">
+      <section className="px-6 py-14 bg-gradient-to-b from-white to-gray-50/80">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-16 text-center animate-[fadeUp_0.5s_ease-out]">
+          <div className="mb-8 text-center animate-[fadeUp_0.5s_ease-out]">
             <p className="text-[#DA291C] font-semibold text-xs tracking-[0.15em] uppercase mb-3 flex items-center gap-2 justify-center">
               <span className="w-6 h-px bg-[#DA291C]"></span> {hero?.featuresPreTitle || t("coreFeatures")}
               <span className="w-6 h-px bg-[#DA291C]"></span>
@@ -5146,7 +5146,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             <p className="text-gray-500 mt-4 max-w-xl mx-auto text-[15px]">Hệ thống E-Portfolio toàn diện cho sinh viên Thiết kế Đồ họa UEF</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.length > 0 ? features.map((item, idx) => {
               const c = item.content;
               const icons = [Image, User, Star, Monitor, Heart, Users];
@@ -5158,7 +5158,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
               return (
                 <div key={item.id || idx} className="group bg-white rounded-2xl border border-gray-200 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden animate-[fadeUp_${0.6 + idx * 0.1}s_ease-out]">
                   <div className={`h-1.5 ${colorCycle[ci]} w-full`}></div>
-                  <div className="p-7">
+                  <div className="p-5">
                     <div className={`w-12 h-12 rounded-xl ${iconBg[ci]} ${iconColors[ci]} flex items-center justify-center mb-5 group-hover:scale-110 transition-all duration-300 ${ci === 0 ? 'group-hover:bg-[#1a4ba8] group-hover:text-white' : ci === 1 ? 'group-hover:bg-[#DA291C] group-hover:text-white' : 'group-hover:bg-[#212121] group-hover:text-white'}`}>
                       <IconComp size={22} />
                     </div>
@@ -5176,7 +5176,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
               <>
                 <div className="group bg-white rounded-2xl border border-gray-200 hover:border-[#1a4ba8]/30 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden animate-[fadeUp_0.6s_ease-out]">
                   <div className="h-1.5 bg-[#1a4ba8] w-full"></div>
-                  <div className="p-7">
+                  <div className="p-5">
                     <div className="w-12 h-12 rounded-xl bg-[#1a4ba8]/10 text-[#1a4ba8] flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-[#1a4ba8] group-hover:text-white transition-all duration-300">
                       <Image size={22} />
                     </div>
@@ -5247,9 +5247,9 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
       </section>
 
       {/* Latest Artworks */}
-      <section className="px-8 py-20">
-        <div className="max-w-7xl mx-auto border-t border-gray-100 pt-16">
-          <div className="flex justify-between items-end mb-12">
+      <section className="px-6 py-10">
+        <div className="max-w-7xl mx-auto border-t border-gray-100 pt-8">
+          <div className="flex justify-between items-end mb-8">
             <div>
               <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2">
                 <span className="w-6 h-px bg-[#1a4ba8]"></span> {hero?.galleryPreTitle || t("featuredProducts")}
@@ -5261,7 +5261,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {featuredArtworks.slice(0, 8).map((work, idx) => (
               <div key={work.id} className="group cursor-pointer" onClick={() => { setActiveArtworkId && setActiveArtworkId(work.id); setPage("detail"); }}>
                 <div className={`rounded-xl overflow-hidden mb-4 relative ${idx % 2 === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
@@ -5310,12 +5310,12 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
       )}
 
       {/* Steps Section */}
-      <section className="px-8 py-20 bg-gray-50/50">
-        <div className="max-w-7xl mx-auto border-t border-gray-100 pt-16">
+      <section className="px-6 py-10 bg-gray-50/50">
+        <div className="max-w-7xl mx-auto border-t border-gray-100 pt-8">
           <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2 flex items-center gap-2 justify-center">
             <span className="w-6 h-px bg-[#1a4ba8]"></span> {hero?.stepsPreTitle || t("guide")}
           </p>
-          <h2 className="text-3xl font-extrabold text-center mb-16">{hero?.stepsTitle || t("startInThreeSteps")}</h2>
+          <h2 className="text-3xl font-extrabold text-center mb-10">{hero?.stepsTitle || t("startInThreeSteps")}</h2>
           
           <div className="flex flex-col md:flex-row justify-center items-center gap-8 relative max-w-4xl mx-auto">
             <div className="hidden md:block absolute top-6 left-[15%] right-[15%] h-px bg-gray-300 z-0 border-t border-dashed border-gray-300"></div>
@@ -5352,7 +5352,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
       </section>
 
       {/* CTA Footer */}
-      <section className="bg-gradient-to-r from-[#1a4ba8] to-[#0d2e6e] text-white px-8 py-20 relative overflow-hidden">
+      <section className="bg-gradient-to-r from-[#1a4ba8] to-[#0d2e6e] text-white px-6 py-14 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
           <div>
@@ -5367,8 +5367,8 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white text-[#212121] py-16 px-8 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
+      <footer className="bg-white text-[#212121] py-10 px-6 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
               <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
@@ -5436,7 +5436,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-3">
           <p>{footerInfo?.copyright || getSetting('footerCopyright') || t("footerCopyright")}</p>
           <p>{footerInfo?.footerBrand || t("footerBrand")}</p>
         </div>
@@ -5558,11 +5558,11 @@ function AboutPage({ setPage }) {
     <div className="bg-white min-h-screen text-[#212121] overflow-x-hidden font-sans">
       
       {/* HERO SECTION */}
-      <section className="relative min-h-[90vh] pt-24 pb-16 px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 items-center overflow-hidden bg-[#f9fafc]">
+      <section className="relative min-h-[70vh] pt-16 pb-10 px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 items-center overflow-hidden bg-[#f9fafc]">
         <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_55%_80%_at_100%_50%,rgba(214,232,255,0.6)_0%,transparent_70%),radial-gradient(ellipse_35%_40%_at_5%_90%,rgba(155,28,28,0.06)_0%,transparent_60%)]"></div>
         
         <div className="relative z-10 lg:pr-12">
-          <div className="inline-flex items-center gap-2 bg-[#d6e8ff] text-[#0d2e6e] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-8 animate-[fadeUp_0.5s_ease-out]">
+          <div className="inline-flex items-center gap-2 bg-[#d6e8ff] text-[#0d2e6e] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-5 animate-[fadeUp_0.5s_ease-out]">
             <span className="w-1.5 h-1.5 bg-[#1e6fd9] rounded-full animate-ping"></span>
             {t("aboutFacultyUef")}
           </div>
@@ -5575,10 +5575,10 @@ function AboutPage({ setPage }) {
               <>{t("aboutHeroExplore")}<br/><span className="text-[#1a4ba8]">{t("aboutHeroExcellentProjects")}</span><br/>{t("aboutHeroFromUefStudents")}</>
             )}
           </h1>
-          <p className="text-[#666] text-base leading-relaxed max-w-[460px] mb-10 animate-[fadeUp_0.9s_ease-out]">
+          <p className="text-[#666] text-base leading-relaxed max-w-[460px] mb-6 animate-[fadeUp_0.9s_ease-out]">
             {aboutHero?.description || <>{t("aboutHeroDesc1")} <strong className="text-[#1a4ba8]">{t("aboutHeroDesc2")}</strong></>}
           </p>
-          <div className="flex flex-wrap gap-3 mb-4 animate-[fadeUp_1.1s_ease-out]">
+          <div className="flex flex-wrap gap-3 mb-3 animate-[fadeUp_1.1s_ease-out]">
             <a href="#audience" className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#0d2e6e] text-white rounded-xl font-bold text-[15px] hover:bg-[#1a4ba8] hover:-translate-y-1 transition-all shadow-lg shadow-[#0d2e6e]/20 hover:shadow-[#1a4ba8]/40 duration-300">
               {t("aboutExploreNow")} <ArrowRight size={16} />
             </a>
@@ -5586,7 +5586,7 @@ function AboutPage({ setPage }) {
               Đăng nhập
             </button>
           </div>
-          <div className="flex gap-8 pt-7 mt-10 border-t border-[#e2e6ec] animate-[fadeUp_1.3s_ease-out]">
+          <div className="flex gap-6 pt-5 mt-6 border-t border-[#e2e6ec] animate-[fadeUp_1.3s_ease-out]">
             {aboutHero?.stats ? (() => {
               try {
                 const statsArr = JSON.parse(aboutHero.stats);
@@ -5629,7 +5629,7 @@ function AboutPage({ setPage }) {
       </section>
 
       {/* TICKER */}
-      <div className="bg-[#0d2e6e] py-4 overflow-hidden border-y border-white/10 shadow-inner">
+      <div className="bg-[#0d2e6e] py-2 overflow-hidden border-y border-white/10 shadow-inner">
         <div className="flex gap-0 whitespace-nowrap animate-[ticker_32s_linear_infinite] w-max">
           {[...Array(2)].map((_, i) => (
             <React.Fragment key={i}>
@@ -5643,11 +5643,11 @@ function AboutPage({ setPage }) {
       </div>
 
       {/* GALLERY STRIP */}
-      <div className="bg-white py-16 overflow-hidden relative">
+      <div className="bg-white py-10 overflow-hidden relative">
         <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-10"></div>
         <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-10"></div>
         
-        <div className="text-center mb-10">
+        <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#1a4ba8] animate-[fadeUp_0.5s_ease-out]">
             <span className="w-7 h-[2px] bg-[#1a4ba8]"></span> {t("aboutFeaturedArtworks")}
           </div>
@@ -5663,17 +5663,17 @@ function AboutPage({ setPage }) {
       </div>
 
       {/* AUDIENCE SECTION (Core Platform) */}
-      <section id="audience" className="bg-gradient-to-b from-[#f5f6f8] to-white py-24 px-6 lg:px-12 border-t border-[#e2e6ec]">
+      <section id="audience" className="bg-gradient-to-b from-[#f5f6f8] to-white py-14 px-6 lg:px-12 border-t border-[#e2e6ec]">
         <div className="max-w-7xl mx-auto">
-          <div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#1a4ba8] mb-5">
+          <div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#1a4ba8] mb-3">
             <span className="w-7 h-[2px] bg-[#1a4ba8]"></span> {t("aboutCoreEcosystem")}
           </div>
           <h2 className="text-4xl md:text-5xl font-black text-[#0a0c0f] leading-[1.1] mb-6 tracking-tight">{t("aboutSeamlessExperience1")}<br/>{t("aboutSeamlessExperience2")}</h2>
-          <p className="text-[#666] text-base leading-relaxed max-w-[600px] mb-12">
+          <p className="text-[#666] text-base leading-relaxed max-w-[600px] mb-6">
             {t("aboutAudienceDesc")}
           </p>
 
-          <div className="flex gap-2 border-b-2 border-[#e2e6ec] mb-12 overflow-x-auto pb-1">
+          <div className="flex gap-2 border-b-2 border-[#e2e6ec] mb-8 overflow-x-auto pb-1">
             <button onClick={() => setActiveTab("student")} className={`flex items-center gap-2 px-8 py-3.5 font-bold text-[15px] rounded-t-xl whitespace-nowrap transition-all ${activeTab === 'student' ? 'bg-[#0d2e6e] text-white shadow-md transform -translate-y-1' : 'text-[#8b96a8] hover:text-[#1a4ba8] hover:bg-gray-100'}`}>
               <GraduationCap size={18} /> {t("student")}
             </button>
@@ -5685,7 +5685,7 @@ function AboutPage({ setPage }) {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             {activeTab === "student" && (
               <>
                 <div className="animate-[fadeUp_0.5s_ease-out]">
@@ -5815,14 +5815,14 @@ function AboutPage({ setPage }) {
       </section>
 
       {/* PILLARS SECTION */}
-      <section className="bg-white py-28 px-6 lg:px-12 text-[#212121] relative overflow-hidden">
+      <section className="bg-white py-16 px-6 lg:px-12 text-[#212121] relative overflow-hidden">
         {/* Subtle decorative glows — ĐỎ + XANH DƯƠNG */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#1a4ba8] rounded-full blur-[150px] opacity-[0.06] pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[#DA291C] rounded-full blur-[150px] opacity-[0.05] pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="max-w-[700px] mb-20 text-center mx-auto animate-[fadeUp_0.5s_ease-out]">
-            <div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#1a4ba8] mb-5">
+          <div className="max-w-[700px] mb-12 text-center mx-auto animate-[fadeUp_0.5s_ease-out]">
+<div className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#1a4ba8] mb-3">
               <span className="w-7 h-[2px] bg-[#1a4ba8]"></span> {t("aboutValuesPreTitle")}
             </div>
             <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight tracking-tight text-[#212121]">
@@ -5831,9 +5831,9 @@ function AboutPage({ setPage }) {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             {/* XANH DƯƠNG — Pillar 1 */}
-            <div className="bg-white border border-[#1a4ba8]/20 p-10 rounded-3xl hover:shadow-[0_0_30px_rgba(26,75,168,0.12)] transition-all border-t-[4px] border-t-[#1a4ba8] group hover:-translate-y-2 duration-300 animate-[fadeUp_0.7s_ease-out]">
+            <div className="bg-white border border-[#1a4ba8]/20 p-6 rounded-3xl hover:shadow-[0_0_30px_rgba(26,75,168,0.12)] transition-all border-t-[4px] border-t-[#1a4ba8] group hover:-translate-y-2 duration-300 animate-[fadeUp_0.7s_ease-out]">
               <div className="w-14 h-14 rounded-2xl bg-[#1a4ba8]/10 text-[#1a4ba8] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <LayoutGrid size={28} />
               </div>
@@ -5841,7 +5841,7 @@ function AboutPage({ setPage }) {
               <p className="text-[15px] text-[#555] leading-relaxed">{t("aboutValue1Desc")}</p>
             </div>
             {/* ĐỎ — Pillar 2 */}
-            <div className="bg-white border border-[#DA291C]/20 p-10 rounded-3xl hover:shadow-[0_0_30px_rgba(218,41,28,0.12)] transition-all border-t-[4px] border-t-[#DA291C] group hover:-translate-y-2 duration-300 animate-[fadeUp_0.9s_ease-out]">
+            <div className="bg-white border border-[#DA291C]/20 p-6 rounded-3xl hover:shadow-[0_0_30px_rgba(218,41,28,0.12)] transition-all border-t-[4px] border-t-[#DA291C] group hover:-translate-y-2 duration-300 animate-[fadeUp_0.9s_ease-out]">
               <div className="w-14 h-14 rounded-2xl bg-[#DA291C]/10 text-[#DA291C] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <ShieldCheck size={28} />
               </div>
@@ -5849,7 +5849,7 @@ function AboutPage({ setPage }) {
               <p className="text-[15px] text-[#555] leading-relaxed">{t("aboutValue2Desc")}</p>
             </div>
             {/* TRẮNG (với chữ đen) — Pillar 3 */}
-            <div className="bg-gray-50 border border-gray-200 p-10 rounded-3xl hover:shadow-[0_0_30px_rgba(0,0,0,0.08)] transition-all border-t-[4px] border-t-gray-300 group hover:-translate-y-2 duration-300 animate-[fadeUp_1.1s_ease-out]">
+            <div className="bg-gray-50 border border-gray-200 p-6 rounded-3xl hover:shadow-[0_0_30px_rgba(0,0,0,0.08)] transition-all border-t-[4px] border-t-gray-300 group hover:-translate-y-2 duration-300 animate-[fadeUp_1.1s_ease-out]">
               <div className="w-14 h-14 rounded-2xl bg-gray-200 text-[#555] flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
                 <Building2 size={28} />
               </div>
@@ -5858,7 +5858,7 @@ function AboutPage({ setPage }) {
             </div>
           </div>
           
-          <div className="bg-white border border-gray-200 rounded-3xl p-10 flex flex-col md:flex-row items-center justify-evenly gap-10 text-center animate-[fadeUp_1.3s_ease-out] shadow-sm">
+          <div className="bg-white border border-gray-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-evenly gap-6 text-center animate-[fadeUp_1.3s_ease-out] shadow-sm">
              <div>
                 <div className="font-black text-5xl md:text-6xl text-[#212121] mb-2 tracking-tight">350+</div>
                 <div className="text-xs font-bold uppercase tracking-[0.2em] text-[#1a4ba8]">{t("aboutStats1Title")}</div>
@@ -5878,18 +5878,18 @@ function AboutPage({ setPage }) {
       </section>
 
       {/* PROCESS FLOW */}
-      <section className="py-24 px-6 lg:px-12 bg-[#f9fafc] border-b border-[#e2e6ec] overflow-hidden relative">
+      <section className="py-14 px-6 lg:px-12 bg-[#f9fafc] border-b border-[#e2e6ec] overflow-hidden relative">
         <div className="max-w-7xl mx-auto">
-           <div className="text-center mb-16 animate-[fadeUp_0.5s_ease-out]">
+<div className="text-center mb-10 animate-[fadeUp_0.5s_ease-out]">
              <h2 className="text-4xl font-black text-[#0a0c0f] mb-4">{t("aboutProcessTitle")}</h2>
              <p className="text-[#666] max-w-2xl mx-auto text-base">{t("aboutProcessDesc")}</p>
            </div>
            
-           <div className="relative flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10">
+           <div className="relative flex flex-col md:flex-row items-center justify-center gap-6 md:gap-6">
              {/* Decorative connecting line for desktop */}
              <div className="hidden md:block absolute top-1/2 left-10 right-10 h-0.5 bg-gradient-to-r from-[#d6e8ff] via-[#1a4ba8] to-[#d6e8ff] -translate-y-1/2 z-0 opacity-40"></div>
              
-             <div className="relative z-10 bg-white p-8 rounded-3xl border border-[#e2e6ec] shadow-lg flex-1 text-center w-full max-w-[300px] hover:-translate-y-2 transition-transform duration-300 animate-[fadeUp_0.7s_ease-out]">
+             <div className="relative z-10 bg-white p-6 rounded-3xl border border-[#e2e6ec] shadow-lg flex-1 text-center w-full max-w-[300px] hover:-translate-y-2 transition-transform duration-300 animate-[fadeUp_0.7s_ease-out]">
                <div className="w-16 h-16 bg-gradient-to-br from-[#1a4ba8] to-[#0d2e6e] text-white rounded-2xl flex items-center justify-center mx-auto mb-6 font-black text-2xl shadow-xl shadow-[#1a4ba8]/20 ring-4 ring-white">1</div>
                <h4 className="font-extrabold text-[#0a0c0f] text-lg mb-3">{t("aboutStep1Title")}</h4>
                <p className="text-[14px] text-[#666] leading-relaxed">{t("aboutStep1Desc")}</p>
@@ -5897,7 +5897,7 @@ function AboutPage({ setPage }) {
              
              <ArrowRight className="text-[#1a4ba8] hidden md:block relative z-10 bg-[#f9fafc] ring-8 ring-[#f9fafc] rounded-full animate-[fadeUp_0.8s_ease-out]" size={32} />
              
-             <div className="relative z-10 bg-white p-8 rounded-3xl border border-[#e2e6ec] shadow-lg flex-1 text-center w-full max-w-[300px] hover:-translate-y-2 transition-transform duration-300 animate-[fadeUp_0.9s_ease-out]">
+             <div className="relative z-10 bg-white p-6 rounded-3xl border border-[#e2e6ec] shadow-lg flex-1 text-center w-full max-w-[300px] hover:-translate-y-2 transition-transform duration-300 animate-[fadeUp_0.9s_ease-out]">
                <div className="w-16 h-16 bg-gradient-to-br from-[#c0392b] to-[#8a1919] text-white rounded-2xl flex items-center justify-center mx-auto mb-6 font-black text-2xl shadow-xl shadow-[#c0392b]/20 ring-4 ring-white">2</div>
                <h4 className="font-extrabold text-[#0a0c0f] text-lg mb-3">{t("aboutStep2Title")}</h4>
                <p className="text-[14px] text-[#666] leading-relaxed">{t("aboutStep2Desc")}</p>
@@ -5905,7 +5905,7 @@ function AboutPage({ setPage }) {
              
              <ArrowRight className="text-[#c0392b] hidden md:block relative z-10 bg-[#f9fafc] ring-8 ring-[#f9fafc] rounded-full animate-[fadeUp_1.0s_ease-out]" size={32} />
              
-             <div className="relative z-10 bg-white p-8 rounded-3xl border border-[#e2e6ec] shadow-lg flex-1 text-center w-full max-w-[300px] hover:-translate-y-2 transition-transform duration-300 animate-[fadeUp_1.1s_ease-out]">
+             <div className="relative z-10 bg-white p-6 rounded-3xl border border-[#e2e6ec] shadow-lg flex-1 text-center w-full max-w-[300px] hover:-translate-y-2 transition-transform duration-300 animate-[fadeUp_1.1s_ease-out]">
                <div className="w-16 h-16 bg-gradient-to-br from-[#c9a227] to-[#967615] text-white rounded-2xl flex items-center justify-center mx-auto mb-6 font-black text-2xl shadow-xl shadow-[#c9a227]/20 ring-4 ring-white">3</div>
                <h4 className="font-extrabold text-[#0a0c0f] text-lg mb-3">{t("aboutStep3Title")}</h4>
                <p className="text-[14px] text-[#666] leading-relaxed">{t("aboutStep3Desc")}</p>
@@ -5915,9 +5915,9 @@ function AboutPage({ setPage }) {
       </section>
 
       {/* COMPARE SECTION */}
-      <section id="compare" className="py-24 px-6 lg:px-12 bg-white">
+      <section id="compare" className="py-14 px-6 lg:px-12 bg-white">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16 animate-[fadeUp_0.5s_ease-out]">
+          <div className="text-center mb-10 animate-[fadeUp_0.5s_ease-out]">
             <h2 className="text-4xl font-black text-[#0a0c0f] mb-4">{t("aboutCompareTitle")}</h2>
             <p className="text-[#666] text-base">{t("aboutCompareDesc")}</p>
           </div>
@@ -5963,7 +5963,7 @@ function AboutPage({ setPage }) {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="py-24 px-6 lg:px-12 bg-[#f9fafc] border-t border-[#e2e6ec]">
+      <section id="faq" className="py-14 px-6 lg:px-12 bg-[#f9fafc] border-t border-[#e2e6ec]">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-16">
            <div className="animate-[fadeUp_0.5s_ease-out]">
              <h3 className="font-black text-4xl mb-5 tracking-tight text-[#0a0c0f]">{t("aboutFaqTitle")}</h3>
@@ -6004,7 +6004,7 @@ function AboutPage({ setPage }) {
       </section>
 
       {/* CTA SECTION */}
-      <section className="py-32 px-6 lg:px-12 bg-gradient-to-br from-[#0d2e6e] via-[#153b86] to-[#091a45] text-center text-white relative overflow-hidden">
+      <section className="py-20 px-6 lg:px-12 bg-gradient-to-br from-[#0d2e6e] via-[#153b86] to-[#091a45] text-center text-white relative overflow-hidden">
         {/* Animated glowing orbs */}
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-white/5 rounded-full blur-[100px] pointer-events-none animate-pulse"></div>
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#60afff]/20 rounded-full blur-[100px] pointer-events-none animate-pulse delay-1000"></div>
@@ -6028,8 +6028,8 @@ function AboutPage({ setPage }) {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-white text-[#212121] py-16 px-6 lg:px-12 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-10">
+      <footer className="bg-white text-[#212121] py-10 px-6 lg:px-12 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
 
           <div className="md:col-span-1">
             <div className="flex items-center gap-3 mb-4">
@@ -6102,7 +6102,7 @@ function AboutPage({ setPage }) {
           </div>
 
         </div>
-        <div className="max-w-7xl mx-auto mt-12 pt-8 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-4">
           <p>{footerInfo?.copyright || getSetting('footerCopyright') || '© 2026 UEF Design Gallery. Tất cả bản quyền được bảo hộ.'}</p>
           <p>{footerInfo?.footerBrand || t("aboutFooterDev")} <Heart size={14} className="inline text-[#DA291C] mx-1" /></p>
         </div>
