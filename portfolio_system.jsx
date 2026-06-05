@@ -21,7 +21,7 @@ import {
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive,
   GraduationCap, Rocket, Upload, Menu, ShoppingCart, Languages,
-  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter
+  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight
 } from "lucide-react";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -1509,7 +1509,18 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     description: "",
   });
   const [sendingOrder, setSendingOrder] = useState(false);
+  const [navbarHeight, setNavbarHeight] = useState(0);
   useEffect(() => { const h = (e) => { if (e.key === 'Escape') setShowFullscreen(false); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
+
+  useEffect(() => {
+    const measure = () => {
+      const header = document.querySelector('header');
+      if (header) setNavbarHeight(header.offsetHeight);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   const currentUserId = authUser?.id;
   const currentUserRole = authUser?.role;
@@ -1719,254 +1730,225 @@ if (mins < 1) return t("justNow");
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
-      <div style={{ padding: "20px 48px", borderBottom: `1px solid ${GRAY_LIGHT}`, display: "flex", gap: 6, alignItems: "center" }}>
-        <span style={{ fontSize: 13, color: MUTED, cursor: "pointer" }} onClick={() => setPage("gallery")}>Gallery</span>
-        <span style={{ fontSize: 13, color: MUTED }}>/</span>
-        <span style={{ fontSize: 13, color: MUTED }}>{art.subject || t("artwork") }</span>
-        <span style={{ fontSize: 13, color: MUTED }}>/</span>
-        <span style={{ fontSize: 13, color: BLACK, fontWeight: 500 }}>{art.title}</span>
+      {/* Breadcrumb */}
+      <div style={{ padding: "12px 24px", borderBottom: `1px solid ${GRAY_LIGHT}`, display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+        <span style={{ color: MUTED, cursor: "pointer" }} onClick={() => setPage("gallery")}>Gallery</span>
+        <ChevronRight size={12} color={MUTED} />
+        <span style={{ color: MUTED }}>{art.subject || t("artwork")}</span>
+        <ChevronRight size={12} color={MUTED} />
+        <span style={{ color: BLACK, fontWeight: 500 }}>{art.title}</span>
       </div>
 
-      <div className="detail-grid" style={{ display: "grid", gridTemplateColumns: "65fr 35fr", minHeight: "calc(100vh - 105px)" }}>
-        <div className="detail-image-panel" style={{ background: GRAY_BG, display: "flex", flexDirection: "row", alignItems: "stretch", position: "relative", padding: 0 }}>
-          {allImagesDeduped.length > 1 && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "16px 12px", overflowY: "auto", flexShrink: 0, zIndex: 3, justifyContent: "center" }}>
-              {allImagesDeduped.map((url, idx) => (
-                <div key={idx} onClick={() => setActiveImageIdx(idx)} style={{ width: 56, height: 48, borderRadius: 6, overflow: "hidden", border: `2px solid ${idx === activeImageIdx ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", opacity: idx === activeImageIdx ? 1 : 0.55, transition: "all .15s", flexShrink: 0 }}>
-                  <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
+      <div style={{ display: "flex" }}>
+        {/* LEFT SIDEBAR - Behance style */}
+        <div style={{ position: "sticky", top: navbarHeight, width: 80, height: "100vh", borderRight: `1px solid ${GRAY_LIGHT}`, display: "flex", flexDirection: "column", alignItems: "center", padding: "16px 0", flexShrink: 0, background: "#fff", zIndex: 10, boxSizing: "border-box" }}>
+          {/* Avatar with pulse dot */}
+          <div style={{ position: "relative", marginBottom: 6 }}>
+            <img src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
+            <div style={{ position: "absolute", bottom: 0, right: 0, width: 10, height: 10, borderRadius: "50%", background: "#22c55e", border: "2px solid #fff" }} />
+          </div>
+          <span style={{ fontSize: 10, color: MUTED, textAlign: "center", marginBottom: 10, cursor: "pointer", wordBreak: "break-word", maxWidth: 60, lineHeight: 1.2 }} onClick={() => { const slug = art.user?.portfolioSettings?.portfolioSlug; if (slug) setPage("portfolio", { portfolioSlug: slug }); }}>{art.user?.fullName}</span>
+
+          <div style={{ width: 24, height: 1, background: GRAY_LIGHT, marginBottom: 10 }} />
+
+          {/* Order (replaces Hire) */}
+          <button onClick={() => setShowOrderModal(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 0", width: "100%", border: "none", background: "transparent", cursor: "pointer", color: CERULEAN, fontSize: 10, fontWeight: 600 }}>
+            <ShoppingCart size={18} />
+            <span>{t("order")}</span>
+          </button>
+
+          <div style={{ width: 24, height: 1, background: GRAY_LIGHT, margin: "10px 0" }} />
+
+          {/* Tools */}
+          {(art.toolsUsed || []).length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "8px 0" }}>
+              {(art.toolsUsed || []).slice(0, 3).map(tool => (
+                <div key={tool} style={{ width: 32, height: 32, borderRadius: 8, background: GRAY_BG, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: MUTED, fontWeight: 600, border: `1px solid ${GRAY_LIGHT}` }} title={tool}>{tool.slice(0, 3).toUpperCase()}</div>
               ))}
             </div>
           )}
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", padding: 0, overflow: "hidden" }}>
-            <span style={{ position: "relative", display: "inline-block", maxWidth: "100%", maxHeight: "100%" }}>
-              <img src={activeImage} alt={art.title} style={{ maxWidth: "100%", maxHeight: "100%", width: "auto", height: "auto", display: "block" }} />
-              <span style={{ position: "absolute", bottom: 12, right: 12, pointerEvents: "none", zIndex: 2 }}>
-                <span style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 900, userSelect: "none", letterSpacing: 3, textTransform: "uppercase", background: "rgba(0,0,0,0.55)", padding: "4px 12px", borderRadius: 4, backdropFilter: "blur(2px)" }}>{art.watermarkText || "UEF"}</span>
-              </span>
-            </span>
-            <div style={{ position: "absolute", bottom: 20, right: 24, display: "flex", gap: 8, zIndex: 3 }}>
-              <button onClick={() => setShowFullscreen(true)} title={t("zoomIn")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Maximize2 size={16} /></button>
-              <button onClick={() => setShowDownloadModal(true)} title={t("download")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><FileDown size={16} /></button>
-              <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt(t("copyLinkPrompt"), window.location.href); } }} title={t("copyLink")} style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><Link size={16} /></button>
-            </div>
-          </div>
-          {shareToast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: BLACK, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>{t("linkCopied")}</div>}
-          {showDownloadModal && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDownloadModal(false)}>
-              <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
-                <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
-                  <h3 className="text-base font-bold text-[#212121]">{t("downloadArtwork")}</h3>
-                  <button onClick={() => setShowDownloadModal(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={18} /></button>
-                </div>
-                <div className="p-5">
-                  <p className="text-xs text-[#666666] mb-4">{t("chooseFormatToDownload")}{allImagesDeduped.length > 1 ? ` (${allImagesDeduped.length} ${t("images")})` : ""}:</p>
-                  <div className="flex flex-col gap-3">
-                    {[
-                      { key: "png", label: "PNG", desc: t("pngDescription") },
-                      { key: "jpg", label: "JPG", desc: t("jpgDescription") },
-                      { key: "pdf", label: "PDF", desc: t("pdfDescription") },
-                    ].map(opt => (
-                      <button key={opt.key} onClick={() => { setDownloadFormat(opt.key); handleDownload(opt.key); }}
-                        className="flex items-center justify-between w-full px-4 py-3 rounded-lg border border-[#E0E0E0] hover:border-[#1a4ba8] hover:bg-[#eef4ff] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={downloading}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-[#e0eaff] flex items-center justify-center text-[#1a4ba8] font-bold text-xs uppercase">{opt.key}</div>
-                          <div className="text-left">
-                            <p className="text-sm font-semibold text-[#212121]">{opt.label}</p>
-                            <p className="text-xs text-[#666666]">{opt.desc}</p>
-                          </div>
-                        </div>
-                        {downloading && downloadFormat === opt.key ? (
-                          <span className="inline-block w-4 h-4 border-2 border-[#1a4ba8] border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span>
-                        ) : <FileDown size={16} className="text-[#1a4ba8]" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+
+          <div style={{ width: 24, height: 1, background: GRAY_LIGHT, margin: "10px 0" }} />
+
+          {/* Save */}
+          <button onClick={() => onBookmarkClick && onBookmarkClick(art)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 0", width: "100%", border: "none", background: "transparent", cursor: "pointer", color: isBookmarked && isBookmarked(art.id) ? CERULEAN : MUTED, fontSize: 10 }}>
+            <Bookmark size={18} fill={isBookmarked && isBookmarked(art.id) ? CERULEAN : "none"} color={isBookmarked && isBookmarked(art.id) ? CERULEAN : MUTED} />
+            <span>{isBookmarked && isBookmarked(art.id) ? t("saved") : t("save")}</span>
+          </button>
+
+          <div style={{ width: 24, height: 1, background: GRAY_LIGHT, margin: "10px 0" }} />
+
+          {/* Share */}
+          <button onClick={async () => { try { await navigator.clipboard.writeText(window.location.href); setShareToast(true); setTimeout(() => setShareToast(false), 2000); } catch { prompt(t("copyLinkPrompt"), window.location.href); } }} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 0", width: "100%", border: "none", background: "transparent", cursor: "pointer", color: MUTED, fontSize: 10 }}>
+            <svg width="18" height="18" viewBox="0 0 14 13" fill="none"><path d="M13.282 3.287L10.188 0 7.1 3.287a.318.318 0 00.237.531h1.579v4.3a.159.159 0 00.159.159H11.3a.159.159 0 00.159-.159v-4.3h1.584a.318.318 0 00.237-.531z" fill="currentColor"/><path d="M14.682 6h-2.068a.159.159 0 00-.159.159v.955a.159.159 0 00.159.159h1.114v7H2.273v-7h1.113a.159.159 0 00.159-.159v-.955A.159.159 0 003.386 6H1.318A.318.318 0 001 6.318v8.909a.318.318 0 00.318.318h13.364a.318.318 0 00.318-.318V6.318A.318.318 0 0014.682 6z" fill="currentColor"/></svg>
+            <span>{t("share")}</span>
+          </button>
+
+          <div style={{ width: 24, height: 1, background: GRAY_LIGHT, margin: "10px 0" }} />
+
+          {/* Appreciate (Like) */}
+          <button onClick={handleLike} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, padding: "10px 0", width: "100%", border: "none", background: "transparent", cursor: "pointer", color: isLiked ? "#E53E3E" : MUTED, fontSize: 10 }}>
+            <svg width="16" height="16" viewBox="0 0 17 17" fill={isLiked ? "#E53E3E" : "none"}><path d="M.5 7.5h3v8h-3zM7.207 15.207c.193.19.425.29.677.293H12c.256 0 .512-.098.707-.293l2.5-2.5c.19-.19.288-.457.293-.707V8.5c0-.553-.445-1-1-1h-5L11 5s.5-.792.5-1.5v-1c0-.553-.447-1-1-1l-1 2-4 4v6l1.707 1.707z" stroke="currentColor"/></svg>
+            <span>{likeCount}</span>
+          </button>
         </div>
 
-        <div className="detail-info-panel" style={{ borderLeft: `1px solid ${GRAY_LIGHT}`, padding: "32px 28px", overflow: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-              <span style={{ background: "#eef4ff", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.subject}</span>
-              <span style={{ fontSize: 12, color: MUTED }}>{new Date(art.createdAt).toLocaleDateString("vi-VN")}</span>
-            </div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 8px", color: BLACK, lineHeight: 1.3 }}>{art.title}</h1>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
-              {art.semester && <span style={{ background: "#FEF3E2", color: "#92400E", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}>{(semesterMeta[art.semester]?.icon) || <BookOpen size={12} />} {semesterMeta[art.semester]?.label || art.semester}</span>}
-              {art.academicYear && <span style={{ background: "#E8F0FE", color: "#1E40AF", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Calendar size={12} /> {art.academicYear}</span>}
-              {(art.collaborators || []).length > 0 && <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {(art.collaborators || []).length} {t("members")}</span>}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <img
-                src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"}
-                alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG, cursor: "pointer" }}
-                onClick={() => {
-                  const slug = art.user?.portfolioSettings?.portfolioSlug;
-                  if (slug) setPage("portfolio", { portfolioSlug: slug });
-                  else alert(t("portfolioNotSetup"));
-                }}
-              />
-              <span
-                style={{ fontSize: 13, color: MUTED, cursor: "pointer" }}
-                onClick={() => {
-                  const slug = art.user?.portfolioSettings?.portfolioSlug;
-                  if (slug) setPage("portfolio", { portfolioSlug: slug });
-                  else alert(t("portfolioNotSetup"));
-                }}
-              >{art.user?.fullName}</span>
-              <span style={{ fontSize: 12, color: MUTED }}>·</span>
-              <span
-                style={{ fontSize: 12, color: CERULEAN, cursor: "pointer" }}
-                onClick={() => {
-                  const slug = art.user?.portfolioSettings?.portfolioSlug;
-                  if (slug) setPage("portfolio", { portfolioSlug: slug });
-                  else alert(t("portfolioNotSetup"));
-                }}
-              >{t("viewPortfolio")}</span>
-            </div>
-          </div>
-
-          {art.subject && <div style={{ marginBottom: 12 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t("category")}</span>
-            <div style={{ marginTop: 4 }}>
-              <span style={{ background: "#eef4ff", color: CERULEAN, fontSize: 12, fontWeight: 600, padding: "4px 12px", borderRadius: 8, border: `1px solid #a8bce0` }}>{art.subject}</span>
-            </div>
-          </div>}
-
-          {(art.toolsUsed || []).length > 0 && <div style={{ marginBottom: 12 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t("toolsUsed")}</span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-              {art.toolsUsed.map(tool => (
-                <span key={tool} style={{ background: "#F0F0F0", color: "#333", fontSize: 12, padding: "4px 10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>{tool}</span>
-              ))}
-            </div>
-          </div>}
-
-          {(art.collaborators || []).length > 0 && <div style={{ marginBottom: 12 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t("coAuthor")}</span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
-              {(art.collaborators || []).map(c => (
-                <span key={c} style={{ background: "#F0FDF4", color: "#166534", fontSize: 12, padding: "4px 10px", borderRadius: 8, border: `1px solid #BBF7D0`, display: "flex", alignItems: "center", gap: 4 }}>
-                  <Users size={12} /> @{typeof c === 'object' ? c.fullName || c.email : c}
-                </span>
-              ))}
-            </div>
-          </div>}
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
-            {(art.tags || []).map(tag => (
-              <span key={tag} style={{ background: GRAY_BG, fontSize: 11, padding: "4px 10px", borderRadius: 12, color: "#555", cursor: "pointer", border: `1px solid ${GRAY_LIGHT}` }}>{tag}</span>
-            ))}
-          </div>
-
-          <p style={{ fontSize: 13, color: "#444", lineHeight: 1.75, marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-            {art.description || t("noDescription") }
-          </p>
-
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-            <div style={{ display: "flex", gap: 14 }}>
-              <button onClick={handleLike} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${isLiked ? "#F5C5C5" : GRAY_LIGHT}`, background: isLiked ? "#FEF2F2" : "#fff", cursor: "pointer", transition: "all .15s" }}>
-                <Heart size={16} fill={isLiked ? "#E53E3E" : "none"} color={isLiked ? "#E53E3E" : MUTED} />
-                <span style={{ fontSize: 13, color: isLiked ? "#E53E3E" : MUTED, fontWeight: isLiked ? 600 : 400 }}>{likeCount}</span>
-              </button>
-              <button style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer" }}>
-                <MessageSquare size={16} color={MUTED} />
-                <span style={{ fontSize: 13, color: MUTED }}>{comments.length}</span>
-              </button>
-            </div>
-             <div style={{ display: "flex", gap: 8 }}>
-               <button
-                 onClick={() => onBookmarkClick && onBookmarkClick(art)}
-                 style={{
-                   padding: "8px 14px",
-                   borderRadius: 8,
-                   border: `1px solid ${isBookmarked && isBookmarked(art.id) ? "#a8bce0" : GRAY_LIGHT}`,
-                   background: isBookmarked && isBookmarked(art.id) ? "#eef4ff" : "#fff",
-                   fontSize: 13,
-                   cursor: "pointer",
-                   color: isBookmarked && isBookmarked(art.id) ? CERULEAN : BLACK,
-                   display: "flex",
-                   alignItems: "center",
-                   gap: 6,
-                   fontWeight: isBookmarked && isBookmarked(art.id) ? 600 : 400,
-                 }}
-               >
-                 <Bookmark
-                   size={16}
-                   fill={isBookmarked && isBookmarked(art.id) ? CERULEAN : "none"}
-                   color={isBookmarked && isBookmarked(art.id) ? CERULEAN : MUTED}
-                 />
-                 {isBookmarked && isBookmarked(art.id) ? t("saved") : t("save")}
-               </button>
-               <button onClick={() => setShowReport(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                  <ShieldAlert size={16} /> {t("report")}
-                </button>
-                <button onClick={() => setShowOrderModal(true)} style={{ padding: "8px 14px", borderRadius: 8, border: `1px solid #10B981`, background: "#ECFDF5", color: "#059669", fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                  <ShoppingCart size={16} /> {t("order")}
-               </button>
-             </div>
-          </div>
-
-          {canGrade && (
-            <div style={{ background: GRAY_BG, borderRadius: 12, padding: "20px", border: `1px solid ${GRAY_LIGHT}`, marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <div style={{ width: 28, height: 28, background: "#e0eaff", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Check size={16} color={CERULEAN} strokeWidth={2} />
+        {/* MAIN CONTENT */}
+        <div style={{ flex: 1, maxWidth: 1400, margin: "0 auto", width: "100%" }}>
+          {/* Project header */}
+          <div style={{ padding: "24px 32px 0" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, flexWrap: "wrap" }}>
+                  <span style={{ background: "#eef4ff", color: CERULEAN, fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10 }}>{art.subject}</span>
+                  {art.semester && <span style={{ background: "#FEF3E2", color: "#92400E", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}>{(semesterMeta[art.semester]?.icon) || <BookOpen size={12} />} {semesterMeta[art.semester]?.label || art.semester}</span>}
+                  {art.academicYear && <span style={{ background: "#E8F0FE", color: "#1E40AF", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Calendar size={12} /> {art.academicYear}</span>}
+                  {(art.collaborators || []).length > 0 && <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 11, fontWeight: 600, padding: "3px 9px", borderRadius: 10, display: "flex", alignItems: "center", gap: 4 }}><Users size={12} /> {(art.collaborators || []).length} {t("members")}</span>}
                 </div>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: BLACK }}>
-                    {existingGrade ? t("graded") : t("lecturerReview")}
-                  </p>
-                  <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>
-                    {existingGrade ? `${t("score")}: ${existingGrade.score}/10` : t("enterScoreAndComment")}
-                  </p>
+                <h1 style={{ fontSize: 28, fontWeight: 800, margin: "0 0 12px", color: BLACK, lineHeight: 1.2, letterSpacing: "-0.02em" }}>{art.title}</h1>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <img src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} onClick={() => { const slug = art.user?.portfolioSettings?.portfolioSlug; if (slug) setPage("portfolio", { portfolioSlug: slug }); }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: BLACK, cursor: "pointer" }} onClick={() => { const slug = art.user?.portfolioSettings?.portfolioSlug; if (slug) setPage("portfolio", { portfolioSlug: slug }); }}>{art.user?.fullName}</span>
                 </div>
               </div>
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("scoreRange")}</label>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <input value={gradeScore} onChange={e => setGradeScore(e.target.value)} type="number" min="0" max="10" step="0.5" placeholder="8.5" style={{ width: 80, padding: "9px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, color: CERULEAN, background: "#fff", outline: "none", textAlign: "center" }} />
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                <button onClick={() => setShowDownloadModal(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 13, cursor: "pointer", fontWeight: 500 }}>
+                  <FileDown size={16} /> {t("download")}
+                </button>
+                <button onClick={handleLike} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px solid ${isLiked ? "#E53E3E" : GRAY_LIGHT}`, background: isLiked ? "#FEF2F2" : "#fff", color: isLiked ? "#E53E3E" : MUTED, fontSize: 13, cursor: "pointer", fontWeight: isLiked ? 600 : 500 }}>
+                  <Heart size={16} fill={isLiked ? "#E53E3E" : "none"} /> {likeCount}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Stacked images - Behance style full-width */}
+          {allImagesDeduped.map((url, idx) => (
+            <div key={idx} style={{ width: "100%", position: "relative" }}>
+              <img
+                src={url}
+                alt={`${art.title} - ${idx + 1}`}
+                style={{ width: "100%", height: "auto", display: "block", background: GRAY_BG }}
+              />
+              <span style={{ position: "absolute", bottom: 16, right: 16, color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: 900, userSelect: "none", letterSpacing: 3, textTransform: "uppercase", background: "rgba(0,0,0,0.55)", padding: "4px 12px", borderRadius: 4, backdropFilter: "blur(2px)", pointerEvents: "none" }}>{art.watermarkText || "UEF"}</span>
+            </div>
+          ))}
+
+          {allImagesDeduped.length > 1 && <div style={{ height: 1, background: GRAY_LIGHT }} />}
+
+          {/* Description + Metadata */}
+          <div style={{ maxWidth: 720, margin: "0 auto", padding: "40px 24px" }}>
+            <p style={{ fontSize: 15, color: "#444", lineHeight: 1.8, marginBottom: 32, whiteSpace: "pre-wrap" }}>
+              {art.description || t("noDescription")}
+            </p>
+
+            {(art.tags || []).length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>{t("tags")}</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {(art.tags || []).map(tag => (
+                    <span key={tag} style={{ background: GRAY_BG, fontSize: 12, padding: "4px 12px", borderRadius: 12, color: "#555", border: `1px solid ${GRAY_LIGHT}` }}>{tag}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(art.toolsUsed || []).length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>{t("toolsUsed")}</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {art.toolsUsed.map(tool => (
+                    <span key={tool} style={{ background: "#F0F0F0", color: "#333", fontSize: 12, padding: "4px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>{tool}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(art.collaborators || []).length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, display: "block" }}>{t("coAuthor")}</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {(art.collaborators || []).map(c => (
+                    <span key={c} style={{ background: "#F0FDF4", color: "#166534", fontSize: 12, padding: "4px 12px", borderRadius: 8, border: `1px solid #BBF7D0`, display: "flex", alignItems: "center", gap: 4 }}>
+                      <Users size={12} /> @{typeof c === 'object' ? c.fullName || c.email : c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 24, alignItems: "center", padding: "16px 0", borderTop: `1px solid ${GRAY_LIGHT}`, borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: MUTED }}>
+                <Eye size={16} /> {art.viewCount || 0}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: MUTED }}>
+                <Heart size={16} color={isLiked ? "#E53E3E" : MUTED} fill={isLiked ? "#E53E3E" : "none"} /> {likeCount}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: MUTED }}>
+                <MessageSquare size={16} /> {comments.length}
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: MUTED }}>
+                <Calendar size={16} /> {new Date(art.createdAt).toLocaleDateString("vi-VN")}
+              </div>
+              <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+                <button onClick={() => setShowReport(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: MUTED, fontSize: 12, cursor: "pointer" }}>
+                  <ShieldAlert size={14} /> {t("report")}
+                </button>
+                <button onClick={() => setShowOrderModal(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#ECFDF5", color: "#059669", fontSize: 12, cursor: "pointer", fontWeight: 500 }}>
+                  <ShoppingCart size={14} /> {t("order")}
+                </button>
+              </div>
+            </div>
+
+            {canGrade && (
+              <div style={{ background: GRAY_BG, borderRadius: 12, padding: "20px", border: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                  <div style={{ width: 28, height: 28, background: "#e0eaff", borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Check size={16} color={CERULEAN} strokeWidth={2} />
+                  </div>
                   <div>
-                    <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{t("enterScoreRange")}</p>
-                    {gradeScore && <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <div key={n} style={{ width: 14, height: 5, borderRadius: 2, background: parseFloat(gradeScore) >= n ? CERULEAN : GRAY_LIGHT }} />)}
-                    </div>}
+                    <p style={{ fontSize: 13, fontWeight: 700, margin: 0, color: BLACK }}>{existingGrade ? t("graded") : t("lecturerReview")}</p>
+                    <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{existingGrade ? `${t("score")}: ${existingGrade.score}/10` : t("enterScoreAndComment")}</p>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("scoreRange")}</label>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input value={gradeScore} onChange={e => setGradeScore(e.target.value)} type="number" min="0" max="10" step="0.5" placeholder="8.5" style={{ width: 80, padding: "9px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 20, fontWeight: 700, color: CERULEAN, background: "#fff", outline: "none", textAlign: "center" }} />
+                    <div>
+                      <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{t("enterScoreRange")}</p>
+                      {gradeScore && <div style={{ display: "flex", gap: 2, marginTop: 4 }}>
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <div key={n} style={{ width: 14, height: 5, borderRadius: 2, background: parseFloat(gradeScore) >= n ? CERULEAN : GRAY_LIGHT }} />)}
+                      </div>}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("critiqueAndFeedback")}</label>
+                  <textarea value={gradeComment} onChange={e => setGradeComment(e.target.value)} placeholder={t("gradeCommentPlaceholder")} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 80, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
+                </div>
+                <button onClick={handleSaveGrade} disabled={!gradeScore || savingGrade} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: gradeScore && !savingGrade ? CERULEAN : GRAY_LIGHT, color: gradeScore && !savingGrade ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: gradeScore && !savingGrade ? "pointer" : "not-allowed" }}>
+                  {savingGrade ? t("saving") : existingGrade ? t("updateGrade") : t("saveGrade")}
+                </button>
+              </div>
+            )}
+
+            {existingGrade && !canGrade && (
+              <div style={{ background: "#F0FFF0", borderRadius: 12, padding: "20px", border: `1px solid #C6F6C6`, marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ fontSize: 32, fontWeight: 700, color: CERULEAN }}>{existingGrade.score}</div>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>{t("gradeScore")}</p>
+                    {existingGrade.comment && <p style={{ fontSize: 12, color: "#444", margin: 0, lineHeight: 1.5 }}>{existingGrade.comment}</p>}
+                    {existingGrade.lecturer && <p style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>{t("by")}: {existingGrade.lecturer.fullName}</p>}
                   </div>
                 </div>
               </div>
-              <div style={{ marginBottom: 14 }}>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("critiqueAndFeedback")}</label>
-                <textarea value={gradeComment} onChange={e => setGradeComment(e.target.value)} placeholder={t("gradeCommentPlaceholder")} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, lineHeight: 1.6, resize: "vertical", minHeight: 100, background: "#fff", outline: "none", fontFamily: "inherit", color: BLACK, boxSizing: "border-box" }} />
-              </div>
-              <button onClick={handleSaveGrade} disabled={!gradeScore || savingGrade} style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", background: gradeScore && !savingGrade ? CERULEAN : GRAY_LIGHT, color: gradeScore && !savingGrade ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: gradeScore && !savingGrade ? "pointer" : "not-allowed" }}>
-                {savingGrade ? t("saving") : existingGrade ? t("updateGrade") : t("saveGrade")}
-              </button>
-            </div>
-          )}
+            )}
 
-          {existingGrade && !canGrade && (
-            <div style={{ background: "#F0FFF0", borderRadius: 12, padding: "20px", border: `1px solid #C6F6C6`, marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ fontSize: 32, fontWeight: 700, color: CERULEAN }}>{existingGrade.score}</div>
-                <div>
-                  <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>{t("gradeScore")}</p>
-                  {existingGrade.comment && <p style={{ fontSize: 12, color: "#444", margin: 0, lineHeight: 1.5 }}>{existingGrade.comment}</p>}
-                  {existingGrade.lecturer && <p style={{ fontSize: 11, color: MUTED, marginTop: 4 }}>{t("by")}: {existingGrade.lecturer.fullName}</p>}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div style={{ marginTop: 32 }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>{t("comments")} ({comments.length})</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 32 }}>
-              <div style={{ border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, padding: 12, background: GRAY_BG }}>
+            <div style={{ marginTop: 32 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>{t("comments")} ({comments.length})</h3>
+              <div style={{ border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, padding: 12, background: GRAY_BG, marginBottom: 16 }}>
                 {currentUserId ? (
                   <>
                     <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder={t("leaveCommentPlaceholder")} style={{ width: "100%", border: "none", background: "transparent", outline: "none", resize: "none", minHeight: 60, fontSize: 13, color: BLACK, fontFamily: "inherit" }} />
@@ -1978,17 +1960,15 @@ if (mins < 1) return t("justNow");
                   </>
                 ) : (
                   <div style={{ textAlign: "center", padding: "16px 0" }}>
-                    <p style={{ fontSize: 13, color: MUTED, margin: "0 0 10px" }}>{t("pleaseLoginToComment1")} <strong style={{ color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("auth")}>{t("login")}</strong> {t("pleaseLoginToComment2")}</p>
+                    <p style={{ fontSize: 13, color: MUTED, margin: 0 }}>{t("pleaseLoginToComment1")} <strong style={{ color: CERULEAN, cursor: "pointer" }} onClick={() => setPage("auth")}>{t("login")}</strong> {t("pleaseLoginToComment2")}</p>
                   </div>
                 )}
               </div>
-              {comments.length === 0 && (
-                <p style={{ fontSize: 13, color: MUTED, textAlign: "center", padding: "20px 0" }}>{t("noComments")}</p>
-              )}
+              {comments.length === 0 && <p style={{ fontSize: 13, color: MUTED, textAlign: "center", padding: "20px 0" }}>{t("noComments")}</p>}
               {comments.map(cmt => (
-                <div key={cmt.id} style={{ display: "flex", gap: 12 }}>
+                <div key={cmt.id} style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: `1px solid ${GRAY_LIGHT}` }}>
                   <img src={cmt.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                       <p style={{ fontSize: 14, fontWeight: 600, margin: "0 0 4px", color: BLACK }}>
                         {cmt.user?.fullName}
@@ -2003,8 +1983,29 @@ if (mins < 1) return t("justNow");
             </div>
           </div>
 
+          {/* More by author / Related */}
+          {relatedArtworks.length > 0 && (
+            <div style={{ padding: "40px 24px 64px", borderTop: `1px solid ${GRAY_LIGHT}`, maxWidth: 1400, margin: "0 auto" }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: BLACK, marginBottom: 20 }}>{t("exploreMore")}</h3>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+                {relatedArtworks.slice(0, 4).map((a, i) => (
+                  <div key={a.id} onClick={() => { setPage("detail"); setTimeout(() => setActiveArtworkId(a.id), 50); }} style={{ cursor: "pointer", borderRadius: 4, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                    <div style={{ aspectRatio: "4/3", overflow: "hidden", background: GRAY_BG }}>
+                      <img src={a.coverImageUrl} alt={a.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                    <div style={{ padding: "10px 12px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 2px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.title}</p>
+                      <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{a.user?.fullName || ""}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {shareToast && <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100, background: BLACK, color: "#fff", padding: "10px 20px", borderRadius: 10, fontSize: 13, fontWeight: 500, boxShadow: "0 8px 24px rgba(0,0,0,0.2)" }}>{t("linkCopied")}</div>}
 
       {showFullscreen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.92)' }} onClick={() => setShowFullscreen(false)}>
@@ -2022,6 +2023,42 @@ if (mins < 1) return t("justNow");
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {showDownloadModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowDownloadModal(false)}>
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
+              <h3 className="text-base font-bold text-[#212121]">{t("downloadArtwork")}</h3>
+              <button onClick={() => setShowDownloadModal(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={18} /></button>
+            </div>
+            <div className="p-5">
+              <p className="text-xs text-[#666666] mb-4">{t("chooseFormatToDownload")}{allImagesDeduped.length > 1 ? ` (${allImagesDeduped.length} ${t("images")})` : ""}:</p>
+              <div className="flex flex-col gap-3">
+                {[
+                  { key: "png", label: "PNG", desc: t("pngDescription") },
+                  { key: "jpg", label: "JPG", desc: t("jpgDescription") },
+                  { key: "pdf", label: "PDF", desc: t("pdfDescription") },
+                ].map(opt => (
+                  <button key={opt.key} onClick={() => { setDownloadFormat(opt.key); handleDownload(opt.key); }}
+                    className="flex items-center justify-between w-full px-4 py-3 rounded-lg border border-[#E0E0E0] hover:border-[#1a4ba8] hover:bg-[#eef4ff] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={downloading}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#e0eaff] flex items-center justify-center text-[#1a4ba8] font-bold text-xs uppercase">{opt.key}</div>
+                      <div className="text-left">
+                        <p className="text-sm font-semibold text-[#212121]">{opt.label}</p>
+                        <p className="text-xs text-[#666666]">{opt.desc}</p>
+                      </div>
+                    </div>
+                    {downloading && downloadFormat === opt.key ? (
+                      <span className="inline-block w-4 h-4 border-2 border-[#1a4ba8] border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span>
+                    ) : <FileDown size={16} className="text-[#1a4ba8]" />}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -2063,23 +2100,10 @@ if (mins < 1) return t("justNow");
         </div>
       )}
 
-      {relatedArtworks.length > 0 && (
-        <div style={{ padding: "40px 48px 64px", borderTop: `1px solid ${GRAY_LIGHT}` }}>
-          <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 24 }}>{t("exploreMore")}</h3>
-          <MasonryGrid
-            items={relatedArtworks.map((a, i) => ({
-              id: a.id, title: a.title, student: a.user?.fullName || "", img: a.coverImageUrl,
-              likes: a.likeCount || 0, h: [240, 300, 350, 270, 320][i % 5], isPublic: a.isPublic, category: a.subject,
-            }))}
-            showHover={true}
-            onArtworkClick={(art) => { setPage("detail"); setTimeout(() => setActiveArtworkId(art.id), 50); }}
-          />
-        </div>
-      )}
       {showOrderModal && activeArtworkId && (
         <OrderModal setPage={setPage} activeArtworkId={activeArtworkId} onClose={() => setShowOrderModal(false)} />
       )}
-  </div>
+    </div>
   );
 }
 function AuthPage({ setPage, onLoginSuccess }) {
