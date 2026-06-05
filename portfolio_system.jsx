@@ -311,8 +311,19 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const [showYearTool, setShowYearTool] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
   const [categoryCovers, setCategoryCovers] = useState({});
+  const [navbarHeight, setNavbarHeight] = useState(0);
   const limit = 100;
   const fetchId = useRef(0);
+
+  useEffect(() => {
+    const measure = () => {
+      const header = document.querySelector('header');
+      if (header) setNavbarHeight(header.offsetHeight);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   const UEF_RED = "#DA291C";
   const UEF_BLUE = "#1a4ba8";
@@ -364,7 +375,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 
   return (
     <div style={{ background: "#fff", minHeight: "100vh" }}>
-      <div style={{ position: "sticky", top: 0, background: "#fff", zIndex: 20, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
+      <div style={{ position: "sticky", top: navbarHeight, background: "#fff", zIndex: 40, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
         <div style={{ padding: "12px 24px 0", maxWidth: 1480, margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
             <button
