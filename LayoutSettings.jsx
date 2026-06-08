@@ -1,18 +1,14 @@
 import { useState, useEffect } from 'react';
 import { t } from './lib/i18n.jsx';
 import { fetchSiteContent } from './lib/site-content.js';
-
-const CERULEAN = '#1a4ba8';
-const BLACK = '#212121';
-const MUTED = '#666666';
-const GRAY_LIGHT = '#E0E0E0';
-const GRAY_BG = '#F8F8F8';
+import { ArrowLeft, Plus, Edit2, Trash2, Save, Check, Settings, Image as ImageIcon, Layout, Type, AlertCircle } from 'lucide-react';
 
 const PAGE_TABS = [
-  { id: 'home', label: 'Homepage' },
-  { id: 'about', label: 'About Page' },
-  { id: 'footer', label: 'Footer' },
+  { id: 'home', label: 'Homepage', icon: Layout },
+  { id: 'about', label: 'About Page', icon: Layout },
+  { id: 'footer', label: 'Footer', icon: Layout },
 ];
+
 const SECTION_LABELS_MAP = {
   hero: 'Hero Banner',
   features: 'Features Cards',
@@ -135,185 +131,344 @@ export default function LayoutSettings({ setPage }) {
   function renderContentEditor(content, onChange) {
     const fields = Object.keys(content || {});
     return (
-      <div className="space-y-3" style={{ maxHeight: 400, overflowY: 'auto' }}>
-        {fields.length === 0 && <p style={{ fontSize: 12, color: MUTED }}>No content fields</p>}
-        {fields.map((key) => (
-          <div key={key}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: MUTED, marginBottom: 3, textTransform: 'capitalize' }}>{key.replace(/([A-Z])/g, ' $1')}</label>
-            {key.toLowerCase().includes('image') || key.toLowerCase().includes('url') || key.toLowerCase().includes('src') ? (
-              <div>
+      <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-3 custom-scrollbar">
+        {fields.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-12 px-4 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+             <Type className="w-10 h-10 mb-3 opacity-50" />
+             <p className="text-sm font-medium text-gray-500">No content fields available</p>
+             <p className="text-xs text-gray-400 mt-1">This section may not require custom fields.</p>
+          </div>
+        )}
+        {fields.map((key) => {
+          const isImage = key.toLowerCase().includes('image') || key.toLowerCase().includes('url') || key.toLowerCase().includes('src');
+          const isTextarea = key.toLowerCase().includes('description') || (typeof content[key] === 'string' && content[key].length > 80);
+          
+          return (
+            <div key={key} className="space-y-2">
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">{key.replace(/([A-Z])/g, ' $1')}</label>
+              {isImage ? (
+                <div className="space-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <ImageIcon className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <input
+                      value={content[key] || ''}
+                      onChange={(e) => onChange({ ...content, [key]: e.target.value })}
+                      placeholder="https://example.com/image.png"
+                      className="block w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all"
+                    />
+                  </div>
+                  {content[key] && (
+                    <div className="relative inline-block rounded-lg overflow-hidden border border-gray-200 shadow-sm group bg-white">
+                      <img src={content[key]} alt="" className="h-24 w-auto object-contain max-w-full" onError={(e) => e.target.style.display='none'} />
+                      <div className="absolute inset-0 bg-gray-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                        <a href={content[key]} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-white/90 text-gray-900 rounded-md text-xs font-semibold shadow-sm hover:bg-white transition-colors">View Original</a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : isTextarea ? (
+                <textarea
+                  value={content[key] || ''}
+                  onChange={(e) => onChange({ ...content, [key]: e.target.value })}
+                  rows={4}
+                  className="block w-full px-4 py-3 bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all resize-y"
+                  placeholder={`Enter ${key.replace(/([A-Z])/g, ' $1').toLowerCase()}...`}
+                />
+              ) : (
                 <input
                   value={content[key] || ''}
                   onChange={(e) => onChange({ ...content, [key]: e.target.value })}
-                  placeholder={`https://...`}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
+                  className="block w-full px-4 py-2.5 bg-gray-50/50 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all"
+                  placeholder={`Enter ${key.replace(/([A-Z])/g, ' $1').toLowerCase()}...`}
                 />
-                {content[key] && (
-                  <img src={content[key]} alt="" style={{ width: 80, height: 60, objectFit: 'cover', borderRadius: 4, marginTop: 4, border: `1px solid ${GRAY_LIGHT}` }} />
-                )}
-              </div>
-            ) : key.toLowerCase().includes('description') || (typeof content[key] === 'string' && content[key].length > 80) ? (
-              <textarea
-                value={content[key] || ''}
-                onChange={(e) => onChange({ ...content, [key]: e.target.value })}
-                rows={3}
-                style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: 'none', boxSizing: 'border-box', resize: 'vertical' }}
-              />
-            ) : (
-              <input
-                value={content[key] || ''}
-                onChange={(e) => onChange({ ...content, [key]: e.target.value })}
-                style={{ width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
-              />
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }
 
   if (loading) {
-    return <div style={{ padding: 40, textAlign: 'center', color: MUTED, fontSize: 14 }}>Loading settings...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50/50 flex flex-col items-center justify-center p-8">
+        <div className="w-10 h-10 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+        <div className="text-gray-500 font-medium">Loading layout settings...</div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: '32px 40px', background: '#fff', minHeight: '100vh' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Layout Settings</h2>
-          <p style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>Manage content for Homepage, About page, and Footer</p>
-        </div>
-        <button onClick={() => setPage('admin')} style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: '#fff', fontSize: 13, cursor: 'pointer' }}>← Back to Admin</button>
-      </div>
-
-      {error && (
-        <div style={{ background: '#FFF5F5', border: '1px solid #FED7D7', borderRadius: 8, padding: '10px 14px', marginBottom: 16, color: '#C53030', fontSize: 12 }}>
-          {error}
-        </div>
-      )}
-
-      {/* Page tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-        {PAGE_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActivePage(tab.id)}
-            style={{
-              padding: '10px 20px', border: 'none', background: 'none', fontSize: 14, fontWeight: 500,
-              color: activePage === tab.id ? CERULEAN : MUTED, cursor: 'pointer',
-              borderBottom: activePage === tab.id ? `2px solid ${CERULEAN}` : '2px solid transparent',
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Sections */}
-      <div className="space-y-6">
-        {sections.length === 0 && (
-          <p style={{ textAlign: 'center', color: MUTED, fontSize: 13, padding: 40 }}>No sections configured yet.</p>
-        )}
-        {sections.map((section) => (
-          <div key={section.id} style={{ border: `1px solid ${GRAY_LIGHT}`, borderRadius: 10, overflow: 'hidden' }}>
-            <div style={{ background: GRAY_BG, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-              <div>
-                <span style={{ fontWeight: 600, fontSize: 14, color: BLACK }}>{SECTION_LABELS_MAP[section.section] || section.label}</span>
-                <span style={{ fontSize: 11, color: MUTED, marginLeft: 8 }}>({section.section})</span>
-              </div>
-              <button
-                onClick={() => setEditingItem({ sectionId: section.id, sortOrder: section.items.length, content: {} })}
-                style={{ padding: '5px 12px', borderRadius: 6, border: 'none', background: CERULEAN, color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
-              >
-                + Add Item
-              </button>
+    <div className="min-h-screen bg-gray-50/50 py-8 px-4 sm:px-8 lg:px-12 font-sans">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        {/* Header Section */}
+        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+              <Layout className="w-8 h-8" />
             </div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Layout Settings</h2>
+              <p className="text-gray-500 mt-1">Manage dynamic content for pages and sections</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setPage('admin')} 
+            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm group"
+          >
+            <ArrowLeft className="w-4 h-4 text-gray-400 group-hover:-translate-x-1 transition-transform" />
+            Back to Admin
+          </button>
+        </div>
 
-            {section.items.length === 0 && (
-              <div style={{ padding: 20, textAlign: 'center', color: MUTED, fontSize: 12 }}>
-                No items. Click "Add Item" to create one.
+        {error && (
+          <div className="flex items-start gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 shadow-sm">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <p className="font-medium text-sm">{error}</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          
+          {/* Sidebar / Tabs */}
+          <div className="lg:col-span-1 space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-8">
+              <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-gray-500" />
+                  Pages
+                </h3>
+              </div>
+              <div className="p-2 flex flex-col gap-1">
+                {PAGE_TABS.map((tab) => {
+                  const isActive = activePage === tab.id;
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActivePage(tab.id)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                        isActive 
+                          ? 'bg-blue-50 text-blue-700' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {/* Simple Settings Panel (Moved to Sidebar for better layout) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Settings className="w-4 h-4 text-gray-500" />
+                  Global Variables
+                </h3>
+              </div>
+              <div className="p-4 space-y-4">
+                {Object.keys(settings).length === 0 ? (
+                  <p className="text-gray-400 text-sm text-center py-4">No global settings.</p>
+                ) : (
+                  Object.entries(settings).map(([key, val]) => {
+                    const isSaving = savingKey === key;
+                    const isSaved = savedKey === key;
+                    return (
+                      <div key={key} className="space-y-1.5">
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider">{key}</label>
+                        <div className="flex gap-2">
+                          <input 
+                            value={val} 
+                            onChange={(e) => { setSavedKey(null); setSettings((p) => ({ ...p, [key]: e.target.value })); }} 
+                            className="flex-1 min-w-0 px-3 py-2 bg-gray-50 hover:bg-white focus:bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all" 
+                          />
+                          <button
+                            onClick={() => saveSetting(key, settings[key])}
+                            disabled={isSaving}
+                            className={`flex items-center justify-center w-10 shrink-0 rounded-lg border transition-all ${
+                              isSaved 
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-600' 
+                                : isSaving 
+                                  ? 'bg-gray-100 border-gray-200 text-gray-400' 
+                                  : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
+                            }`}
+                            title={isSaved ? 'Saved!' : 'Save'}
+                          >
+                            {isSaved ? <Check className="w-4 h-4" /> : isSaving ? <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-500 rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-bold text-gray-900">
+                {PAGE_TABS.find(t => t.id === activePage)?.label} Sections
+              </h3>
+              <span className="bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-full border border-gray-200">
+                {sections.length} Sections
+              </span>
+            </div>
+            
+            {sections.length === 0 ? (
+              <div className="bg-white rounded-2xl p-12 shadow-sm border border-dashed border-gray-300 flex flex-col items-center justify-center text-center">
+                <Layout className="w-12 h-12 text-gray-300 mb-4" />
+                <h4 className="text-lg font-semibold text-gray-900">No sections found</h4>
+                <p className="text-gray-500 mt-1 max-w-sm">There are currently no configurable sections for this page.</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {sections.map((section) => (
+                  <div key={section.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
+                    {/* Section Header */}
+                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-base">{SECTION_LABELS_MAP[section.section] || section.label}</h4>
+                        <p className="text-xs font-mono text-gray-500 mt-0.5">{section.section}</p>
+                      </div>
+                      <button
+                        onClick={() => setEditingItem({ sectionId: section.id, sortOrder: section.items.length, content: {} })}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm shadow-blue-600/20"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Item
+                      </button>
+                    </div>
+
+                    {/* Items List */}
+                    <div className="divide-y divide-gray-100">
+                      {section.items.length === 0 ? (
+                        <div className="px-6 py-10 text-center flex flex-col items-center">
+                          <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                            <Plus className="w-6 h-6 text-gray-300" />
+                          </div>
+                          <p className="text-gray-500 text-sm">No items in this section. Click "Add Item" to create one.</p>
+                        </div>
+                      ) : (
+                        section.items.map((item, idx) => (
+                          <div key={item.id} className="p-6 flex flex-col sm:flex-row gap-6 hover:bg-gray-50/50 transition-colors group">
+                            {/* Visual Preview */}
+                            {item.content?.imageUrl && (
+                              <div className="shrink-0 w-24 h-24 rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm">
+                                <img src={item.content.imageUrl} alt="" className="w-full h-full object-cover" onError={(e) => e.target.style.display='none'} />
+                              </div>
+                            )}
+                            
+                            {/* Item Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4 mb-2">
+                                <div>
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-md bg-gray-100 text-gray-600 text-xs font-bold mr-2 mb-1">
+                                    {idx + 1}
+                                  </span>
+                                  <h5 className="inline text-base font-bold text-gray-900 truncate">
+                                    {item.content?.title || item.content?.name || item.content?.heading || '(Untitled Item)'}
+                                  </h5>
+                                </div>
+                                {/* Actions */}
+                                <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+                                  <button 
+                                    onClick={() => setEditingItem({ ...item, sectionId: section.id })} 
+                                    className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="Edit Item"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => deleteItem(item.id)} 
+                                    className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Delete Item"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              {item.content?.description && (
+                                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
+                                  {item.content.description}
+                                </p>
+                              )}
+                              
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {Object.keys(item.content || {})
+                                  .filter(k => k !== 'title' && k !== 'name' && k !== 'description' && k !== 'imageUrl' && k !== 'heading')
+                                  .slice(0, 3)
+                                  .map(k => (
+                                    <span key={k} className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 border border-gray-200 text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                                      {k}
+                                    </span>
+                                  ))
+                                }
+                                {Object.keys(item.content || {}).length > 5 && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-md text-[10px] font-medium text-gray-400">
+                                    +{Object.keys(item.content).length - 5} more
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-
-            {section.items.map((item, idx) => (
-              <div key={item.id} style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, padding: '12px 16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                  <span style={{ fontSize: 11, color: MUTED, fontWeight: 500 }}>
-                    #{idx + 1} {item.content?.title || item.content?.name || '(no title)'}
-                  </span>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => setEditingItem({ ...item, sectionId: section.id })} style={{ padding: '3px 8px', borderRadius: 4, border: `1px solid ${GRAY_LIGHT}`, background: '#fff', fontSize: 10, cursor: 'pointer' }}>Edit</button>
-                    <button onClick={() => deleteItem(item.id)} style={{ padding: '3px 8px', borderRadius: 4, border: '1px solid #FED7D7', background: '#FFF5F5', color: '#C53030', fontSize: 10, cursor: 'pointer' }}>Delete</button>
-                  </div>
-                </div>
-                {item.content?.imageUrl && (
-                  <img src={item.content.imageUrl} alt="" style={{ width: 60, height: 40, objectFit: 'cover', borderRadius: 4, border: `1px solid ${GRAY_LIGHT}` }} />
-                )}
-                {item.content?.description && (
-                  <p style={{ fontSize: 11, color: MUTED, margin: '4px 0 0' }}>{item.content.description.substring(0, 100)}{String(item.content.description).length > 100 ? '...' : ''}</p>
-                )}
-              </div>
-            ))}
           </div>
-        ))}
-      </div>
-
-      {/* Simple Settings */}
-      <div style={{ marginTop: 32, border: `1px solid ${GRAY_LIGHT}`, borderRadius: 10, overflow: 'hidden' }}>
-        <div style={{ background: GRAY_BG, padding: '12px 16px', borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-          <span style={{ fontWeight: 600, fontSize: 14, color: BLACK }}>Site Settings</span>
-        </div>
-        <div style={{ padding: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {Object.keys(settings).length === 0 && (
-            <p style={{ color: MUTED, fontSize: 12, gridColumn: 'span 2' }}>No site settings yet.</p>
-          )}
-          {Object.entries(settings).map(([key, val]) => {
-            const isSaving = savingKey === key;
-            const isSaved = savedKey === key;
-            return (
-            <div key={key}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: MUTED, marginBottom: 3 }}>{key}</label>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <input value={val} onChange={(e) => { setSavedKey(null); setSettings((p) => ({ ...p, [key]: e.target.value })); }} style={{ flex: 1, padding: '8px 10px', borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: 'none' }} />
-                <button
-                  onClick={() => saveSetting(key, settings[key])}
-                  disabled={isSaving}
-                  style={{
-                    padding: '8px 12px', borderRadius: 6, border: 'none',
-                    background: isSaved ? '#38A169' : isSaving ? GRAY_LIGHT : CERULEAN,
-                    color: isSaving ? MUTED : '#fff', fontSize: 11,
-                    cursor: isSaving ? 'not-allowed' : 'pointer',
-                    minWidth: 60, transition: 'background 0.2s',
-                  }}
-                >
-                  {isSaving ? '...' : isSaved ? 'Saved!' : 'Save'}
-                </button>
-              </div>
-            </div>
-            );
-          })}
         </div>
       </div>
 
       {/* Editing Modal */}
       {editingItem && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setEditingItem(null)}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 24, maxWidth: 520, width: '90%', maxHeight: '80vh', overflowY: 'auto' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: BLACK, margin: '0 0 8px' }}>
-              {editingItem.id ? 'Edit Item' : 'Add Item'}
-            </h3>
-            <p style={{ fontSize: 12, color: MUTED, marginBottom: 16 }}>Configure content fields below</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onClick={() => setEditingItem(null)} />
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingItem.id ? 'Edit Item' : 'Add New Item'}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">Configure the content fields below.</p>
+              </div>
+              <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
+                <Layout className="w-5 h-5" />
+              </div>
+            </div>
 
-            {renderContentEditor(editingItem.content || {}, (newContent) => setEditingItem({ ...editingItem, content: newContent }))}
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto">
+              {renderContentEditor(editingItem.content || {}, (newContent) => setEditingItem({ ...editingItem, content: newContent }))}
+            </div>
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
-              <button onClick={() => setEditingItem(null)} style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: '#fff', fontSize: 13, cursor: 'pointer' }}>Cancel</button>
+            {/* Modal Footer */}
+            <div className="px-6 py-5 border-t border-gray-100 bg-gray-50/50 rounded-b-3xl flex items-center justify-end gap-3 shrink-0">
+              <button 
+                onClick={() => setEditingItem(null)} 
+                className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+              >
+                Cancel
+              </button>
               <button
                 onClick={() => saveItem(editingItem)}
                 disabled={saving}
-                style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: saving ? GRAY_LIGHT : CERULEAN, color: saving ? MUTED : '#fff', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}
+                className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-400 transition-colors shadow-sm shadow-blue-600/20"
               >
-                {saving ? 'Saving...' : 'Save'}
+                {saving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                {saving ? 'Saving...' : 'Save Item'}
               </button>
             </div>
           </div>
