@@ -413,7 +413,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
               {years.map(y => <option key={y} value={y}>{y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}</option>)}
             </select>
             <select value={filters.tool} onChange={e => setFilter("tool", e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
-              {toolsList.map(t => <option key={t} value={t}>{t === "Tất cả" ? `${t("tools")}: ${t("all")}` : t}</option>)}
+              {toolsList.map(toolItem => <option key={toolItem} value={toolItem}>{toolItem === "Tất cả" ? `${t("tools")}: ${t("all")}` : toolItem}</option>)}
             </select>
             {activeFilterCount > 0 && (
               <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); }} style={{ padding: "3px 8px", borderRadius: 6, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
@@ -626,19 +626,19 @@ function PortfolioPage({ setPage, pageParams }) {
         .portfolio-hero-grid {
           display: grid;
           grid-template-columns: 1.2fr 0.8fr;
-          gap: 28px;
+          gap: 48px;
         }
         @media (max-width: 1024px) {
-          .portfolio-hero-grid { grid-template-columns: 1fr; }
+          .portfolio-hero-grid { grid-template-columns: 1fr; gap: 32px; }
         }
         .bento-grid {
           display: grid;
           grid-template-columns: repeat(12, minmax(0, 1fr));
           grid-auto-rows: 26px;
-          gap: 14px;
+          gap: 20px;
         }
         @media (max-width: 640px) {
-          .bento-grid { grid-auto-rows: 24px; }
+          .bento-grid { grid-auto-rows: 24px; gap: 16px; }
         }
       `}</style>
 
@@ -649,7 +649,7 @@ function PortfolioPage({ setPage, pageParams }) {
         <div className="absolute -top-24 -right-24 w-[520px] h-[520px] rounded-full bg-[#1a4ba8]/10 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-40 -left-28 w-[520px] h-[520px] rounded-full bg-black/5 blur-3xl pointer-events-none" />
 
-        <div className="relative max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 pt-14 pb-10">
+        <div className="relative max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 pt-10 pb-8">
           <div className="portfolio-hero-grid items-start">
             {/* left */}
             <div>
@@ -742,9 +742,9 @@ function PortfolioPage({ setPage, pageParams }) {
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 pb-20">
+      <main className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 pb-12">
         {/* FEATURED CASE STUDIES (Flow #3 — UI tĩnh) */}
-        <section className="pt-12">
+        <section className="pt-8">
           <div className="flex items-end justify-between gap-6 mb-6">
             <div>
               <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2">Featured Case Studies</p>
