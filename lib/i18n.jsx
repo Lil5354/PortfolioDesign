@@ -775,6 +775,11 @@ const translations = {
     tiengAnh: "English",
     vietnamese: "Tiếng Việt",
     english: "English",
+    gradeThisArtwork: "Chấm điểm ấn phẩm này",
+    updateGrade: "Cập nhật điểm",
+    scoreLabel: "Điểm (0-10)",
+    feedbackOptional: "Nhận xét (không bắt buộc)...",
+    submitGrade: "Gửi đánh giá",
   },
   en: {
     aboutFacultyUef: "Faculty of Graphic Design — UEF",
@@ -1539,6 +1544,11 @@ const translations = {
     tiengAnh: "English",
     vietnamese: "Vietnamese",
     english: "English",
+    gradeThisArtwork: "Grade this artwork",
+    updateGrade: "Update grade",
+    scoreLabel: "Score (0-10)",
+    feedbackOptional: "Feedback (optional)...",
+    submitGrade: "Submit grade",
   },
 };
 
