@@ -5,6 +5,7 @@ import { MajorCard } from "./components/ui/MajorCard";
 import { api } from "./lib/api-client";
 import LayoutSettings from "./LayoutSettings.jsx";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
+import EbookViewerModal from "./components/catalog/EbookViewerModal";
 import NotificationBell from "./components/NotificationBell";
 import { TranslationProvider, useI18n } from "./lib/i18n.jsx";
 import { t } from "./lib/i18n.jsx";
@@ -14,6 +15,7 @@ import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import HTMLFlipBook from 'react-pageflip';
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
   Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
@@ -961,10 +963,12 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
             <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>{t("myArtworks")}</h2>
             <p style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>{t("manageVisibility")}</p>
           </div>
-          <button onClick={() => setPage("upload")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 22px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
-            <Plus size={18} color="#fff" />
-            {t("uploadNewArtwork")}
-          </button>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={() => setPage("upload")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 22px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+              <Plus size={18} color="#fff" />
+              {t("uploadNewArtwork")}
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -1052,7 +1056,9 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
 }
 
 function UploadPage({ setPage, setActiveArtworkId }) {
-    const [showPopup, setShowPopup] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [isEbookViewerOpen, setIsEbookViewerOpen] = useState(false);
+  const [isEbook, setIsEbook] = useState(false);
   const [uploadState, setUploadState] = useState("idle");
   const [createdId, setCreatedId] = useState(null);
   const [checked1, setChecked1] = useState(false);
@@ -1131,6 +1137,14 @@ function UploadPage({ setPage, setActiveArtworkId }) {
 
   const allFileUrls = coverImage ? [coverImage, ...additionalImages] : [...additionalImages];
 
+  const handleUseEbook = (pages) => {
+    if (pages.length > 0) {
+      setCoverImage(pages[0]);
+      setAdditionalImages(pages.slice(1, 10)); // up to 9 extra images
+      setIsEbook(true);
+    }
+  };
+
   const handleUploadSubmit = async () => {
     if (!coverImage) { setError(t("pleaseSelectCoverImage")); return; }
     if (!title.trim()) { setError(t("pleaseEnterCourseName")); return; }
@@ -1138,6 +1152,12 @@ function UploadPage({ setPage, setActiveArtworkId }) {
     if (!checked1 || !checked2 || !checked3) { setError(t("pleaseConfirmCommitments")); return; }
     setError("");
     setUploadState("loading");
+    
+    let submitTags = tags.length > 0 ? [...tags] : [subject];
+    if (isEbook && !submitTags.includes("IS_EBOOK")) {
+      submitTags.push("IS_EBOOK");
+    }
+
     try {
       const newArtwork = await api.artworks.create({
         title: title.trim(),
@@ -1146,7 +1166,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         toolsUsed: tools,
         semester: yearToSemester[projectYear] || "HK1",
         academicYear: yearToAcademic[projectYear] || "2024-2025",
-        tags: tags.length > 0 ? tags : [subject],
+        tags: submitTags,
         collaborators: friends.map(f => f.fullName || f),
         collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: allFileUrls,
@@ -1155,6 +1175,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         watermarkPosition: "bottom-right",
         isPublic: false,
         isAiConfirmed: checked1,
+        isEbook: isEbook,
       });
       setCreatedId(newArtwork.id);
       setUploadState("success");
@@ -1229,36 +1250,77 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>{t("shareWithCommunity")}</p>
         <div className="upload-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
           <div>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{t("coverImage")}</label>
-            <input type="file" id="coverInput" accept="image/*" style={{ display: "none" }} onChange={handleCoverUpload} />
-            <div onClick={() => document.getElementById("coverInput")?.click()} style={{ border: `2px dashed ${coverImage ? CERULEAN : GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG, cursor: "pointer" }}>
-              {coverImage ? (
-                <img src={coverImage} alt="preview" style={{ width: "100%", height: 400, objectFit: "cover", display: "block" }} />
-              ) : (
-                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                  <FileImage size={36} color={MUTED} strokeWidth={1.5} />
-                  <p style={{ color: MUTED, fontSize: 14, fontWeight: 600, margin: 0 }}>{t("clickToSelectCover")}</p>
-                  <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>{t("imageFormatHint")}</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 10 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{isEbook ? "E-BOOK PREVIEW" : t("coverImage")}</label>
+              <button onClick={() => setIsEbookViewerOpen(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, border: `1px solid ${CERULEAN}`, background: "#fff", color: CERULEAN, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                <BookOpen size={14} color={CERULEAN} />
+                Tải lên E-book
+              </button>
+            </div>
+            {isEbook ? (
+              <div style={{ border: `1px solid ${GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: "#F0F2F5", padding: "40px 0", display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column" }}>
+                <div style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                  <HTMLFlipBook 
+                    width={280} 
+                    height={390} 
+                    size="stretch"
+                    minWidth={200}
+                    maxWidth={400}
+                    minHeight={300}
+                    maxHeight={600}
+                    maxShadowOpacity={0.5}
+                    showCover={true}
+                    mobileScrollSupport={true}
+                    className="shadow-2xl mx-auto"
+                  >
+                    {[coverImage, ...additionalImages].filter(Boolean).map((img, index) => (
+                      <div key={index} className="demoPage bg-white overflow-hidden border border-gray-200">
+                        <img src={img} alt={`Page ${index + 1}`} className="w-full h-full object-contain pointer-events-none" style={{ width: "100%", height: "100%", display: "block" }} />
+                      </div>
+                    ))}
+                  </HTMLFlipBook>
                 </div>
-              )}
-            </div>
-            <div style={{ marginTop: 16 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("additionalImages")} ({additionalImages.length}/9)</label>
-              <input type="file" id="additionalInput" accept="image/*" multiple style={{ display: "none" }} onChange={handleAdditionalUpload} />
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {additionalImages.map((url, idx) => (
-                  <div key={idx} style={{ width: 80, height: 64, borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, position: "relative" }}>
-                    <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    <div onClick={() => removeAdditional(idx)} style={{ position: "absolute", top: 2, right: 2, width: 18, height: 18, borderRadius: "50%", background: "rgba(0,0,0,0.5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>×</div>
-                  </div>
-                ))}
-                {additionalImages.length < 9 && (
-                  <div onClick={() => document.getElementById("additionalInput")?.click()} style={{ width: 80, height: 64, borderRadius: 8, border: `2px dashed ${GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: GRAY_BG }}>
-                    <Plus size={22} color={MUTED} />
-                  </div>
-                )}
+                <div style={{ marginTop: 30, background: "rgba(0,0,0,0.7)", color: "white", padding: "8px 20px", borderRadius: 30, fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 8, backdropFilter: "blur(4px)", pointerEvents: "none" }}>
+                  <span style={{ display: "flex", width: 8, height: 8, position: "relative" }}>
+                    <span style={{ position: "absolute", width: "100%", height: "100%", borderRadius: "50%", background: "#00c2a8", animation: "ping 1s cubic-bezier(0, 0, 0.2, 1) infinite", opacity: 0.75 }}></span>
+                    <span style={{ position: "relative", width: "100%", height: "100%", borderRadius: "50%", background: "#00c2a8" }}></span>
+                  </span>
+                  Kéo mép giấy hoặc click vào góc để lật trang
+                </div>
               </div>
-            </div>
+            ) : (
+              <>
+                <input type="file" id="coverInput" accept="image/*" style={{ display: "none" }} onChange={handleCoverUpload} />
+                <div onClick={() => document.getElementById("coverInput")?.click()} style={{ border: `2px dashed ${coverImage ? CERULEAN : GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG, cursor: "pointer" }}>
+                  {coverImage ? (
+                    <img src={coverImage} alt="preview" style={{ width: "100%", height: 400, objectFit: "cover", display: "block" }} />
+                  ) : (
+                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                      <FileImage size={36} color={MUTED} strokeWidth={1.5} />
+                      <p style={{ color: MUTED, fontSize: 14, fontWeight: 600, margin: 0 }}>{t("clickToSelectCover")}</p>
+                      <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>{t("imageFormatHint")}</p>
+                    </div>
+                  )}
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("additionalImages")} ({additionalImages.length}/9)</label>
+                  <input type="file" id="additionalInput" accept="image/*" multiple style={{ display: "none" }} onChange={handleAdditionalUpload} />
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {additionalImages.map((url, idx) => (
+                      <div key={idx} style={{ width: 80, height: 64, borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, position: "relative" }}>
+                        <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <div onClick={() => removeAdditional(idx)} style={{ position: "absolute", top: 2, right: 2, width: 18, height: 18, borderRadius: "50%", background: "rgba(0,0,0,0.5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>×</div>
+                      </div>
+                    ))}
+                    {additionalImages.length < 9 && (
+                      <div onClick={() => document.getElementById("additionalInput")?.click()} style={{ width: 80, height: 64, borderRadius: 8, border: `2px dashed ${GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: GRAY_BG }}>
+                        <Plus size={22} color={MUTED} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1305,6 +1367,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
           </div>
         </div>
       </div>
+      <EbookViewerModal isOpen={isEbookViewerOpen} onClose={() => setIsEbookViewerOpen(false)} onUseEbook={handleUseEbook} />
     </div>
   );
 }
@@ -1491,6 +1554,17 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [gradeComment, setGradeComment] = useState("");
   const [existingGrade, setExistingGrade] = useState(null);
   const [savingGrade, setSavingGrade] = useState(false);
+  const ebookViewerRef = useRef(null);
+
+  const toggleEbookFullscreen = () => {
+    if (!document.fullscreenElement) {
+      ebookViewerRef.current?.requestFullscreen().catch(err => {
+        console.error("Error attempting to enable fullscreen:", err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
   const [relatedArtworks, setRelatedArtworks] = useState([]);
   const [liking, setLiking] = useState(false);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
@@ -1514,6 +1588,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [downloading, setDownloading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [isReadingEbook, setIsReadingEbook] = useState(false);
   const [orderData, setOrderData] = useState({
     name: "",
     email: "",
@@ -1774,26 +1849,76 @@ if (mins < 1) return t("justNow");
         {/* CỘT CHÍNH (Nội dung) */}
         <div style={{ flex: 1, maxWidth: 1200, display: "flex", flexDirection: "column", background: "#f9f9f9" }}>
           
-          {/* CÁC ẢNH */}
-          <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-            {allImagesDeduped.map((img, i) => (
-              <div key={i} style={{ width: "100%", position: "relative" }} onMouseEnter={e => {
-                const overlay = e.currentTarget.querySelector('.img-hover-actions');
-                if(overlay) overlay.style.opacity = 1;
-              }} onMouseLeave={e => {
-                const overlay = e.currentTarget.querySelector('.img-hover-actions');
-                if(overlay) overlay.style.opacity = 0;
-              }}>
-                <img src={img} style={{ width: "100%", display: "block" }} alt="" />
-                
-                {/* Ảnh Hover Actions */}
-                <div className="img-hover-actions" style={{ position: "absolute", top: 20, right: 20, display: "flex", gap: 12, opacity: 0, transition: "opacity 0.2s" }}>
-                  <button onClick={() => { setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Briefcase size={16} /> More Like This</button>
-                  <button onClick={() => setShowDownloadModal(true)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Download size={16} /> Download</button>
-                  <button onClick={() => handleShare()} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Link size={16} /> Permalink</button>
+          {/* CÁC ẢNH HOẶC E-BOOK */}
+          <div style={{ display: "flex", flexDirection: "column", width: "100%", background: (art.isEbook || art.tags?.includes("IS_EBOOK")) ? "#F0F2F5" : "transparent" }}>
+            {(art.isEbook || art.tags?.includes("IS_EBOOK")) ? (
+              isReadingEbook ? (
+                <div ref={ebookViewerRef} style={{ width: "100%", padding: "40px 0", display: "flex", justifyContent: "center", position: "relative", background: "#F0F2F5" }}>
+                  <button onClick={(e) => { e.stopPropagation(); setIsReadingEbook(false); }} style={{ position: "absolute", top: 20, right: 20, background: "rgba(0,0,0,0.5)", color: "#fff", border: "none", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>
+                    <X size={20} />
+                  </button>
+                  <HTMLFlipBook 
+                    width={400} 
+                    height={560} 
+                    size="stretch"
+                    minWidth={315}
+                    maxWidth={1000}
+                    minHeight={400}
+                    maxHeight={1533}
+                    maxShadowOpacity={0.5}
+                    showCover={true}
+                    mobileScrollSupport={true}
+                    className="shadow-2xl mx-auto"
+                  >
+                    {allImagesDeduped.map((img, index) => (
+                      <div key={index} className="demoPage bg-white overflow-hidden border border-gray-200">
+                        <img src={img.imageUrl || img} alt={`Page ${index + 1}`} className="w-full h-full object-contain pointer-events-none" style={{ width: "100%", height: "100%", display: "block" }} />
+                      </div>
+                    ))}
+                  </HTMLFlipBook>
+                  
+                  <button onClick={toggleEbookFullscreen} style={{ position: "absolute", top: 20, left: 20, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 20, padding: "8px 16px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: "bold", fontSize: 13, zIndex: 10, transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}>
+                    <Maximize2 size={16} /> Toàn màn hình
+                  </button>
+                  
+                  <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.7)", color: "white", padding: "10px 24px", borderRadius: 30, fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8, backdropFilter: "blur(4px)", pointerEvents: "none", zIndex: 10 }}>
+                    <span style={{ display: "flex", width: 8, height: 8, position: "relative" }}>
+                      <span style={{ position: "absolute", width: "100%", height: "100%", borderRadius: "50%", background: "#00c2a8", animation: "ping 1s cubic-bezier(0, 0, 0.2, 1) infinite", opacity: 0.75 }}></span>
+                      <span style={{ position: "relative", width: "100%", height: "100%", borderRadius: "50%", background: "#00c2a8" }}></span>
+                    </span>
+                    Kéo mép giấy hoặc click vào góc để lật trang
+                  </div>
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div style={{ width: "100%", padding: "60px 0", display: "flex", justifyContent: "center", position: "relative", background: "#F0F2F5", cursor: "pointer" }} onClick={() => setIsReadingEbook(true)}>
+                  <img src={art.coverImageUrl} style={{ maxWidth: "80%", maxHeight: "70vh", objectFit: "contain", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", borderRadius: 4 }} alt="Ebook Cover" />
+                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
+                     <button style={{ background: "#1a4ba8", color: "white", padding: "16px 32px", borderRadius: 30, display: "flex", gap: 10, alignItems: "center", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 16, boxShadow: "0 8px 24px rgba(0,0,0,0.3)", pointerEvents: "none" }}>
+                       <BookOpen size={24} /> Đọc E-book
+                     </button>
+                  </div>
+                </div>
+              )
+            ) : (
+              allImagesDeduped.map((img, i) => (
+                <div key={i} style={{ width: "100%", position: "relative" }} onMouseEnter={e => {
+                  const overlay = e.currentTarget.querySelector('.img-hover-actions');
+                  if(overlay) overlay.style.opacity = 1;
+                }} onMouseLeave={e => {
+                  const overlay = e.currentTarget.querySelector('.img-hover-actions');
+                  if(overlay) overlay.style.opacity = 0;
+                }}>
+                  <img src={img} style={{ width: "100%", display: "block" }} alt="" />
+                  
+                  {/* Ảnh Hover Actions */}
+                  <div className="img-hover-actions" style={{ position: "absolute", top: 20, right: 20, display: "flex", gap: 12, opacity: 0, transition: "opacity 0.2s" }}>
+                    <button onClick={() => { setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Briefcase size={16} /> More Like This</button>
+                    <button onClick={() => setShowDownloadModal(true)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Download size={16} /> Download</button>
+                    <button onClick={() => handleShare()} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Link size={16} /> Permalink</button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* KHU VỰC THÔNG SỐ ẤN PHẨM (Nền đen) */}
