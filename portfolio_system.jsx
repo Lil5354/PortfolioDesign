@@ -5593,11 +5593,11 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             <div className="flex items-center gap-3 mb-4">
               <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
               <div>
-                <p className="font-bold text-[#212121]">{footerInfo?.brand || 'Design Gallery'}</p>
+                <p className="font-bold text-[#212121]">{getSetting('siteName') || footerInfo?.brand || 'Design Gallery'}</p>
                 <p className="text-xs text-[#666]">{footerInfo?.subtitle || 'Khoa Thiết kế Đồ họa'}</p>
               </div>
             </div>
-            <p className="text-sm text-[#666] leading-relaxed mb-4">{footerInfo?.description || 'Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.'}</p>
+            <p className="text-sm text-[#666] leading-relaxed mb-4">{getSetting('siteDescription') || footerInfo?.description || 'Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.'}</p>
             <div className="flex gap-3">
               <a href={footerInfo?.emailUrl || "mailto:khoathietke@uef.edu.vn"} className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Mail size={15} /></a>
               <a href={footerInfo?.facebookUrl || "https://facebook.com/uef.edu.vn"} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Globe size={15} /></a>
@@ -5657,7 +5657,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-gray-200 text-center text-sm text-[#999] flex flex-col md:flex-row justify-between items-center gap-3">
-          <p>{footerInfo?.copyright || getSetting('footerCopyright') || t("footerCopyright")}</p>
+          <p>{getSetting('footerCopyright') || footerInfo?.copyright || t("footerCopyright")}</p>
           <p>{footerInfo?.footerBrand || t("footerBrand")}</p>
         </div>
       </footer>
@@ -6255,11 +6255,11 @@ function AboutPage({ setPage }) {
             <div className="flex items-center gap-3 mb-4">
               <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
               <div>
-                <p className="font-bold text-[#212121]">{footerInfo?.brand || 'Design Gallery'}</p>
+                <p className="font-bold text-[#212121]">{getSetting('siteName') || footerInfo?.brand || 'Design Gallery'}</p>
                 <p className="text-xs text-[#666]">{footerInfo?.subtitle || 'Khoa Thiết kế Đồ họa'}</p>
               </div>
             </div>
-            <p className="text-sm text-[#666] leading-relaxed mb-4">{footerInfo?.description || 'Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.'}</p>
+            <p className="text-sm text-[#666] leading-relaxed mb-4">{getSetting('siteDescription') || footerInfo?.description || 'Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.'}</p>
             <div className="flex gap-3">
               <a href={footerInfo?.emailUrl || "mailto:khoathietke@uef.edu.vn"} className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Mail size={15} /></a>
               <a href={footerInfo?.facebookUrl || "https://facebook.com/uef.edu.vn"} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Globe size={15} /></a>

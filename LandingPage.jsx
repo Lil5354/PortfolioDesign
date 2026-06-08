@@ -248,8 +248,8 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
           <div className="flex items-center gap-3">
             <img src="/logo-uef.png" alt="UEF" className="h-7 object-contain" />
             <div>
-              <p className="font-bold text-white">{footerInfo?.brand || `UEF Design Gallery - ${t("facultyOfGraphicDesign")}`}</p>
-              <p className="text-xs mt-1">{footerInfo?.copyright || getSetting('footerCopyright') || ''}</p>
+              <p className="font-bold text-white">{getSetting('siteName') || footerInfo?.brand || `UEF Design Gallery - ${t("facultyOfGraphicDesign")}`}</p>
+              <p className="text-xs mt-1">{getSetting('footerCopyright') || footerInfo?.copyright || ''}</p>
             </div>
           </div>
           <div className="flex gap-6">
