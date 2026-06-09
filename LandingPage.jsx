@@ -36,7 +36,7 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
         </nav>
         <div className="flex items-center gap-4 text-sm font-medium">
           <span className="text-gray-400"><button onClick={() => setLanguage(currentLang === "vi" ? "en" : "vi")} className="font-bold uppercase">{currentLang === "vi" ? "EN" : "VI"}</button></span>
-          <button onClick={() => setPage("auth")} className="bg-[#1a4ba8] text-white px-5 py-2 rounded-lg hover:bg-[#1642a6] transition-colors">{t("login")}</button>
+          {!isLoggedIn && <button onClick={() => setPage("auth")} className="bg-[#1a4ba8] text-white px-5 py-2 rounded-lg hover:bg-[#1642a6] transition-colors">{t("login")}</button>}
         </div>
       </header>
 
@@ -57,14 +57,16 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
             <div className="h-0.5 bg-gray-200 w-3/5"></div>
           </div>
           <div className="flex flex-wrap gap-4 mb-4">
-            <button onClick={() => setPage(hero?.primaryCtaLink || "gallery")} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
+            <button onClick={() => setPage(isLoggedIn ? "dashboard" : (hero?.primaryCtaLink || "gallery"))} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
               {hero?.primaryCta || t("aboutCtaBtn2")} <ArrowRight size={18} />
             </button>
-            <button onClick={() => setPage(hero?.secondaryCtaLink || "auth")} className="bg-white text-[#212121] border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
-              {hero?.secondaryCta || t("studentLogin")}
-            </button>
+            {!isLoggedIn && (
+              <button onClick={() => setPage(hero?.secondaryCtaLink || "auth")} className="bg-white text-[#212121] border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                {hero?.secondaryCta || t("studentLogin")}
+              </button>
+            )}
           </div>
-          <p className="text-xs text-gray-500 mb-16">{hero?.note || t("loginNote")}</p>
+          {isLoggedIn ? <div className="mb-16"></div> : <p className="text-xs text-gray-500 mb-16">{hero?.note || t("loginNote")}</p>}
           
           <div className="flex flex-wrap items-center gap-8 border-t border-gray-100 pt-8">
             {stats.slice(0, 4).map((s, i) => (
@@ -236,8 +238,10 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
             <p className="text-gray-400">{cta?.subtitle || `Dành cho sinh viên Thiết kế Đồ họa UEF`}</p>
           </div>
           <div className="flex gap-4">
-            <button onClick={() => setPage(cta?.primaryCtaLink || "auth")} className="bg-[#1a4ba8] hover:bg-[#1642a6] text-white px-8 py-3 rounded-lg font-bold transition-colors">{cta?.primaryCta || "Đăng nhập ngay"}</button>
-            <button onClick={() => setPage(cta?.secondaryCtaLink || "gallery")} className="border border-gray-600 hover:border-gray-400 text-white px-8 py-3 rounded-lg font-bold transition-colors">{cta?.secondaryCta || t("viewGallery")}</button>
+            {!isLoggedIn && (
+              <button onClick={() => setPage(cta?.primaryCtaLink || "auth")} className="bg-[#1a4ba8] hover:bg-[#1642a6] text-white px-8 py-3 rounded-lg font-bold transition-colors">{cta?.primaryCta || "Đăng nhập ngay"}</button>
+            )}
+            <button onClick={() => setPage(isLoggedIn ? "dashboard" : (cta?.secondaryCtaLink || "gallery"))} className="border border-gray-600 hover:border-gray-400 text-white px-8 py-3 rounded-lg font-bold transition-colors">{cta?.secondaryCta || t("viewGallery")}</button>
           </div>
         </div>
       </section>

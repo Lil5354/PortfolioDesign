@@ -30,6 +30,24 @@ const SECTION_LABELS_MAP = {
   footerInfo: 'Footer Info',
 };
 
+const getItemDisplayTitle = (item) => {
+  if (!item || !item.content) return '(Untitled Item)';
+  const c = item.content;
+  // Try common title fields first
+  const explicitTitle = c.title || c.name || c.heading || c.label || c.title1 || c.question || c.quote || c.note || c.text;
+  if (explicitTitle) return explicitTitle;
+  
+  // Fallback to first text field
+  const firstString = Object.entries(c).find(([k, v]) => 
+    typeof v === 'string' && 
+    v.trim() !== '' && 
+    !k.toLowerCase().includes('image') && 
+    !k.toLowerCase().includes('url') && 
+    !k.toLowerCase().includes('icon')
+  );
+  return firstString ? firstString[1] : '(Untitled Item)';
+};
+
 export default function LayoutSettings({ setPage }) {
   const [activePage, setActivePage] = useState('home');
   const [sections, setSections] = useState([]);
@@ -201,11 +219,11 @@ export default function LayoutSettings({ setPage }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50/50 py-8 px-4 sm:px-8 lg:px-12 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gray-50/50 py-4 sm:py-6 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="w-full max-w-[1600px] mx-auto space-y-4 sm:space-y-6">
         
         {/* Header Section */}
-        <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+        <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-5">
             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
               <Layout className="w-8 h-8" />
@@ -231,12 +249,12 @@ export default function LayoutSettings({ setPage }) {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
           
           {/* Sidebar / Tabs */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-8">
-              <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+          <div className="lg:col-span-1 space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="p-3 border-b border-gray-100 bg-gray-50/50">
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                   <Settings className="w-4 h-4 text-gray-500" />
                   Pages
@@ -250,7 +268,7 @@ export default function LayoutSettings({ setPage }) {
                     <button
                       key={tab.id}
                       onClick={() => setActivePage(tab.id)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                         isActive 
                           ? 'bg-blue-50 text-blue-700' 
                           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -266,13 +284,13 @@ export default function LayoutSettings({ setPage }) {
             
             {/* Simple Settings Panel (Moved to Sidebar for better layout) */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+              <div className="p-3 border-b border-gray-100 bg-gray-50/50">
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
                   <Settings className="w-4 h-4 text-gray-500" />
                   Global Variables
                 </h3>
               </div>
-              <div className="p-4 space-y-4">
+              <div className="p-3 space-y-3">
                 {Object.keys(settings).length === 0 ? (
                   <p className="text-gray-400 text-sm text-center py-4">No global settings.</p>
                 ) : (
@@ -286,7 +304,7 @@ export default function LayoutSettings({ setPage }) {
                           <input 
                             value={val} 
                             onChange={(e) => { setSavedKey(null); setSettings((p) => ({ ...p, [key]: e.target.value })); }} 
-                            className="flex-1 min-w-0 px-3 py-2 bg-gray-50 hover:bg-white focus:bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all" 
+                            className="flex-1 min-w-0 px-2.5 py-1.5 bg-gray-50 hover:bg-white focus:bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all" 
                           />
                           <button
                             onClick={() => saveSetting(key, settings[key])}
@@ -312,7 +330,7 @@ export default function LayoutSettings({ setPage }) {
           </div>
 
           {/* Main Content Area */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-4 sm:space-y-5">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-bold text-gray-900">
                 {PAGE_TABS.find(t => t.id === activePage)?.label} Sections
@@ -329,11 +347,11 @@ export default function LayoutSettings({ setPage }) {
                 <p className="text-gray-500 mt-1 max-w-sm">There are currently no configurable sections for this page.</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-5">
                 {sections.map((section) => (
                   <div key={section.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
                     {/* Section Header */}
-                    <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="px-4 sm:px-5 py-3 border-b border-gray-100 bg-gray-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
                         <h4 className="font-bold text-gray-900 text-base">{SECTION_LABELS_MAP[section.section] || section.label}</h4>
                         <p className="text-xs font-mono text-gray-500 mt-0.5">{section.section}</p>
@@ -358,7 +376,7 @@ export default function LayoutSettings({ setPage }) {
                         </div>
                       ) : (
                         section.items.map((item, idx) => (
-                          <div key={item.id} className="p-6 flex flex-col sm:flex-row gap-6 hover:bg-gray-50/50 transition-colors group">
+                          <div key={item.id} className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-5 hover:bg-gray-50/50 transition-colors group">
                             {/* Visual Preview */}
                             {item.content?.imageUrl && (
                               <div className="shrink-0 w-24 h-24 rounded-xl overflow-hidden bg-white border border-gray-200 shadow-sm">
@@ -374,7 +392,7 @@ export default function LayoutSettings({ setPage }) {
                                     {idx + 1}
                                   </span>
                                   <h5 className="inline text-base font-bold text-gray-900 truncate">
-                                    {item.content?.title || item.content?.name || item.content?.heading || '(Untitled Item)'}
+                                    {getItemDisplayTitle(item)}
                                   </h5>
                                 </div>
                                 {/* Actions */}

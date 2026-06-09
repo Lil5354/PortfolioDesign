@@ -104,7 +104,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
 
   return (
     <header className="flex items-center justify-between px-8 py-3 border-b border-gray-100 bg-white sticky top-0 z-50">
-      <div className="flex items-center cursor-pointer" onClick={() => setPage("home")}>
+      <div className="flex items-center cursor-pointer" onClick={() => setPage("gallery")}>
         <img src="/logo-uef.png" alt="UEF" className="h-11 object-contain" />
       </div>
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
@@ -2547,13 +2547,6 @@ function AuthPage({ setPage, onLoginSuccess }) {
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)" }} />
       </div>
 
-      {/* Back to home button */}
-      <div
-        onClick={() => setPage("home")}
-        style={{ position: "absolute", top: 24, left: 24, zIndex: 20, cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
-      >
-        <img src="/logo-uef.png" alt="UEF" style={{ height: 28 }} />
-      </div>
 
       {/* Login card */}
       <div style={{ position: "relative", zIndex: 10, width: "100%", maxWidth: 420, margin: "0 16px" }}>
@@ -5270,14 +5263,16 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             <div className="h-0.5 bg-gray-200 w-3/5"></div>
           </div>
           <div className="flex flex-wrap gap-3 mb-3">
-            <button onClick={() => setPage(hero?.primaryCtaLink || "gallery")} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
+            <button onClick={() => setPage(isLoggedIn ? "dashboard" : (hero?.primaryCtaLink || "gallery"))} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
               {hero?.primaryCta || t("exploreGallery")} <ArrowRight size={18} />
             </button>
-            <button onClick={() => setPage(hero?.secondaryCtaLink || "auth")} className="bg-white text-[#212121] border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
-              {hero?.secondaryCta || t("studentLogin")}
-            </button>
+            {!isLoggedIn && (
+              <button onClick={() => setPage(hero?.secondaryCtaLink || "auth")} className="bg-white text-[#212121] border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                {hero?.secondaryCta || t("studentLogin")}
+              </button>
+            )}
           </div>
-          <p className="text-xs text-gray-500 mb-16">{hero?.note || t("loginNote")}</p>
+          {isLoggedIn ? <div className="mb-16"></div> : <p className="text-xs text-gray-500 mb-16">{hero?.note || t("loginNote")}</p>}
           
           <div className="flex flex-wrap items-center gap-8 border-t border-gray-100 pt-8">
             {stats.slice(0, 4).map((s, i) => (
@@ -5746,7 +5741,7 @@ const softwareStack = [
   "Procreate",
 ];
 
-function AboutPage({ setPage }) {
+function AboutPage({ setPage, isLoggedIn }) {
   const [activeTab, setActiveTab] = useState("student");
   const [openFaq, setOpenFaq] = useState(null);
   const { getContentBySection, getContentItems, getSetting } = useSiteContent();
@@ -5799,12 +5794,14 @@ function AboutPage({ setPage }) {
             {aboutHero?.description || <>{t("aboutHeroDesc1")} <strong className="text-[#1a4ba8]">{t("aboutHeroDesc2")}</strong></>}
           </p>
           <div className="flex flex-wrap gap-3 mb-3 animate-[fadeUp_1.1s_ease-out]">
-            <a href="#audience" className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#0d2e6e] text-white rounded-xl font-bold text-[15px] hover:bg-[#1a4ba8] hover:-translate-y-1 transition-all shadow-lg shadow-[#0d2e6e]/20 hover:shadow-[#1a4ba8]/40 duration-300">
+            <a href={isLoggedIn ? undefined : "#audience"} onClick={(e) => { if (isLoggedIn) { e.preventDefault(); setPage("dashboard"); } }} className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#0d2e6e] text-white rounded-xl font-bold text-[15px] hover:bg-[#1a4ba8] hover:-translate-y-1 transition-all shadow-lg shadow-[#0d2e6e]/20 hover:shadow-[#1a4ba8]/40 duration-300 cursor-pointer">
               {t("aboutExploreNow")} <ArrowRight size={16} />
             </a>
-            <button onClick={() => setPage("auth")} className="inline-flex items-center px-7 py-3.5 bg-transparent border-2 border-[#e2e6ec] text-[#0a0c0f] rounded-xl font-bold text-[15px] hover:border-[#1a4ba8] hover:text-[#1a4ba8] transition-colors">
-              Đăng nhập
-            </button>
+            {!isLoggedIn && (
+              <button onClick={() => setPage("auth")} className="inline-flex items-center px-7 py-3.5 bg-transparent border-2 border-[#e2e6ec] text-[#0a0c0f] rounded-xl font-bold text-[15px] hover:border-[#1a4ba8] hover:text-[#1a4ba8] transition-colors">
+                Đăng nhập
+              </button>
+            )}
           </div>
           <div className="flex gap-6 pt-5 mt-6 border-t border-[#e2e6ec] animate-[fadeUp_1.3s_ease-out]">
             {aboutHero?.stats ? (() => {
@@ -6237,10 +6234,12 @@ function AboutPage({ setPage }) {
           <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight tracking-tight">{t("aboutCtaTitle1")}<br/>{t("aboutCtaTitle2")}</h2>
           <p className="text-white/80 mb-12 text-lg max-w-xl mx-auto">{t("aboutCtaDesc")}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button onClick={() => setPage("auth")} className="px-10 py-4 bg-white text-[#0d2e6e] font-black rounded-2xl text-[16px] hover:bg-[#f0f4ff] hover:-translate-y-1 transition-all shadow-xl shadow-black/30 duration-300">
-              Bắt đầu ngay miễn phí
-            </button>
-            <button onClick={() => setPage("gallery")} className="px-10 py-4 bg-transparent text-white font-bold rounded-2xl text-[16px] border-2 border-white/30 hover:bg-white/10 hover:border-white/60 transition-all duration-300">
+            {!isLoggedIn && (
+              <button onClick={() => setPage("auth")} className="px-10 py-4 bg-white text-[#0d2e6e] font-black rounded-2xl text-[16px] hover:bg-[#f0f4ff] hover:-translate-y-1 transition-all shadow-xl shadow-black/30 duration-300">
+                Bắt đầu ngay miễn phí
+              </button>
+            )}
+            <button onClick={() => setPage(isLoggedIn ? "dashboard" : "gallery")} className="px-10 py-4 bg-transparent text-white font-bold rounded-2xl text-[16px] border-2 border-white/30 hover:bg-white/10 hover:border-white/60 transition-all duration-300">
               Khám phá Gallery
             </button>
           </div>
@@ -7554,9 +7553,9 @@ export default function App() {
 
   const getHashState = useCallback(() => {
     const hash = window.location.hash.replace(/^#\/?/, '');
-    if (!hash) return { page: "home", id: null };
+    if (!hash) return { page: "gallery", id: null };
     const parts = hash.split('/');
-    return { page: parts[0] || "home", id: parts.length > 1 ? parts.slice(1).join('/') : null };
+    return { page: parts[0] || "gallery", id: parts.length > 1 ? parts.slice(1).join('/') : null };
   }, []);
 
   const [page, setPageState] = useState(() => getHashState().page);
@@ -7589,7 +7588,7 @@ export default function App() {
     } else if (newPage === "portfolio" && params?.portfolioSlug) {
       path = `#/portfolio/${params.portfolioSlug}`;
     } else {
-      path = newPage === "home" ? "#/" : `#/${newPage}`;
+      path = newPage === "gallery" ? "#/" : `#/${newPage}`;
     }
     window.history.pushState({ page: newPage, id: params?.artworkId || null }, "", path);
   }, []);
@@ -7831,7 +7830,7 @@ export default function App() {
       {page === "admin" && (
         (userRole === "admin" || userRole === "lecturer") ? <AdminDashboardPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
-      {page === "about" && <AboutPage setPage={setPage} />}
+      {page === "about" && <AboutPage setPage={setPage} isLoggedIn={isLoggedIn} />}
       {page === "messages" && (
         isLoggedIn ? <MessagesPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />
       )}
