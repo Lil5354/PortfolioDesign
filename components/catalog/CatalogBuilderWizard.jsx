@@ -304,18 +304,50 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
   const handleExport = () => {
     setExporting(true);
     const doc = iframeRef.current.contentWindow.document;
+    
+    // Đếm số lượng trang/section để tính tổng chiều cao
+    const sections = doc.querySelectorAll('.page, .cover, .page-foreword, .page-toc, .page-closing, .page-spread, .page-body');
+    const pageCount = Math.max(1, sections.length);
+    
+    // Tính toán kích thước vật lý (mm) tuỳ theo khổ in
+    let sectionWidth = "210mm";
+    let sectionHeight = "297mm";
+    
+    if (payload.layoutMode === 'custom_canvas') {
+      sectionWidth = `${payload.canvasWidth || 1123}px`;
+      sectionHeight = `${payload.canvasHeight || 794}px`;
+    } else {
+      if (payload.pdfSize === 'Square') {
+        sectionWidth = "210mm";
+        sectionHeight = "210mm";
+      } else if (payload.pdfOrientation === 'landscape') {
+        sectionWidth = "297mm";
+        sectionHeight = "210mm";
+      }
+    }
+    
+    // Tổng chiều cao cho toàn bộ poster
+    const totalHeight = payload.layoutMode === 'custom_canvas' ? sectionHeight : `calc(${sectionHeight} * ${pageCount})`;
+    
     let html = "<!DOCTYPE html><html>" + doc.documentElement.innerHTML + "</html>";
     const printCSS = `
       <style>
         @media print {
           @page { 
-            size: ${payload.layoutMode === 'custom_canvas' ? `${payload.canvasWidth || 1123}px ${payload.canvasHeight || 794}px` : `${payload.pdfSize === 'A4' ? 'A4' : '210mm 210mm'} ${payload.pdfOrientation === 'landscape' ? 'landscape' : 'portrait'}`}; 
+            size: ${sectionWidth} ${totalHeight}; 
             margin: 0; 
           }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           .page, .cover, .page-foreword, .page-toc, .page-closing, .page-spread, .page-body {
-            page-break-after: always !important;
-            break-after: page !important;
+            width: ${sectionWidth} !important;
+            height: ${sectionHeight} !important;
+            min-height: ${sectionHeight} !important;
+            max-height: ${sectionHeight} !important;
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+            page-break-before: avoid !important;
+            break-before: avoid !important;
+            overflow: hidden !important;
           }
           .page-spread > div, .work-card, .article-card, .highlight-box, .stat-item, .work-block, [style*="border:1px solid"] {
             page-break-inside: avoid !important;

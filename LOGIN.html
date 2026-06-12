@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - UEF</title>
+    <!-- Nhúng Tailwind CSS để style giao diện nhanh chóng -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Nhúng FontAwesome để lấy các icon (người dùng, chìa khóa, con mắt, lá cờ) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Cấu hình màu sắc tùy chỉnh cho Tailwind để giống ảnh 100% -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'uef-blue': '#102781', // Màu xanh dương đậm của nút và chữ UEF
+                        'uef-red': '#dd2027',  // Màu đỏ của chữ UEF
+                        'cookie-bg': 'rgba(38, 28, 21, 0.9)', // Màu nền nút cookies
+                    },
+                    fontFamily: {
+                        'serif': ['"Times New Roman"', 'Times', 'serif'],
+                        'sans': ['Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Tùy chỉnh placeholder cho các ô input */
+        input::placeholder {
+            color: #9ca3af; /* text-gray-400 */
+            font-size: 0.9rem;
+        }
+        /* Loại bỏ viền xanh mặc định của trình duyệt khi focus vào ô input */
+        input:focus {
+            outline: none;
+            border-color: #102781;
+            box-shadow: 0 0 0 1px #102781;
+        }
+    </style>
+</head>
+<body class="h-screen w-full relative font-sans text-gray-800">
+
+    <!-- 
+        PHẦN 1: HÌNH NỀN (BACKGROUND)
+        Lưu ý: Tôi sử dụng một ảnh cảnh thành phố làm mẫu. 
+        Bạn có thể thay thế link trong url(...) bằng link ảnh thật của trường.
+    -->
+    <div class="absolute inset-0 w-full h-full z-0">
+        <img 
+            src="https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=2070&auto=format&fit=crop" 
+            alt="UEF Campus Background" 
+            class="w-full h-full object-cover object-center"
+        >
+        <!-- Lớp phủ màu nhẹ nếu ảnh quá sáng, ở đây ảnh gốc khá sáng nên để trong suốt -->
+        <div class="absolute inset-0 bg-black/10"></div>
+    </div>
+
+    <!-- 
+        PHẦN 2: KHỐI FORM ĐĂNG NHẬP CHÍNH
+    -->
+    <div class="relative z-10 w-full h-full flex justify-center items-center px-4">
+        
+        <!-- Hộp thẻ trắng chứa nội dung -->
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-[420px] px-10 py-12 flex flex-col items-center">
+            
+            <!-- 2.1 Logo UEF (Mô phỏng lại bằng HTML/CSS) -->
+            <div class="flex flex-col items-center mb-8 w-full">
+                <!-- Biểu tượng tròn bên trên logo -->
+                <div class="w-[50px] h-[50px] border-[2px] border-[#0a4d8c] rounded-full flex items-center justify-center mb-1 relative overflow-hidden">
+                    <!-- Icon tòa nhà mường tượng tháp đồng hồ -->
+                    <i class="fa-solid fa-building-columns text-[#0a4d8c] text-xl mt-2"></i>
+                    <div class="absolute bottom-0 w-full h-[3px] bg-[#0a4d8c]"></div>
+                </div>
+                <!-- Chữ UEF màu đỏ -->
+                <h1 class="text-[3.5rem] font-serif font-bold text-uef-red leading-none mb-1">UEF</h1>
+                <!-- Chữ tên trường tiếng Việt -->
+                <h2 class="text-[0.75rem] font-bold text-[#0a4d8c] uppercase tracking-wider text-center">Đại học Kinh tế Tài chính</h2>
+            </div>
+
+            <!-- 2.2 Đăng nhập bằng tài khoản (SSO) -->
+            <p class="text-[0.8rem] text-gray-500 mb-3 text-center">Đăng nhập bằng tài khoản của bạn trên:</p>
+            <button class="w-full flex items-center justify-center gap-3 bg-[#f8f9fa] hover:bg-gray-100 border border-gray-200 rounded py-2.5 mb-8 transition-colors">
+                <!-- Giả lập icon UEF nhỏ -->
+                <div class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center bg-white shadow-sm">
+                    <span class="text-[8px] font-bold text-uef-red">UEF</span>
+                </div>
+                <span class="text-[0.95rem] font-medium text-gray-700">Đăng nhập với UEF ID</span>
+            </button>
+
+            <!-- 2.3 Form Nhập Tên tài khoản & Mật khẩu -->
+            <div class="w-full space-y-4">
+                
+                <!-- Ô Tên tài khoản -->
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i class="fa-regular fa-user"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        placeholder="Tên tài khoản" 
+                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded text-sm transition-all bg-white"
+                    >
+                </div>
+
+                <!-- Ô Mật khẩu -->
+                <div class="relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-key text-[0.9rem]"></i>
+                    </div>
+                    <input 
+                        type="password" 
+                        id="passwordInput"
+                        placeholder="Mật khẩu" 
+                        class="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded text-sm transition-all bg-white"
+                    >
+                    <!-- Nút con mắt để hiện/ẩn mật khẩu -->
+                    <button 
+                        type="button" 
+                        id="togglePassword"
+                        class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                    >
+                        <i class="fa-regular fa-eye-slash" id="eyeIcon"></i>
+                    </button>
+                </div>
+
+                <!-- Nút Đăng nhập -->
+                <button class="w-full bg-uef-blue hover:bg-blue-900 text-white font-medium py-3 rounded mt-2 transition-colors text-[0.95rem]">
+                    Đăng nhập
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- 
+        PHẦN 3: CÁC NÚT NỔI Ở GÓC DƯỚI BÊN PHẢI
+    -->
+    <div class="absolute bottom-5 right-5 z-20 flex flex-col items-end gap-2">
+        
+        <!-- Nút thông báo Cookies -->
+        <button class="bg-cookie-bg hover:bg-black/90 text-white text-xs py-2 px-4 rounded-md shadow-lg flex items-center gap-2 transition-colors border border-white/10">
+            <i class="fa-solid fa-circle-info text-[#f39c12]"></i>
+            Thông báo từ các Cookies
+        </button>
+
+        <!-- Nút chọn ngôn ngữ -->
+        <button class="bg-white hover:bg-gray-50 text-gray-700 text-xs py-2 px-3 rounded shadow-md border border-gray-200 flex items-center gap-2 transition-colors">
+            <i class="fa-regular fa-flag"></i>
+            <span class="font-medium">VI</span>
+        </button>
+        
+    </div>
+
+    <!-- 
+        PHẦN 4: JAVASCRIPT XỬ LÝ SỰ KIỆN TƯƠNG TÁC
+    -->
+    <script>
+        // Xử lý sự kiện khi bấm vào biểu tượng con mắt ở ô mật khẩu
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('passwordInput');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        togglePasswordBtn.addEventListener('click', function() {
+            // Kiểm tra kiểu hiện tại của input
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Đổi icon con mắt
+            if (type === 'text') {
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+                eyeIcon.classList.add('text-uef-blue'); // Thêm màu khi hiển thị pass
+            } else {
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+                eyeIcon.classList.remove('text-uef-blue');
+            }
+        });
+    </script>
+</body>
+</html>

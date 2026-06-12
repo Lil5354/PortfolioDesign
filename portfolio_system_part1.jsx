@@ -1,0 +1,1763 @@
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useAuth } from "./lib/AuthContext";
+import { LecturerCard } from "./components/ui/LecturerCard";
+import { MajorCard } from "./components/ui/MajorCard";
+import { api } from "./lib/api-client";
+import LayoutSettings from "./LayoutSettings.jsx";
+import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
+import EbookViewerModal from "./components/catalog/EbookViewerModal";
+import NotificationBell from "./components/NotificationBell";
+import { TranslationProvider, useI18n } from "./lib/i18n.jsx";
+import { t } from "./lib/i18n.jsx";
+import { useSiteContent } from "./lib/site-content.js";
+
+import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import HTMLFlipBook from 'react-pageflip';
+import {
+  Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
+  Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
+  Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
+  Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
+  MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive,
+  GraduationCap, Rocket, Upload, Menu, ShoppingCart, Languages,
+  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight, ChevronLeft, ThumbsUp, MessageCircle, Package, FileText, Tag, Download
+} from "lucide-react";
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import ChatBot from './components/ChatBot';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+export function GlobalLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] w-full bg-white z-50">
+      <div style={{ width: 300, height: 300 }}>
+        <DotLottieReact
+          src="https://lottie.host/c21c637c-1f75-4ece-8274-afbb094dcfd8/VvdZEvXog8.lottie"
+          loop
+          autoplay
+        />
+      </div>
+    </div>
+  );
+}
+
+const CERULEAN = "#1a4ba8";
+const ACCENT_BLUE = "#1a4ba8";
+const DARK_BLUE = "#0d2e6e";
+const CRIMSON = "#8B1A1A";
+const BLACK = "#212121";
+const GRAY_BG = "#F8F8F8";
+const GRAY_LIGHT = "#E0E0E0";
+const MUTED = "#666666";
+
+const artworks = [
+  { id: 1, title: "Neon Cityscape Poster", student: "Nguyễn Minh Anh", likes: 142, h: 320, img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", category: "Poster", tool: "Illustrator", year: "2024", isPublic: true },
+  { id: 2, title: "Brand Identity UEF", student: "Trần Bảo Long", likes: 89, h: 240, img: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg", category: "Branding", tool: "Figma", year: "2024", isPublic: true },
+  { id: 3, title: "3D Abstract Geometry", student: "Lê Thị Hương", likes: 203, h: 380, img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80", category: "3D Art", tool: "Blender", year: "2023", isPublic: false },
+  { id: 4, title: "Vintage Travel Series", student: "Phạm Quốc Việt", likes: 56, h: 270, img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80", category: "Illustration", tool: "Procreate", year: "2023", isPublic: true },
+  { id: 5, title: "UI Design System", student: "Hoàng Thị Mai", likes: 175, h: 300, img: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=800&q=80", category: "UI/UX", tool: "Figma", year: "2024", isPublic: true },
+  { id: 6, title: "Cultural Festival Poster", student: "Vũ Đăng Khoa", likes: 98, h: 350, img: "https://images.unsplash.com/photo-1541462608143-67571c6738dd?w=800&q=80", category: "Poster", tool: "Photoshop", year: "2023", isPublic: true },
+  { id: 7, title: "Minimal Logo Collection", student: "Đặng Thu Hiền", likes: 130, h: 260, img: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&q=80", category: "Branding", tool: "Illustrator", year: "2024", isPublic: false },
+  { id: 8, title: "Futuristic UI Concept", student: "Bùi Minh Khải", likes: 214, h: 290, img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80", category: "UI/UX", tool: "Figma", year: "2024", isPublic: true },
+];
+
+function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userData }) {
+  const { lang, toggleLang } = useI18n();
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const mobileMenuRef = useRef(null);
+  const langRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setIsMobileMenuOpen(false);
+      }
+      if (langRef.current && !langRef.current.contains(event.target)) {
+        setIsLangOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const isActive = (id) => activePage === id || (id === "home" && (activePage === "home" || activePage === "landing"));
+  const navItems = [
+    { id: "home", label: t("home") },
+    { id: "gallery", label: t("gallery") },
+    { id: "about", label: t("about") },
+  ];
+  if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: t("portfolio") });
+
+  const userName = userData?.name || t("defaultUser");
+  const userEmail = userData?.email || "";
+  const userAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+
+  return (
+    <header className="flex items-center justify-between px-8 py-3 border-b border-gray-100 bg-white sticky top-0 z-50">
+      <div className="flex items-center cursor-pointer" onClick={() => setPage("home")}>
+        <img src="/logo-uef.png" alt="UEF" className="h-11 object-contain" />
+      </div>
+      <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+        {navItems.map((item) => (
+          <button key={item.id} onClick={() => setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#1a4ba8] border-b-2 border-[#1a4ba8]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
+        ))}
+      </nav>
+      <button className="md:hidden flex items-center cursor-pointer text-[#666666] hover:text-[#212121]" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+        {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+      </button>
+      <div className="flex items-center gap-3 text-sm font-medium">
+        {isLoggedIn && <NotificationBell setPage={setPage} />}
+        <div className="relative skiptranslate" ref={langRef}>
+          <button onClick={() => setIsLangOpen(!isLangOpen)}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[#E0E0E0] bg-white text-[#666666] hover:text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer"
+            title={lang === 'vi' ? t("english") : t("vietnamese")}>
+            <Languages size={16} />
+            <span className="text-[11px] font-semibold uppercase">{lang === 'vi' ? 'VI' : 'EN'}</span>
+          </button>
+          {isLangOpen && (
+            <div className="absolute right-0 top-full mt-2 w-40 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
+              <button onClick={() => { if (lang !== 'vi') toggleLang(); setIsLangOpen(false); }}
+                className={`w-full text-left px-4 py-2 text-sm ${lang === 'vi' ? 'text-[#1a4ba8] font-bold bg-[#eef4ff]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
+                {t("tiengViet")}
+              </button>
+              <button onClick={() => { if (lang !== 'en') toggleLang(); setIsLangOpen(false); }}
+                className={`w-full text-left px-4 py-2 text-sm ${lang === 'en' ? 'text-[#1a4ba8] font-bold bg-[#eef4ff]' : 'text-[#212121] hover:bg-[#F8F8F8]'}`}>
+                {t("tiengAnh")}
+              </button>
+            </div>
+          )}
+        </div>
+        {isLoggedIn ? (
+          <div className="relative" ref={dropdownRef}>
+            <div className="flex items-center gap-2 cursor-pointer border border-[#E0E0E0] rounded-full p-1 pr-3 hover:bg-[#F8F8F8] transition-colors" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+              <img src={userAvatar} alt="avatar" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" />
+              <ChevronDown size={14} className="text-[#666666]" />
+            </div>
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-[#E0E0E0] rounded-xl shadow-lg overflow-hidden py-1 z-50">
+                <div className="px-4 py-3 border-b border-[#E0E0E0] bg-[#F8F8F8]">
+                  <p className="text-sm font-bold text-[#212121]">{userName}</p>
+                  <p className="text-xs text-[#666666]">{userEmail}</p>
+                </div>
+                <div className="py-1">
+                  {userRole === "student" ? (
+                    <>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {t("studentDashboard")}</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> {t("portfolioSettings")}</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("messages"); setIsDropdownOpen(false); }}><Mail size={16} className="text-[#666666]" /> {t("inbox")}</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("admin"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {t("adminDashboard")}</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
+                    </>
+                  )}
+                </div>
+                <div className="border-t border-[#E0E0E0] py-1">
+                  <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#FEF2F2] hover:text-[#8B1A1A] cursor-pointer text-[#8B1A1A] text-sm font-medium transition-colors" onClick={() => { onLogout && onLogout(); setIsDropdownOpen(false); }}><LogOut size={16} /> {t("logout")}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <button onClick={() => setPage("register")} className="text-gray-500 hover:text-[#212121] px-4 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors">{t("register")}</button>
+            <button onClick={() => setPage("auth")} className="bg-[#1a4ba8] text-white px-5 py-1.5 rounded-lg hover:bg-[#1642a6] transition-colors">{t("login")}</button>
+          </>
+        )}
+      </div>
+      {isMobileMenuOpen && (
+        <div ref={mobileMenuRef} className="fixed top-14 left-0 right-0 bg-white border-b border-[#E0E0E0] shadow-lg z-40 md:hidden">
+          <div className="flex flex-col py-2">
+            {navItems.map((item) => (
+              <button key={item.id} onClick={() => { setPage(item.id); setIsMobileMenuOpen(false); }} className={`px-6 py-3 text-sm font-medium text-left transition-colors ${isActive(item.id) ? "text-[#1a4ba8] bg-[#eef4ff]" : "text-gray-600 hover:bg-[#F8F8F8]"}`}>{item.label}</button>
+            ))}
+            {isLoggedIn && (
+              <>
+                {userRole === "student" ? (
+                  <>
+                    <div className="border-t border-[#E0E0E0] my-1" />
+                    <button onClick={() => { setPage("dashboard"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />{t("studentDashboard")}</button>
+                    <button onClick={() => { setPage("messages"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Mail size={16} className="inline mr-2" />{t("inbox")}</button>
+                    <button onClick={() => { setPage("settings"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Settings size={16} className="inline mr-2" />{t("settings")}</button>
+                  </>
+                ) : (
+                  <>
+                    <div className="border-t border-[#E0E0E0] my-1" />
+                    <button onClick={() => { setPage("admin"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />{t("admin")}</button>
+                  </>
+                )}
+                <div className="border-t border-[#E0E0E0] my-1" />
+                <button onClick={() => { onLogout && onLogout(); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#8B1A1A] hover:bg-[#FEF2F2]"><LogOut size={16} className="inline mr-2" />{t("logout")}</button>
+              </>
+            )}
+            {!isLoggedIn && (
+              <>
+                <div className="border-t border-[#E0E0E0] my-1" />
+                <button onClick={() => { setPage("auth"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-[#1a4ba8] hover:bg-[#eef4ff]">{t("login")}</button>
+                <button onClick={() => { setPage("register"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]">{t("register")}</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
+
+function MasonryGrid({
+  items,
+  showHover = true,
+  onArtworkClick,
+  showBookmarkAction = false,
+  isBookmarked,
+  onBookmarkClick,
+}) {
+    const [hovered, setHovered] = useState(null);
+  const cols = [[], [], []];
+  items.forEach((item, i) => cols[i % 3].push(item));
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+      {cols.map((col, ci) => (
+        <div key={ci} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {col.map(art => (
+            <div key={art.id} onClick={() => onArtworkClick && onArtworkClick(art)} style={{ position: "relative", borderRadius: 12, overflow: "hidden", cursor: "pointer", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG }}
+              onMouseEnter={() => setHovered(art.id)} onMouseLeave={() => setHovered(null)}>
+              <img src={art.img} alt={art.title} style={{ width: "100%", height: art.h, objectFit: "cover", display: "block" }} />
+              {showHover && hovered === art.id && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.18) 55%, transparent 100%)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-end",
+                    padding: "16px 14px",
+                  }}
+                >
+                  {showBookmarkAction && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onBookmarkClick && onBookmarkClick(art);
+                      }}
+                      title={t("saveToCollectionFlow")}
+                      style={{
+                        position: "absolute",
+                        top: 10,
+                        right: 10,
+                        width: 34,
+                        height: 34,
+                        borderRadius: 10,
+                        border: "1px solid rgba(255,255,255,0.18)",
+                        background: isBookmarked && isBookmarked(art.id) ? "rgba(26,75,168,0.92)" : "rgba(255,255,255,0.14)",
+                        backdropFilter: "blur(10px)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                        transition: "all .15s",
+                      }}
+                    >
+                      <Bookmark
+                        size={16}
+                        color={isBookmarked && isBookmarked(art.id) ? "#fff" : "rgba(255,255,255,0.9)"}
+                        fill={isBookmarked && isBookmarked(art.id) ? "#fff" : "none"}
+                      />
+                    </button>
+                  )}
+
+                  <p style={{ color: "#fff", fontWeight: 600, fontSize: 14, margin: 0 }}>{art.title}</p>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 4 }}>
+                    <span style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>{art.student}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Heart size={14} color="#ff6b6b" fill="#ff6b6b" />
+                      <span style={{ color: "#fff", fontSize: 12 }}>{art.likes}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!art.isPublic && (
+                <div style={{ position: "absolute", top: 8, right: 8, background: "rgba(255,255,255,0.9)", borderRadius: 6, padding: "4px 8px", border: `1px solid ${GRAY_LIGHT}`, display: "flex", alignItems: "center", gap: 4 }}>
+                  <Lock size={10} color={BLACK} />
+                  <span style={{ color: BLACK, fontSize: 11, fontWeight: 500 }}>{t("private")}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
+  const [filters, setFilters] = useState({ category: "Tất cả", year: "Tất cả", tool: "Tất cả", sort: "newest", q: "" });
+  const [page, setPageNum] = useState(1);
+  const [data, setData] = useState({ artworks: [], total: 0, totalPages: 0 });
+  const [loading, setLoading] = useState(true);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [showYearTool, setShowYearTool] = useState(false);
+  const [hoveredId, setHoveredId] = useState(null);
+  const [categoryCovers, setCategoryCovers] = useState({});
+  const [navbarHeight, setNavbarHeight] = useState(0);
+  const limit = 100;
+  const fetchId = useRef(0);
+
+  useEffect(() => {
+    const measure = () => {
+      const header = document.querySelector('header');
+      if (header) setNavbarHeight(header.offsetHeight);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  const UEF_RED = "#DA291C";
+  const UEF_BLUE = "#1a4ba8";
+  const UEF_WHITE = "#FFFFFF";
+
+  const categories = ["Tất cả", "Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+  const years = ["Tất cả", "2022-2023", "2023-2024", "2024-2025"];
+  const toolsList = ["Tất cả", "Figma", "Illustrator", "Photoshop", "Blender", "Procreate", "After Effects", "InDesign", "Lightroom", "Cinema 4D"];
+
+  useEffect(() => {
+    fetch("/api/artworks/category-covers")
+      .then(r => r.json())
+      .then(setCategoryCovers)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const id = ++fetchId.current;
+    setLoading(true);
+    const params = { page: String(page), limit: String(limit), sort: filters.sort };
+    if (filters.category !== "Tất cả") params.category = filters.category;
+    if (filters.year !== "Tất cả") params.year = filters.year;
+    if (filters.tool !== "Tất cả") params.tool = filters.tool;
+    if (filters.q.trim()) params.q = filters.q.trim();
+    api.artworks.list(params).then(res => {
+      if (id === fetchId.current) { setData(res); setLoading(false); }
+    }).catch(() => { if (id === fetchId.current) setLoading(false); });
+  }, [filters, page]);
+
+  const setFilter = (key, val) => {
+    setFilters(prev => ({ ...prev, [key]: val }));
+    setPageNum(1);
+  };
+
+  const activeFilterCount = [filters.year !== "Tất cả", filters.tool !== "Tất cả"].filter(Boolean).length;
+
+  const mapped = (data.artworks || []).map(a => ({
+    id: a.id,
+    title: a.title,
+    student: a.user?.fullName || t("student"),
+    img: a.coverImageUrl,
+    likes: a.likeCount || 0,
+    views: a.viewCount || 0,
+    isPublic: a.isPublic,
+    category: a.subject,
+  }));
+
+  const paginate = (p) => setPageNum(Math.max(1, Math.min(p, data.totalPages || 1)));
+
+  return (
+    <div style={{ background: "#fff" }}>
+      <div style={{ position: "sticky", top: navbarHeight, background: "#fff", zIndex: 40, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
+        <div style={{ padding: "12px 24px 0", maxWidth: 1480, margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+            <button
+            onClick={() => setShowYearTool(v => !v)}
+            style={{ display: "flex", alignItems: "center", gap: 4, padding: "7px 12px", borderRadius: 8, border: `1px solid ${showYearTool || activeFilterCount > 0 ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || activeFilterCount > 0 ? `${UEF_BLUE}08` : "#fff", color: UEF_BLUE, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s", flexShrink: 0 }}
+          >
+            <Filter size={14} />
+            {t("filter")}
+            {activeFilterCount > 0 && (
+              <span style={{ marginLeft: 2, background: UEF_BLUE, color: "#fff", fontSize: 10, fontWeight: 700, width: 17, height: 17, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{activeFilterCount}</span>
+            )}
+          </button>
+
+          <div style={{ position: "relative", flex: 1 }}>
+            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: MUTED, pointerEvents: "none" }} />
+            <input value={filters.q} onChange={e => setFilter("q", e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "7px 32px 7px 32px", borderRadius: 8, border: searchFocused ? `1px solid ${UEF_BLUE}` : `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: GRAY_BG, color: BLACK, boxSizing: "border-box", transition: "all .15s" }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+            {filters.q && (
+              <button onClick={() => setFilter("q", "")} style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: MUTED, padding: 4, display: "flex" }}><X size={13} /></button>
+            )}
+          </div>
+
+          <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+            <button onClick={() => setFilter("sort", "newest")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "newest" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "newest" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("newest")}</button>
+            <button onClick={() => setFilter("sort", "most_likes")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "most_likes" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("mostLiked")}</button>
+          </div>
+
+          <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}>{data.total} {t("artworksFound")}</span>
+          </div>
+
+        {showYearTool && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+            <select value={filters.year} onChange={e => setFilter("year", e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
+              {years.map(y => <option key={y} value={y}>{y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}</option>)}
+            </select>
+            <select value={filters.tool} onChange={e => setFilter("tool", e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
+              {toolsList.map(t => <option key={t} value={t}>{t === "Tất cả" ? `${t("tools")}: ${t("all")}` : t}</option>)}
+            </select>
+            {activeFilterCount > 0 && (
+              <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); }} style={{ padding: "3px 8px", borderRadius: 6, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
+            )}
+          </div>
+        )}
+
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            <style>{`.gallery-cat-scroll::-webkit-scrollbar { display: none; }`}</style>
+            <div className="gallery-cat-scroll" style={{ display: "flex", gap: 6, minWidth: "100%" }}>
+              {categories.map(cat => {
+                const coverUrl = cat !== "Tất cả" ? categoryCovers[cat] : null;
+                const isActive = filters.category === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setFilter("category", cat)}
+                    style={{
+                      position: "relative", padding: "5px 16px", borderRadius: 8,
+                      border: isActive ? `2px solid ${UEF_BLUE}` : "2px solid transparent",
+                      cursor: "pointer", fontWeight: isActive ? 700 : 500, fontSize: 12,
+                      color: UEF_WHITE, whiteSpace: "nowrap", flexShrink: 0,
+                      transition: "all .2s", textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+                      boxShadow: isActive ? "0 4px 14px rgba(26,75,168,0.25)" : "0 1px 3px rgba(0,0,0,0.08)",
+                      transform: isActive ? "scale(1.04)" : "scale(1)", letterSpacing: "0.3px",
+                      overflow: "hidden",
+                      background: coverUrl ? "#1a1a2e" : (isActive ? UEF_BLUE : "#333"),
+                    }}
+                  >
+                    {coverUrl && (
+                      <>
+                        <img src={coverUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35 }} />
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }} />
+                      </>
+                    )}
+                    <span style={{ position: "relative", zIndex: 1 }}>{cat}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div style={{ padding: "16px 24px 64px", maxWidth: 1480, margin: "0 auto" }}>
+        {loading ? (
+          <GlobalLoading />
+        ) : mapped.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>{t("noArtworksFound")}</div>
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 }}>
+              {mapped.map(art => (
+                <div
+                  key={art.id}
+                  onClick={() => { setActiveArtworkId && setActiveArtworkId(art.id); setPage("detail"); }}
+                  style={{ cursor: "pointer", transition: "transform .15s", transform: hoveredId === art.id ? "translateY(-2px)" : "none" }}
+                  onMouseEnter={() => setHoveredId(art.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                >
+                  <div style={{ position: "relative", borderRadius: 4, overflow: "hidden", background: GRAY_BG, transition: "filter .2s", filter: hoveredId === art.id ? "brightness(0.85)" : "none" }}>
+                    {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }} /> : (
+                      <div style={{ width: "100%", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 12 }}>{t("noImage")}</div>
+                    )}
+                    {!art.isPublic && (
+                      <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
+                        <Lock size={10} color="#fff" />
+                        <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
+                      </div>
+                    )}
+                    {onBookmarkClick && hoveredId === art.id && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onBookmarkClick(art); }}
+                        style={{ position: "absolute", top: 8, right: 8, width: 32, height: 32, borderRadius: 8, border: "none", background: isBookmarked && isBookmarked(art.id) ? "rgba(26,75,168,0.9)" : "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 3, transition: "all .15s" }}
+                      >
+                        <Bookmark size={14} color="#fff" fill={isBookmarked && isBookmarked(art.id) ? "#fff" : "none"} />
+                      </button>
+                    )}
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)", padding: "24px 12px 10px", opacity: hoveredId === art.id ? 1 : 0, transition: "opacity .2s", pointerEvents: "none" }}>
+                      <p style={{ margin: 0, color: "#fff", fontWeight: 600, fontSize: 13, lineHeight: 1.3, textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>{art.title}</p>
+                    </div>
+                  </div>
+                  <p style={{ margin: "8px 0 2px", fontSize: 14, fontWeight: 600, color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: 13, color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                      <Eye size={13} color="#999" />
+                      <span style={{ fontSize: 12, color: MUTED }}>{art.views}</span>
+                      <Heart size={12} color="#ccc" />
+                      <span style={{ fontSize: 12, color: MUTED }}>{art.likes}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {data.totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 36 }}>
+                <button onClick={() => paginate(page - 1)} disabled={page <= 1} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: page <= 1 ? GRAY_BG : "#fff", color: page <= 1 ? MUTED : BLACK, fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer" }}>{t("previous")}</button>
+                {Array.from({ length: data.totalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => paginate(p)} style={{ width: 32, height: 32, borderRadius: 6, border: "none", background: p === page ? UEF_BLUE : GRAY_BG, color: p === page ? "#fff" : MUTED, fontSize: 12, fontWeight: p === page ? 600 : 400, cursor: "pointer" }}>{p}</button>
+                ))}
+                <button onClick={() => paginate(page + 1)} disabled={page >= data.totalPages} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: page >= data.totalPages ? GRAY_BG : "#fff", color: page >= data.totalPages ? MUTED : BLACK, fontSize: 12, cursor: page >= data.totalPages ? "not-allowed" : "pointer" }}>{t("next")}</button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PortfolioPage({ setPage, pageParams }) {
+    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactState, setContactState] = useState("idle");
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPurpose, setContactPurpose] = useState(t("recruitmentInternship"));
+  const [contactContent, setContactContent] = useState("");
+  const [portfolioData, setPortfolioData] = useState(null);
+  const [portfolioArtworks, setPortfolioArtworks] = useState([]);
+  const [portfolioSettingsData, setPortfolioSettingsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const hashSlug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
+  const slug = pageParams?.portfolioSlug || hashSlug;
+  const titleByYear = { "Năm 1": t("freshmanDesigner"), "Năm 2": t("internDesigner"), "Năm 3": t("professionalDesigner"), "Năm 4": t("seniorDesigner"), "Tốt nghiệp": t("graduateDesigner") };
+
+  useEffect(() => {
+    setLoading(true);
+    setPortfolioSettingsData(null);
+    const fetchFn = slug ? api.portfolios.get(slug) : api.portfolios.me();
+    const artworksFn = slug ? api.portfolios.artworks(slug, { limit: "50" }) : Promise.resolve({ artworks: [] });
+    const statsFn = slug ? api.portfolios.stats(slug) : Promise.resolve({});
+
+    Promise.all([
+      fetchFn.catch(() => null),
+      artworksFn.catch(() => ({ artworks: [] })),
+      statsFn.catch(() => ({})),
+    ]).then(([pData, artRes, pStats]) => {
+      if (pData) {
+        pData.stats = { ...(pData.stats || {}), ...pStats };
+        if (pData.allArtworks) setPortfolioArtworks(pData.allArtworks);
+        setPortfolioData(pData);
+      }
+      if (artRes?.artworks) setPortfolioArtworks(artRes.artworks);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+
+    api.portfolios.mine().then(data => {
+      setPortfolioSettingsData(data);
+    }).catch(() => {});
+  }, [slug]);
+
+  if (loading) return <GlobalLoading />;
+  if (!portfolioData) return <div className="flex min-h-screen items-center justify-center text-[#666666]">{t("portfolioNotFound")}</div>;
+
+  const { user, portfolioSettings, stats, featuredArtworks, privateGrade } = portfolioData;
+  const profile = {
+    fullName: user?.fullName || t("student"),
+    profileHeadline: portfolioSettings?.profileHeadline || "Design Student",
+    bio: user?.bio || "",
+    avatarUrl: user?.avatarUrl || "",
+    email: user?.email || "",
+  };
+  const socialLinksRaw = portfolioSettings?.socialLinks || {};
+  const socialLinks = [
+    socialLinksRaw.behance && { label: "Behance", href: socialLinksRaw.behance, icon: "globe" },
+    socialLinksRaw.linkedin && { label: "LinkedIn", href: socialLinksRaw.linkedin, icon: "link" },
+    profile.email && portfolioSettings?.showEmail && { label: t("email"), href: `mailto:${profile.email}`, icon: "mail" },
+  ].filter(Boolean);
+
+  const highlightWorks = (portfolioArtworks || []).filter(a => a.isHighlighted).slice(0, 2);
+  const topLikedWorks = (portfolioArtworks || []).filter(a => !a.isHighlighted).sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0)).slice(0, 2);
+  const extraWorks = highlightWorks.length >= 2 ? highlightWorks : [...highlightWorks, ...topLikedWorks].slice(0, 2);
+  const allFeatured = [...(featuredArtworks || []), ...extraWorks.filter(ex => !(featuredArtworks || []).some(f => f.id === ex.id))];
+  const featuredWorks = allFeatured.slice(0, 6).map((a, i) => {
+    const layouts = ["col-span-12 lg:col-span-7", "col-span-12 sm:col-span-6 lg:col-span-5", "col-span-12 sm:col-span-6 lg:col-span-5", "col-span-12 sm:col-span-4", "col-span-12 sm:col-span-4", "col-span-12 sm:col-span-4"];
+    return { id: a.id, title: a.title, img: a.coverImageUrl, tools: a.toolsUsed || [], colClass: layouts[i % layouts.length], rowSpan: [10, 5, 5, 5, 5, 5][i % 6] };
+  });
+
+  const handleContactSubmit = async () => {
+    if (!contactName || !contactEmail || !contactContent) return;
+    setContactState("loading");
+    try {
+      const targetSlug = slug || (portfolioSettingsData?.portfolioSlug || "");
+      await api.portfolios.sendContact(targetSlug, {
+        senderName: contactName,
+        senderEmail: contactEmail,
+        purpose: contactPurpose,
+        content: contactContent,
+      });
+      setContactState("success");
+    } catch (e) {
+      alert(t("sendError") + (e?.message || t("pleaseTryAgain")));
+      setContactState("idle");
+    }
+  };
+
+  const closeContactModal = () => {
+    setIsContactModalOpen(false);
+    setTimeout(() => setContactState("idle"), 300);
+  };
+
+  return (
+    <div className="bg-white min-h-screen">
+      <style>{`
+        /* Portfolio public — phác thảo UI mới (Hero + Featured Bento) */
+        .portfolio-hero-grid {
+          display: grid;
+          grid-template-columns: 1.2fr 0.8fr;
+          gap: 28px;
+        }
+        @media (max-width: 1024px) {
+          .portfolio-hero-grid { grid-template-columns: 1fr; }
+        }
+        .bento-grid {
+          display: grid;
+          grid-template-columns: repeat(12, minmax(0, 1fr));
+          grid-auto-rows: 26px;
+          gap: 14px;
+        }
+        @media (max-width: 640px) {
+          .bento-grid { grid-auto-rows: 24px; }
+        }
+      `}</style>
+
+      {/* HERO SECTION (Flow #1 — UI tĩnh) */}
+      <section className="relative overflow-hidden border-b border-[#E0E0E0]">
+        {/* background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a4ba8]/10 via-white to-white" />
+        <div className="absolute -top-24 -right-24 w-[520px] h-[520px] rounded-full bg-[#1a4ba8]/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -left-28 w-[520px] h-[520px] rounded-full bg-black/5 blur-3xl pointer-events-none" />
+
+        <div className="relative max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 pt-14 pb-10">
+          <div className="portfolio-hero-grid items-start">
+            {/* left */}
+            <div>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-sm bg-[#F8F8F8]">
+                  <img src={profile.avatarUrl} alt={profile.fullName} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-1">
+                    {t("publicPortfolio")}
+                  </p>
+                  <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#212121] leading-[1.05]">
+                    {profile.fullName}
+                  </h1>
+                </div>
+              </div>
+
+              <p className="text-base sm:text-lg text-[#666666] font-medium mb-2">
+                {titleByYear[portfolioSettingsData?.portfolioSettings?.yearLevel || portfolioSettingsData?.yearLevel || portfolioSettings?.yearLevel || "Năm 3"]} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || portfolioSettings?.major || t("graphicDesign")} • UEF
+              </p>
+              <p className="text-sm sm:text-[15px] text-[#444444] leading-relaxed max-w-2xl">
+                {profile.bio}
+              </p>
+
+              {/* social links */}
+              <div className="flex flex-wrap gap-2.5 mt-6">
+                {socialLinks.map((l) => {
+                  const iconMap = {
+                    globe: <Globe size={16} className="text-[#1a4ba8]" />,
+                    link: <Link size={16} className="text-[#1a4ba8]" />,
+                    mail: <Mail size={16} className="text-[#1a4ba8]" />,
+                  };
+                  return (
+                    <a
+                      key={l.label}
+                      href={l.href}
+                      target={l.href.startsWith("http") ? "_blank" : undefined}
+                      rel={l.href.startsWith("http") ? "noreferrer" : undefined}
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:border-[#1a4ba8] hover:shadow-sm transition-all"
+                    >
+                      {iconMap[l.icon]}
+                      <span>{l.label}</span>
+                      {l.href.startsWith("http") && <ExternalLink size={14} className="text-[#666666]" />}
+                    </a>
+                  );
+                })}
+              </div>
+
+              {/* CTA */}
+              <div className="flex flex-wrap gap-3 mt-8">
+                <button
+                  className="px-5 py-2.5 rounded-xl bg-[#1a4ba8] text-white text-sm font-bold hover:bg-[#0d2e6e] transition-colors"
+                  onClick={() => setIsContactModalOpen(true)}
+                >
+                  {t("contact")}
+                </button>
+                <button className="px-5 py-2.5 rounded-xl border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:bg-[#F8F8F8] transition-colors">
+                  {t("share")}
+                </button>
+              </div>
+
+              {/* quick stats (giữ tinh thần thiết kế cũ) */}
+              <div className="mt-10 flex flex-wrap gap-8 border-t border-[#E0E0E0] pt-6">
+                {[{ label: t("artworks"), val: stats?.artworkCount || 0 }, { label: t("views"), val: stats?.viewCount?.toLocaleString() || "0" }, { label: t("likes"), val: stats?.likeCount?.toLocaleString() || "0" }].map((s) => (
+                  <div key={s.label} className="flex items-end gap-2">
+                    <span className="text-2xl font-extrabold text-[#212121] tracking-tight">{s.val}</span>
+                    <span className="text-sm text-[#666666] pb-0.5">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* right (teaser bento nhỏ để tăng “wow”) */}
+            <div className="bg-white/70 backdrop-blur-sm border border-[#E0E0E0] rounded-2xl p-4 shadow-sm">
+              <p className="text-xs font-semibold tracking-widest uppercase text-[#666666] mb-3">
+                Featured snapshot
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {featuredWorks.slice(0, 4).map((w) => (
+                  <div key={w.id} className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] aspect-[4/3]">
+                    <img src={w.img} alt={w.title} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-[#666666] mt-3 leading-relaxed">
+                * Demo UI — sau này “Featured” sẽ được chọn tự động theo highlight của giảng viên / lượt view / pin.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <main className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-12 pb-20">
+        {/* FEATURED CASE STUDIES (Flow #3 — UI tĩnh) */}
+        <section className="pt-12">
+          <div className="flex items-end justify-between gap-6 mb-6">
+            <div>
+              <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2">Featured Case Studies</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#212121] tracking-tight">{t("featuredProjects")}</h2>
+              <p className="text-sm text-[#666666] mt-2 max-w-2xl">
+                {t("bentoDescription")}
+              </p>
+            </div>
+            <button className="hidden sm:inline-flex px-4 py-2 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#212121] hover:bg-[#F8F8F8] transition-colors">
+              {t("viewAll")}
+            </button>
+          </div>
+
+          <div className="bento-grid">
+            {featuredWorks.map((w) => (
+              <div
+                key={w.id}
+                onClick={() => setPage && setPage("detail", { artworkId: w.id })}
+                className={`group relative overflow-hidden rounded-2xl border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer ${w.colClass}`}
+                style={{ gridRow: `span ${w.rowSpan}` }}
+              >
+                <img
+                  src={w.img}
+                  alt={w.title}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.05]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-x-0 bottom-0 p-5 translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <p className="text-white text-[15px] font-bold leading-snug mb-3">{w.title}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {w.tools.map((t) => (
+                      <span
+                        key={t}
+                        className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-white"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {privateGrade && (
+        <div className="mt-10" style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, borderRadius: 10, padding: "14px 18px", marginBottom: 28, display: "flex", gap: 14, alignItems: "flex-start" }}>
+          <div style={{ background: BLACK, borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 4 }}>
+            <Lock size={12} color="#fff" />
+            <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>{t("privateUppercase")}</span>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: BLACK }}>{t("lecturerFeedback")}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 12, color: MUTED }}>{t("totalScore")}</span>
+                <span style={{ fontSize: 22, fontWeight: 700, color: CERULEAN }}>{privateGrade.score}</span>
+                <span style={{ fontSize: 13, color: MUTED }}>/10</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 13, color: "#555", marginTop: 6, lineHeight: 1.6, marginBottom: 0 }}>{privateGrade.comment}</p>
+          </div>
+        </div>
+        )}
+
+        <TimelineSection slug={slug || ''} />
+
+        <div style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
+          <div style={{ display: "flex", gap: 0 }}>
+{[t("allArtworks"), "Poster", "Branding", "UI/UX"].map((tab, i) => (
+                <button key={tab} style={{ padding: "10px 20px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: i === 0 ? 600 : 400, color: i === 0 ? BLACK : MUTED, borderBottom: i === 0 ? `2px solid ${BLACK}` : "2px solid transparent", marginBottom: -1 }}>{tab}</button>
+            ))}
+          </div>
+        </div>
+        <MasonryGrid items={artworks.slice(0, 6)} onArtworkClick={(art) => { setPage("detail", { artworkId: art.id }); }} />
+        <div style={{ height: 64 }} />
+      </main>
+
+      {isContactModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-[#E0E0E0] flex justify-between items-center bg-[#F8F8F8]">
+              <h3 className="font-bold text-lg text-[#212121]">{t("sendContactMessage")}</h3>
+              <button onClick={closeContactModal} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
+            </div>
+            {contactState === "success" ? (
+              <div className="p-8 flex flex-col items-center justify-center text-center">
+                <div className="w-16 h-16 bg-[#e0eaff] rounded-full flex items-center justify-center mb-4">
+                  <Check size={32} className="text-[#1a4ba8]" />
+                </div>
+                <h4 className="text-xl font-bold text-[#212121] mb-2">{t("sentSuccessfully")}</h4>
+                <p className="text-sm text-[#666666] mb-6">{t("messageSentTo")}{profile.fullName}.</p>
+                <button onClick={closeContactModal} className="w-full py-2.5 bg-[#F8F8F8] border border-[#E0E0E0] rounded-lg text-sm font-semibold text-[#212121] hover:bg-[#E0E0E0] transition-colors cursor-pointer">{t("close")}</button>
+              </div>
+            ) : (
+              <div className="p-6 flex flex-col gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("fullNameOrOrg")}</label>
+                  <input value={contactName} onChange={e => setContactName(e.target.value)} type="text" placeholder={t("enterYourName")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("contactEmail")}</label>
+                  <input value={contactEmail} onChange={e => setContactEmail(e.target.value)} type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("purpose")}</label>
+                  <select value={contactPurpose} onChange={e => setContactPurpose(e.target.value)} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] bg-white cursor-pointer">
+                    <option value={t("recruitmentInternship")}>{t("recruitmentInternship")}</option>
+                    <option value={t("freelanceCollaboration")}>{t("freelanceCollaboration")}</option>
+                    <option value={t("other")}>{t("other")}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("content")}</label>
+                  <textarea value={contactContent} onChange={e => setContactContent(e.target.value)} placeholder={t("enterMessageContent")} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] min-h-[100px] resize-y" />
+                </div>
+                <button onClick={handleContactSubmit} disabled={contactState === "loading"} className={`mt-2 w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all flex justify-center items-center gap-2 ${contactState === "loading" ? "bg-[#666666] cursor-wait" : "bg-[#1a4ba8] hover:opacity-90 cursor-pointer"}`}>
+                  {contactState === "loading" ? t("sending") : <><Send size={16} /> {t("sendMessage")}</>}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ToggleSwitch({ isOn, onToggle }) {
+  return (
+    <div onClick={onToggle} style={{ width: 38, height: 20, borderRadius: 10, background: isOn ? CERULEAN : GRAY_LIGHT, cursor: "pointer", position: "relative", transition: "background .2s", flexShrink: 0 }}>
+      <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: isOn ? 20 : 2, transition: "left .2s", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
+    </div>
+  );
+}
+
+function DashboardSidebar({ activePage, setPage, userData }) {
+    const items = [
+    { icon: <Image size={18} />, label: t("myArtworks"), page: "dashboard" },
+    { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
+    { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
+    { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
+  ];
+  const profileName = userData?.name || t("student");
+  const profileAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+  const studentYear = t("student");
+
+  return (
+    <div style={{ width: 220, background: "#fff", borderRight: `1px solid ${GRAY_LIGHT}`, padding: "28px 0", flexShrink: 0 }}>
+      <div style={{ padding: "0 20px 20px", borderBottom: `1px solid ${GRAY_LIGHT}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img src={profileAvatar} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} />
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, margin: 0, color: BLACK }}>{profileName}</p>
+            <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{studentYear}</p>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "16px 0" }}>
+        {items.map(item => {
+          const isActive = activePage === item.page;
+          return (
+            <div key={item.page} onClick={() => setPage(item.page)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 20px", cursor: "pointer", background: isActive ? "#eef4ff" : "transparent", borderRight: isActive ? `3px solid ${CERULEAN}` : "3px solid transparent" }}>
+              <span style={{ color: isActive ? CERULEAN : MUTED, display: "flex" }}>{item.icon}</span>
+              <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, color: isActive ? CERULEAN : BLACK }}>{item.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userData }) {
+    const [artworksList, setArtworksList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [collabArtworks, setCollabArtworks] = useState([]);
+  const [collabLoading, setCollabLoading] = useState(true);
+
+  const { user: authUser } = useAuth();
+
+  useEffect(() => {
+    api.users.myArtworks().then(res => {
+      setArtworksList(Array.isArray(res) ? res : (res.artworks || []));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!authUser?.id) { setCollabLoading(false); return; }
+    api.artworks.list({ collaboratorId: authUser.id, limit: "50" }).then(res => {
+      setCollabArtworks(res.artworks || []);
+      setCollabLoading(false);
+    }).catch(() => setCollabLoading(false));
+  }, [authUser?.id]);
+
+  const totalArtworks = artworksList.length;
+  const totalViews = artworksList.reduce((s, a) => s + (a.viewCount || 0), 0);
+  const totalLikes = artworksList.reduce((s, a) => s + (a.likeCount || 0), 0);
+  const publicCount = artworksList.filter(a => a.isPublic).length;
+
+  const stats = [
+    { label: t("totalArtworks"), val: totalArtworks.toLocaleString(), icon: <Image size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: t("views"), val: totalViews.toLocaleString(), icon: <Eye size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: t("likes"), val: totalLikes.toLocaleString(), icon: <Heart size={24} color={BLACK} strokeWidth={1.5} /> },
+    { label: t("publicArtworks"), val: publicCount.toString(), icon: <Globe size={24} color={BLACK} strokeWidth={1.5} /> },
+  ];
+
+  return (
+    <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
+      <DashboardSidebar activePage="dashboard" setPage={setPage} userData={userData} />
+
+      <div style={{ flex: 1, padding: "32px 40px", overflow: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>{t("myArtworks")}</h2>
+            <p style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>{t("manageVisibility")}</p>
+          </div>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={() => setPage("upload")} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 22px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
+              <Plus size={18} color="#fff" />
+              {t("uploadNewArtwork")}
+            </button>
+          </div>
+        </div>
+
+        {loading ? (
+          <GlobalLoading />
+        ) : (
+          <>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, marginBottom: 32 }}>
+              {stats.map(s => (
+                <div key={s.label} style={{ background: "#fff", borderRadius: 12, padding: "18px 20px", border: `1px solid ${GRAY_LIGHT}` }}>
+                  <div style={{ marginBottom: 8 }}>{s.icon}</div>
+                  <p style={{ fontSize: 24, fontWeight: 700, margin: "0 0 2px", color: BLACK }}>{s.val}</p>
+                  <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+              {artworksList.map(art => (
+                <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                  <div style={{ position: "relative", background: GRAY_BG }}>
+                    <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
+                    <div style={{ position: "absolute", top: 8, left: 8 }}>
+                      <span style={{ background: art.isPublic ? "#e0eaff" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#a8bce0" : GRAY_LIGHT}` }}>{art.isPublic ? t("public") : t("private")}</span>
+                    </div>
+                  </div>
+                  <div style={{ padding: "12px 14px" }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                      <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.subject}</span>
+                      {(art.toolsUsed || []).slice(0, 1).map(t => (
+                        <span key={t} style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{t}</span>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px solid ${GRAY_LIGHT}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 11, color: MUTED }}>{t("public")}</span>
+                        <ToggleSwitch isOn={art.isPublic} onToggle={() => {}} />
+                      </div>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button onClick={() => { setActiveArtworkId(art.id); setTimeout(() => setPage("edit_artwork"), 50); }} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
+                        </button>
+                        <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid #F5C5C5`, background: "#FEF2F2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Trash2 size={14} color={CRIMSON} strokeWidth={1.5} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {collabArtworks.length > 0 && (
+              <>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginTop: 40, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                <Users size={20} color={CERULEAN} /> {t("coAuthor")} ({collabArtworks.length})
+              </h3>
+    <div className="masonry-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+                {collabArtworks.map(art => (
+                  <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                    <div style={{ position: "relative", background: GRAY_BG }}>
+                      <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
+                      <div style={{ position: "absolute", top: 8, left: 8 }}>
+                        <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: 3 }}>
+                          <Users size={10} /> {art.user?.fullName || t("coAuthor") }
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ padding: "12px 14px" }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.subject}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function UploadPage({ setPage, setActiveArtworkId }) {
+  const [showPopup, setShowPopup] = useState(false);
+  const [isEbookViewerOpen, setIsEbookViewerOpen] = useState(false);
+  const [isEbook, setIsEbook] = useState(false);
+  const [uploadState, setUploadState] = useState("idle");
+  const [createdId, setCreatedId] = useState(null);
+  const [checked1, setChecked1] = useState(false);
+  const [checked2, setChecked2] = useState(false);
+  const [checked3, setChecked3] = useState(false);
+  const [tags, setTags] = useState([]);
+  const [tagInput, setTagInput] = useState("");
+  const [tools, setTools] = useState([]);
+  const [toolInput, setToolInput] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [subject, setSubject] = useState("");
+  const [projectYear, setProjectYear] = useState("Năm 3");
+  const [isGroupProject, setIsGroupProject] = useState(false);
+  const [friends, setFriends] = useState([]);
+  const [friendInput, setFriendInput] = useState("");
+  const [friendResults, setFriendResults] = useState([]);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [notifyOnConfirm, setNotifyOnConfirm] = useState(true);
+  const [coverImage, setCoverImage] = useState(null);
+  const [additionalImages, setAdditionalImages] = useState([]);
+  const [error, setError] = useState("");
+  const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
+
+  useEffect(() => {
+    fetch("/api/site-settings")
+      .then(r => r.json())
+      .then(data => {
+        if (data.watermark_text) setDefaultWatermarkText(data.watermark_text);
+      })
+      .catch(() => {});
+  }, []);
+
+  const yearToSemester = { "Năm 1": "HK1", "Năm 2": "HK2", "Năm 3": "HK3", "Năm 4": "HK1", "Tốt nghiệp": "HK2" };
+  const yearToAcademic = { "Năm 1": "2024-2025", "Năm 2": "2023-2024", "Năm 3": "2022-2023", "Năm 4": "2021-2022", "Tốt nghiệp": "2021-2022" };
+  const allSubjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+
+  const handleFriendSearch = (val) => {
+    setFriendInput(val);
+    if (val.length < 2) { setFriendResults([]); return; }
+    api.users.search(val).then(setFriendResults).catch(() => {});
+  };
+
+  const addFriend = (user) => {
+    if (!friends.find(f => f.id === user.id)) {
+      setFriends([...friends, { id: user.id, fullName: user.fullName, email: user.email }]);
+    }
+    setFriendInput("");
+    setFriendResults([]);
+  };
+
+  const readFileAsDataURL = (file) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const dataUrl = await readFileAsDataURL(file);
+    setCoverImage(dataUrl);
+  };
+
+  const handleAdditionalUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    const max = 10 - (coverImage ? 1 : 0) - additionalImages.length;
+    const toAdd = files.slice(0, max);
+    const urls = await Promise.all(toAdd.map(readFileAsDataURL));
+    setAdditionalImages(prev => [...prev, ...urls].slice(0, 9));
+  };
+
+  const removeAdditional = (idx) => {
+    setAdditionalImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const allFileUrls = coverImage ? [coverImage, ...additionalImages] : [...additionalImages];
+
+  const handleUseEbook = (pages) => {
+    if (pages.length > 0) {
+      setCoverImage(pages[0]);
+      setAdditionalImages(pages.slice(1, 10)); // up to 9 extra images
+      setIsEbook(true);
+    }
+  };
+
+  const handleUploadSubmit = async () => {
+    if (!coverImage) { setError(t("pleaseSelectCoverImage")); return; }
+    if (!title.trim()) { setError(t("pleaseEnterCourseName")); return; }
+    if (!subject) { setError(t("pleaseSelectCategory")); return; }
+    if (!checked1 || !checked2 || !checked3) { setError(t("pleaseConfirmCommitments")); return; }
+    setError("");
+    setUploadState("loading");
+    try {
+      const newArtwork = await api.artworks.create({
+        title: title.trim(),
+        description: description.trim() || null,
+        subject,
+        toolsUsed: tools,
+        semester: yearToSemester[projectYear] || "HK1",
+        academicYear: yearToAcademic[projectYear] || "2024-2025",
+        tags: tags.length > 0 ? tags : [subject],
+        collaborators: friends.map(f => f.fullName || f),
+        collaboratorIds: friends.map(f => f.id).filter(Boolean),
+        fileUrls: allFileUrls,
+        coverImageUrl: coverImage,
+        watermarkText: defaultWatermarkText || "UEF",
+        watermarkPosition: "bottom-right",
+        isPublic: false,
+        isAiConfirmed: checked1,
+        isEbook: isEbook,
+      });
+      setCreatedId(newArtwork.id);
+      setUploadState("success");
+      setTimeout(() => {
+        setUploadState("idle");
+        setShowPopup(false);
+        setActiveArtworkId(newArtwork.id);
+        setPage("dashboard");
+      }, 1800);
+    } catch (e) {
+      setError(e?.message || t("uploadError"));
+      setUploadState("idle");
+    }
+  };
+
+  return (
+    <div style={{ background: "#fff", minHeight: "100vh", padding: "40px 64px", position: "relative" }}>
+      {showPopup && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "#fff", borderRadius: 16, padding: "36px 40px", width: 480, boxShadow: "0 24px 64px rgba(0,0,0,0.35)" }}>
+            {uploadState === "success" ? (
+              <div className="flex flex-col items-center justify-center text-center py-4">
+                <div className="w-16 h-16 bg-[#e0eaff] rounded-full flex items-center justify-center mb-4">
+                  <Check size={32} className="text-[#1a4ba8]" />
+                </div>
+                <h4 className="text-xl font-bold text-[#212121] mb-2">{t("uploadSuccess")}</h4>
+                <p className="text-sm text-[#666666]">{t("artworkSubmitted")}</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                  <div style={{ width: 40, height: 40, background: "#FEF2F2", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ShieldAlert size={20} color={CRIMSON} strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h3 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: BLACK }}>{t("academicCommitment")}</h3>
+                    <p style={{ fontSize: 12, color: MUTED, margin: 0 }}>{t("requiredBeforePosting")}</p>
+                  </div>
+                </div>
+                <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, marginBottom: 20, background: GRAY_BG, padding: "12px 14px", borderRadius: 8, borderLeft: `3px solid ${CRIMSON}` }}>
+                  {t("commitmentDescription")}
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {[
+                    { id: "c1", state: checked1, set: setChecked1, text: t("commitmentAi") },
+                    { id: "c2", state: checked2, set: setChecked2, text: t("commitmentNoCopy") },
+                    { id: "c3", state: checked3, set: setChecked3, text: t("commitmentConsequences") },
+                  ].map(c => (
+                    <label key={c.id} style={{ display: "flex", gap: 10, cursor: "pointer", alignItems: "flex-start" }}>
+                      <div onClick={() => c.set(!c.state)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${c.state ? CERULEAN : GRAY_LIGHT}`, background: c.state ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>
+                        {c.state && <Check size={14} color="#fff" strokeWidth={3} />}
+                      </div>
+                      <span style={{ fontSize: 13, color: "#333", lineHeight: 1.5 }}>{c.text}</span>
+                    </label>
+                  ))}
+                </div>
+                {error && <p style={{ color: CRIMSON, fontSize: 12, marginTop: 12 }}>{error}</p>}
+                <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
+                  <button onClick={() => setShowPopup(false)} disabled={uploadState === "loading"} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: uploadState === "loading" ? "not-allowed" : "pointer", color: MUTED }}>{t("cancel")}</button>
+                  <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3 && !uploadState) ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3 && !uploadState) ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3 && !uploadState) ? "pointer" : "not-allowed" }}>
+                    {uploadState === "loading" ? t("processing") : t("confirmAndPost")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6, color: BLACK }}>{t("uploadNewArtwork")}</h2>
+        <p style={{ color: MUTED, fontSize: 14, marginBottom: 32 }}>{t("shareWithCommunity")}</p>
+        <div className="upload-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }}>
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 10 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{t("coverImage")}</label>
+              <button onClick={() => setIsEbookViewerOpen(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, border: `1px solid ${CERULEAN}`, background: "#fff", color: CERULEAN, fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+                <BookOpen size={14} color={CERULEAN} />
+                Tải lên E-book
+              </button>
+            </div>
+            <input type="file" id="coverInput" accept="image/*" style={{ display: "none" }} onChange={handleCoverUpload} />
+            <div onClick={() => document.getElementById("coverInput")?.click()} style={{ border: `2px dashed ${coverImage ? CERULEAN : GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: GRAY_BG, cursor: "pointer" }}>
+              {coverImage ? (
+                <img src={coverImage} alt="preview" style={{ width: "100%", height: 400, objectFit: "cover", display: "block" }} />
+              ) : (
+                <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                  <FileImage size={36} color={MUTED} strokeWidth={1.5} />
+                  <p style={{ color: MUTED, fontSize: 14, fontWeight: 600, margin: 0 }}>{t("clickToSelectCover")}</p>
+                  <p style={{ color: MUTED, fontSize: 12, margin: 0 }}>{t("imageFormatHint")}</p>
+                </div>
+              )}
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("additionalImages")} ({additionalImages.length}/9)</label>
+              <input type="file" id="additionalInput" accept="image/*" multiple style={{ display: "none" }} onChange={handleAdditionalUpload} />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {additionalImages.map((url, idx) => (
+                  <div key={idx} style={{ width: 80, height: 64, borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, position: "relative" }}>
+                    <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    <div onClick={() => removeAdditional(idx)} style={{ position: "absolute", top: 2, right: 2, width: 18, height: 18, borderRadius: "50%", background: "rgba(0,0,0,0.5)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11 }}>×</div>
+                  </div>
+                ))}
+                {additionalImages.length < 9 && (
+                  <div onClick={() => document.getElementById("additionalInput")?.click()} style={{ width: 80, height: 64, borderRadius: 8, border: `2px dashed ${GRAY_LIGHT}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", background: GRAY_BG }}>
+                    <Plus size={22} color={MUTED} />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("courseName")}</label><input value={title} onChange={e => setTitle(e.target.value)} placeholder="Design Graphic - Flowers Garden" style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, color: BLACK, outline: "none", boxSizing: "border-box", background: GRAY_BG }} /></div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("projectType")}</label>
+              <div style={{ display: "flex", gap: 6 }}>{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, border: `1px solid ${projectYear === y ? CERULEAN : GRAY_LIGHT}`, background: projectYear === y ? "#eef4ff" : GRAY_BG, color: projectYear === y ? CERULEAN : MUTED, fontSize: 12, fontWeight: projectYear === y ? 600 : 400, cursor: "pointer" }}>{y}</button>))}</div>
+            </div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("projectCategory")}</label>
+              <div style={{ display: "flex", gap: 10 }}>
+                {[{ key: false, label: t("individual"), desc: t("selfPerformed"), icon: <User size={16} /> }, { key: true, label: t("group"), desc: t("teamwork"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#eef4ff" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
+              </div>
+            </div>
+            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("addTeamMembers")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#e0eaff", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("describeYourArtwork")} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("category")} *</label>
+                <select value={subject} onChange={e => setSubject(e.target.value)} style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, background: GRAY_BG, color: BLACK }}>
+<option value="">{t("selectOption")}</option>
+                  {allSubjects.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("tools")}</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>
+                  {tools.map(t => (<span key={t} style={{ background: "#e0eaff", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12 }}>{t}<X size={12} color={CERULEAN} onClick={() => setTools(tools.filter(x => x !== t))} style={{ cursor: "pointer", marginLeft: 4 }} /></span>))}
+                  <input value={toolInput} onChange={e => setToolInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && toolInput.trim()) { setTools([...tools, toolInput.trim()]); setToolInput(""); } }} placeholder="Add tool..." style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} />
+                </div>
+              </div>
+            </div>
+            <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("tags")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{tags.map(tag => (<span key={tag} style={{ background: "#e0eaff", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>{tag}<X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== tag))} style={{ cursor: "pointer" }} /></span>))}<input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder={t("addTagPlaceholder")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} /></div></div>
+            <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
+                <div onClick={() => setAgreedToTerms(!agreedToTerms)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${agreedToTerms ? CERULEAN : GRAY_LIGHT}`, background: agreedToTerms ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>{agreedToTerms && <Check size={12} color="#fff" strokeWidth={3} />}</div>
+                <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6, margin: 0 }}>{t("fullCommitment")}</p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div onClick={() => setNotifyOnConfirm(!notifyOnConfirm)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${notifyOnConfirm ? CERULEAN : GRAY_LIGHT}`, background: notifyOnConfirm ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>{notifyOnConfirm && <Check size={12} color="#fff" strokeWidth={3} />}</div>
+                <span style={{ fontSize: 12, color: "#666" }}>{t("notifyOnConfirmText")}</span>
+              </div>
+            </div>
+            <div style={{ paddingTop: 4 }}>
+              <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{t("submitArtwork")}</button>
+              <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("postSubmissionNote")}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <EbookViewerModal isOpen={isEbookViewerOpen} onClose={() => setIsEbookViewerOpen(false)} onUseEbook={handleUseEbook} />
+    </div>
+  );
+}
+
+function OrderModal({ setPage, activeArtworkId, onClose }) {
+    const [orderData, setOrderData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    description: "",
+  });
+  const [sendingOrder, setSendingOrder] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()) {
+      alert(t("fillRequiredFields"));
+      return;
+    }
+
+    setSendingOrder(true);
+    try {
+      let recipientSlug = "uef-design-gallery";
+      try {
+        const artworkData = await api.artworks.get(activeArtworkId);
+        const ownerSlug = artworkData?.user?.portfolioSettings?.portfolioSlug;
+        if (ownerSlug) recipientSlug = ownerSlug;
+      } catch {}
+
+      await api.messages.send({
+        recipientSlug,
+        senderName: orderData.name.trim(),
+        senderEmail: orderData.email.trim(),
+        senderCompany: orderData.company.trim() || null,
+        purpose: "order",
+        content: JSON.stringify({
+          artworkId: activeArtworkId,
+          artworkTitle: t("orderedArtwork"),
+          artworkImage: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
+          phone: orderData.phone.trim() || null,
+          company: orderData.company.trim() || null,
+          description: orderData.description.trim(),
+        }),
+      });
+
+      alert(t("orderSentSuccess"));
+      onClose();
+      setPage("messages");
+    } catch (e) {
+      alert(t("orderSendError") + (e?.message || t("pleaseTryAgain")));
+    } finally {
+      setSendingOrder(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-[#E0E0E0] flex items-center justify-between">
+          <h3 className="text-lg font-bold text-[#212121]">{t("orderArtwork")}</h3>
+          <button onClick={onClose} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
+        </div>
+        <div className="p-6">
+          <div style={{ marginBottom: 20 }}>
+            <p className="text-sm text-[#666666] mb-3">{t("orderDescription")}</p>
+            <div style={{ background: "#FEF3C7", border: "1px solid #FCD34D", borderRadius: 8, padding: "12px 14px" }}>
+              <div style={{ display: "flex", alignItems: "start", gap: 8 }}>
+                <ShieldAlert size={16} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <p className="text-xs text-[#92400E]">
+                  <strong>{t("notice")}</strong> {t("orderNotice")}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("fullName")}</label>
+              <input
+                type="text"
+                value={orderData.name}
+                onChange={e => setOrderData({ ...orderData, name: e.target.value })}
+                placeholder={t("placeholderFullName")}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("emailStar")}</label>
+              <input
+                type="email"
+                value={orderData.email}
+                onChange={e => setOrderData({ ...orderData, email: e.target.value })}
+                placeholder="nguyenvana@example.com"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("phoneNumber")}</label>
+              <input
+                type="tel"
+                value={orderData.phone}
+                onChange={e => setOrderData({ ...orderData, phone: e.target.value })}
+                placeholder="090xxx xxx xx"
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("company")}</label>
+              <input
+                type="text"
+                value={orderData.company}
+                onChange={e => setOrderData({ ...orderData, company: e.target.value })}
+                placeholder={t("placeholderCompany")}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+            <div>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("requirementsDescription")}</label>
+              <textarea
+                value={orderData.description}
+                onChange={e => setOrderData({ ...orderData, description: e.target.value })}
+                placeholder={t("orderDescriptionPlaceholder")}
+                rows={4}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", resize: "vertical", minHeight: 100, boxSizing: "border-box", color: BLACK }}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="p-6 border-t border-[#E0E0E0] flex gap-3">
+          <button onClick={onClose} disabled={sendingOrder} style={{ flex: 1, padding: "12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", color: BLACK, opacity: sendingOrder ? 0.6 : 1 }}>
+            {t("cancel")}
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={sendingOrder || !orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()}
+            style={{
+              flex: 1,
+              padding: "12px",
+              borderRadius: 8,
+              border: "none",
+              background: (sendingOrder || !orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()) ? GRAY_LIGHT : "#059669",
+              color: (sendingOrder || !orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()) ? MUTED : "#fff",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: (sendingOrder || !orderData.name.trim() || !orderData.email.trim() || !orderData.description.trim()) ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            {sendingOrder ? (
+              <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }}></span> {t("sending")}</>
+            ) : (
+              <>
+                <ShoppingCart size={16} /> {t("confirmOrder")}
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
+    const { user: authUser } = useAuth();
+  const [art, setArt] = useState({
+    title: t("loading"), subject: t("loading"), coverImageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
+    description: "", tags: [], toolsUsed: [], likeCount: 0, commentCount: 0,
+    createdAt: new Date().toISOString(), user: null, userId: null, isPublic: true,
+  });
+  const [loading, setLoading] = useState(true);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+  const [gradeScore, setGradeScore] = useState("");
+  const [gradeComment, setGradeComment] = useState("");
+  const [existingGrade, setExistingGrade] = useState(null);
+  const [savingGrade, setSavingGrade] = useState(false);
+  const ebookViewerRef = useRef(null);
+
+  const toggleEbookFullscreen = () => {
+    if (!document.fullscreenElement) {
+      ebookViewerRef.current?.requestFullscreen().catch(err => {
+        console.error("Error attempting to enable fullscreen:", err);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+  const [relatedArtworks, setRelatedArtworks] = useState([]);
+  const [liking, setLiking] = useState(false);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [showReport, setShowReport] = useState(false);
+  const [reportType, setReportType] = useState("");
+  const [reportDetail, setReportDetail] = useState("");
+  const [sendingReport, setSendingReport] = useState(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadFormat, setDownloadFormat] = useState("png");
+  const [downloading, setDownloading] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderData, setOrderData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    description: "",
+  });
+  const [sendingOrder, setSendingOrder] = useState(false);
+  const [navbarHeight, setNavbarHeight] = useState(0);
+  useEffect(() => { const h = (e) => { if (e.key === 'Escape') setShowFullscreen(false); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
+
+  useEffect(() => {
+    const measure = () => {
+      const header = document.querySelector('header');
+      if (header) setNavbarHeight(header.offsetHeight);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
+
+  const currentUserId = authUser?.id;
+  const currentUserRole = authUser?.role;
+  const canGrade = currentUserRole === "lecturer" || currentUserRole === "admin";
+
+  // Debug log
+  useEffect(() => {
+    console.log("👤 DetailPage - authUser:", authUser);
+    console.log("👤 DetailPage - currentUserId:", currentUserId);
+    console.log("👤 DetailPage - currentUserRole:", currentUserRole);
+  }, [authUser, currentUserId, currentUserRole]);
+
+  useEffect(() => {
+    if (!activeArtworkId) return;
+    setLoading(true);
+    setActiveImageIdx(0);
+      setLoadError(false);
+      api.artworks.incrementView(activeArtworkId).catch(() => {});
+      api.artworks.get(activeArtworkId).then(res => {
+      setArt({
+        ...res,
+        subject: res.subject || t("artwork"),
+        tags: res.tags || [],
+        toolsUsed: res.toolsUsed || [],
+        description: res.description || "",
+      });
+      setIsLiked(res.isLiked || false);
+      setLikeCount(res.likeCount || 0);
+      setComments(res.comments || []);
+      setExistingGrade(res.grade || null);
+      if (res.grade) {
+        setGradeScore(String(res.grade.score));
+        setGradeComment(res.grade.comment || "");
+      }
+      setLoading(false);
+    }).catch(() => { setLoadError(true); setLoading(false); });
+    api.artworks.related(activeArtworkId, 6).then(setRelatedArtworks).catch(() => {});
+  }, [activeArtworkId]);
+
+  const handleLike = async () => {
+    if (liking) return;
+    setLiking(true);
+    const wasLiked = isLiked;
+    setIsLiked(!wasLiked);
+    setLikeCount(prev => wasLiked ? Math.max(0, prev - 1) : prev + 1);
+    try {
+      if (wasLiked) {
+        await api.artworks.unlike(activeArtworkId);
+      } else {
+        await api.artworks.like(activeArtworkId);
+      }
+    } catch {
+      setIsLiked(wasLiked);
+      setLikeCount(prev => wasLiked ? prev + 1 : Math.max(0, prev - 1));
+    }
+    setLiking(false);
+  };
+
+  const handleSendComment = async () => {
+    if (!commentText.trim()) return;
+    if (!currentUserId) {
+      alert(t("loginToComment"));
+      return;
+    }
+    setSendingComment(true);
+    try {
+      const newComment = await api.artworks.comments.create(activeArtworkId, commentText.trim());
+      setComments(prev => [newComment, ...prev]);
+      setCommentText("");
+    } catch (e) {
+      alert(t("commentError") + (e?.message || t("pleaseTryAgain")));
+    }
+    setSendingComment(false);
+  };
+
+  const handleSaveGrade = async () => {
+    if (!gradeScore || !canGrade) return;
+    setSavingGrade(true);
+    try {
+      const result = await api.artworks.grade(activeArtworkId, {
+        score: parseFloat(gradeScore),
+        comment: gradeComment || null,
+      });
+      setExistingGrade(result);
+    } catch (e) {
+      alert(t("gradeError") + (e?.message || t("pleaseTryAgain")));
+    }
+    setSavingGrade(false);
+  };
+
+  const allImages = [art.coverImageUrl, ...(art.fileUrls || [])].filter(Boolean);
+  const allImagesDeduped = [...new Set(allImages)];
+  const activeImage = allImagesDeduped[activeImageIdx] || allImagesDeduped[0] || art.coverImageUrl;
+
+  const semesterMeta = {
+    HK1: { label: "Năm 1", icon: <Rocket size={12} /> },
+    HK2: { label: "Năm 2", icon: <BookOpen size={12} /> },
+    HK3: { label: "Năm 3", icon: <GraduationCap size={12} /> },
+  };
+
+  const timeAgo = (dateStr) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+if (mins < 1) return t("justNow");
+      if (mins < 60) return t("minutesAgo").replace("{mins}", mins);
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return t("hoursAgo").replace("{hours}", hours);
+    const days = Math.floor(hours / 24);
+    if (days < 7) return t("daysAgo").replace("{days}", days);
+    return new Date(dateStr).toLocaleDateString("vi-VN");
+  };
+
+  const drawWatermarkedImage = async (imgUrl, fmt = "png") => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imgUrl; });
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    const wmText = art.watermarkText || "UEF";
+    const wmSize = Math.max(Math.min(canvas.width, canvas.height) * 0.04, 14);
+    ctx.font = `bold ${wmSize}px sans-serif`;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "bottom";
+    const tw = ctx.measureText(wmText).width;
+    const pad = 20;
+    const bx = canvas.width - pad;
+    const by = canvas.height - pad;
+    const bh = wmSize * 1.8;
+    ctx.fillStyle = "rgba(0,0,0,0.6)";
+    ctx.beginPath();
+    ctx.roundRect(bx - tw - pad, by - bh, tw + pad, bh, 6);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.92)";
+    ctx.fillText(wmText, bx, by - bh / 2 + wmSize * 0.35);
+    const mime = fmt === "jpg" ? "image/jpeg" : "image/png";
+    const blob = await new Promise(res => canvas.toBlob(b => res(b), mime, fmt === "jpg" ? 0.92 : undefined));
+    return { blob, width: canvas.width, height: canvas.height };
+  };
+
+  const getPdfBlob = async ({ blob, width, height }) => {
+    const imgBytes = new Uint8Array(await blob.arrayBuffer());
+    const pw = 595, ph = 842;
+    const scale = Math.min(pw / width, ph / height) * 0.95;
+    const iw = Math.round(width * scale), ih = Math.round(height * scale);
+    const pdf = [
+      `%PDF-1.4\n`,
+      `1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n`,
+      `2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n`,
+      `3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${pw} ${ph}]/Contents 4 0 R/Resources<</XObject<</Im0 5 0 R>>>>>>endobj\n`,
+      `4 0 obj<</Length ${40 + iw + ih}>>stream\nq ${iw} 0 0 ${ih} ${(pw - iw) / 2} ${(ph - ih) / 2} cm /Im0 Do Q\nendstream\nendobj\n`,
+      `5 0 obj<</Type/XObject/Subtype/Image/Width ${width}/Height ${height}/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length ${imgBytes.length}>>stream\n`,
+    ];
+    const offsets = [0];
+    const enc = new TextEncoder();
+    const all = [];
+    for (let i = 0; i < pdf.length; i++) {
+      const b = enc.encode(pdf[i]);
+      all.push(b);
+      offsets.push(offsets[i] + b.length);
+    }
+    all.push(imgBytes);
+    offsets.push(offsets[offsets.length - 1] + imgBytes.length);
+    const last = enc.encode(`\nendstream\nendobj\nxref\n0 7\n0000000000 65535 f \n${offsets.slice(0, 6).map((o, i) => `${String(o).padStart(10, "0")} 00000 n`).join("\n")}\ntrailer<</Size 7/Root 1 0 R>>\nstartxref\n${offsets[6]}\n%%EOF\n`);
+    all.push(last);
+    return new Blob(all, { type: "application/pdf" });
+  };
+
+  const handleDownload = async (fmt) => {
+    setDownloading(true);
+    setShowDownloadModal(false);
+    try {
+      const images = allImagesDeduped.length > 0 ? allImagesDeduped : [art.coverImageUrl];
+      const isPdf = fmt === "pdf";
+      for (let i = 0; i < images.length; i++) {
+        const result = await drawWatermarkedImage(images[i], isPdf ? "jpg" : fmt);
+        const baseName = `${art.title || "artwork"}${images.length > 1 ? `_${i + 1}` : ""}`;
+        if (isPdf) {
+          const pdfBlob = await getPdfBlob(result);
+          saveAs(pdfBlob, `${baseName}.pdf`);
+        } else {
+          saveAs(result.blob, `${baseName}.${fmt}`);
+        }
+      }
+    } catch (e) { console.error("Download error:", e); alert(t("downloadError")); }
+    setDownloading(false);
+  };
+
+  const seasonNames = { HK1: "Mùa 1", HK2: "Mùa 2", HK3: "Mùa 3" };
+
+  if (loadError) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", gap: 16, minHeight: "100vh", background: "#fff" }}>
+        <div style={{ width: 64, height: 64, borderRadius: 16, background: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ShieldAlert size={28} color={CRIMSON} />
+        </div>
+        <h2 style={{ fontSize: 18, fontWeight: 700, color: BLACK, margin: 0 }}>{t("cannotLoadArtwork")}</h2>
+        <p style={{ fontSize: 14, color: MUTED, margin: 0, maxWidth: 400, textAlign: "center" }}>{t("artworkNotFound")}</p>
+        <button onClick={() => setPage("gallery")} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>{t("backToGallery")}</button>
+      </div>
+    );
+  }
+
+  if (loading) return <GlobalLoading />;
+

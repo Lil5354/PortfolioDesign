@@ -208,6 +208,7 @@ model Message {
   content       String
   isRead        Boolean  @default(false) @map("is_read")
   isEmailed     Boolean  @default(false) @map("is_emailed")
+  isArchived    Boolean  @default(false) @map("is_archived")
   createdAt     DateTime @default(now()) @map("created_at")
 
   recipient User @relation(fields: [recipientId], references: [id])

@@ -27,12 +27,12 @@ export async function PATCH(
 
     await prisma.message.update({
       where: { id: params.id },
-      data: { isArchived: true },
+      data: { isArchived: false },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('PATCH /api/messages/[id]/archive error:', error);
+    console.error('PATCH /api/messages/[id]/unarchive error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

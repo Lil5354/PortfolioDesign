@@ -1,6 +1,6 @@
 import { useSiteContent } from "./lib/site-content";
 import { useI18n } from "./lib/i18n";
-import { ArrowRight, Image as ImageIcon, User, Star, Monitor, Heart, Users, Mail, Phone, MapPin, Globe } from "lucide-react";
+import { ArrowRight, Image as ImageIcon, User, Star, Monitor, Heart, Users, Mail, Phone, MapPin, Globe, Eye } from "lucide-react";
 
 export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
   const { t, currentLang, setLang: setLanguage } = useI18n();
@@ -18,10 +18,10 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
   const footerLinks = getContentItems('footer', 'footerLinks');
 
   const artworks = [
-    { id: 1, img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", title: "Kỷ niệm UEF", student: "Nguyễn Lê Minh Anh", likes: 142 },
-    { id: 2, img: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg", title: "Poster Design", student: "Trần Bảo Long", likes: 89 },
-    { id: 3, img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80", title: "Typography", student: "Lê Thị Hương", likes: 203 },
-    { id: 4, img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80", title: "Packaging", student: "Phạm Quốc Việt", likes: 56 },
+    { id: 1, img: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80", title: "Kỷ niệm UEF", student: "Nguyễn Lê Minh Anh", likes: 142, views: 820 },
+    { id: 2, img: "https://i.pinimg.com/1200x/64/52/dc/6452dc484427b34cc0be14c3d80c948a.jpg", title: "Poster Design", student: "Trần Bảo Long", likes: 89, views: 345 },
+    { id: 3, img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80", title: "Typography", student: "Lê Thị Hương", likes: 203, views: 1204 },
+    { id: 4, img: "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=800&q=80", title: "Packaging", student: "Phạm Quốc Việt", likes: 56, views: 124 },
   ];
 
   return (
@@ -160,17 +160,20 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
               {t("viewFullGallery")} &rsaquo;
             </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {artworks.map((work, idx) => (
-              <div key={work.id} className="group cursor-pointer">
-                <div className={`rounded-xl overflow-hidden mb-4 relative ${idx % 2 === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
-                  <img src={work.img} alt={work.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  {idx === 0 && <div className="absolute top-3 left-3 bg-[#1a4ba8] text-white text-[10px] font-bold px-2 py-1 rounded">{t("highlighted")}</div>}
+              <div key={work.id} className="group cursor-pointer transition-transform hover:-translate-y-1">
+                <div className="rounded overflow-hidden mb-2 relative aspect-[4/3] bg-gray-100">
+                  <img src={work.img} alt={work.title} className="w-full h-full object-cover" />
+                  {idx === 0 && <div className="absolute top-2 left-2 bg-[#1a4ba8] text-white text-[10px] font-bold px-2 py-1 rounded">{t("highlighted")}</div>}
                 </div>
-                <h4 className="font-bold text-[15px] mb-1">{work.title}</h4>
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{work.student}</span>
-                  <span className="flex items-center gap-1"><Heart size={12} /> {work.likes}</span>
+                <h4 className="font-bold text-[14px] mb-0.5 text-[#212121] truncate">{work.title}</h4>
+                <div className="flex items-center justify-between">
+                  <span className="text-[13px] text-gray-500 truncate flex-1">{work.student}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="flex items-center gap-1 text-[12px] text-gray-500"><Eye size={13} className="text-gray-400" /> {work.views}</span>
+                    <span className="flex items-center gap-1 text-[12px] text-gray-500"><Heart size={12} className="text-gray-300" /> {work.likes}</span>
+                  </div>
                 </div>
               </div>
             ))}

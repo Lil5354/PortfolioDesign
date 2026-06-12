@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UEF Đăng nhập</title>
+    <!-- Nạp Tailwind CSS qua CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Thêm font Roboto để giống với giao diện phổ biến -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Nạp FontAwesome để dùng icon con mắt -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            /* Đặt hình nền mờ giống trong ảnh, ở đây dùng tạm một ảnh mờ tương tự */
+            background-image: url('https://images.unsplash.com/photo-1519501025264-65ba15a82390?q=80&w=2064&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Lớp phủ gradient đen tối để làm nổi bật form đăng nhập */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0) 100%);
+            z-index: 0;
+        }
+
+        /* Tinh chỉnh input và button */
+        .input-field {
+            background-color: #eef2fb; /* Màu nền xanh nhạt của input */
+            color: #333;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(43, 108, 176, 0.3); /* Viền khi focus */
+        }
+
+        .btn-primary {
+            background-color: #2b6cb0; /* Màu xanh đậm của nút đăng nhập */
+        }
+        
+        .btn-primary:hover {
+            background-color: #2c5282;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Lớp phủ nền mờ -->
+    <div class="overlay"></div>
+
+    <div class="relative z-10 flex-grow flex items-center justify-center p-4">
+        <!-- Container chính của form -->
+        <div class="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
+            
+            <div class="flex justify-center items-center space-x-6 mb-6">
+                <!-- Logo UEF (Dùng ảnh thực tế từ web UEF nếu có, ở đây dùng placeholder sát nghĩa) -->
+                <img src="https://www.uef.edu.vn/build/imgs/logo.png" alt="UEF Logo" class="h-16 object-contain">
+                <!-- Đường chia nhỏ giữa 2 logo -->
+                <div class="h-10 border-l border-gray-300"></div>
+                <!-- Logo QS Stars -->
+                <img src="https://www.uef.edu.vn/build/imgs/logo-qs.png" alt="QS Stars Logo" class="h-12 object-contain">
+            </div>
+
+            <h2 class="text-center text-xl font-bold text-[#2b6cb0] mb-4">UEF ID</h2>
+
+            <div class="bg-[#eef2fb] text-[#2b6cb0] text-sm text-center p-3 rounded mb-6">
+                Đăng nhập vào tài khoản UEF ID của bạn để truy cập<br>
+                <span class="font-bold">UEF LMS</span>
+            </div>
+
+            <form action="#" method="POST">
+                <!-- Trường Tên đăng nhập / UEF ID -->
+                <div class="mb-4">
+                    <input type="text" value="225053167" class="input-field w-full px-4 py-3 rounded border-none text-sm placeholder-gray-500" placeholder="UEF ID">
+                </div>
+
+                <!-- Trường Mật khẩu -->
+                <div class="mb-4 relative">
+                    <input type="password" value="........" id="password" class="input-field w-full px-4 py-3 rounded border-none text-sm placeholder-gray-500" placeholder="Mật khẩu">
+                    <!-- Icon ẩn/hiện mật khẩu -->
+                    <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700">
+                        <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between mb-6 text-sm">
+                    <label class="flex items-center text-gray-600 cursor-pointer">
+                        <input type="checkbox" class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span>Ghi nhớ tôi</span>
+                    </label>
+                    <a href="#" class="text-green-600 hover:underline">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="btn-primary w-full text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline transition duration-150">
+                    ĐĂNG NHẬP
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <div class="relative flex items-center justify-center mb-4">
+                    <div class="border-t border-gray-300 w-full absolute"></div>
+                    <span class="bg-white px-3 text-xs text-gray-500 relative z-10">Hoặc đăng nhập bằng</span>
+                </div>
+
+                <button class="w-full flex items-center justify-center bg-white border border-gray-300 rounded py-2 hover:bg-gray-50 transition duration-150">
+                    <span class="text-gray-600 text-sm font-medium mr-2">Google</span>
+                    <!-- Biểu tượng Google đơn giản -->
+                    <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)"><path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/><path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.369 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/><path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/><path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.109 -17.884 43.989 -14.754 43.989 Z"/></g></svg>
+                </button>
+            </div>
+
+            <div class="mt-4 bg-gray-100 text-center py-3 rounded text-sm text-gray-600">
+                Nếu bạn cần trợ giúp, truy cập <a href="#" class="text-blue-600 hover:underline">help.uef.edu.vn</a>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="relative z-10 pb-4 flex justify-center">
+        <button class="bg-white bg-opacity-90 border border-gray-300 text-gray-700 py-1 px-4 rounded shadow text-sm flex items-center hover:bg-gray-50">
+            Tiếng Việt
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+    </div>
+
+    <script>
+        function togglePassword() {
+            var passwordInput = document.getElementById("password");
+            var eyeIcon = document.getElementById("eyeIcon");
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                eyeIcon.classList.remove("fa-eye");
+                eyeIcon.classList.add("fa-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                eyeIcon.classList.remove("fa-eye-slash");
+                eyeIcon.classList.add("fa-eye");
+            }
+        }
+    </script>
+</body>
+</html>
