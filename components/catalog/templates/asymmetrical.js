@@ -225,6 +225,7 @@ export function renderAsymmetrical(payload, artworks) {
     grid-template-columns: 1fr 1fr;
     gap: 80px;
     align-items: center;
+    padding: 80px 60px;
   }
 
   .page-number {

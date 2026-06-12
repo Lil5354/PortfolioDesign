@@ -5,7 +5,7 @@ export function renderClassic(payload, artworks) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FORMA — ${payload.journalSubtitle} 2025 · Classic</title>
-<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --ivory: ${payload.backgroundColor};
@@ -287,6 +287,7 @@ export function renderClassic(payload, artworks) {
     grid-template-columns: 1fr 3px 1fr;
     gap: 0 60px;
     align-items: center;
+    padding: 60px 50px;
   }
 
   .rule-vertical {
@@ -347,6 +348,7 @@ export function renderClassic(payload, artworks) {
   /* ===================== TABLE OF CONTENTS ===================== */
   .page-toc {
     background: var(--parchment);
+    padding: 60px 50px;
   }
 
   .toc-header {
@@ -417,6 +419,7 @@ export function renderClassic(payload, artworks) {
   /* ===================== BODY (WORKS) ===================== */
   .page-body {
     background: var(--white);
+    padding: 60px 50px;
   }
 
   .works-grid {
@@ -488,6 +491,7 @@ export function renderClassic(payload, artworks) {
     align-items: center;
     justify-content: center;
     text-align: center;
+    padding: 60px 50px;
   }
 
   .colophon-ornament { margin-bottom: 32px; }

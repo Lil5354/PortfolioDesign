@@ -305,10 +305,6 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     setExporting(true);
     const doc = iframeRef.current.contentWindow.document;
     
-    // Đếm số lượng trang/section để tính tổng chiều cao
-    const sections = doc.querySelectorAll('.page, .cover, .page-foreword, .page-toc, .page-closing, .page-spread, .page-body');
-    const pageCount = Math.max(1, sections.length);
-    
     // Tính toán kích thước vật lý (mm) tuỳ theo khổ in
     let sectionWidth = "210mm";
     let sectionHeight = "297mm";
@@ -326,28 +322,26 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       }
     }
     
-    // Tổng chiều cao cho toàn bộ poster
-    const totalHeight = payload.layoutMode === 'custom_canvas' ? sectionHeight : `calc(${sectionHeight} * ${pageCount})`;
-    
     let html = "<!DOCTYPE html><html>" + doc.documentElement.innerHTML + "</html>";
+    
+    // Replace media queries to emulate print layout accurately in the popup window
+    html = html.replace(/@media\s+screen/g, "@media nothing");
+    html = html.replace(/@media\s+print/g, "@media all");
+    
     const printCSS = `
       <style>
-        @media print {
-          @page { 
-            size: ${sectionWidth} ${totalHeight}; 
-            margin: 0; 
-          }
+        @media all {
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-          .page, .cover, .page-foreword, .page-toc, .page-closing, .page-spread, .page-body {
+          .page, .cover, .page-foreword, .page-toc, .page-closing, .page-spread, .page-body, .page-colophon, .page-works {
             width: ${sectionWidth} !important;
-            height: ${sectionHeight} !important;
             min-height: ${sectionHeight} !important;
-            max-height: ${sectionHeight} !important;
+            height: auto !important;
+            max-height: none !important;
             page-break-after: avoid !important;
             break-after: avoid !important;
             page-break-before: avoid !important;
             break-before: avoid !important;
-            overflow: hidden !important;
+            overflow: visible !important;
           }
           .page-spread > div, .work-card, .article-card, .highlight-box, .stat-item, .work-block, [style*="border:1px solid"] {
             page-break-inside: avoid !important;
@@ -358,15 +352,47 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       </style>
     `;
     html = html.replace('</head>', printCSS + '</head>');
+    
     const printWin = window.open('', '_blank');
     if (printWin) {
       printWin.document.write(html);
       printWin.document.close();
       printWin.onload = () => {
-        setTimeout(() => {
-          printWin.print();
-          setExporting(false);
-        }, 800);
+        // Force width to compute accurate scrollHeight for print
+        printWin.document.body.style.width = sectionWidth;
+        printWin.document.body.style.position = 'absolute';
+        printWin.document.body.style.left = '0';
+        printWin.document.body.style.top = '0';
+        
+        // Ensure all images are fully loaded before measuring height
+        const images = Array.from(printWin.document.querySelectorAll('img'));
+        const imagePromises = images.map(img => {
+          if (img.complete) return Promise.resolve();
+          return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        });
+        
+        Promise.all(imagePromises).then(() => {
+          setTimeout(() => {
+            let realHeight = printWin.document.documentElement.scrollHeight;
+            realHeight += 10; // add buffer to prevent unwanted page breaks from rounding
+            
+            const pageStyle = printWin.document.createElement('style');
+            pageStyle.innerHTML = `@media all { @page { size: ${sectionWidth} ${realHeight}px; margin: 0; } }`;
+            printWin.document.head.appendChild(pageStyle);
+            
+            // Reset styles
+            printWin.document.body.style.position = '';
+            printWin.document.body.style.left = '';
+            printWin.document.body.style.top = '';
+            printWin.document.body.style.width = '';
+            
+            printWin.print();
+            setExporting(false);
+          }, 800); // Allow browser to layout after images load
+        });
       };
     } else {
       alert("Trình duyệt đã chặn popup.");
@@ -382,8 +408,8 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       ];
     } else if (payload.layoutTheme === 'classic') {
       return [
-        { name: "Forma Sepia", bg: "#f8f4ec", text: "#1a1410", primary: "#b8963e", secondary: "#8b3a1e", head: "IM Fell English", body: "Libre Baskerville" },
-        { name: "Midnight Gold", bg: "#1a1410", text: "#f8f4ec", primary: "#d4af6a", secondary: "#b8963e", head: "IM Fell English", body: "Libre Baskerville" }
+        { name: "Forma Sepia", bg: "#f8f4ec", text: "#1a1410", primary: "#b8963e", secondary: "#8b3a1e", head: "Playfair Display", body: "Lora" },
+        { name: "Midnight Gold", bg: "#1a1410", text: "#f8f4ec", primary: "#d4af6a", secondary: "#b8963e", head: "Playfair Display", body: "Lora" }
       ];
     } else {
       return [
@@ -564,15 +590,15 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
                     <label className="block text-xs font-bold text-[#666] mb-1">Heading Font</label>
                     <select value={payload.headingFont} onChange={e => update({ headingFont: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-xl text-sm outline-none">
                       <option value="Barlow Condensed">Barlow Condensed (Modern)</option>
-                      <option value="IM Fell English">IM Fell English (Classic)</option>
-                      <option value="Playfair Display">Playfair Display (Editorial)</option>
+                      <option value="Playfair Display">Playfair Display (Editorial/Classic)</option>
+                      <option value="Lora">Lora (Classic)</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#666] mb-1">Body Font</label>
                     <select value={payload.bodyFont} onChange={e => update({ bodyFont: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-xl text-sm outline-none">
                       <option value="Barlow">Barlow (Sans-serif)</option>
-                      <option value="Libre Baskerville">Libre Baskerville (Serif)</option>
+                      <option value="Lora">Lora (Serif)</option>
                       <option value="Cormorant Garamond">Cormorant Garamond</option>
                     </select>
                   </div>
