@@ -194,14 +194,36 @@ export function renderClassic(payload, artworks) {
     to   { opacity: 1; }
   }
 
-  /* ===================== PAGES ===================== */
-  .page {
-    width: 100%;
-    min-height: 100vh;
-    padding: 80px 80px;
-    position: relative;
-    overflow: hidden;
-    page-break-after: always;
+  /* =================== PAGES =================== */
+  @media screen {
+    body {
+      background: #888 !important;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      padding: 2rem 0;
+    }
+    .page {
+      width: ${payload.pdfOrientation === 'landscape' ? '297mm' : '210mm'} !important;
+      height: ${payload.pdfOrientation === 'landscape' ? '210mm' : '297mm'} !important;
+      min-height: unset !important;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      background-color: var(--bg);
+    }
+  }
+  @media print {
+    .page {
+      width: 100%;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+      background-color: var(--bg);
+    }
   }
 
   .page-number {

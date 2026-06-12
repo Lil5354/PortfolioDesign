@@ -1,9 +1,13 @@
-
 import { renderClassic } from './classic.js';
 import { renderModern } from './modern.js';
 import { renderAsymmetrical } from './asymmetrical.js';
+import { renderCustomCanvas } from './custom_canvas.js';
 
 export function generatePreviewHTML(payload, sortedEnabled) {
+  if (payload.layoutMode === 'custom_canvas') {
+    return renderCustomCanvas(payload, sortedEnabled);
+  }
+
   switch (payload.layoutTheme) {
     case 'classic': return renderClassic(payload, sortedEnabled);
     case 'modern': return renderModern(payload, sortedEnabled);

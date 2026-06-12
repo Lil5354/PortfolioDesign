@@ -13,7 +13,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { 
   X, ChevronLeft, ChevronRight, Check, Image as ImageIcon, Type, 
   AlignLeft, Layout, Eye, FileDown, Bold, Italic, List, GripVertical, 
-  Palette, Settings, FileText, Smartphone, Laptop
+  Palette, Settings, FileText, Smartphone, Laptop, Upload, ZoomIn, ZoomOut, Maximize
 } from "lucide-react";
 
 import { generatePreviewHTML, generatePrintReadyHTML } from "./templates/index.js";
@@ -63,14 +63,6 @@ function SortableSection({ id, item, isSelected, onToggle }) {
   );
 }
 
-const STEPS = [
-  { key: "basic", label: "Thông tin", icon: AlignLeft },
-  { key: "layout", label: "Bố cục", icon: Layout },
-  { key: "design", label: "Visual", icon: Palette },
-  { key: "structure", label: "Cấu trúc", icon: FileText },
-  { key: "preview", label: "Preview", icon: Eye },
-];
-
 const InputRow = ({ label, value, onChange, placeholder }) => (
   <div className="mb-4">
     {label && <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">{label}</label>}
@@ -78,9 +70,100 @@ const InputRow = ({ label, value, onChange, placeholder }) => (
   </div>
 );
 
+const getFallbackImage = (url) => (url && url.trim() !== "" && url !== "undefined") ? url : "https://via.placeholder.com/150?text=No+Image";
+
+function CanvasItem({ item, art, scale = 1, isSelected, onClick, onUpdate, onRemove }) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+
+  const handlePointerDown = (e, action, dir = '') => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (action === 'drag') setIsDragging(true);
+    if (action === 'resize') setIsResizing(true);
+    
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startLeft = parseFloat(item.left);
+    const startTop = parseFloat(item.top);
+    const startWidth = parseFloat(item.width);
+    const startHeight = parseFloat(item.height);
+
+    const onPointerMove = (eMove) => {
+      const dx = (eMove.clientX - startX) / scale;
+      const dy = (eMove.clientY - startY) / scale;
+      
+      if (action === 'drag') {
+        onUpdate({ ...item, left: `${startLeft + dx}px`, top: `${startTop + dy}px` });
+      } else if (action === 'resize') {
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        let newLeft = startLeft;
+        let newTop = startTop;
+
+        if (dir.includes('e')) newWidth += dx;
+        if (dir.includes('s')) newHeight += dy;
+        if (dir.includes('w')) { newWidth -= dx; newLeft += dx; }
+        if (dir.includes('n')) { newHeight -= dy; newTop += dy; }
+
+        onUpdate({ 
+          ...item, 
+          width: `${Math.max(20, newWidth)}px`, 
+          height: `${Math.max(20, newHeight)}px`, 
+          left: `${newLeft}px`, 
+          top: `${newTop}px` 
+        });
+      }
+    };
+
+    const onPointerUp = () => {
+      setIsDragging(false);
+      setIsResizing(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  };
+
+  return (
+    <div 
+      onPointerDown={(e) => { onClick(); handlePointerDown(e, 'drag'); }}
+      className={`absolute border-2 ${isSelected ? 'border-[#1a4ba8]' : 'border-transparent hover:border-gray-300'} group flex items-center justify-center`}
+      style={{ 
+        left: item.left, top: item.top, width: item.width, height: item.height, zIndex: item.zIndex, cursor: isDragging ? 'grabbing' : 'grab',
+        color: item.color || '#000', fontFamily: item.fontFamily || 'Arial', fontSize: item.fontSize || '16px', fontWeight: item.fontWeight || 'normal'
+      }}
+    >
+      {item.type === 'text' ? (
+        <div style={{width: '100%', height: '100%', outline: 'none', overflow: 'hidden'}}>{item.content}</div>
+      ) : (
+        <img src={getFallbackImage(art?.coverImageUrl)} className="w-full h-full object-contain pointer-events-none" alt="" />
+      )}
+      <button onClick={(e) => { e.stopPropagation(); onRemove(item.id); }} className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 z-10"><X size={12} /></button>
+      
+      {['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'].map(dir => (
+        <div 
+          key={dir}
+          onPointerDown={(e) => handlePointerDown(e, 'resize', dir)}
+          className="absolute w-3 h-3 bg-white border border-[#1a4ba8] opacity-0 group-hover:opacity-100"
+          style={{
+            top: dir.includes('n') ? -6 : dir.includes('s') ? 'calc(100% - 6px)' : 'calc(50% - 6px)',
+            left: dir.includes('w') ? -6 : dir.includes('e') ? 'calc(100% - 6px)' : 'calc(50% - 6px)',
+            cursor: `${dir}-resize`,
+            zIndex: 10
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function CatalogBuilderWizard({ collection, onClose }) {
   const [step, setStep] = useState(0);
   const [exporting, setExporting] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState(null);
   const iframeRef = useRef(null);
 
   const [payload, setPayload] = useState({
@@ -110,10 +193,10 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
 
     // 3. Design System
     colorMode: "dark",
-    primaryColor: "#ff3c00", // Accent Modern
+    primaryColor: "#ff3c00",
     secondaryColor: "#00c2a8", 
-    backgroundColor: "#080808", // Modern dark bg
-    textColor: "#f2f2f0", // Modern white text
+    backgroundColor: "#080808",
+    textColor: "#f2f2f0",
     headingFont: "Barlow Condensed",
     bodyFont: "Barlow",
     monoFont: "IBM Plex Mono",
@@ -130,13 +213,20 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     pdfOrientation: "portrait",
     pdfResolution: "print_300dpi",
     includeBleed: true,
+    
+    // 6. Custom Canvas
+    layoutMode: "template", // 'template' | 'custom_canvas'
+    customBackgroundUrl: "",
+    canvasWidth: 0,
+    canvasHeight: 0,
+    canvasItems: [],
+    canvasZoom: 100,
   });
 
   const update = useCallback((patch) => setPayload(p => ({ ...p, ...patch })), []);
-  const updateNested = useCallback((key, field, val) => setPayload(p => ({ ...p, [key]: { ...p[key], [field]: val } })), []);
 
   const items = (collection?.items || []).map(it => ({
-    id: it.artworkId,
+    id: it.artworkId || Math.random().toString(), // fallback in case of no ID
     title: it.artwork?.title || "Untitled",
     student: it.artwork?.user?.fullName || "Student",
     coverImageUrl: it.artwork?.coverImageUrl || "",
@@ -145,8 +235,10 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     award: ""
   }));
 
-  const enabledArtworks = items.filter(it => payload.enabledArtworkIds.includes(it.id));
   const sortedEnabled = payload.artworkOrderIds.map(id => items.find(it => it.id === id)).filter(Boolean).filter(it => payload.enabledArtworkIds.includes(it.id));
+
+  // In Custom Canvas mode, we export ALL items added to the canvas regardless of "enabledArtworkIds"
+  const canvasArtworks = payload.layoutMode === 'custom_canvas' ? items : sortedEnabled;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
   const handleDragEnd = (event) => {
@@ -160,14 +252,33 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     update({ enabledArtworkIds: payload.enabledArtworkIds.includes(id) ? payload.enabledArtworkIds.filter(x => x !== id) : [...payload.enabledArtworkIds, id] });
   };
 
+  const getSteps = () => {
+    if (payload.layoutMode === 'custom_canvas') {
+      return [
+        { key: "basic", label: "Thông tin & Chế độ", icon: AlignLeft },
+        { key: "canvas", label: "Thiết kế Canvas", icon: Layout },
+        { key: "preview", label: "Preview & Xuất PDF", icon: Eye },
+      ];
+    }
+    return [
+      { key: "basic", label: "Thông tin", icon: AlignLeft },
+      { key: "layout", label: "Bố cục", icon: Layout },
+      { key: "design", label: "Visual", icon: Palette },
+      { key: "structure", label: "Cấu trúc", icon: FileText },
+      { key: "preview", label: "Preview & Xuất PDF", icon: Eye },
+    ];
+  };
+
+  const currentSteps = getSteps();
+
   useEffect(() => {
-    if (step === 4 && iframeRef.current) {
+    const currentStepKey = currentSteps[step]?.key;
+    if (currentStepKey === 'preview' && iframeRef.current) {
       const doc = iframeRef.current.contentWindow.document;
       doc.open();
       doc.write(generatePreviewHTML(payload, sortedEnabled));
       doc.close();
 
-      // Inject interactive editing script
       const script = doc.createElement('script');
       script.innerHTML = `
         document.addEventListener('dblclick', function(e) {
@@ -188,18 +299,19 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       `;
       doc.body.appendChild(script);
     }
-  }, [step, payload, sortedEnabled]);
+  }, [step, payload, sortedEnabled, currentSteps]);
 
   const handleExport = () => {
     setExporting(true);
-    
     const doc = iframeRef.current.contentWindow.document;
     let html = "<!DOCTYPE html><html>" + doc.documentElement.innerHTML + "</html>";
-    
     const printCSS = `
       <style>
         @media print {
-          @page { size: ${payload.pdfSize === 'A4' ? 'A4 portrait' : '210mm 210mm'}; margin: 0; }
+          @page { 
+            size: ${payload.layoutMode === 'custom_canvas' ? `${payload.canvasWidth || 1123}px ${payload.canvasHeight || 794}px` : `${payload.pdfSize === 'A4' ? 'A4' : '210mm 210mm'} ${payload.pdfOrientation === 'landscape' ? 'landscape' : 'portrait'}`}; 
+            margin: 0; 
+          }
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           .page, .cover, .page-foreword, .page-toc, .page-closing, .page-spread, .page-body {
             page-break-after: always !important;
@@ -214,7 +326,6 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       </style>
     `;
     html = html.replace('</head>', printCSS + '</head>');
-
     const printWin = window.open('', '_blank');
     if (printWin) {
       printWin.document.write(html);
@@ -223,15 +334,14 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
         setTimeout(() => {
           printWin.print();
           setExporting(false);
-        }, 800); // wait for fonts to load
+        }, 800);
       };
     } else {
-      alert("Trình duyệt đã chặn popup. Vui lòng cho phép popup để kết xuất PDF.");
+      alert("Trình duyệt đã chặn popup.");
       setExporting(false);
     }
   };
 
-  // Color presets based on theme
   const getThemePresets = () => {
     if (payload.layoutTheme === 'modern') {
       return [
@@ -244,7 +354,6 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
         { name: "Midnight Gold", bg: "#1a1410", text: "#f8f4ec", primary: "#d4af6a", secondary: "#b8963e", head: "IM Fell English", body: "Libre Baskerville" }
       ];
     } else {
-      // asymmetrical
       return [
         { name: "Onyx Gold", bg: "#0a0a0a", text: "#f5f0e8", primary: "#c9a84c", secondary: "#8b1a1a", head: "Playfair Display", body: "Cormorant Garamond" },
         { name: "Ivory Minimal", bg: "#f5f0e8", text: "#2c3e50", primary: "#8b1a1a", secondary: "#c9a84c", head: "Playfair Display", body: "Cormorant Garamond" }
@@ -253,39 +362,86 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
   };
 
   const renderStep = () => {
-    switch (step) {
-      case 0:
+    const stepKey = currentSteps[step]?.key;
+    switch (stepKey) {
+      case "basic":
         return (
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div>
-              <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><AlignLeft className="text-[#1a4ba8]" /> Tiêu đề & Thông tin bìa</h3>
+          <div className="w-full min-w-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="w-full min-w-0">
+              <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><AlignLeft className="text-[#1a4ba8]" /> Tiêu đề & Chế độ thiết kế</h3>
               <div className="grid grid-cols-2 gap-x-6">
                 <InputRow label="Tên tập san" value={payload.journalTitle} onChange={v => update({ journalTitle: v })} />
                 <InputRow label="Phụ đề" value={payload.journalSubtitle} onChange={v => update({ journalSubtitle: v })} />
-                <InputRow label="Số xuất bản (Edition)" value={payload.editionNumber} onChange={v => update({ editionNumber: v })} />
-                <InputRow label="Năm học" value={payload.academicYear} onChange={v => update({ academicYear: v })} />
-                <InputRow label="Tên trường" value={payload.schoolName} onChange={v => update({ schoolName: v })} />
-                <InputRow label="Khoa / Bộ môn" value={payload.departmentName} onChange={v => update({ departmentName: v })} />
               </div>
             </div>
+
             <hr className="border-[#E0E0E0]" />
-            <div>
-              <h3 className="text-xl font-bold text-[#212121] mb-6">Nội dung</h3>
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Tên gọi thông điệp kết</label>
-                  <InputRow label="" value={payload.closingText} onChange={v => update({ closingText: v })} />
+
+            <div className="w-full min-w-0">
+              <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><Layout className="text-[#1a4ba8]" /> Chế độ thiết kế</h3>
+              <div className="flex gap-4 mb-6">
+                <button onClick={() => update({ layoutMode: 'template' })} className={`flex-1 min-w-0 p-4 rounded-xl border-2 text-center transition-all ${payload.layoutMode === 'template' ? 'border-[#1a4ba8] bg-[#eef4ff]' : 'border-[#E0E0E0] hover:border-[#a8bce0] bg-white'}`}>
+                  <Layout className="mx-auto mb-2 text-[#1a4ba8]" />
+                  <div className="font-bold text-[#212121] truncate">Dùng Layout Có Sẵn</div>
+                  <div className="text-xs text-[#666] mt-1 break-words">Các mẫu tự động dàn trang</div>
+                </button>
+                <button onClick={() => update({ layoutMode: 'custom_canvas' })} className={`flex-1 min-w-0 p-4 rounded-xl border-2 text-center transition-all ${payload.layoutMode === 'custom_canvas' ? 'border-[#1a4ba8] bg-[#eef4ff]' : 'border-[#E0E0E0] hover:border-[#a8bce0] bg-white'}`}>
+                  <Upload className="mx-auto mb-2 text-[#1a4ba8]" />
+                  <div className="font-bold text-[#212121] truncate">Tự Tải Nền Lên</div>
+                  <div className="text-xs text-[#666] mt-1 break-words">Trở thành Canvas Editor tự do</div>
+                </button>
+              </div>
+            </div>
+
+            {payload.layoutMode === "template" && (
+              <div className="mb-4 bg-[#F8F8F8] p-6 rounded-xl border border-[#E0E0E0]">
+                <label className="block text-xs font-bold text-[#666] mb-1.5 uppercase tracking-wide">Khổ Tập San (Hướng in)</label>
+                <select value={payload.pdfOrientation} onChange={e => update({ pdfOrientation: e.target.value })} className="w-full px-4 py-2.5 border border-[#E0E0E0] rounded-xl text-sm outline-none bg-white">
+                  <option value="portrait">Khổ Dọc (Portrait)</option>
+                  <option value="landscape">Khổ Ngang (Landscape)</option>
+                </select>
+                <p className="text-xs text-[#666] mt-2">Toàn bộ template sẽ tự động tối ưu để hiển thị vừa vặn với khổ in bạn chọn.</p>
+              </div>
+            )}
+
+            {payload.layoutMode === 'custom_canvas' && (
+              <div className="mb-4 bg-[#F8F8F8] p-6 rounded-xl border border-[#E0E0E0] w-full min-w-0 box-border">
+                <h3 className="text-xl font-bold text-[#212121] mb-4">Tải lên hình nền (Background)</h3>
+                <p className="text-sm text-[#666] mb-4 break-words">Tải lên một hình ảnh sẽ làm nền cho toàn bộ trang poster. Kích thước bản in PDF sẽ tự động vừa vặn 100% với kích thước ảnh nền này.</p>
+                <div className="border-2 border-dashed border-[#E0E0E0] rounded-xl p-8 text-center bg-white hover:bg-gray-50 transition-colors w-full min-w-0 overflow-hidden box-border">
+                  {payload.customBackgroundUrl ? (
+                    <div className="space-y-4 w-full flex flex-col items-center">
+                      <img src={payload.customBackgroundUrl} alt="Background" className="max-h-64 max-w-full object-contain mx-auto shadow-md rounded-lg" />
+                      <div className="text-xs font-bold text-[#666]">Kích thước nhận diện: {payload.canvasWidth} x {payload.canvasHeight} px</div>
+                      <button onClick={() => update({ customBackgroundUrl: '' })} className="px-4 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm font-semibold text-red-500 hover:bg-red-50">Xóa hình nền</button>
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center"><Upload size={24} /></div>
+                      <div><span className="font-bold text-[#1a4ba8]">Nhấn để tải lên</span> ảnh nền từ máy tính</div>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        if (e.target.files[0]) {
+                          const url = URL.createObjectURL(e.target.files[0]);
+                          const img = new Image();
+                          img.onload = () => {
+                            update({ customBackgroundUrl: url, canvasWidth: img.width, canvasHeight: img.height });
+                          };
+                          img.src = url;
+                        }
+                      }} />
+                    </label>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
         );
 
-      case 1:
+      case "layout":
         return (
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div>
-              <h3 className="text-xl font-bold text-[#212121] mb-6 flex items-center gap-2"><Layout className="text-[#1a4ba8]" /> Bố cục tổng thể (Theme)</h3>
+          <div className="w-full min-w-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="w-full min-w-0">
+              <h3 className="text-xl font-bold text-[#212121] mb-6">Bố cục tổng thể (Theme)</h3>
               <div className="grid grid-cols-3 gap-4">
                 {[
                   { id: "classic", label: "Classic", desc: "Cổ điển, đối xứng, sang trọng." },
@@ -294,15 +450,8 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
                 ].map(t => (
                   <button key={t.id} onClick={() => {
                       update({ layoutTheme: t.id });
-                      // auto apply first preset of this theme
                       const presets = getThemePresets();
-                      if(t.id === 'classic') {
-                        update({ backgroundColor: presets[0].bg, textColor: presets[0].text, primaryColor: presets[0].primary, secondaryColor: presets[0].secondary, headingFont: presets[0].head, bodyFont: presets[0].body });
-                      } else if (t.id === 'modern') {
-                        update({ backgroundColor: presets[0].bg, textColor: presets[0].text, primaryColor: presets[0].primary, secondaryColor: presets[0].secondary, headingFont: presets[0].head, bodyFont: presets[0].body });
-                      } else {
-                        update({ backgroundColor: presets[0].bg, textColor: presets[0].text, primaryColor: presets[0].primary, secondaryColor: presets[0].secondary, headingFont: presets[0].head, bodyFont: presets[0].body });
-                      }
+                      update({ backgroundColor: presets[0].bg, textColor: presets[0].text, primaryColor: presets[0].primary, secondaryColor: presets[0].secondary, headingFont: presets[0].head, bodyFont: presets[0].body });
                     }} 
                     className={`p-5 rounded-2xl border-2 text-left transition-all ${payload.layoutTheme === t.id ? "border-[#1a4ba8] bg-[#eef4ff]" : "border-[#E0E0E0] hover:border-[#a8bce0] bg-white"}`}>
                     <div className="text-sm font-bold text-[#212121] mb-1">{t.label}</div>
@@ -312,9 +461,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
               </div>
             </div>
             
-            <hr className="border-[#E0E0E0]" />
-            
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-2 gap-8 mt-8">
               <div>
                 <h4 className="text-sm font-bold text-[#212121] mb-4">Cấu hình Bìa & Thông tin</h4>
                 <div className="bg-[#F8F8F8] p-4 rounded-xl border border-[#E0E0E0] space-y-2">
@@ -322,7 +469,6 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
                   <input value={payload.bgLetter} onChange={e => update({ bgLetter: e.target.value })} maxLength={1} className="w-16 px-4 py-2 border border-[#E0E0E0] rounded-xl text-center font-bold text-lg" />
                 </div>
               </div>
-              
               <div>
                 <h4 className="text-sm font-bold text-[#212121] mb-4">Trang Tác Phẩm</h4>
                 <div className="space-y-3">
@@ -337,9 +483,9 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
           </div>
         );
 
-      case 2:
+      case "design":
         return (
-          <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="w-full min-w-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
             <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><Palette className="text-[#1a4ba8]" /> Thiết kế Visual</h3>
             
             <div className="bg-[#F8F8F8] p-5 rounded-2xl border border-[#E0E0E0]">
@@ -404,10 +550,10 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
           </div>
         );
 
-      case 3:
+      case "structure":
         return (
-          <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="flex items-center justify-between">
+          <div className="w-full min-w-0 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 flex flex-col">
+            <div className="flex items-center justify-between shrink-0">
               <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><FileText className="text-[#1a4ba8]" /> Cấu trúc & Thứ tự trang</h3>
               <div className="bg-[#F8F8F8] px-3 py-1.5 rounded-full text-xs font-bold text-[#666]">
                 {payload.enabledArtworkIds.length} / {items.length} tác phẩm xuất bản
@@ -441,23 +587,209 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
           </div>
         );
 
-      case 4:
+      case "canvas":
+        const selectedItem = payload.canvasItems.find(i => i.id === selectedItemId);
+        return (
+          <div className="w-full h-full space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 flex flex-col">
+            <div className="flex items-center justify-between shrink-0">
+              <h3 className="text-xl font-bold text-[#212121] flex items-center gap-2"><Palette className="text-[#1a4ba8]" /> Thiết kế Canvas Tự do</h3>
+            </div>
+            
+            <div className="flex flex-1 gap-6 min-h-[500px] overflow-hidden">
+              {/* Sidebar list of tools & artworks */}
+              <div className="w-64 shrink-0 bg-white border border-[#E0E0E0] rounded-2xl p-4 flex flex-col">
+                
+                <h4 className="font-bold text-sm mb-3 text-[#1a4ba8]">Công cụ Text</h4>
+                <div className="mb-4">
+                  <button onClick={() => {
+                    const newItem = {
+                      id: Date.now().toString(),
+                      type: 'text',
+                      content: 'Nhập văn bản...',
+                      left: '50px', top: '50px', width: '200px', height: '50px',
+                      fontSize: '24px', color: '#000000', fontFamily: 'Inter', fontWeight: 'bold',
+                      zIndex: payload.canvasItems.length + 1
+                    };
+                    update({ canvasItems: [...payload.canvasItems, newItem] });
+                    setSelectedItemId(newItem.id);
+                  }} className="w-full py-2 bg-[#1a4ba8] hover:bg-[#0d2e6e] text-white font-bold rounded-lg text-sm flex justify-center items-center gap-2 shadow">
+                    <Type size={16} /> Thêm Văn Bản
+                  </button>
+                </div>
+
+                {selectedItem && selectedItem.type === 'text' && (
+                  <div className="mb-6 p-3 bg-[#eef4ff] border border-[#a8bce0] rounded-xl space-y-3 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-[#a8bce0] pb-1">
+                      <h5 className="text-xs font-bold uppercase text-[#1a4ba8]">Thuộc tính Text</h5>
+                      <button onClick={() => {
+                        update({ canvasItems: payload.canvasItems.filter(x => x.id !== selectedItem.id) });
+                        setSelectedItemId(null);
+                      }} className="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1 bg-white px-2 py-1 rounded shadow-sm border border-red-200">
+                        <X size={12} /> Xoá
+                      </button>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold block mb-1">Nội dung</label>
+                      <textarea value={selectedItem.content} onChange={e => update({ canvasItems: payload.canvasItems.map(x => x.id === selectedItem.id ? { ...x, content: e.target.value } : x) })} className="w-full p-2 border border-[#a8bce0] rounded text-sm outline-none" rows={3}></textarea>
+                    </div>
+                    <div className="flex gap-2">
+                      <div className="flex-1">
+                        <label className="text-xs font-bold block mb-1">Cỡ chữ (px)</label>
+                        <input type="number" value={parseInt(selectedItem.fontSize)} onChange={e => update({ canvasItems: payload.canvasItems.map(x => x.id === selectedItem.id ? { ...x, fontSize: `${e.target.value}px` } : x) })} className="w-full p-1.5 border border-[#a8bce0] rounded text-sm outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold block mb-1">Màu</label>
+                        <input type="color" value={selectedItem.color} onChange={e => update({ canvasItems: payload.canvasItems.map(x => x.id === selectedItem.id ? { ...x, color: e.target.value } : x) })} className="w-8 h-8 rounded p-0 border-0 cursor-pointer" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold block mb-1">Font chữ</label>
+                      <select value={selectedItem.fontFamily} onChange={e => update({ canvasItems: payload.canvasItems.map(x => x.id === selectedItem.id ? { ...x, fontFamily: e.target.value } : x) })} className="w-full p-1.5 border border-[#a8bce0] rounded text-sm outline-none">
+                        <option value="Arial">Arial</option>
+                        <option value="Inter">Inter</option>
+                        <option value="Roboto">Roboto</option>
+                        <option value="Montserrat">Montserrat</option>
+                        <option value="Be Vietnam Pro">Be Vietnam Pro</option>
+                        <option value="Playfair Display">Playfair Display</option>
+                        <option value="Lora">Lora</option>
+                        <option value="Merriweather">Merriweather</option>
+                        <option value="Dancing Script">Dancing Script</option>
+                        <option value="Pacifico">Pacifico</option>
+                        <option value="Caveat">Caveat</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <h4 className="font-bold text-sm mt-4 mb-3 border-t border-[#E0E0E0] pt-4">Thêm Ảnh Khả Dụng</h4>
+                <p className="text-xs text-[#666] mb-4">Kéo thả ảnh từ đây vào canvas để sắp xếp.</p>
+                <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+                  {items.map(it => (
+                    <div key={it.id} 
+                      draggable
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData('artworkId', it.id);
+                      }}
+                      className="p-2 border border-[#E0E0E0] rounded-lg cursor-grab hover:border-[#1a4ba8] flex items-center gap-2 bg-white shadow-sm"
+                      onClick={() => {
+                        const newItem = {
+                          id: Date.now().toString(),
+                          type: 'artwork',
+                          artworkId: it.id,
+                          left: '50px',
+                          top: '50px',
+                          width: '150px',
+                          height: '150px',
+                          zIndex: payload.canvasItems.length + 1
+                        };
+                        update({ canvasItems: [...payload.canvasItems, newItem] });
+                        setSelectedItemId(newItem.id);
+                      }}
+                    >
+                      <img src={getFallbackImage(it.coverImageUrl)} className="w-10 h-10 object-cover rounded bg-gray-100 pointer-events-none" />
+                      <span className="text-xs font-semibold truncate pointer-events-none">{it.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Canvas Area */}
+              <div className="flex-1 bg-[#E0E0E0] rounded-2xl border border-[#CCC] overflow-hidden flex flex-col shadow-inner relative"
+                   onPointerDown={() => setSelectedItemId(null)}>
+                <div className="p-2 bg-white/80 border-b border-[#CCC] flex justify-between items-center z-20 absolute top-0 left-0 right-0 backdrop-blur">
+                  <span className="text-xs font-bold text-[#666]">Canvas Preview</span>
+                  <div className="flex gap-2">
+                    <button onClick={() => update({ canvasZoom: Math.max(20, payload.canvasZoom - 10) })} className="p-1.5 hover:bg-gray-200 rounded"><ZoomOut size={16} /></button>
+                    <span className="text-xs font-mono flex items-center w-12 justify-center">{payload.canvasZoom}%</span>
+                    <button onClick={() => update({ canvasZoom: Math.min(200, payload.canvasZoom + 10) })} className="p-1.5 hover:bg-gray-200 rounded"><ZoomIn size={16} /></button>
+                    <button onClick={() => update({ canvasZoom: 100 })} className="p-1.5 hover:bg-gray-200 rounded ml-2" title="Reset Zoom"><Maximize size={16} /></button>
+                  </div>
+                </div>
+                
+                <div className="flex-1 overflow-auto mt-10 p-8 flex items-start justify-center bg-gray-50">
+                  <div 
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const artworkId = e.dataTransfer.getData('artworkId');
+                      if (artworkId) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const scale = payload.canvasZoom / 100;
+                        const x = (e.clientX - rect.left) / scale;
+                        const y = (e.clientY - rect.top) / scale;
+                        
+                        const newItem = {
+                          id: Date.now().toString(),
+                          type: 'artwork',
+                          artworkId,
+                          left: `${x}px`,
+                          top: `${y}px`,
+                          width: '150px',
+                          height: '150px',
+                          zIndex: payload.canvasItems.length + 1
+                        };
+                        update({ canvasItems: [...payload.canvasItems, newItem] });
+                        setSelectedItemId(newItem.id);
+                      }
+                    }}
+                    className="relative bg-white shadow-lg transition-transform origin-top-left"
+                    style={{ 
+                      width: payload.canvasWidth || (payload.pdfOrientation === 'landscape' ? 1123 : 794),
+                      height: payload.canvasHeight || (payload.pdfOrientation === 'landscape' ? 794 : 1123),
+                      transform: `scale(${payload.canvasZoom / 100})`,
+                      backgroundImage: payload.customBackgroundUrl ? `url('${payload.customBackgroundUrl}')` : 'none',
+                      backgroundSize: '100% 100%',
+                      backgroundPosition: 'center',
+                    }}
+                  >
+                    {payload.canvasItems.map(cItem => (
+                      <CanvasItem 
+                        key={cItem.id} 
+                        item={cItem} 
+                        art={items.find(x => x.id === cItem.artworkId) || { coverImageUrl: '' }}
+                        scale={payload.canvasZoom / 100}
+                        isSelected={selectedItemId === cItem.id}
+                        onClick={() => setSelectedItemId(cItem.id)}
+                        onUpdate={(updated) => update({ canvasItems: payload.canvasItems.map(x => x.id === updated.id ? updated : x) })}
+                        onRemove={(id) => {
+                          update({ canvasItems: payload.canvasItems.filter(x => x.id !== id) });
+                          if (selectedItemId === id) setSelectedItemId(null);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "preview":
         return (
           <div className="h-[calc(100vh-200px)] w-full flex animate-in fade-in slide-in-from-bottom-2 duration-300 gap-6">
             {/* Left strip */}
             <div className="w-64 bg-white border border-[#E0E0E0] rounded-2xl flex flex-col overflow-hidden">
                <div className="p-4 border-b border-[#E0E0E0] bg-[#F8F8F8]">
                  <h4 className="font-bold text-[#212121]">Xuất Bản Tập San</h4>
-                 <p className="text-xs text-[#666] mt-1">{sortedEnabled.length} tác phẩm đã chọn</p>
+                 <p className="text-xs text-[#666] mt-1">{payload.layoutMode === 'custom_canvas' ? 'Canvas Tự do' : `${canvasArtworks.length} tác phẩm đã chọn`}</p>
                </div>
                <div className="p-4 flex-1 overflow-y-auto space-y-4">
-                 <div>
-                    <label className="block text-xs font-bold text-[#666] mb-1">Khổ Giấy</label>
-                    <select value={payload.pdfSize} onChange={e => update({ pdfSize: e.target.value })} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm bg-white font-semibold">
-                      <option value="A4">A4 Portrait (210x297)</option>
-                      <option value="Square">Vuông (210x210)</option>
-                    </select>
-                 </div>
+                 {payload.layoutMode === 'template' ? (
+                   <div>
+                      <label className="block text-xs font-bold text-[#666] mb-1">Khổ Giấy</label>
+                      <select value={payload.pdfSize} onChange={e => update({ pdfSize: e.target.value })} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm bg-white font-semibold">
+                        <option value="A4">A4 Portrait (210x297)</option>
+                        <option value="Square">Vuông (210x210)</option>
+                      </select>
+                   </div>
+                 ) : (
+                   <div>
+                     <label className="block text-xs font-bold text-[#666] mb-1">Khổ Giấy Tự Động</label>
+                     <div className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm bg-[#F8F8F8] font-bold text-[#1a4ba8]">
+                       {payload.canvasWidth || 1123} x {payload.canvasHeight || 794} px
+                     </div>
+                   </div>
+                 )}
                  <div>
                     <label className="block text-xs font-bold text-[#666] mb-1">Chất lượng in</label>
                     <select value={payload.pdfResolution} onChange={e => update({ pdfResolution: e.target.value })} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm bg-white font-semibold">
@@ -488,6 +820,9 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[100] bg-white flex flex-col font-sans">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700&family=Caveat:wght@400;700&family=Dancing+Script:wght@400;700&family=Inter:wght@400;700&family=Lora:ital,wght@0,400;0,700;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:ital,wght@0,400;0,700;1,400&family=Pacifico&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto:ital,wght@0,400;0,700;1,400&display=swap');
+      `}</style>
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-5 border-b border-[#E0E0E0] bg-white relative z-10 shadow-sm">
         <div className="flex items-center gap-4">
@@ -500,21 +835,21 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
         
         {/* Steps Tracker */}
         <div className="flex items-center gap-2">
-          {STEPS.map((s, i) => (
+          {currentSteps.map((s, i) => (
             <div key={s.key} className="flex items-center">
               <button onClick={() => setStep(i)} className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all ${i === step ? "bg-[#212121] text-white shadow-md" : i < step ? "bg-[#e0eaff] text-[#1a4ba8]" : "bg-transparent text-[#999] hover:bg-[#F8F8F8]"}`}>
                 {i < step ? <Check size={16} /> : <s.icon size={16} />}
                 <span className="hidden md:inline">{s.label}</span>
               </button>
-              {i < STEPS.length - 1 && <ChevronRight size={16} className="text-[#CCC] mx-1" />}
+              {i < currentSteps.length - 1 && <ChevronRight size={16} className="text-[#CCC] mx-1" />}
             </div>
           ))}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className={`flex-1 overflow-y-auto bg-[#FAFAFA] p-8 ${step === 4 ? '' : 'flex flex-col'}`}>
-        <div className={`${step === 4 ? 'w-full h-full' : 'max-w-4xl mx-auto bg-white rounded-3xl border border-[#E0E0E0] shadow-sm min-h-[600px] p-8 flex flex-col w-full'}`}>
+      <div className={`flex-1 overflow-y-auto bg-[#FAFAFA] p-8 ${(currentSteps[step]?.key === 'preview' || currentSteps[step]?.key === 'canvas') ? '' : 'flex flex-col'}`}>
+        <div className={`${(currentSteps[step]?.key === 'preview' || currentSteps[step]?.key === 'canvas') ? 'w-full h-full' : 'max-w-6xl mx-auto bg-white rounded-3xl border border-[#E0E0E0] shadow-sm min-h-[600px] p-8 flex flex-col w-full shrink-0'}`}>
           {renderStep()}
         </div>
       </div>
@@ -525,9 +860,9 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
           <ChevronLeft size={18} /> Quay lại
         </button>
         <div className="flex gap-2">
-          {STEPS.map((_, i) => <div key={i} className={`w-2.5 h-2.5 rounded-full ${i === step ? "bg-[#1a4ba8]" : "bg-[#E0E0E0]"}`} />)}
+          {currentSteps.map((_, i) => <div key={i} className={`w-2.5 h-2.5 rounded-full ${i === step ? "bg-[#1a4ba8]" : "bg-[#E0E0E0]"}`} />)}
         </div>
-        {step < STEPS.length - 1 ? (
+        {step < currentSteps.length - 1 ? (
           <button onClick={() => setStep(step + 1)} className="px-8 py-3 rounded-xl bg-[#212121] text-white font-bold shadow-md hover:opacity-90 hover:shadow-lg transition-all flex items-center gap-2">
             Tiếp tục <ChevronRight size={18} />
           </button>
