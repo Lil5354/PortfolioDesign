@@ -197,9 +197,9 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
     secondaryColor: "#00c2a8", 
     backgroundColor: "#080808",
     textColor: "#f2f2f0",
-    headingFont: "Barlow Condensed",
-    bodyFont: "Barlow",
-    monoFont: "IBM Plex Mono",
+    headingFont: "Oswald",
+    bodyFont: "Inter",
+    monoFont: "Space Mono",
     borderStyle: "none",
     showGrain: false,
     bgLetter: "G",
@@ -316,7 +316,7 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       if (payload.pdfSize === 'Square') {
         sectionWidth = "210mm";
         sectionHeight = "210mm";
-      } else if (payload.pdfOrientation === 'landscape') {
+      } else if (payload.pdfSize === 'A4_Landscape' || payload.pdfOrientation === 'landscape') {
         sectionWidth = "297mm";
         sectionHeight = "210mm";
       }
@@ -403,8 +403,8 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
   const getThemePresets = () => {
     if (payload.layoutTheme === 'modern') {
       return [
-        { name: "Neon Grid", bg: "#080808", text: "#f2f2f0", primary: "#ff3c00", secondary: "#00c2a8", head: "Barlow Condensed", body: "Barlow" },
-        { name: "Cyber Mono", bg: "#111111", text: "#e0e0e0", primary: "#ffe600", secondary: "#ff003c", head: "IBM Plex Mono", body: "Barlow" }
+        { name: "Neon Grid", bg: "#080808", text: "#f2f2f0", primary: "#ff3c00", secondary: "#00c2a8", head: "Oswald", body: "Inter" },
+        { name: "Cyber Mono", bg: "#111111", text: "#e0e0e0", primary: "#ffe600", secondary: "#ff003c", head: "Space Mono", body: "Inter" }
       ];
     } else if (payload.layoutTheme === 'classic') {
       return [
@@ -413,8 +413,8 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
       ];
     } else {
       return [
-        { name: "Onyx Gold", bg: "#0a0a0a", text: "#f5f0e8", primary: "#c9a84c", secondary: "#8b1a1a", head: "Playfair Display", body: "Cormorant Garamond" },
-        { name: "Ivory Minimal", bg: "#f5f0e8", text: "#2c3e50", primary: "#8b1a1a", secondary: "#c9a84c", head: "Playfair Display", body: "Cormorant Garamond" }
+        { name: "Onyx Gold", bg: "#0a0a0a", text: "#f5f0e8", primary: "#c9a84c", secondary: "#8b1a1a", head: "Playfair Display", body: "Lora" },
+        { name: "Ivory Minimal", bg: "#f5f0e8", text: "#2c3e50", primary: "#8b1a1a", secondary: "#c9a84c", head: "Playfair Display", body: "Lora" }
       ];
     }
   };
@@ -589,17 +589,20 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
                   <div>
                     <label className="block text-xs font-bold text-[#666] mb-1">Heading Font</label>
                     <select value={payload.headingFont} onChange={e => update({ headingFont: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-xl text-sm outline-none">
-                      <option value="Barlow Condensed">Barlow Condensed (Modern)</option>
-                      <option value="Playfair Display">Playfair Display (Editorial/Classic)</option>
-                      <option value="Lora">Lora (Classic)</option>
+                      <option value="Oswald">Oswald (Modern)</option>
+                      <option value="Be Vietnam Pro">Be Vietnam Pro (Modern)</option>
+                      <option value="Playfair Display">Playfair Display (Classic)</option>
+                      <option value="Lora">Lora (Classic/Editorial)</option>
+                      <option value="Space Mono">Space Mono</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#666] mb-1">Body Font</label>
                     <select value={payload.bodyFont} onChange={e => update({ bodyFont: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-xl text-sm outline-none">
-                      <option value="Barlow">Barlow (Sans-serif)</option>
+                      <option value="Inter">Inter (Sans-serif)</option>
+                      <option value="Be Vietnam Pro">Be Vietnam Pro (Sans-serif)</option>
                       <option value="Lora">Lora (Serif)</option>
-                      <option value="Cormorant Garamond">Cormorant Garamond</option>
+                      <option value="Cormorant Garamond">Cormorant Garamond (Serif)</option>
                     </select>
                   </div>
                 </div>
@@ -836,7 +839,8 @@ export default function CatalogBuilderWizard({ collection, onClose }) {
                    <div>
                       <label className="block text-xs font-bold text-[#666] mb-1">Khổ Giấy</label>
                       <select value={payload.pdfSize} onChange={e => update({ pdfSize: e.target.value })} className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm bg-white font-semibold">
-                        <option value="A4">A4 Portrait (210x297)</option>
+                        <option value="A4">A4 Khổ Dọc (210x297)</option>
+                        <option value="A4_Landscape">A4 Khổ Ngang (297x210)</option>
                         <option value="Square">Vuông (210x210)</option>
                       </select>
                    </div>

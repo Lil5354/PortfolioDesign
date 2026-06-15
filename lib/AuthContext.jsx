@@ -8,47 +8,33 @@ export function AuthProvider({ children }) {
 
   const refreshSession = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/session", { 
-        credentials: "include",
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("/api/users/me", { 
+        headers: { "Authorization": `Bearer ${token}` },
         cache: "no-store"
       });
       
       if (!res.ok) {
         console.error("❌ Session API error:", res.status, res.statusText);
+        localStorage.removeItem("token");
         setUser(null);
         setLoading(false);
         return;
       }
       
-      const session = await res.json();
+      const userData = await res.json();
       
-      let userObj = null;
-      
-      if (session?.user) {
-        userObj = session.user;
-      } else if (session?.data?.user) {
-        userObj = session.data.user;
-      } else if (session?.id && session?.email) {
-        userObj = session;
-      }
-      
-      if (userObj) {
-        const userData = {
-          id: userObj.id || userObj._id || userObj.userId || userObj.sub,
-          name: userObj.name || userObj.fullName || userObj.displayName || userObj.given_name || "",
-          email: userObj.email || "",
-          image: userObj.image || userObj.avatarUrl || userObj.picture || userObj.avatar || "",
-          role: userObj.role || "student",
-        };
-        
-        if (userData.id && userData.email) {
-          setUser(userData);
-        } else {
-          console.warn("⚠️ User data incomplete:", userData);
-          setUser(null);
-        }
+      if (userData && userData.id) {
+        setUser(userData);
       } else {
         setUser(null);
+        localStorage.removeItem("token");
       }
     } catch (error) {
       console.error("❌ Auth error:", error);
@@ -101,23 +87,22 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loginWithEmail = useCallback(async (email, password) => {
-    const res = await fetch("/api/auth/email-login", {
+    const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email.trim(), password }),
     });
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.error || "Đăng nhập thất bại");
+      throw new Error(data.error || data.message || "Đăng nhập thất bại");
     }
+    if (data.token) localStorage.setItem("token", data.token);
     await refreshSession();
     return data;
   }, [refreshSession]);
 
   const logout = useCallback(async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    } catch {}
+    localStorage.removeItem("token");
     setUser(null);
     window.location.href = "/";
   }, []);
@@ -129,7 +114,7 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ email, fullName, password }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Đăng ký thất bại");
+    if (!res.ok) throw new Error(data.error || data.message || "Đăng ký thất bại");
     return data;
   }, []);
 

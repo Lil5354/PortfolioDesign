@@ -98,9 +98,9 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
   ];
   if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: t("portfolio") });
 
-  const userName = userData?.name || t("defaultUser");
+  const userName = userData?.fullName || userData?.name || t("defaultUser");
   const userEmail = userData?.email || "";
-  const userAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+  const userAvatar = userData?.avatarUrl || userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
 
   return (
     <header className="flex items-center justify-between px-8 py-3 border-b border-gray-100 bg-white sticky top-0 z-50">
@@ -471,7 +471,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
               {mapped.map(art => (
                 <div
                   key={art.id}
-                  onClick={() => { setActiveArtworkId && setActiveArtworkId(art.id); setPage("detail"); }}
+                  onClick={() => setPage("detail", { artworkId: art.id })}
                   style={{ cursor: "pointer", transition: "transform .15s", transform: hoveredId === art.id ? "translateY(-2px)" : "none" }}
                   onMouseEnter={() => setHoveredId(art.id)}
                   onMouseLeave={() => setHoveredId(null)}
@@ -548,7 +548,7 @@ function PortfolioPage({ setPage, pageParams }) {
     setLoading(true);
     setPortfolioSettingsData(null);
     const fetchFn = slug ? api.portfolios.get(slug) : api.portfolios.me();
-    const artworksFn = slug ? api.portfolios.artworks(slug, { limit: "50" }) : Promise.resolve({ artworks: [] });
+    const artworksFn = slug ? api.portfolios.artworks(slug, { limit: "50" }) : api.users.myArtworks().then(data => ({ artworks: data }));
     const statsFn = slug ? api.portfolios.stats(slug) : Promise.resolve({});
 
     Promise.all([
@@ -584,15 +584,19 @@ function PortfolioPage({ setPage, pageParams }) {
     );
   }
 
-  const { user, portfolioSettings, stats, featuredArtworks, privateGrade } = portfolioData;
+  const { stats, featuredArtworks, privateGrade } = portfolioData;
+  const pUser = portfolioData.user || portfolioData;
+  const pSettings = portfolioData.portfolioSettings || portfolioData.settings || {};
   const profile = {
-    fullName: user?.fullName || t("student"),
-    profileHeadline: portfolioSettings?.profileHeadline || "Design Student",
-    bio: user?.bio || "",
-    avatarUrl: user?.avatarUrl || "",
-    email: user?.email || "",
+    fullName: pUser?.fullName || t("student"),
+    profileHeadline: pSettings?.profileHeadline || "Design Student",
+    bio: pUser?.bio || "",
+    avatarUrl: pUser?.avatarUrl || "",
+    email: pUser?.email || "",
   };
-  const socialLinksRaw = portfolioSettings?.socialLinks || {};
+  const socialLinksRaw = typeof pSettings?.socialLinks === 'string' 
+    ? (function(){ try { return JSON.parse(pSettings.socialLinks); } catch(e){ return {}; } })() 
+    : (pSettings?.socialLinks || {});
   const socialLinks = [
     socialLinksRaw.behance && { label: "Behance", href: socialLinksRaw.behance, icon: "globe" },
     socialLinksRaw.linkedin && { label: "LinkedIn", href: socialLinksRaw.linkedin, icon: "link" },
@@ -716,7 +720,7 @@ function PortfolioPage({ setPage, pageParams }) {
               </div>
 
               <p className="text-base sm:text-lg text-[#666666] font-medium mb-2">
-                {titleByYear[portfolioSettingsData?.portfolioSettings?.yearLevel || portfolioSettingsData?.yearLevel || portfolioSettings?.yearLevel || "Năm 3"]} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || portfolioSettings?.major || t("graphicDesign")} • UEF
+                {titleByYear[portfolioSettingsData?.portfolioSettings?.yearLevel || portfolioSettingsData?.yearLevel || pSettings?.yearLevel || "Năm 3"]} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || pSettings?.major || t("graphicDesign")} • UEF
               </p>
               <p className="text-sm sm:text-[15px] text-[#444444] leading-relaxed max-w-2xl">
                 {profile.bio}
@@ -863,7 +867,7 @@ function PortfolioPage({ setPage, pageParams }) {
 
         <TimelineSection slug={slug || ''} />
 
-        <div style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
+        <div className="mt-16" style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
           <div style={{ display: "flex", gap: 0 }}>
             {[t("allArtworks"), "Poster", "Branding", "UI/UX"].map((tab) => (
                 <button key={tab} onClick={() => setActiveCategory(tab)} style={{ padding: "10px 20px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: activeCategory === tab ? 600 : 400, color: activeCategory === tab ? BLACK : MUTED, borderBottom: activeCategory === tab ? `2px solid ${BLACK}` : "2px solid transparent", marginBottom: -1 }}>{tab}</button>
@@ -976,8 +980,8 @@ function DashboardSidebar({ activePage, setPage, userData }) {
     { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
     { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
   ];
-  const profileName = userData?.name || t("student");
-  const profileAvatar = userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+  const profileName = userData?.fullName || userData?.name || t("student");
+  const profileAvatar = userData?.avatarUrl || userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
   const studentYear = t("student");
 
   return (
@@ -1077,7 +1081,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
               {artworksList.map(art => (
                 <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
                   <div style={{ position: "relative", background: GRAY_BG }}>
-                    <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
+                    <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail", { artworkId: art.id })} />
                     <div style={{ position: "absolute", top: 8, left: 8 }}>
                       <span style={{ background: art.isPublic ? "#e0eaff" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#a8bce0" : GRAY_LIGHT}` }}>{art.isPublic ? t("public") : t("private")}</span>
                     </div>
@@ -1118,7 +1122,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                 {collabArtworks.map(art => (
                   <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
                     <div style={{ position: "relative", background: GRAY_BG }}>
-                      <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => { setActiveArtworkId(art.id); setPage("detail"); }} />
+                      <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail", { artworkId: art.id })} />
                       <div style={{ position: "absolute", top: 8, left: 8 }}>
                         <span style={{ background: "#F0FDF4", color: "#166534", fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: 3 }}>
                           <Users size={10} /> {art.user?.fullName || t("coAuthor") }
@@ -1478,23 +1482,33 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
 
     setSendingOrder(true);
     try {
-      let recipientSlug = "uef-design-gallery";
+      let targetRecipientId = null;
+      let targetRecipientSlug = "uef-design-gallery"; // Fallback
+      let actualTitle = t("orderedArtwork");
+      let actualImage = "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80";
       try {
-        const artworkData = await api.artworks.get(activeArtworkId);
-        const ownerSlug = artworkData?.user?.portfolioSettings?.portfolioSlug;
-        if (ownerSlug) recipientSlug = ownerSlug;
+        if (activeArtworkId) {
+          const artworkData = await api.artworks.get(activeArtworkId);
+          if (artworkData?.userId) targetRecipientId = artworkData.userId;
+          else if (artworkData?.user?.id) targetRecipientId = artworkData.user.id;
+          else if (artworkData?.user?.portfolioSettings?.portfolioSlug) targetRecipientSlug = artworkData.user.portfolioSettings.portfolioSlug;
+          
+          if (artworkData?.title) actualTitle = artworkData.title;
+          if (artworkData?.coverImageUrl) actualImage = artworkData.coverImageUrl;
+        }
       } catch {}
 
       await api.messages.send({
-        recipientSlug,
+        recipientId: targetRecipientId,
+        recipientSlug: targetRecipientId ? null : targetRecipientSlug,
         senderName: orderData.name.trim(),
         senderEmail: orderData.email.trim(),
         senderCompany: orderData.company.trim() || null,
         purpose: "order",
         content: JSON.stringify({
           artworkId: activeArtworkId,
-          artworkTitle: t("orderedArtwork"),
-          artworkImage: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
+          artworkTitle: actualTitle,
+          artworkImage: actualImage,
           phone: orderData.phone.trim() || null,
           company: orderData.company.trim() || null,
           description: orderData.description.trim(),
@@ -2078,10 +2092,10 @@ if (mins < 1) return t("justNow");
             {/* Tác giả & Related Artworks */}
             <div style={{ width: "100%", display: "flex", flexDirection: "column", borderTop: "1px solid #333", paddingTop: 40 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32 }}>
-                <img src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
+                <img onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: "bold", color: "#fff" }}>{art.user?.fullName}</h3>
+                    <h3 onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} style={{ margin: 0, fontSize: 16, fontWeight: "bold", color: "#fff", cursor: "pointer" }}>{art.user?.fullName}</h3>
                     <span style={{ background: "#0057ff", color: "#fff", fontSize: 10, padding: "2px 6px", borderRadius: 4, fontWeight: "bold" }}>PRO</span>
                   </div>
                   <button onClick={() => setIsFollowing(!isFollowing)} style={{ background: isFollowing ? "rgba(255,255,255,0.2)" : "#0057ff", color: "#fff", border: "none", padding: "6px 20px", borderRadius: 16, fontSize: 12, fontWeight: "bold", marginTop: 8, cursor: "pointer" }}>{isFollowing ? "Following" : "Follow"}</button>
@@ -2091,7 +2105,7 @@ if (mins < 1) return t("justNow");
               {/* Related Artworks Grid */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                 {relatedArtworks.slice(0,4).map(rArt => (
-                  <div key={rArt.id} onClick={() => { setPage("detail"); setTimeout(() => setActiveArtworkId(rArt.id), 50); }} style={{ cursor: "pointer", borderRadius: 8, overflow: "hidden", background: "#222", position: "relative" }}>
+                  <div key={rArt.id} onClick={() => setPage("detail", { artworkId: rArt.id })} style={{ cursor: "pointer", borderRadius: 8, overflow: "hidden", background: "#222", position: "relative" }}>
                     <img src={rArt.coverImageUrl} style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }} />
                   </div>
                 ))}
@@ -3614,12 +3628,25 @@ function MessagesPage({ setPage, userData }) {
               <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#eef4ff", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#a8bce0"}`, overflow: "hidden" }}>
                 <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
                   <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
-                    {msg.senderName?.charAt(0) || "?"}
+                  {(() => {
+                    let avatarUrl = null;
+                    if (msg.purpose === 'order') {
+                      try {
+                        const data = JSON.parse(msg.content);
+                        if (data.artworkImage) avatarUrl = data.artworkImage;
+                      } catch {}
+                    }
+                    if (avatarUrl) {
+                      return <img src={avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />;
+                    }
+                    const nameStr = msg.senderName?.replace("To: ", "") || "?";
+                    return nameStr.charAt(0).toUpperCase();
+                  })()}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                      <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.senderName}</p>
-                      {msg.senderCompany && <span style={{ fontSize: 13, color: MUTED }}>• {msg.senderCompany}</span>}
+                      <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.senderName?.replace("To: ", "Gửi đến: ")}</p>
+                      {msg.senderCompany && msg.purpose !== 'order' && <span style={{ fontSize: 13, color: MUTED }}>• {msg.senderCompany}</span>}
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       {msg.purpose === 'order' && (
@@ -5524,7 +5551,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
               const aspectClass = isTall ? "aspect-[3/4]" : "aspect-square";
               return (
                 <div key={i} className={colClass}>
-                  <div className={`bg-gray-100 rounded-xl overflow-hidden ${aspectClass} ${art ? 'cursor-pointer' : ''}`} onClick={() => { if (art) { setActiveArtworkId?.(art.id); setPage("detail"); } }}>
+                  <div className={`bg-gray-100 rounded-xl overflow-hidden ${aspectClass} ${art ? 'cursor-pointer' : ''}`} onClick={() => { if (art) { setPage("detail", { artworkId: art.id }); } }}>
                     {art ? (
                       <img src={art.coverImageUrl} alt={art.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                     ) : (
@@ -5685,7 +5712,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {featuredArtworks.slice(0, 8).map((work, idx) => (
-              <div key={work.id} className="group cursor-pointer" onClick={() => { setActiveArtworkId && setActiveArtworkId(work.id); setPage("detail"); }}>
+              <div key={work.id} className="group cursor-pointer" onClick={() => setPage("detail", { artworkId: work.id })}>
                 <div className={`rounded-xl overflow-hidden mb-4 relative ${idx % 2 === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
                   <img src={work.coverImageUrl} alt={work.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   {idx === 0 && (
@@ -6725,7 +6752,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
         major: p.major || "",
         yearLevel: p.yearLevel || "Năm 3",
         isPortfolioPublic: p.isPortfolioPublic !== false,
-        socialLinks: p.socialLinks || {},
+        socialLinks: (typeof p.socialLinks === 'string' ? (function(){ try{ return JSON.parse(p.socialLinks); }catch{ return {}; } })() : (p.socialLinks || {})),
         featuredArtworkIds: p.featuredArtworkIds || [],
       });
       setMyArtworks(Array.isArray(arts) ? arts : (arts.artworks || []));
@@ -6752,7 +6779,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
         major: settings.major,
         yearLevel: settings.yearLevel,
         isPortfolioPublic: settings.isPortfolioPublic,
-        socialLinks: settings.socialLinks,
+        socialLinks: JSON.stringify(settings.socialLinks),
         featuredArtworkIds: settings.featuredArtworkIds,
       });
       setMessage({ type: "success", text: t("portfolioSettingsSaved") });
@@ -7108,15 +7135,15 @@ function SettingsPage({ setPage, userData }) {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch("/api/auth/session", { credentials: "include" })
+    fetch("/api/users/me")
       .then((r) => r.json())
-      .then((session) => {
-        if (session?.user) {
+      .then((data) => {
+        if (data && data.id) {
           setProfile({
-            fullName: session.user.name || session.user.fullName || "",
-            studentId: session.user.studentId || "",
-            email: session.user.email || "",
-            avatarUrl: session.user.image || session.user.avatarUrl || "",
+            fullName: data.fullName || "",
+            studentId: data.studentId || "",
+            email: data.email || "",
+            avatarUrl: data.avatarUrl || "",
           });
         }
       })
@@ -7130,14 +7157,13 @@ function SettingsPage({ setPage, userData }) {
     const body = { fullName: profile.fullName };
     if (pendingAvatar !== null) body.avatarUrl = pendingAvatar || "";
     try {
-      const res = await fetch("/api/user/profile", {
+      const res = await fetch("/api/users/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (res.ok && data.success) {
+      if (res.ok) {
         setMessage({ type: "success", text: t("profileUpdated") });
         setPendingAvatar(null);
         setProfile(p => ({ ...p, avatarUrl: data.user?.avatarUrl || p.avatarUrl }));
@@ -7171,7 +7197,7 @@ function SettingsPage({ setPage, userData }) {
     setChangingPass(true);
     setMessage({ type: "", text: "" });
     try {
-      const res = await fetch("/api/user/change-password", {
+      const res = await fetch("/api/users/change-password", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword: passwords.current, newPassword: passwords.newPass }),
@@ -7481,7 +7507,7 @@ function TimelineSection({ entries: propEntries, slug }) {
   }, [slug]);
 
   const rawEntries = fetchedEntries || [];
-  if (fetchDone && rawEntries.length === 0) {
+  if (!fetchDone || rawEntries.length === 0) {
     return null;
   }
 
@@ -7819,9 +7845,11 @@ export default function App() {
   const isLoggedIn = !!authUser;
   const userRole = authUser?.role || "student";
   const userData = authUser ? {
-    name: authUser.name || "",
+    name: authUser.fullName || authUser.name || "",
+    fullName: authUser.fullName || authUser.name || "",
     email: authUser.email || "",
-    image: authUser.image || "",
+    image: authUser.avatarUrl || authUser.image || "",
+    avatarUrl: authUser.avatarUrl || authUser.image || "",
     id: authUser.id || "",
   } : null;
 

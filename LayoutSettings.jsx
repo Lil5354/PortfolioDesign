@@ -85,28 +85,37 @@ export default function LayoutSettings({ setPage }) {
     setError('');
     try {
       let res;
+      const headers = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       if (item.id) {
         res = await fetch(`/api/site-section-items/${item.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(item),
         });
       } else {
         res = await fetch(`/api/site-sections/${item.sectionId}/items`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(item),
         });
       }
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Save failed (${res.status})`);
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Save failed (${res.status})`);
+        } else {
+          throw new Error(`Save failed (${res.status}): Server error`);
+        }
       }
       setEditingItem(null);
       await loadData();
       await fetchSiteContent();
     } catch (e) {
-      setError('Failed to save item');
+      setError(`Failed to save item: ${e.message}`);
     }
     setSaving(false);
   }
@@ -114,7 +123,11 @@ export default function LayoutSettings({ setPage }) {
   async function deleteItem(id) {
     if (!confirm('Delete this item?')) return;
     try {
-      await fetch(`/api/site-section-items/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('token');
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      await fetch(`/api/site-section-items/${id}`, { method: 'DELETE', headers });
       await loadData();
       await fetchSiteContent();
     } catch (e) {
@@ -127,9 +140,13 @@ export default function LayoutSettings({ setPage }) {
     setError('');
     setSavedKey(null);
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = localStorage.getItem('token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/site-settings', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ key, value }),
       });
       if (!res.ok) {

@@ -70,7 +70,7 @@ export default function NotificationBell({ setPage }) {
 
   useEffect(() => {
     fetchUnread();
-    const interval = setInterval(fetchUnread, 15000);
+    const interval = setInterval(fetchUnread, 5000);
     return () => clearInterval(interval);
   }, [fetchUnread]);
 

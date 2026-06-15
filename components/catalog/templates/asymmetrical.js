@@ -1,11 +1,16 @@
 export function renderAsymmetrical(payload, artworks) {
+  payload = { ...payload, headingFont: payload.headingFont === 'Playfair Display' ? 'Lora' : payload.headingFont, bodyFont: payload.bodyFont === 'Cormorant Garamond' ? 'Inter' : payload.bodyFont };
+  const isLandscape = payload.pdfSize === 'A4_Landscape' || payload.pdfOrientation === 'landscape';
+  const isSquare = payload.pdfSize === 'Square';
+  const sectionWidth = isLandscape ? '297mm' : '210mm';
+  const sectionHeight = isSquare ? '210mm' : (isLandscape ? '210mm' : '297mm');
   return `<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GRAPHICA — Tập San Ấn Phẩm Thiết Kế Đồ Họa 2025</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&family=Be+Vietnam+Pro:wght@400;500;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --ink: ${payload.backgroundColor};
@@ -26,7 +31,7 @@ export function renderAsymmetrical(payload, artworks) {
   body {
     background: var(--cream);
     color: var(--ink);
-    font-family: '${payload.bodyFont}', serif;
+    font-family: '${payload.bodyFont}', 'Cormorant Garamond', 'Be Vietnam Pro', serif;
     overflow-x: hidden;
   }
 
@@ -69,7 +74,7 @@ export function renderAsymmetrical(payload, artworks) {
   /* Background large "G" */
   .cover-bg-letter {
     position: absolute;
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 65vw;
     color: rgba(201,168,76,0.04);
     top: 50%;
@@ -89,7 +94,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .cover-eyebrow {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 11px;
     letter-spacing: 6px;
     color: var(--gold);
@@ -100,7 +105,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .cover-title {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: clamp(72px, 12vw, 160px);
     font-weight: 900;
     color: var(--white);
@@ -120,7 +125,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .cover-subtitle {
-    font-family: '${payload.bodyFont}', serif;
+    font-family: '${payload.bodyFont}', 'Cormorant Garamond', serif;
     font-size: clamp(16px, 2.5vw, 22px);
     color: rgba(245,240,232,0.65);
     font-style: italic;
@@ -153,7 +158,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .cover-meta-item {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 10px;
     color: rgba(201,168,76,0.7);
     letter-spacing: 3px;
@@ -197,10 +202,10 @@ export function renderAsymmetrical(payload, artworks) {
       gap: 2rem;
       padding: 2rem 0;
     }
-    .page {
-      width: ${payload.pdfOrientation === 'landscape' ? '297mm' : '210mm'} !important;
-      height: ${payload.pdfOrientation === 'landscape' ? '210mm' : '297mm'} !important;
-      min-height: unset !important;
+    .page, .cover {
+      width: ${sectionWidth} !important;
+      min-height: ${sectionHeight} !important;
+      height: auto !important;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
       flex-shrink: 0;
       position: relative;
@@ -232,7 +237,7 @@ export function renderAsymmetrical(payload, artworks) {
     position: absolute;
     bottom: 40px;
     right: 60px;
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 10px;
     letter-spacing: 4px;
     color: var(--gold);
@@ -240,7 +245,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .section-label {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 10px;
     letter-spacing: 5px;
     text-transform: uppercase;
@@ -260,7 +265,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .page-heading {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: clamp(36px, 4vw, 60px);
     font-weight: 700;
     line-height: 1.1;
@@ -274,7 +279,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .body-text {
-    font-family: '${payload.bodyFont}', serif;
+    font-family: '${payload.bodyFont}', 'Cormorant Garamond', serif;
     font-size: 18px;
     line-height: 1.9;
     color: #3a3a3a;
@@ -285,7 +290,7 @@ export function renderAsymmetrical(payload, artworks) {
 
   .drop-cap::first-letter {
     float: left;
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 88px;
     line-height: 0.75;
     padding-right: 12px;
@@ -302,7 +307,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .pull-quote p {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 22px;
     font-style: italic;
     line-height: 1.5;
@@ -342,7 +347,7 @@ export function renderAsymmetrical(payload, artworks) {
   .toc-item:hover .toc-title { color: var(--gold-light); }
 
   .toc-number {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 11px;
     color: rgba(201,168,76,0.5);
     letter-spacing: 2px;
@@ -354,7 +359,7 @@ export function renderAsymmetrical(payload, artworks) {
   .toc-content { flex: 1; }
 
   .toc-title {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 22px;
     font-weight: 700;
     color: var(--white);
@@ -364,7 +369,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .toc-desc {
-    font-family: '${payload.bodyFont}', serif;
+    font-family: '${payload.bodyFont}', 'Cormorant Garamond', serif;
     font-size: 14px;
     color: rgba(245,240,232,0.45);
     font-style: italic;
@@ -372,7 +377,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .toc-page {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 28px;
     color: rgba(201,168,76,0.25);
     font-weight: 700;
@@ -428,7 +433,7 @@ export function renderAsymmetrical(payload, artworks) {
   .card-body { padding: 28px; }
 
   .card-tag {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 9px;
     letter-spacing: 4px;
     text-transform: uppercase;
@@ -437,7 +442,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .card-title {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 22px;
     font-weight: 700;
     line-height: 1.2;
@@ -446,7 +451,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .card-excerpt {
-    font-family: '${payload.bodyFont}', serif;
+    font-family: '${payload.bodyFont}', 'Cormorant Garamond', serif;
     font-size: 15px;
     line-height: 1.7;
     color: #555;
@@ -470,7 +475,7 @@ export function renderAsymmetrical(payload, artworks) {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 13px;
     color: var(--white);
     font-weight: 700;
@@ -478,14 +483,14 @@ export function renderAsymmetrical(payload, artworks) {
 
   .author-info { flex: 1; }
   .author-name {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 10px;
     letter-spacing: 1px;
     color: var(--ink);
     font-weight: 700;
   }
   .author-role {
-    font-family: '${payload.bodyFont}', serif;
+    font-family: '${payload.bodyFont}', 'Cormorant Garamond', serif;
     font-size: 12px;
     color: #888;
     font-style: italic;
@@ -569,7 +574,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .closing-title {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: clamp(40px, 6vw, 80px);
     font-weight: 900;
     color: var(--white);
@@ -583,7 +588,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .closing-body {
-    font-family: '${payload.bodyFont}', serif;
+    font-family: '${payload.bodyFont}', 'Cormorant Garamond', serif;
     font-size: 20px;
     color: rgba(245,240,232,0.7);
     line-height: 1.9;
@@ -602,7 +607,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .thanks-list li {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 10px;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -623,7 +628,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .school-name {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 20px;
     color: var(--white);
     font-weight: 700;
@@ -632,7 +637,7 @@ export function renderAsymmetrical(payload, artworks) {
   }
 
   .school-detail {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'Space Mono', monospace;
     font-size: 10px;
     letter-spacing: 3px;
     color: rgba(201,168,76,0.6);
@@ -675,7 +680,7 @@ export function renderAsymmetrical(payload, artworks) {
     position: absolute;
     top: -20px;
     left: 24px;
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 80px;
     color: var(--gold);
     opacity: 0.3;
@@ -738,9 +743,14 @@ export function renderAsymmetrical(payload, artworks) {
     .page, .page-body, .page-toc, .page-closing { padding: 60px 32px; }
     .cover-meta { padding: 0 32px; }
   }
+
+  /* Landscape adjustments */
+  .landscape .page-foreword { grid-template-columns: 1fr 1.5fr; gap: 40px; }
+  .landscape .article-grid { grid-template-columns: repeat(4, 1fr); }
+  .landscape .page-spread { grid-template-columns: 1.5fr 1fr; }
 </style>
 </head>
-<body>
+<body class="${isLandscape ? 'landscape' : 'portrait'}">
 
 <!-- ══════════════════════════════
      TRANG BÌA

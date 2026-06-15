@@ -21,7 +21,7 @@ export function generatePrintReadyHTML(payload, artworks) {
   const printCSS = `
     <style>
       @media print {
-        @page { size: ${payload.pdfSize === 'A4' ? 'A4 portrait' : '210mm 210mm'}; margin: 0; }
+        @page { size: ${payload.pdfSize === 'A4' ? 'A4 portrait' : payload.pdfSize === 'A4_Landscape' ? 'A4 landscape' : '210mm 210mm'}; margin: 0; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         .page, .cover, .page-foreword, .page-toc, .page-closing, .page-spread, .page-body {
           page-break-after: always !important;

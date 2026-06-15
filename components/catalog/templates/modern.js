@@ -1,11 +1,16 @@
 export function renderModern(payload, artworks) {
+  payload = { ...payload, headingFont: payload.headingFont === 'Barlow Condensed' ? 'Oswald' : payload.headingFont, bodyFont: payload.bodyFont === 'Barlow' ? 'Inter' : payload.bodyFont, monoFont: payload.monoFont === 'IBM Plex Mono' ? 'Space Mono' : payload.monoFont };
+  const isLandscape = payload.pdfSize === 'A4_Landscape' || payload.pdfOrientation === 'landscape';
+  const isSquare = payload.pdfSize === 'Square';
+  const sectionWidth = isLandscape ? '297mm' : '210mm';
+  const sectionHeight = isSquare ? '210mm' : (isLandscape ? '210mm' : '297mm');
   return `<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GRID — Tập San Ấn Phẩm Thiết Kế Đồ Họa 2025 · Modern</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,700;0,900;1,700&family=Barlow:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&family=Space+Mono:wght@400;700&family=Barlow+Condensed:ital,wght@0,300;0,700;0,900;1,700&family=Barlow:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Be+Vietnam+Pro:wght@400;500;700;900&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --black: ${payload.backgroundColor};
@@ -26,7 +31,7 @@ export function renderModern(payload, artworks) {
   body {
     background: var(--black);
     color: var(--white);
-    font-family: '${payload.bodyFont}', sans-serif;
+    font-family: '${payload.bodyFont}', 'Be Vietnam Pro', 'Inter', sans-serif;
     overflow-x: hidden;
   }
 
@@ -75,7 +80,7 @@ export function renderModern(payload, artworks) {
   }
 
   .tag {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 9px;
     letter-spacing: 2px;
     color: var(--gray3);
@@ -85,7 +90,7 @@ export function renderModern(payload, artworks) {
   }
 
   .cover-logo {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 13px;
     font-weight: 700;
     letter-spacing: 5px;
@@ -115,7 +120,7 @@ export function renderModern(payload, artworks) {
   /* Large background number */
   .cover-bg-num {
     position: absolute;
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 40vw;
     font-weight: 900;
     color: rgba(255,255,255,0.02);
@@ -128,7 +133,7 @@ export function renderModern(payload, artworks) {
   }
 
   .cover-eyebrow {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 10px;
     letter-spacing: 3px;
     color: var(--accent);
@@ -141,7 +146,7 @@ export function renderModern(payload, artworks) {
   }
 
   .cover-main-title {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: clamp(90px, 14vw, 200px);
     font-weight: 900;
     line-height: 0.85;
@@ -171,7 +176,7 @@ export function renderModern(payload, artworks) {
 
   .cover-sub-info-item label {
     display: block;
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 8px;
     color: var(--gray3);
     letter-spacing: 3px;
@@ -179,7 +184,7 @@ export function renderModern(payload, artworks) {
     margin-bottom: 4px;
   }
   .cover-sub-info-item span {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 16px;
     font-weight: 700;
     color: var(--white);
@@ -217,7 +222,7 @@ export function renderModern(payload, artworks) {
   }
   .cover-stat:last-child { border-right: none; }
   .cover-stat label {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 8px;
     letter-spacing: 2px;
     color: var(--gray3);
@@ -226,7 +231,7 @@ export function renderModern(payload, artworks) {
     margin-bottom: 6px;
   }
   .cover-stat strong {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 28px;
     font-weight: 900;
     color: var(--white);
@@ -255,10 +260,10 @@ export function renderModern(payload, artworks) {
       gap: 2rem;
       padding: 2rem 0;
     }
-    .page {
-      width: ${payload.pdfOrientation === 'landscape' ? '297mm' : '210mm'} !important;
-      height: ${payload.pdfOrientation === 'landscape' ? '210mm' : '297mm'} !important;
-      min-height: unset !important;
+    .page, .cover {
+      width: ${sectionWidth} !important;
+      min-height: ${sectionHeight} !important;
+      height: auto !important;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
       flex-shrink: 0;
       position: relative;
@@ -287,14 +292,14 @@ export function renderModern(payload, artworks) {
     background: var(--black);
   }
   .page-bar-title {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 9px;
     letter-spacing: 3px;
     color: var(--gray3);
     text-transform: uppercase;
   }
   .page-bar-num {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 9px;
     letter-spacing: 2px;
     color: var(--accent);
@@ -321,7 +326,7 @@ export function renderModern(payload, artworks) {
   }
 
   .foreword-chapter {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: clamp(80px, 14vw, 180px);
     font-weight: 900;
     line-height: 0.8;
@@ -331,7 +336,7 @@ export function renderModern(payload, artworks) {
   }
 
   .foreword-chapter-label {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 9px;
     letter-spacing: 3px;
     color: var(--accent);
@@ -358,7 +363,7 @@ export function renderModern(payload, artworks) {
   }
 
   .foreword-quote {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: clamp(26px, 3vw, 44px);
     font-weight: 700;
     font-style: italic;
@@ -386,7 +391,7 @@ export function renderModern(payload, artworks) {
   }
 
   .mono-line {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 10px;
     letter-spacing: 2px;
     color: var(--gray3);
@@ -415,7 +420,7 @@ export function renderModern(payload, artworks) {
   }
 
   .toc-sidebar-title {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: clamp(40px, 6vw, 80px);
     font-weight: 900;
     text-transform: uppercase;
@@ -431,7 +436,7 @@ export function renderModern(payload, artworks) {
   }
 
   .toc-section-label {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 9px;
     letter-spacing: 3px;
     color: var(--accent2);
@@ -462,7 +467,7 @@ export function renderModern(payload, artworks) {
   .toc-item:hover { background: var(--gray2); }
 
   .toc-item-num {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 42px;
     font-weight: 900;
     color: rgba(255,255,255,0.08);
@@ -476,7 +481,7 @@ export function renderModern(payload, artworks) {
     border-left: var(--grid-gap) solid var(--gray2);
   }
   .toc-item-info h4 {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 20px;
     font-weight: 700;
     text-transform: uppercase;
@@ -485,7 +490,7 @@ export function renderModern(payload, artworks) {
     margin-bottom: 3px;
   }
   .toc-item-info p {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 8px;
     color: var(--gray3);
     letter-spacing: 2px;
@@ -493,7 +498,7 @@ export function renderModern(payload, artworks) {
   }
 
   .toc-item-pg {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 28px;
     font-weight: 300;
     color: var(--gray3);
@@ -543,7 +548,7 @@ export function renderModern(payload, artworks) {
   .work-block:hover .work-block-overlay { transform: translateY(0); }
 
   .work-tag {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 8px;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -552,7 +557,7 @@ export function renderModern(payload, artworks) {
   }
 
   .work-title {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 22px;
     font-weight: 700;
     text-transform: uppercase;
@@ -562,7 +567,7 @@ export function renderModern(payload, artworks) {
   }
 
   .work-author {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 9px;
     color: var(--gray4);
     letter-spacing: 1px;
@@ -607,7 +612,7 @@ export function renderModern(payload, artworks) {
   .closing-bg-text {
     position: absolute;
     top: 0; left: -20px;
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 30vw;
     font-weight: 900;
     color: rgba(0,0,0,0.08);
@@ -621,7 +626,7 @@ export function renderModern(payload, artworks) {
   }
 
   .closing-label {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 9px;
     letter-spacing: 3px;
     color: rgba(8,8,8,0.6);
@@ -630,7 +635,7 @@ export function renderModern(payload, artworks) {
   }
 
   .closing-title {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: clamp(60px, 9vw, 120px);
     font-weight: 900;
     text-transform: uppercase;
@@ -658,7 +663,7 @@ export function renderModern(payload, artworks) {
     padding: 28px 24px;
   }
   .credit-cell label {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 8px;
     letter-spacing: 3px;
     color: var(--accent2);
@@ -670,7 +675,7 @@ export function renderModern(payload, artworks) {
     list-style: none;
   }
   .credit-cell ul li {
-    font-family: '${payload.headingFont}', sans-serif;
+    font-family: '${payload.headingFont}', 'Be Vietnam Pro', sans-serif;
     font-size: 15px;
     font-weight: 500;
     color: var(--white);
@@ -686,15 +691,26 @@ export function renderModern(payload, artworks) {
     align-items: center;
   }
   .closing-footer p {
-    font-family: '${payload.monoFont}', monospace;
+    font-family: '${payload.monoFont}', 'IBM Plex Mono', monospace;
     font-size: 9px;
     color: var(--gray3);
     letter-spacing: 2px;
     text-transform: uppercase;
   }
+
+  /* Landscape orientation adjustments */
+  .landscape .cover-hero { grid-template-columns: 1.5fr 1fr; }
+  .landscape .cover-bottom { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .landscape .works-full-bleed { grid-template-columns: 1fr 1fr 1fr; }
+  .landscape .work-block-wide { grid-column: span 2; }
+  .landscape .works-three { grid-template-columns: repeat(4, 1fr); }
+  .landscape .foreword-body { grid-template-columns: 1fr 1.5fr; }
+  .landscape .toc-body { grid-template-columns: 1fr 4fr; }
+  .landscape .closing-left { padding: 60px 80px; }
+  .landscape .closing-right { padding: 60px 80px; }
 </style>
 </head>
-<body>
+<body class="${isLandscape ? 'landscape' : 'portrait'}">
 
 <!-- =================== COVER =================== -->
 <section class="cover">

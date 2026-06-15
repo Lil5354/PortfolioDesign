@@ -1,11 +1,16 @@
 export function renderClassic(payload, artworks) {
+  payload = { ...payload, headingFont: payload.headingFont === 'Playfair Display' ? 'Lora' : payload.headingFont, bodyFont: payload.bodyFont === 'Cormorant Garamond' ? 'Inter' : payload.bodyFont };
+  const isLandscape = payload.pdfSize === 'A4_Landscape' || payload.pdfOrientation === 'landscape';
+  const isSquare = payload.pdfSize === 'Square';
+  const sectionWidth = isLandscape ? '297mm' : '210mm';
+  const sectionHeight = isSquare ? '210mm' : (isLandscape ? '210mm' : '297mm');
   return `<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FORMA — ${payload.journalSubtitle} 2025 · Classic</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&family=Space+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Josefin+Sans:wght@300;400;600;700&family=Be+Vietnam+Pro:wght@400;500;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --ivory: ${payload.backgroundColor};
@@ -26,7 +31,7 @@ export function renderClassic(payload, artworks) {
   body {
     background: var(--ivory);
     color: var(--ink);
-    font-family: '${payload.bodyFont}', serif;
+    font-family: '${payload.bodyFont}', 'Lora', 'Be Vietnam Pro', serif;
     overflow-x: hidden;
   }
 
@@ -81,7 +86,7 @@ export function renderClassic(payload, artworks) {
   }
 
   .cover-vol {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 8px;
@@ -100,7 +105,7 @@ export function renderClassic(payload, artworks) {
   }
 
   .cover-title {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: clamp(80px, 14vw, 180px);
     color: var(--ivory);
     line-height: 0.85;
@@ -111,7 +116,7 @@ export function renderClassic(payload, artworks) {
   }
 
   .cover-title-sub {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: clamp(14px, 2.2vw, 24px);
     font-style: italic;
     color: var(--gold2);
@@ -156,7 +161,7 @@ export function renderClassic(payload, artworks) {
   }
 
   .cover-tagline {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 11px;
     font-weight: 300;
     letter-spacing: 5px;
@@ -178,7 +183,7 @@ export function renderClassic(payload, artworks) {
     animation: fadeIn 1s ease 1.4s forwards;
   }
   .cover-meta span {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 9px;
     letter-spacing: 4px;
     color: rgba(184,150,62,0.6);
@@ -204,10 +209,10 @@ export function renderClassic(payload, artworks) {
       gap: 2rem;
       padding: 2rem 0;
     }
-    .page {
-      width: ${payload.pdfOrientation === 'landscape' ? '297mm' : '210mm'} !important;
-      height: ${payload.pdfOrientation === 'landscape' ? '210mm' : '297mm'} !important;
-      min-height: unset !important;
+    .page, .cover {
+      width: ${sectionWidth} !important;
+      min-height: ${sectionHeight} !important;
+      height: auto !important;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
       flex-shrink: 0;
       position: relative;
@@ -229,7 +234,7 @@ export function renderClassic(payload, artworks) {
   .page-number {
     position: absolute;
     bottom: 40px;
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 9px;
     letter-spacing: 4px;
     color: var(--gold);
@@ -249,7 +254,7 @@ export function renderClassic(payload, artworks) {
     gap: 20px;
   }
   .running-head span {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 9px;
     letter-spacing: 5px;
     color: var(--rule);
@@ -263,7 +268,7 @@ export function renderClassic(payload, artworks) {
 
   /* Section labels */
   .sec-label {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 6px;
@@ -302,7 +307,7 @@ export function renderClassic(payload, artworks) {
   .foreword-right { padding-left: 20px; }
 
   .drop-cap::first-letter {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     float: left;
     font-size: 5.5em;
     line-height: 0.8;
@@ -311,9 +316,9 @@ export function renderClassic(payload, artworks) {
     color: var(--rust);
   }
 
-  h1.classic { font-family: '${payload.headingFont}', serif; font-size: clamp(36px, 4vw, 58px); line-height: 1.05; color: var(--ink); margin-bottom: 20px; }
-  h2.classic { font-family: '${payload.headingFont}', serif; font-size: clamp(24px, 2.5vw, 36px); line-height: 1.1; color: var(--ink); margin-bottom: 16px; }
-  h3.classic { font-family: '${payload.monoFont}', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--sepia); margin-bottom: 12px; }
+  h1.classic { font-family: '${payload.headingFont}', 'Playfair Display', serif; font-size: clamp(36px, 4vw, 58px); line-height: 1.05; color: var(--ink); margin-bottom: 20px; }
+  h2.classic { font-family: '${payload.headingFont}', 'Playfair Display', serif; font-size: clamp(24px, 2.5vw, 36px); line-height: 1.1; color: var(--ink); margin-bottom: 16px; }
+  h3.classic { font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--sepia); margin-bottom: 12px; }
 
   p.body-text {
     font-size: 15px;
@@ -323,7 +328,7 @@ export function renderClassic(payload, artworks) {
   }
 
   .ornamental-quote {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: clamp(22px, 2.5vw, 32px);
     font-style: italic;
     color: var(--rust);
@@ -336,7 +341,7 @@ export function renderClassic(payload, artworks) {
   }
   .ornamental-quote cite {
     display: block;
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 10px;
     letter-spacing: 4px;
     font-style: normal;
@@ -384,7 +389,7 @@ export function renderClassic(payload, artworks) {
     border-bottom: 1px solid rgba(200,184,154,0.4);
   }
   .toc-num {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 22px;
     color: var(--gold);
     line-height: 1;
@@ -392,13 +397,13 @@ export function renderClassic(payload, artworks) {
   }
   .toc-title-wrap { flex: 1; }
   .toc-title-wrap h4 {
-    font-family: '${payload.bodyFont}', serif;
+    font-family: '${payload.bodyFont}', 'Lora', serif;
     font-size: 14px;
     color: var(--ink);
     margin-bottom: 3px;
   }
   .toc-title-wrap p {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 9px;
     letter-spacing: 3px;
     color: var(--rule);
@@ -411,7 +416,7 @@ export function renderClassic(payload, artworks) {
     min-width: 30px;
   }
   .toc-page {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 16px;
     color: var(--sepia);
   }
@@ -453,13 +458,13 @@ export function renderClassic(payload, artworks) {
     padding: 20px;
   }
   .work-info h4 {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 18px;
     color: var(--ink);
     margin-bottom: 6px;
   }
   .work-info p {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 10px;
     letter-spacing: 3px;
     color: var(--gold);
@@ -497,14 +502,14 @@ export function renderClassic(payload, artworks) {
   .colophon-ornament { margin-bottom: 32px; }
 
   .colophon-title {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: clamp(40px, 6vw, 80px);
     color: var(--ivory);
     line-height: 1;
     margin-bottom: 8px;
   }
   .colophon-sub {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 10px;
     letter-spacing: 6px;
     color: var(--gold);
@@ -528,7 +533,7 @@ export function renderClassic(payload, artworks) {
   }
   .colophon-cell:last-child { border-right: none; }
   .colophon-cell h5 {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 9px;
     letter-spacing: 4px;
     text-transform: uppercase;
@@ -536,7 +541,7 @@ export function renderClassic(payload, artworks) {
     margin-bottom: 8px;
   }
   .colophon-cell p {
-    font-family: '${payload.headingFont}', serif;
+    font-family: '${payload.headingFont}', 'Playfair Display', serif;
     font-size: 15px;
     color: var(--ivory);
     font-style: italic;
@@ -544,15 +549,24 @@ export function renderClassic(payload, artworks) {
   }
 
   .colophon-closing {
-    font-family: '${payload.monoFont}', sans-serif;
+    font-family: '${payload.monoFont}', 'Josefin Sans', sans-serif;
     font-size: 9px;
     letter-spacing: 4px;
     color: rgba(184,150,62,0.4);
     text-transform: uppercase;
   }
+
+  /* Landscape adjustments */
+  .landscape .cover-inner { max-width: 1200px; padding: 40px 80px; }
+  .landscape .cover-illustration { width: clamp(200px, 30vw, 320px); }
+  .landscape .foreword-left { padding-right: 40px; }
+  .landscape .foreword-right { padding-left: 40px; }
+  .landscape .page-foreword { grid-template-columns: 1fr 3px 1.5fr; gap: 0 40px; }
+  .landscape .works-grid { grid-template-columns: repeat(4, 1fr); }
+  .landscape .works-featured { grid-template-columns: 1fr 1fr; }
 </style>
 </head>
-<body>
+<body class="${isLandscape ? 'landscape' : 'portrait'}">
 
 <!-- ═══════════════ COVER ═══════════════ -->
 <section class="cover">
