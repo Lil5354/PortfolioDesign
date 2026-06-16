@@ -143,17 +143,29 @@ public class ArtworksController : ControllerBase
             };
         }
 
+        var currentUserId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserRole = User?.FindFirstValue(ClaimTypes.Role);
+
         var comments = await _context.Comments
             .Include(c => c.User)
             .Where(c => c.ArtworkId == id)
             .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new {
-                c.Id,
-                c.Content,
-                c.CreatedAt,
-                User = new { c.User.Id, FullName = c.User.FullName ?? "User", c.User.AvatarUrl }
-            })
             .ToListAsync();
+
+        var filteredComments = comments.Where(c => 
+            c.PositionX == null || // Public comment
+            c.UserId == currentUserId || // My comment
+            artwork.UserId == currentUserId || // I am the author
+            currentUserRole == "admin" // I am admin
+        ).Select(c => new {
+            c.Id,
+            c.Content,
+            c.PositionX,
+            c.PositionY,
+            c.TargetImageIndex,
+            c.CreatedAt,
+            User = new { c.User.Id, FullName = c.User.FullName ?? "User", c.User.AvatarUrl }
+        }).ToList();
 
         var response = new
         {
@@ -174,9 +186,13 @@ public class ArtworksController : ControllerBase
             artwork.CreatedAt,
             artwork.Tags,
             artwork.FileUrls,
+            artwork.BlocksJson,
+            artwork.IsAiVerified,
+            artwork.AiScore,
+            artwork.AiGeneratedPct,
             isLiked = isLiked,
             Grade = gradeData,
-            Comments = comments,
+            Comments = filteredComments,
             User = new { artwork.User.Id, artwork.User.FullName, artwork.User.StudentId, artwork.User.AvatarUrl, PortfolioSettings = artwork.User.PortfolioSettings }
         };
 
@@ -264,19 +280,35 @@ public class ArtworksController : ControllerBase
     [HttpGet("{id}/comments")]
     public async Task<IActionResult> GetComments(string id)
     {
+        var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.Id == id);
+        if (artwork == null) return NotFound();
+
+        var currentUserId = User?.FindFirstValue(ClaimTypes.NameIdentifier);
+        var currentUserRole = User?.FindFirstValue(ClaimTypes.Role);
+
         var comments = await _context.Comments
             .Where(c => c.ArtworkId == id)
             .OrderByDescending(c => c.CreatedAt)
             .Include(c => c.User)
-            .Select(c => new
-            {
-                c.Id,
-                c.Content,
-                c.CreatedAt,
-                User = new { c.User.Id, FullName = c.User.FullName ?? "User", AvatarUrl = c.User.AvatarUrl }
-            })
             .ToListAsync();
-        return Ok(comments);
+
+        var filteredComments = comments.Where(c => 
+            c.PositionX == null || // Public comment
+            c.UserId == currentUserId || // My comment
+            artwork.UserId == currentUserId || // I am the author
+            currentUserRole == "admin" // I am admin
+        ).Select(c => new
+        {
+            c.Id,
+            c.Content,
+            c.PositionX,
+            c.PositionY,
+            c.TargetImageIndex,
+            c.CreatedAt,
+            User = new { c.User.Id, FullName = c.User.FullName ?? "User", AvatarUrl = c.User.AvatarUrl }
+        }).ToList();
+
+        return Ok(filteredComments);
     }
 
     [HttpPost("{id}/comments")]
@@ -294,7 +326,10 @@ public class ArtworksController : ControllerBase
             ArtworkId = id,
             UserId = userId,
             Content = dto.Content,
-            CreatedAt = DateTime.UtcNow
+            PositionX = dto.PositionX,
+            PositionY = dto.PositionY,
+            TargetImageIndex = dto.TargetImageIndex,
+            CreatedAt = DateTime.UtcNow,
         };
         _context.Comments.Add(comment);
         await _context.SaveChangesAsync();
@@ -302,14 +337,51 @@ public class ArtworksController : ControllerBase
         var user = await _context.Users.FindAsync(userId);
         return Ok(new
         {
-            comment.Id,
-            comment.Content,
-            comment.CreatedAt,
-            User = new { user.Id, FullName = user.FullName ?? "User", AvatarUrl = user.AvatarUrl }
+            Comment = new { 
+                comment.Id, 
+                comment.Content, 
+                comment.PositionX, 
+                comment.PositionY, 
+                comment.TargetImageIndex, 
+                comment.CreatedAt, 
+                User = new { user.Id, FullName = user.FullName ?? "User", user.AvatarUrl } 
+            }
         });
     }
 
-    [HttpPut("{id}/grade")]
+    [HttpPut("{id}/comments/{commentId}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateComment(string id, string commentId, [FromBody] UpdateCommentDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var comment = await _context.Comments.FirstOrDefaultAsync(c => c.Id == commentId && c.ArtworkId == id);
+        if (comment == null) return NotFound();
+        if (comment.UserId != userId) return Forbid();
+
+        if (dto.PositionX.HasValue) comment.PositionX = dto.PositionX.Value;
+        if (dto.PositionY.HasValue) comment.PositionY = dto.PositionY.Value;
+
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true });
+    }
+
+    [HttpDelete("{id}/comments/{commentId}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteComment(string id, string commentId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        var comment = await _context.Comments.FirstOrDefaultAsync(c => c.Id == commentId && c.ArtworkId == id);
+        if (comment == null) return NotFound();
+
+        if (comment.UserId != userId && role != "admin") return Forbid();
+
+        _context.Comments.Remove(comment);
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true });
+    }
+
+    [HttpPost("{id}/grade")]
     [Authorize]
     public async Task<IActionResult> GradeArtwork(string id, [FromBody] GradeArtworkDto dto)
     {
@@ -409,13 +481,17 @@ public class ArtworksController : ControllerBase
             CoverImageUrl = dto.CoverImageUrl,
             OriginalCoverUrl = dto.OriginalCoverUrl,
             WatermarkImageUrl = dto.WatermarkImageUrl,
-            FileUrls = dto.FileUrls ?? new List<string>(),
+            FileUrls = dto.FileUrls,
+            BlocksJson = dto.BlocksJson,
             WatermarkText = dto.WatermarkText,
             WatermarkPosition = dto.WatermarkPosition,
             IsPublic = false,
             IsPending = true,
             IsHighlighted = dto.IsHighlighted ?? false,
             IsAiConfirmed = dto.IsAiConfirmed ?? false,
+            AiScore = dto.AiScore,
+            AiGeneratedPct = dto.AiGeneratedPct,
+            IsAiVerified = dto.IsAiVerified ?? false,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -479,6 +555,7 @@ public class ArtworksController : ControllerBase
         if (!string.IsNullOrEmpty(dto.OriginalCoverUrl)) artwork.OriginalCoverUrl = dto.OriginalCoverUrl;
         if (dto.WatermarkImageUrl != null) artwork.WatermarkImageUrl = dto.WatermarkImageUrl;
         if (dto.FileUrls != null) artwork.FileUrls = dto.FileUrls;
+        if (dto.BlocksJson != null) artwork.BlocksJson = dto.BlocksJson;
         if (dto.WatermarkText != null) artwork.WatermarkText = dto.WatermarkText;
         if (dto.WatermarkPosition != null) artwork.WatermarkPosition = dto.WatermarkPosition;
 
@@ -546,10 +623,14 @@ public class CreateArtworkDto
     public string? OriginalCoverUrl { get; set; }
     public string? WatermarkImageUrl { get; set; }
     public List<string>? FileUrls { get; set; }
+    public string? BlocksJson { get; set; }
     public string? WatermarkText { get; set; }
     public string? WatermarkPosition { get; set; }
     public bool? IsHighlighted { get; set; }
     public bool? IsAiConfirmed { get; set; }
+    public int? AiScore { get; set; }
+    public int? AiGeneratedPct { get; set; }
+    public bool? IsAiVerified { get; set; }
 }
 
 public class UpdateArtworkDto
@@ -566,6 +647,7 @@ public class UpdateArtworkDto
     public string? OriginalCoverUrl { get; set; }
     public string? WatermarkImageUrl { get; set; }
     public List<string>? FileUrls { get; set; }
+    public string? BlocksJson { get; set; }
     public string? WatermarkText { get; set; }
     public string? WatermarkPosition { get; set; }
     public bool? IsPublic { get; set; }
@@ -574,6 +656,15 @@ public class UpdateArtworkDto
 public class CreateCommentDto
 {
     public required string Content { get; set; }
+    public double? PositionX { get; set; }
+    public double? PositionY { get; set; }
+    public int? TargetImageIndex { get; set; }
+}
+
+public class UpdateCommentDto
+{
+    public double? PositionX { get; set; }
+    public double? PositionY { get; set; }
 }
 
 public class UpdateVisibilityDto

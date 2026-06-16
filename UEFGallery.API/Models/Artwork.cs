@@ -50,11 +50,20 @@ public class Artwork
 
     public bool IsAiConfirmed { get; set; }
 
+    public int? AiScore { get; set; }
+
+    public int? AiGeneratedPct { get; set; }
+
+    public bool IsAiVerified { get; set; }
+
     public int ViewCount { get; set; }
 
     public int LikeCount { get; set; }
 
     public string? PortfolioSlug { get; set; }
+
+    [Column(TypeName = "jsonb")]
+    public string? BlocksJson { get; set; }
 
     public DateTime CreatedAt { get; set; }
 

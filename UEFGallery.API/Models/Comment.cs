@@ -20,6 +20,12 @@ public class Comment
 
     public DateTime UpdatedAt { get; set; }
 
+    public double? PositionX { get; set; }
+
+    public double? PositionY { get; set; }
+
+    public int? TargetImageIndex { get; set; }
+
     public Artwork Artwork { get; set; }
 
     public User User { get; set; }

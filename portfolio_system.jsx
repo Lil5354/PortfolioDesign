@@ -23,7 +23,7 @@ import {
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive, ArchiveRestore,
   GraduationCap, Rocket, Upload, Menu, ShoppingCart, Languages,
-  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight, ChevronLeft, ThumbsUp, MessageCircle, Package, FileText, Tag, Download
+  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight, ChevronLeft, ThumbsUp, MessageCircle, Package, FileText, Tag, Download, FolderInput, FolderPlus
 } from "lucide-react";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -314,7 +314,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const [hoveredId, setHoveredId] = useState(null);
   const [categoryCovers, setCategoryCovers] = useState({});
   const [navbarHeight, setNavbarHeight] = useState(0);
-  const limit = 100;
+
   const fetchId = useRef(0);
 
   useEffect(() => {
@@ -342,6 +342,8 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       .catch(() => {});
   }, []);
 
+  const [limit] = useState(12);
+
   useEffect(() => {
     const id = ++fetchId.current;
     setLoading(true);
@@ -351,9 +353,15 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
     if (filters.tool !== "Tất cả") params.tool = filters.tool;
     if (filters.q.trim()) params.q = filters.q.trim();
     api.artworks.list(params).then(res => {
-      if (id === fetchId.current) { setData(res); setLoading(false); }
+      if (id === fetchId.current) { 
+        setData(prev => ({
+          ...res,
+          artworks: page === 1 ? (res.artworks || []) : [...(prev.artworks || []), ...(res.artworks || [])]
+        }));
+        setLoading(false); 
+      }
     }).catch(() => { if (id === fetchId.current) setLoading(false); });
-  }, [filters, page]);
+  }, [filters, page, limit]);
 
   const setFilter = (key, val) => {
     setFilters(prev => ({ ...prev, [key]: val }));
@@ -371,6 +379,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
     views: a.viewCount || 0,
     isPublic: a.isPublic,
     category: a.subject,
+    isAiVerified: a.isAiVerified,
   }));
 
   const paginate = (p) => setPageNum(Math.max(1, Math.min(p, data.totalPages || 1)));
@@ -461,7 +470,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       </div>
 
       <div style={{ padding: "16px 24px 64px", maxWidth: 1480, margin: "0 auto" }}>
-        {loading ? (
+        {loading && page === 1 ? (
           <GlobalLoading />
         ) : mapped.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>{t("noArtworksFound")}</div>
@@ -480,12 +489,20 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                     {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }} /> : (
                       <div style={{ width: "100%", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", color: MUTED, fontSize: 12 }}>{t("noImage")}</div>
                     )}
-                    {!art.isPublic && (
-                      <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
-                        <Lock size={10} color="#fff" />
-                        <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
-                      </div>
-                    )}
+                    <div style={{ position: "absolute", top: 8, left: 8, display: "flex", flexDirection: "column", gap: 4, zIndex: 2 }}>
+                      {!art.isPublic && (
+                        <div style={{ background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4 }}>
+                          <Lock size={10} color="#fff" />
+                          <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
+                        </div>
+                      )}
+                      {art.isAiVerified && (
+                        <div style={{ background: "linear-gradient(to right, #1a4ba8, #0ea5e9)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 5px rgba(0,0,0,0.2)" }}>
+                          <ShieldCheck size={10} color="#fff" />
+                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.5px" }}>AI VERIFIED</span>
+                        </div>
+                      )}
+                    </div>
                     {onBookmarkClick && hoveredId === art.id && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onBookmarkClick(art); }}
@@ -510,14 +527,28 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                   </div>
                 </div>
               ))}
+              {loading && page > 1 && Array.from({ length: 5 }).map((_, i) => (
+                <div key={`skeleton-${i}`} style={{ width: "100%" }}>
+                  <div style={{ width: "100%", aspectRatio: "4/3", background: "#e0e0e0", borderRadius: 4, animation: "pulse 1.5s infinite" }} />
+                  <div style={{ marginTop: 8, height: 16, width: "80%", background: "#e0e0e0", borderRadius: 4, animation: "pulse 1.5s infinite" }} />
+                  <div style={{ marginTop: 4, height: 12, width: "50%", background: "#e0e0e0", borderRadius: 4, animation: "pulse 1.5s infinite" }} />
+                </div>
+              ))}
             </div>
-            {data.totalPages > 1 && (
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 36 }}>
-                <button onClick={() => paginate(page - 1)} disabled={page <= 1} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: page <= 1 ? GRAY_BG : "#fff", color: page <= 1 ? MUTED : BLACK, fontSize: 12, cursor: page <= 1 ? "not-allowed" : "pointer" }}>{t("previous")}</button>
-                {Array.from({ length: data.totalPages }, (_, i) => i + 1).map(p => (
-                  <button key={p} onClick={() => paginate(p)} style={{ width: 32, height: 32, borderRadius: 6, border: "none", background: p === page ? UEF_BLUE : GRAY_BG, color: p === page ? "#fff" : MUTED, fontSize: 12, fontWeight: p === page ? 600 : 400, cursor: "pointer" }}>{p}</button>
-                ))}
-                <button onClick={() => paginate(page + 1)} disabled={page >= data.totalPages} style={{ padding: "6px 14px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: page >= data.totalPages ? GRAY_BG : "#fff", color: page >= data.totalPages ? MUTED : BLACK, fontSize: 12, cursor: page >= data.totalPages ? "not-allowed" : "pointer" }}>{t("next")}</button>
+            {data.page < data.totalPages && (
+              <div
+                ref={el => {
+                  if (!el) return;
+                  const observer = new IntersectionObserver(entries => {
+                    if (entries[0].isIntersecting && !loading) {
+                      setPageNum(p => p + 1);
+                    }
+                  }, { threshold: 0.1 });
+                  observer.observe(el);
+                  return () => observer.disconnect();
+                }}
+                style={{ height: 20 }}
+              >
               </div>
             )}
           </>
@@ -976,6 +1007,7 @@ function ToggleSwitch({ isOn, onToggle, disabled = false }) {
 function DashboardSidebar({ activePage, setPage, userData }) {
     const items = [
     { icon: <Image size={18} />, label: t("myArtworks"), page: "dashboard" },
+    { icon: <Bookmark size={18} />, label: "Bộ sưu tập (Moodboard)", page: "moodboards" },
     { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
     { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
     { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
@@ -1009,6 +1041,343 @@ function DashboardSidebar({ activePage, setPage, userData }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function MoodboardSortableCard({ item, onClick, onMove, onRemove }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.8 : 1,
+  };
+  return (
+    <div ref={setNodeRef} style={{ ...style, position: "relative", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "grab" }} {...attributes} {...listeners}>
+      <div style={{ position: "relative" }}>
+        <img onClick={onClick} src={item.artwork?.coverImageUrl || "https://placehold.co/400x300/1a4ba8/ffffff?text=UEF+Design"} style={{ width: "100%", height: 180, objectFit: "cover", display: "block" }} />
+        {item.artwork?.isAiVerified && (
+          <div style={{ position: "absolute", top: 8, left: 8, background: "linear-gradient(to right, #1a4ba8, #0ea5e9)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 5px rgba(0,0,0,0.2)" }}>
+            <ShieldCheck size={10} color="#fff" />
+            <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.5px" }}>AI VERIFIED</span>
+          </div>
+        )}
+      </div>
+      <div style={{ padding: "12px 16px", cursor: "grab" }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: BLACK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={item.artwork?.title}>{item.artwork?.title || "Artwork"}</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <p style={{ margin: 0, fontSize: 12, color: MUTED }}>{new Date(item.createdAt || Date.now()).toLocaleDateString()}</p>
+            {item.artwork?.likeCount > 0 && (
+              <span style={{ fontSize: 12, color: MUTED, display: "flex", alignItems: "center", gap: 4 }}><Heart size={12} /> {item.artwork.likeCount}</span>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onPointerDown={(e) => { e.stopPropagation(); }} onClick={onMove} style={{ background: GRAY_BG, border: "none", borderRadius: 4, padding: "4px", cursor: "pointer", color: CERULEAN }} title="Di chuyển">
+              <FolderInput size={14} />
+            </button>
+            <button onPointerDown={(e) => { e.stopPropagation(); }} onClick={onRemove} style={{ background: "#FEF2F2", border: "none", borderRadius: 4, padding: "4px", cursor: "pointer", color: CRIMSON }} title="Xóa khỏi bộ sưu tập">
+              <Trash2 size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
+  const [collections, setCollections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [activeCollection, setActiveCollection] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingColId, setEditingColId] = useState(null);
+  const [editColName, setEditColName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const [newColName, setNewColName] = useState("");
+  const [moveState, setMoveState] = useState(null);
+  
+  // Sorting and filtering inside collection
+  const [searchArtworkQuery, setSearchArtworkQuery] = useState("");
+  const [sortBy, setSortBy] = useState("custom"); // custom, newest, oldest, az, za, likes
+  const [colLimit] = useState(16);
+  const [colPage, setColPage] = useState(1);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over?.id && activeCollection) {
+      const oldIndex = activeCollection.items.findIndex(it => it.id === active.id);
+      const newIndex = activeCollection.items.findIndex(it => it.id === over.id);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newItems = arrayMove(activeCollection.items, oldIndex, newIndex);
+        setActiveCollection({ ...activeCollection, items: newItems });
+        setSortBy("custom");
+      }
+    }
+  };
+
+  const refreshCollections = async () => {
+    try {
+      const res = await api.collections.list();
+      setCollections(Array.isArray(res) ? res : []);
+    } catch {}
+  };
+
+  useEffect(() => {
+    refreshCollections().finally(() => setLoading(false));
+  }, []);
+
+  const handleCreate = async () => {
+    if (!newColName.trim()) return;
+    try {
+      await api.collections.create({ collectionName: newColName });
+      setNewColName("");
+      setIsCreating(false);
+      await refreshCollections();
+    } catch { alert("Lỗi khi tạo bộ sưu tập"); }
+  };
+
+  const handleDeleteCollection = async (id, e) => {
+    e?.stopPropagation();
+    if (!confirm("Bạn có chắc muốn xóa bộ sưu tập này?")) return;
+    try {
+      await api.collections.delete(id);
+      if (activeCollection?.id === id) setActiveCollection(null);
+      await refreshCollections();
+    } catch { alert("Lỗi khi xóa bộ sưu tập"); }
+  };
+
+  const handleRenameCollection = async (id, e) => {
+    e?.stopPropagation();
+    if (!editColName.trim()) return;
+    try {
+      await api.collections.update(id, { name: editColName });
+      setEditingColId(null);
+      await refreshCollections();
+      if (activeCollection?.id === id) setActiveCollection(prev => ({ ...prev, name: editColName }));
+    } catch { alert("Lỗi khi đổi tên bộ sưu tập"); }
+  };
+
+  const handleRemoveItem = async (colId, artworkId, e) => {
+    e.stopPropagation();
+    if (!confirm("Xóa tác phẩm khỏi bộ sưu tập?")) return;
+    try {
+      await api.collections.removeItem(colId, artworkId);
+      await refreshCollections();
+      if (activeCollection?.id === colId) setActiveCollection(prev => ({ ...prev, items: prev.items.filter(it => it.artworkId !== artworkId) }));
+    } catch { alert("Lỗi khi xóa"); }
+  };
+
+  const handleMoveItem = async (toColId) => {
+    if (!moveState) return;
+    try {
+      await api.collections.addItem(toColId, { artworkId: moveState.artworkId });
+      await api.collections.removeItem(moveState.fromColId, moveState.artworkId);
+      setMoveState(null);
+      await refreshCollections();
+      if (activeCollection?.id === moveState.fromColId) {
+        setActiveCollection(prev => ({ ...prev, items: prev.items.filter(it => it.artworkId !== moveState.artworkId) }));
+      }
+    } catch { alert("Lỗi khi di chuyển"); }
+  };
+
+  const filteredCollections = collections.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  return (
+    <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
+      <DashboardSidebar activePage="moodboards" setPage={setPage} userData={userData} />
+      <div style={{ flex: 1, padding: "32px 40px", overflow: "auto" }}>
+        
+        {loading ? <GlobalLoading /> : activeCollection ? (
+          <div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <button onClick={() => setActiveCollection(null)} style={{ background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, color: MUTED, fontSize: 14, fontWeight: 600 }}>
+                  <ChevronLeft size={20} /> Quay lại
+                </button>
+                {editingColId === activeCollection.id ? (
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input autoFocus value={editColName} onChange={e => setEditColName(e.target.value)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}` }} onKeyDown={e => e.key === 'Enter' && handleRenameCollection(activeCollection.id)} />
+                    <button onClick={() => handleRenameCollection(activeCollection.id)} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 6, padding: "0 12px", cursor: "pointer" }}>Lưu</button>
+                    <button onClick={() => setEditingColId(null)} style={{ background: GRAY_LIGHT, border: "none", borderRadius: 6, padding: "0 12px", cursor: "pointer" }}>Hủy</button>
+                  </div>
+                ) : (
+                  <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: CERULEAN, display: "flex", alignItems: "center", gap: 12 }}>
+                    {activeCollection.name}
+                    <button onClick={() => { setEditingColId(activeCollection.id); setEditColName(activeCollection.name); }} style={{ background: "transparent", border: "none", cursor: "pointer", color: MUTED }}><Edit2 size={16} /></button>
+                  </h2>
+                )}
+                <span style={{ background: "#eef4ff", color: CERULEAN, padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: "bold" }}>{activeCollection.items?.length || 0} tác phẩm</span>
+              </div>
+            </div>
+            
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ position: "relative", flex: 1, marginRight: 24 }}>
+                <Search size={16} style={{ position: "absolute", left: 16, top: 12, color: MUTED }} />
+                <input placeholder="Tìm tác phẩm..." value={searchArtworkQuery} onChange={e => setSearchArtworkQuery(e.target.value)} style={{ width: "100%", padding: "10px 16px 10px 44px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 15 }} />
+              </div>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ padding: "10px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", fontWeight: 600, fontSize: 15 }}>
+                <option value="custom">Tùy chỉnh (Kéo thả)</option>
+                <option value="newest">Mới nhất</option>
+                <option value="oldest">Cũ nhất</option>
+                <option value="az">Tên A-Z</option>
+                <option value="za">Tên Z-A</option>
+                <option value="likes">Nhiều Like nhất</option>
+              </select>
+            </div>
+
+            {activeCollection.items?.length === 0 ? (
+               <div style={{ textAlign: "center", padding: "60px", color: MUTED, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>
+                 <p>Chưa có tác phẩm nào trong bộ sưu tập này.</p>
+               </div>
+            ) : (() => {
+               let filteredItems = (activeCollection.items || []).filter(item => 
+                 (item.artwork?.title || "").toLowerCase().includes(searchArtworkQuery.toLowerCase())
+               );
+
+               if (sortBy !== "custom") {
+                 filteredItems = [...filteredItems].sort((a, b) => {
+                   if (sortBy === "newest") return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+                   if (sortBy === "oldest") return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+                   if (sortBy === "az") return (a.artwork?.title || "").localeCompare(b.artwork?.title || "");
+                   if (sortBy === "za") return (b.artwork?.title || "").localeCompare(a.artwork?.title || "");
+                   if (sortBy === "likes") return (b.artwork?.likeCount || 0) - (a.artwork?.likeCount || 0);
+                   return 0;
+                 });
+               }
+               
+               if (filteredItems.length === 0) return <p style={{ textAlign: "center", padding: 40, color: MUTED, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>Không tìm thấy tác phẩm nào.</p>;
+
+               const displayedItems = filteredItems.slice(0, colPage * colLimit);
+
+               return (
+                 <>
+                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                     <SortableContext items={displayedItems.map(i => i.id)} strategy={rectSortingStrategy}>
+                       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+                          {displayedItems.map(item => (
+                             <MoodboardSortableCard key={item.id} item={item} onClick={() => setPage("detail", { artworkId: item.artworkId })} onMove={(e) => { e.stopPropagation(); setMoveState({ artworkId: item.artworkId, fromColId: activeCollection.id }); }} onRemove={(e) => handleRemoveItem(activeCollection.id, item.artworkId, e)} />
+                          ))}
+                       </div>
+                     </SortableContext>
+                   </DndContext>
+                   
+                   {colPage * colLimit < filteredItems.length && (
+                      <div
+                        ref={el => {
+                          if (!el) return;
+                          const observer = new IntersectionObserver(entries => {
+                            if (entries[0].isIntersecting) setColPage(p => p + 1);
+                          }, { threshold: 0.1 });
+                          observer.observe(el);
+                          return () => observer.disconnect();
+                        }}
+                        style={{ height: 20 }}
+                      >
+                      </div>
+                   )}
+                 </>
+               );
+            })()}
+          </div>
+        ) : (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+              <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Bộ sưu tập (Moodboards)</h2>
+              <div style={{ display: "flex", gap: 16 }}>
+                <div style={{ position: "relative" }}>
+                  <Search size={16} style={{ position: "absolute", left: 12, top: 10, color: MUTED }} />
+                  <input placeholder="Tìm kiếm bộ sưu tập..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ padding: "8px 12px 8px 36px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, width: 250 }} />
+                </div>
+                <button onClick={() => setIsCreating(true)} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 8, padding: "0 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontWeight: "bold" }}>
+                  <Plus size={18} /> Tạo mới
+                </button>
+              </div>
+            </div>
+
+            {isCreating && (
+              <div style={{ background: "#fff", padding: "16px 20px", borderRadius: 12, border: `1px solid ${CERULEAN}`, marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
+                <FolderPlus size={20} color={CERULEAN} />
+                <input autoFocus placeholder="Tên bộ sưu tập mới" value={newColName} onChange={e => setNewColName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreate()} style={{ flex: 1, border: "none", outline: "none", fontSize: 16 }} />
+                <button onClick={handleCreate} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", cursor: "pointer", fontWeight: "bold" }}>Tạo</button>
+                <button onClick={() => setIsCreating(false)} style={{ background: GRAY_LIGHT, color: BLACK, border: "none", borderRadius: 6, padding: "8px 16px", cursor: "pointer", fontWeight: "bold" }}>Hủy</button>
+              </div>
+            )}
+
+            {filteredCollections.length === 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", color: MUTED, background: "#fff", borderRadius: 16, border: `1px dashed ${MUTED}`, margin: "0 auto", maxWidth: 600 }}>
+                <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#f0f4ff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
+                  <Bookmark size={40} color={CERULEAN} strokeWidth={1.5} />
+                </div>
+                <h3 style={{ margin: "0 0 8px 0", fontSize: 18, color: BLACK, fontWeight: 700 }}>Chưa có bộ sưu tập nào</h3>
+                <p style={{ margin: "0 0 24px 0", fontSize: 14, textAlign: "center", maxWidth: 400 }}>Hãy khám phá các tác phẩm trên hệ thống và lưu lại những ý tưởng tuyệt vời nhất vào bộ sưu tập của riêng bạn.</p>
+                <button onClick={() => setPage("gallery")} style={{ background: CERULEAN, color: "#fff", border: "none", padding: "12px 28px", borderRadius: 30, cursor: "pointer", fontWeight: "bold", fontSize: 15, display: "flex", alignItems: "center", gap: 8, transition: "0.2s", boxShadow: "0 4px 12px rgba(0,87,255,0.2)" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.05)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                  Khám phá Gallery
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
+                {filteredCollections.map(col => {
+                  const coverImage = col.items?.[0]?.artwork?.coverImageUrl || "https://placehold.co/600x400/eeeeee/cccccc?text=Trống";
+                  return (
+                    <div key={col.id} onClick={() => setActiveCollection(col)} style={{ background: "#fff", borderRadius: 16, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, cursor: "pointer", transition: "transform 0.2s, box-shadow 0.2s", position: "relative" }} onMouseEnter={e => {e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.08)"}} onMouseLeave={e => {e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"}}>
+                      <div style={{ position: "relative", height: 200 }}>
+                        <img src={coverImage} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)" }} />
+                        
+                        <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 8 }}>
+                          <button onClick={(e) => handleDeleteCollection(col.id, e)} style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(4px)", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", color: "#ffcccc", cursor: "pointer" }} title="Xóa">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                          <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, display: "flex", justifyContent: "space-between", alignItems: "flex-end", pointerEvents: "none" }}>
+                             <div>
+                               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff", textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}>{col.name}</h3>
+                               <p style={{ margin: "4px 0 0 0", fontSize: 13, color: "rgba(255,255,255,0.8)" }}>Cập nhật: {new Date(col.updatedAt || Date.now()).toLocaleDateString()}</p>
+                             </div>
+                             <span style={{ background: "rgba(255,255,255,0.3)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 20, color: "#fff", fontSize: 12, fontWeight: "bold" }}>{col.items?.length || 0} mục</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Move Item Modal */}
+      {moveState && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000 }}>
+          <div style={{ background: "#fff", borderRadius: 16, width: 400, padding: 24, boxShadow: "0 24px 48px rgba(0,0,0,0.2)" }}>
+            <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 700, color: BLACK }}>Di chuyển tác phẩm</h3>
+            <p style={{ margin: "0 0 16px 0", fontSize: 14, color: MUTED }}>Chọn bộ sưu tập đích:</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto", marginBottom: 24 }}>
+              {collections.filter(c => c.id !== moveState.fromColId).map(c => (
+                <button key={c.id} onClick={() => handleMoveItem(c.id)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "transparent", cursor: "pointer", textAlign: "left", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.background = GRAY_BG} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <Folder size={18} color={CERULEAN} />
+                  <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: BLACK }}>{c.name}</span>
+                  <span style={{ fontSize: 12, color: MUTED }}>{c.items?.length || 0} mục</span>
+                </button>
+              ))}
+              {collections.length <= 1 && (
+                <p style={{ fontSize: 13, color: MUTED, textAlign: "center", padding: "16px 0" }}>Bạn không có bộ sưu tập nào khác.</p>
+              )}
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={() => setMoveState(null)} style={{ background: GRAY_LIGHT, border: "none", borderRadius: 8, padding: "10px 20px", fontWeight: "bold", cursor: "pointer" }}>Hủy bỏ</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1186,6 +1555,24 @@ function UploadPage({ setPage, setActiveArtworkId }) {
   const [additionalImages, setAdditionalImages] = useState([]);
   const [error, setError] = useState("");
   const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
+  const [blocks, setBlocks] = useState([]);
+
+  const addBlock = (type) => {
+    const newBlock = { id: Date.now().toString(), type, content: "", data: {} };
+    if (type === "text") newBlock.content = "";
+    if (type === "image") newBlock.data.url = "";
+    if (type === "color") newBlock.data.colors = ["#000000"];
+    if (type === "typography") newBlock.data.fontName = "Inter";
+    setBlocks([...blocks, newBlock]);
+  };
+
+  const updateBlock = (id, newProps) => {
+    setBlocks(blocks.map(b => b.id === id ? { ...b, ...newProps } : b));
+  };
+
+  const removeBlock = (id) => {
+    setBlocks(blocks.filter(b => b.id !== id));
+  };
 
   useEffect(() => {
     fetch("/api/site-settings")
@@ -1294,6 +1681,23 @@ function UploadPage({ setPage, setActiveArtworkId }) {
       const finalWatermarkText = defaultWatermarkText || "UEF";
       const watermarkedCover = await generateWatermarkDataURL(coverImage, finalWatermarkText);
 
+      setUploadState("analyzing_ai");
+      const aiResult = await api.artworks.analyzeArtworkWithAI(coverImage);
+      
+      if (aiResult.originalityScore < 50) {
+        const proceed = window.confirm(
+          `CẢNH BÁO AI:\n\n` +
+          `Hệ thống nhận diện tác phẩm của bạn có tỷ lệ tạo ra bởi AI rất cao (${aiResult.aiGeneratedPercentage}%).\n` +
+          `Độ nguyên bản (Originality) chỉ đạt ${aiResult.originalityScore}%.\n\n` +
+          `Việc đăng tải ấn phẩm lạm dụng AI có thể ảnh hưởng đến kết quả đánh giá của giảng viên. Bạn có chắc chắn muốn tiếp tục đăng không?`
+        );
+        if (!proceed) {
+          setUploadState("idle");
+          return;
+        }
+      }
+
+      setUploadState("loading");
       const newArtwork = await api.artworks.create({
         title: title.trim(),
         description: description.trim() || null,
@@ -1312,6 +1716,10 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         isPublic: false,
         isAiConfirmed: checked1,
         isEbook: isEbook,
+        aiScore: aiResult.originalityScore,
+        aiGeneratedPct: aiResult.aiGeneratedPercentage,
+        isAiVerified: aiResult.isAiVerified,
+        blocksJson: JSON.stringify(blocks)
       });
       setCreatedId(newArtwork.id);
       setUploadState("success");
@@ -1370,9 +1778,9 @@ function UploadPage({ setPage, setActiveArtworkId }) {
                 </div>
                 {error && <p style={{ color: CRIMSON, fontSize: 12, marginTop: 12 }}>{error}</p>}
                 <div style={{ display: "flex", gap: 10, marginTop: 24 }}>
-                  <button onClick={() => setShowPopup(false)} disabled={uploadState === "loading"} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: uploadState === "loading" ? "not-allowed" : "pointer", color: MUTED }}>{t("cancel")}</button>
-                  <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3 && !uploadState) ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3 && !uploadState) ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3 && !uploadState) ? "pointer" : "not-allowed" }}>
-                    {uploadState === "loading" ? t("processing") : t("confirmAndPost")}
+                  <button onClick={() => setShowPopup(false)} disabled={uploadState === "loading" || uploadState === "analyzing_ai"} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: (uploadState === "loading" || uploadState === "analyzing_ai") ? "not-allowed" : "pointer", color: MUTED }}>{t("cancel")}</button>
+                  <button onClick={handleUploadSubmit} disabled={(!checked1 || !checked2 || !checked3) || uploadState === "loading" || uploadState === "analyzing_ai"} style={{ flex: 2, padding: "10px", borderRadius: 8, border: "none", background: (checked1 && checked2 && checked3 && uploadState !== "loading" && uploadState !== "analyzing_ai") ? CERULEAN : GRAY_LIGHT, color: (checked1 && checked2 && checked3 && uploadState !== "loading" && uploadState !== "analyzing_ai") ? "#fff" : MUTED, fontSize: 13, fontWeight: 600, cursor: (checked1 && checked2 && checked3 && uploadState !== "loading" && uploadState !== "analyzing_ai") ? "pointer" : "not-allowed" }}>
+                    {uploadState === "analyzing_ai" ? "Đang phân tích bản quyền AI..." : uploadState === "loading" ? t("processing") : t("confirmAndPost")}
                   </button>
                 </div>
               </>
@@ -1486,20 +1894,129 @@ function UploadPage({ setPage, setActiveArtworkId }) {
               </div>
             </div>
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("tags")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{tags.map(tag => (<span key={tag} style={{ background: "#e0eaff", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}>{tag}<X size={12} color={CERULEAN} onClick={() => setTags(tags.filter(x => x !== tag))} style={{ cursor: "pointer" }} /></span>))}<input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && tagInput.trim()) { setTags([...tags, tagInput.trim()]); setTagInput(""); } }} placeholder={t("addTagPlaceholder")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 80, color: BLACK }} /></div></div>
-            <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
-                <div onClick={() => setAgreedToTerms(!agreedToTerms)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${agreedToTerms ? CERULEAN : GRAY_LIGHT}`, background: agreedToTerms ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>{agreedToTerms && <Check size={12} color="#fff" strokeWidth={3} />}</div>
-                <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6, margin: 0 }}>{t("fullCommitment")}</p>
+          </div>
+        </div>
+
+        {/* Builder Section */}
+        <div style={{ marginTop: 40, borderTop: `1px solid ${GRAY_LIGHT}`, paddingTop: 32, paddingBottom: 64 }}>
+          <h3 style={{ fontSize: 20, fontWeight: 700, color: BLACK, marginBottom: 8 }}>Nội dung chi tiết (Case Study Builder)</h3>
+          <p style={{ color: MUTED, fontSize: 13, marginBottom: 24 }}>Sử dụng các khối (Blocks) dưới đây để trình bày tác phẩm của bạn thành một bài thuyết trình chuyên nghiệp như trên Behance.</p>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 24 }}>
+            {blocks.map((block, i) => (
+              <div key={block.id} style={{ padding: 20, borderRadius: 12, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", position: "relative" }}>
+                <div onClick={() => removeBlock(block.id)} style={{ position: "absolute", top: 12, right: 12, cursor: "pointer", color: CRIMSON, fontWeight: "bold" }}>×</div>
+                
+                {block.type === "text" && (
+                  <div>
+                    <h4 style={{ margin: "0 0 12px 0", fontSize: 14 }}>Khối Văn Bản (Text)</h4>
+                    <textarea 
+                      value={block.content} 
+                      onChange={e => updateBlock(block.id, { content: e.target.value })}
+                      placeholder="Nhập tiêu đề hoặc đoạn mô tả..." 
+                      style={{ width: "100%", padding: 12, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, minHeight: 80, boxSizing: "border-box" }} 
+                    />
+                  </div>
+                )}
+                
+                {block.type === "image" && (
+                  <div>
+                    <h4 style={{ margin: "0 0 12px 0", fontSize: 14 }}>Khối Hình Ảnh (Image)</h4>
+                    {block.data.url ? (
+                      <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                        <img src={block.data.url} alt="" style={{ height: 100, objectFit: "cover", borderRadius: 8 }} />
+                        <button onClick={() => updateBlock(block.id, { data: { ...block.data, url: "" } })} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff" }}>Đổi ảnh</button>
+                      </div>
+                    ) : (
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={async (e) => {
+                          if (e.target.files?.[0]) {
+                            const url = await readFileAsDataURL(e.target.files[0]);
+                            updateBlock(block.id, { data: { ...block.data, url } });
+                          }
+                        }} 
+                      />
+                    )}
+                  </div>
+                )}
+
+                {block.type === "color" && (
+                  <div>
+                    <h4 style={{ margin: "0 0 12px 0", fontSize: 14 }}>Bảng Màu (Color Palette)</h4>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                      {block.data.colors.map((c, idx) => (
+                        <div key={idx} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                          <input type="color" value={c} onChange={e => {
+                            const newColors = [...block.data.colors];
+                            newColors[idx] = e.target.value;
+                            updateBlock(block.id, { data: { ...block.data, colors: newColors } });
+                          }} style={{ width: 40, height: 40, padding: 0, border: "none", cursor: "pointer", borderRadius: 4 }} />
+                          <span style={{ fontSize: 10, textTransform: "uppercase" }}>{c}</span>
+                        </div>
+                      ))}
+                      <button onClick={() => updateBlock(block.id, { data: { ...block.data, colors: [...block.data.colors, "#ffffff"] } })} style={{ width: 40, height: 40, borderRadius: "50%", border: `1px dashed ${MUTED}`, background: "transparent", cursor: "pointer" }}>+</button>
+                    </div>
+                  </div>
+                )}
+
+                {block.type === "typography" && (
+                  <div>
+                    <h4 style={{ margin: "0 0 12px 0", fontSize: 14 }}>Font Chữ (Typography)</h4>
+                    <select 
+                      value={block.data.fontName} 
+                      onChange={e => updateBlock(block.id, { data: { ...block.data, fontName: e.target.value } })}
+                      style={{ padding: "8px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, width: "100%", boxSizing: "border-box", fontSize: 14 }} 
+                    >
+                      <option value="Inter">Inter</option>
+                      <option value="Roboto">Roboto</option>
+                      <option value="Outfit">Outfit</option>
+                      <option value="Playfair Display">Playfair Display</option>
+                      <option value="Montserrat">Montserrat</option>
+                      <option value="Lora">Lora</option>
+                    </select>
+                    <div style={{ marginTop: 12, padding: 16, background: GRAY_BG, borderRadius: 8, fontSize: 24, fontFamily: block.data.fontName }}>
+                      Aa Bb Cc Dd Ee 01234
+                    </div>
+                  </div>
+                )}
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div onClick={() => setNotifyOnConfirm(!notifyOnConfirm)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${notifyOnConfirm ? CERULEAN : GRAY_LIGHT}`, background: notifyOnConfirm ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>{notifyOnConfirm && <Check size={12} color="#fff" strokeWidth={3} />}</div>
-                <span style={{ fontSize: 12, color: "#666" }}>{t("notifyOnConfirmText")}</span>
-              </div>
+            ))}
+          </div>
+          
+          <h4 style={{ fontSize: 14, fontWeight: 600, color: MUTED, marginBottom: 12 }}>Thêm khối nội dung:</h4>
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+             <button onClick={() => addBlock("text")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px dashed ${CERULEAN}`, background: "#eef4ff", color: CERULEAN, fontWeight: 600, cursor: "pointer" }}>
+                + Văn bản (Text)
+             </button>
+             <button onClick={() => addBlock("image")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px dashed ${CERULEAN}`, background: "#eef4ff", color: CERULEAN, fontWeight: 600, cursor: "pointer" }}>
+                + Hình ảnh (Image)
+             </button>
+             <button onClick={() => addBlock("color")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px dashed ${CERULEAN}`, background: "#eef4ff", color: CERULEAN, fontWeight: 600, cursor: "pointer" }}>
+                + Bảng màu (Color Palette)
+             </button>
+             <button onClick={() => addBlock("typography")} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 8, border: `1px dashed ${CERULEAN}`, background: "#eef4ff", color: CERULEAN, fontWeight: 600, cursor: "pointer" }}>
+                + Font chữ (Typography)
+             </button>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 24, padding: 32, background: "#f9f9f9", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>
+          <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>Hoàn tất và Đăng đồ án</h3>
+          <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px", marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
+              <div onClick={() => setAgreedToTerms(!agreedToTerms)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${agreedToTerms ? CERULEAN : GRAY_LIGHT}`, background: agreedToTerms ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>{agreedToTerms && <Check size={12} color="#fff" strokeWidth={3} />}</div>
+              <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6, margin: 0 }}>{t("fullCommitment")}</p>
             </div>
-            <div style={{ paddingTop: 4 }}>
-              <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{t("submitArtwork")}</button>
-              <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("postSubmissionNote")}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div onClick={() => setNotifyOnConfirm(!notifyOnConfirm)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${notifyOnConfirm ? CERULEAN : GRAY_LIGHT}`, background: notifyOnConfirm ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>{notifyOnConfirm && <Check size={12} color="#fff" strokeWidth={3} />}</div>
+              <span style={{ fontSize: 12, color: "#666" }}>{t("notifyOnConfirmText")}</span>
             </div>
+          </div>
+          <div>
+            <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{t("submitArtwork")}</button>
+            <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("postSubmissionNote")}</p>
           </div>
         </div>
       </div>
@@ -1715,6 +2232,12 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [relatedArtworks, setRelatedArtworks] = useState([]);
   const [liking, setLiking] = useState(false);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const [pinpointMode, setPinpointMode] = useState(false);
+  const [pendingComment, setPendingComment] = useState(null);
+  const [activeCommentId, setActiveCommentId] = useState(null);
+  const [draggingCommentId, setDraggingCommentId] = useState(null);
+  const [filterLecturerId, setFilterLecturerId] = useState("");
+  const [showLecturerFilter, setShowLecturerFilter] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [reportType, setReportType] = useState("");
   const [reportDetail, setReportDetail] = useState("");
@@ -1853,15 +2376,58 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     }
     setSendingComment(true);
     try {
-      const newComment = await api.artworks.comments.create(activeArtworkId, commentText.trim());
-      setComments(prev => [{ ...newComment, user: newComment.user || { fullName: authUser?.fullName || "User", avatarUrl: authUser?.image || authUser?.avatarUrl || "" } }, ...prev]);
+      const payload = {
+        content: commentText.trim(),
+        positionX: pendingComment ? pendingComment.x : null,
+        positionY: pendingComment ? pendingComment.y : null,
+        targetImageIndex: pendingComment ? pendingComment.index : null
+      };
+      const resData = await api.artworks.comments.create(activeArtworkId, payload);
+      const rawComment = resData.comment || resData;
+      const newComment = {
+        id: rawComment.id || rawComment.Id,
+        content: rawComment.content || rawComment.Content,
+        positionX: rawComment.positionX ?? rawComment.PositionX,
+        positionY: rawComment.positionY ?? rawComment.PositionY,
+        targetImageIndex: rawComment.targetImageIndex ?? rawComment.TargetImageIndex,
+        createdAt: rawComment.createdAt || rawComment.CreatedAt || new Date().toISOString(),
+        user: rawComment.user || rawComment.User || { fullName: authUser?.fullName || "User", avatarUrl: authUser?.image || authUser?.avatarUrl || "" }
+      };
+      setComments(prev => [newComment, ...prev]);
       setCommentText("");
+      setPendingComment(null);
       setActionSuccessToast("Bình luận thành công!");
       setTimeout(() => setActionSuccessToast(""), 3000);
     } catch (e) {
       alert(t("commentError") + (e?.message || t("pleaseTryAgain")));
     }
     setSendingComment(false);
+    setSendingComment(false);
+  };
+
+  const handleUpdateCommentPos = async (commentId, newX, newY) => {
+    try {
+      await api.artworks.comments.update(activeArtworkId, commentId, { positionX: newX, positionY: newY });
+      setComments(prev => prev.map(c => {
+        if ((c.id || c.Id) === commentId) {
+          return { ...c, positionX: newX, positionY: newY };
+        }
+        return c;
+      }));
+    } catch (e) {
+      console.error("Failed to update comment position", e);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm("Bạn có chắc muốn xóa nhận xét này?")) return;
+    try {
+      await api.artworks.comments.delete(activeArtworkId, commentId);
+      setComments(prev => prev.filter(c => (c.id || c.Id) !== commentId));
+      setActiveCommentId(null);
+    } catch (e) {
+      alert("Không thể xóa nhận xét. Lỗi: " + e?.message);
+    }
   };
 
   const handleSaveGrade = async () => {
@@ -1904,6 +2470,8 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const allImages = [art.coverImageUrl, ...(art.fileUrls || [])].filter(Boolean);
   const allImagesDeduped = [...new Set(allImages)];
   const activeImage = allImagesDeduped[activeImageIdx] || allImagesDeduped[0] || art.coverImageUrl;
+  
+  const parsedBlocks = art.blocksJson ? (typeof art.blocksJson === 'string' ? JSON.parse(art.blocksJson) : art.blocksJson) : [];
 
   const semesterMeta = {
     HK1: { label: "Năm 1", icon: <Rocket size={12} /> },
@@ -2088,34 +2656,367 @@ if (mins < 1) return t("justNow");
                   </div>
                 </div>
               ) : (
-                <div style={{ width: "100%", padding: "60px 0", display: "flex", justifyContent: "center", position: "relative", background: "#F0F2F5", cursor: "pointer" }} onClick={() => setIsReadingEbook(true)}>
-                  <img src={art.coverImageUrl} style={{ maxWidth: "80%", maxHeight: "70vh", objectFit: "contain", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", borderRadius: 4 }} alt="Ebook Cover" />
-                  <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
-                     <button style={{ background: "#1a4ba8", color: "white", padding: "16px 32px", borderRadius: 30, display: "flex", gap: 10, alignItems: "center", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 16, boxShadow: "0 8px 24px rgba(0,0,0,0.3)", pointerEvents: "none" }}>
-                       <BookOpen size={24} /> Đọc E-book
-                     </button>
+                <div style={{ width: "100%", padding: "60px 0", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", background: "#F0F2F5", cursor: "pointer" }} onClick={() => setIsReadingEbook(true)}>
+                  <div style={{ position: "relative" }}>
+                    <img src={art.coverImageUrl} style={{ maxWidth: "80%", maxHeight: "70vh", objectFit: "contain", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", borderRadius: 4 }} alt="Ebook Cover" />
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)", borderRadius: 4 }}>
+                       <button style={{ background: "#1a4ba8", color: "white", padding: "16px 32px", borderRadius: 30, display: "flex", gap: 10, alignItems: "center", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 16, boxShadow: "0 8px 24px rgba(0,0,0,0.3)", pointerEvents: "none" }}>
+                         <BookOpen size={24} /> Đọc E-book
+                       </button>
+                    </div>
                   </div>
                 </div>
               )
             ) : (
-              allImagesDeduped.map((img, i) => (
-                <div key={i} style={{ width: "100%", position: "relative" }} onMouseEnter={e => {
-                  const overlay = e.currentTarget.querySelector('.img-hover-actions');
-                  if(overlay) overlay.style.opacity = 1;
-                }} onMouseLeave={e => {
-                  const overlay = e.currentTarget.querySelector('.img-hover-actions');
-                  if(overlay) overlay.style.opacity = 0;
-                }}>
-                  <img src={img} style={{ width: "100%", display: "block" }} alt="" />
-                  
-                  {/* Ảnh Hover Actions */}
-                  <div className="img-hover-actions" style={{ position: "absolute", top: 20, right: 20, display: "flex", gap: 12, opacity: 0, transition: "opacity 0.2s" }}>
-                    <button onClick={() => { setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Briefcase size={16} /> More Like This</button>
-                    <button onClick={() => setShowDownloadModal(true)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Download size={16} /> Download</button>
-                    <button onClick={() => handleShare()} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Link size={16} /> Permalink</button>
+              <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                {(() => {
+                  const lecturerComments = comments?.filter(c => c.positionX != null && (c.user?.id || c.user?.Id) !== art.user?.id) || [];
+                  const uniqueLecturers = [];
+                  lecturerComments.forEach(c => {
+                    const u = c.user || c.User;
+                    if (u && !uniqueLecturers.find(l => (l.id || l.Id) === (u.id || u.Id))) {
+                      uniqueLecturers.push(u);
+                    }
+                  });
+
+                  return (
+                    <div style={{ padding: "16px 24px", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 16, background: "#fff", borderBottom: "1px solid #eee" }}>
+                      {currentUserId === art.user?.id && uniqueLecturers.length > 0 && (
+                        <div style={{ position: "relative" }}>
+                          <button 
+                            onClick={() => setShowLecturerFilter(!showLecturerFilter)}
+                            style={{ padding: "8px 16px", borderRadius: 20, border: "1px solid #ddd", background: "#f9f9f9", color: "#333", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "0.2s" }}
+                            onMouseEnter={e => e.currentTarget.style.background = "#fff"}
+                            onMouseLeave={e => e.currentTarget.style.background = "#f9f9f9"}
+                          >
+                            <User size={16} color="#666" />
+                            {filterLecturerId ? uniqueLecturers.find(l => (l.id || l.Id) === filterLecturerId)?.fullName || uniqueLecturers.find(l => (l.id || l.Id) === filterLecturerId)?.FullName || "Giảng viên" : "Tất cả nhận xét"}
+                            <ChevronDown size={14} color="#666" />
+                          </button>
+                          {showLecturerFilter && (
+                            <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 8, background: "#fff", borderRadius: 12, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", width: 220, zIndex: 1000, overflow: "hidden", border: "1px solid #eee", display: "flex", flexDirection: "column" }}>
+                              <div 
+                                onClick={() => { setFilterLecturerId(""); setShowLecturerFilter(false); }}
+                                style={{ padding: "12px 16px", cursor: "pointer", fontSize: 14, background: filterLecturerId === "" ? "#f0f4ff" : "#fff", color: filterLecturerId === "" ? CERULEAN : "#333", fontWeight: filterLecturerId === "" ? 600 : 400, borderBottom: "1px solid #eee", transition: "0.2s", display: "flex", alignItems: "center", gap: 8 }}
+                                onMouseEnter={e => e.currentTarget.style.background = filterLecturerId === "" ? "#f0f4ff" : "#f9f9f9"}
+                                onMouseLeave={e => e.currentTarget.style.background = filterLecturerId === "" ? "#f0f4ff" : "#fff"}
+                              >
+                                {filterLecturerId === "" && <Check size={14} color={CERULEAN} />}
+                                <span style={{ marginLeft: filterLecturerId === "" ? 0 : 22 }}>Tất cả nhận xét</span>
+                              </div>
+                              {uniqueLecturers.map(l => {
+                                const id = l.id || l.Id;
+                                const isSelected = filterLecturerId === id;
+                                return (
+                                  <div 
+                                    key={id}
+                                    onClick={() => { setFilterLecturerId(id); setShowLecturerFilter(false); }}
+                                    style={{ padding: "12px 16px", cursor: "pointer", fontSize: 14, background: isSelected ? "#f0f4ff" : "#fff", color: isSelected ? CERULEAN : "#333", fontWeight: isSelected ? 600 : 400, borderBottom: "1px solid #eee", transition: "0.2s", display: "flex", alignItems: "center", gap: 8 }}
+                                    onMouseEnter={e => e.currentTarget.style.background = isSelected ? "#f0f4ff" : "#f9f9f9"}
+                                    onMouseLeave={e => e.currentTarget.style.background = isSelected ? "#f0f4ff" : "#fff"}
+                                  >
+                                    {isSelected && <Check size={14} color={CERULEAN} />}
+                                    <span style={{ marginLeft: isSelected ? 0 : 22 }}>{l.fullName || l.FullName}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {(currentUserRole === "lecturer" || currentUserRole === "admin" || currentUserId === art.user?.id) && (
+                        <button 
+                          onClick={() => {
+                            setPinpointMode(!pinpointMode);
+                            if (pinpointMode) setPendingComment(null);
+                          }} 
+                          style={{ background: pinpointMode ? CERULEAN : "#f0f0f0", color: pinpointMode ? "#fff" : "#333", border: "none", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8 }}>
+                          {currentUserRole === "lecturer" || currentUserRole === "admin" ? (
+                             <><MapPin size={16} /> {pinpointMode ? "Tắt Pinpoint Comment" : "Bật Pinpoint Comment"}</>
+                          ) : (
+                             <><Eye size={16} /> {pinpointMode ? "Ẩn nhận xét" : "Hiện nhận xét"}</>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
+                {allImagesDeduped.map((img, i) => {
+                  if (!img) return null;
+                  const imageComments = comments?.filter(c => c.targetImageIndex === i && c.positionX != null) || [];
+                  return (
+                    <div key={i} style={{ width: "100%", position: "relative" }} onMouseEnter={e => {
+                      const overlay = e.currentTarget.querySelector('.img-hover-actions');
+                      if(overlay) overlay.style.opacity = 1;
+                    }} onMouseLeave={e => {
+                      const overlay = e.currentTarget.querySelector('.img-hover-actions');
+                      if(overlay) overlay.style.opacity = 0;
+                    }}>
+                      <img 
+                        src={img} 
+                        style={{ width: "100%", display: "block", cursor: (pinpointMode && (currentUserRole === "lecturer" || currentUserRole === "admin")) ? "crosshair" : "default" }} 
+                        alt="" 
+                        onClick={(e) => {
+                          if (!pinpointMode || (currentUserRole !== "lecturer" && currentUserRole !== "admin")) return;
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const x = ((e.clientX - rect.left) / rect.width) * 100;
+                          const y = ((e.clientY - rect.top) / rect.height) * 100;
+                          setPendingComment({ x, y, index: i });
+                        }}
+                      />
+                      
+                      {/* Markers */}
+                      {pinpointMode && imageComments.map((c, idx) => {
+                        const uid = c.user?.id || c.User?.Id || c.userId;
+                        if (filterLecturerId && uid !== filterLecturerId && uid !== art.user?.id) return null;
+                        const isMine = uid === currentUserId;
+                        const cId = c.id || c.Id;
+                        const isActive = activeCommentId === cId;
+                        return (
+                          <div 
+                            key={cId || idx} 
+                            style={{ position: "absolute", left: `${c.positionX ?? c.PositionX}%`, top: `${c.positionY ?? c.PositionY}%`, zIndex: isActive ? 100 : 10 }}
+                          >
+                            <div 
+                              onPointerDown={e => {
+                                e.currentTarget.setPointerCapture(e.pointerId);
+                                e.currentTarget.dataset.startX = e.clientX;
+                                e.currentTarget.dataset.startY = e.clientY;
+                                e.currentTarget.dataset.isDragging = "false";
+                                if (isMine) setDraggingCommentId(cId);
+                              }}
+                              onPointerMove={e => {
+                                if (e.currentTarget.hasPointerCapture(e.pointerId) && isMine) {
+                                  const dx = Math.abs(e.clientX - parseFloat(e.currentTarget.dataset.startX));
+                                  const dy = Math.abs(e.clientY - parseFloat(e.currentTarget.dataset.startY));
+                                  if (dx > 3 || dy > 3) {
+                                    e.currentTarget.dataset.isDragging = "true";
+                                    const rect = e.currentTarget.parentElement.parentElement.getBoundingClientRect();
+                                    const newX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+                                    const newY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+                                    e.currentTarget.parentElement.style.left = `${newX}%`;
+                                    e.currentTarget.parentElement.style.top = `${newY}%`;
+                                    e.currentTarget.parentElement.dataset.newX = newX;
+                                    e.currentTarget.parentElement.dataset.newY = newY;
+                                  }
+                                }
+                              }}
+                              onPointerUp={e => {
+                                e.currentTarget.releasePointerCapture(e.pointerId);
+                                setDraggingCommentId(null);
+                                if (e.currentTarget.dataset.isDragging === "true") {
+                                  e.currentTarget.dataset.isDragging = "false";
+                                  const parent = e.currentTarget.parentElement;
+                                  if (parent.dataset.newX && parent.dataset.newY) {
+                                    handleUpdateCommentPos(cId, parseFloat(parent.dataset.newX), parseFloat(parent.dataset.newY));
+                                  }
+                                } else {
+                                  setActiveCommentId(isActive ? null : cId);
+                                }
+                              }}
+                              style={{ width: 24, height: 24, background: isActive ? "#000" : CRIMSON, color: "#fff", borderRadius: "50%", transform: "translate(-50%, -50%)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: isMine ? "grab" : "pointer", userSelect: "none", touchAction: "none" }} 
+                              title={!isActive ? "Nhấn để xem" : ""}
+                            >
+                              {idx + 1}
+                            </div>
+                            
+                            {/* Popover content */}
+                            {isActive && (
+                              <div style={{ position: "absolute", top: 16, left: 16, background: "#fff", padding: 16, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", width: 250, display: "flex", flexDirection: "column", gap: 8, cursor: "default" }} onClick={e => e.stopPropagation()}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                  <img src={c.user?.avatarUrl || c.User?.AvatarUrl || "https://ui-avatars.com/api/?name=User"} style={{ width: 24, height: 24, borderRadius: "50%" }} alt="" />
+                                  <span style={{ fontSize: 13, fontWeight: "bold", color: "#333" }}>{c.user?.fullName || c.User?.FullName}</span>
+                                </div>
+                                <div style={{ fontSize: 14, color: "#444", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
+                                  {c.content || c.Content}
+                                </div>
+                                {isMine && (
+                                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                                    <button onClick={() => handleDeleteComment(cId)} style={{ padding: "4px 8px", background: "#fee", color: "#e53e3e", border: "1px solid #fecaca", borderRadius: 4, cursor: "pointer", fontSize: 11, fontWeight: "bold" }}>Xóa</button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* Pending Marker Popover */}
+                      {pendingComment && pendingComment.index === i && (
+                        <div style={{ position: "absolute", left: `${pendingComment.x}%`, top: `${pendingComment.y}%`, zIndex: 100 }}>
+                          <div style={{ width: 24, height: 24, background: CERULEAN, color: "#fff", borderRadius: "50%", transform: "translate(-50%, -50%)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 12, boxShadow: "0 0 0 4px rgba(26,75,168,0.3)", animation: "pulse 1.5s infinite" }}>
+                            +
+                          </div>
+                          <div style={{ position: "absolute", top: 16, left: 16, background: "#fff", padding: 12, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", width: 250, display: "flex", flexDirection: "column", gap: 8 }} onClick={e => e.stopPropagation()}>
+                            <textarea 
+                               autoFocus 
+                               placeholder="Thêm nhận xét..." 
+                               value={commentText} 
+                               onChange={e => setCommentText(e.target.value)} 
+                               style={{ width: "100%", padding: 8, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, resize: "vertical", minHeight: 60, boxSizing: "border-box" }}
+                            />
+                            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                               <button onClick={() => {setPendingComment(null); setCommentText("");}} style={{ padding: "6px 12px", background: "transparent", border: "none", color: "#666", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Hủy</button>
+                               <button onClick={handleSendComment} style={{ padding: "6px 12px", background: CERULEAN, color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Gửi</button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Ảnh Hover Actions */}
+                      <div className="img-hover-actions" style={{ position: "absolute", top: 20, right: 20, display: "flex", gap: 12, opacity: 0, transition: "opacity 0.2s" }}>
+                        <button onClick={() => { if (onBookmarkClick) onBookmarkClick(art); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: isBookmarked ? "#ffeb3b" : "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Bookmark size={16} fill={isBookmarked ? "#ffeb3b" : "none"} /> {isBookmarked ? "Đã lưu" : "Lưu Moodboard"}</button>
+                        <button onClick={() => { setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Briefcase size={16} /> More Like This</button>
+                        <button onClick={() => setShowDownloadModal(true)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Download size={16} /> Download</button>
+                        <button onClick={() => handleShare()} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Link size={16} /> Permalink</button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Render Blocks */}
+                {parsedBlocks && parsedBlocks.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "40px 60px", background: "#fff" }}>
+                    {parsedBlocks.map((block, i) => (
+                      <div key={block.id || i} style={{ width: "100%" }}>
+                        {block.type === "text" && (
+                          <div style={{ fontSize: 16, lineHeight: 1.8, color: "#333", whiteSpace: "pre-wrap" }}>{block.content}</div>
+                        )}
+                        {block.type === "image" && block.data?.url && (() => {
+                          const imageIndex = 1000 + i;
+                          const imageComments = comments?.filter(c => c.targetImageIndex === imageIndex && c.positionX != null) || [];
+                          return (
+                            <div style={{ width: "100%", position: "relative" }}>
+                              <img 
+                                src={block.data.url} 
+                                style={{ width: "100%", borderRadius: 8, display: "block", cursor: (pinpointMode && (currentUserRole === "lecturer" || currentUserRole === "admin")) ? "crosshair" : "default" }} 
+                                alt="" 
+                                onClick={(e) => {
+                                  if (!pinpointMode || (currentUserRole !== "lecturer" && currentUserRole !== "admin")) return;
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                                  setPendingComment({ x, y, index: imageIndex });
+                                }}
+                              />
+                              {pinpointMode && imageComments.map((c, idx) => {
+                                const uid = c.user?.id || c.User?.Id || c.userId;
+                                if (filterLecturerId && uid !== filterLecturerId && uid !== art.user?.id) return null;
+                                const isMine = uid === currentUserId;
+                                const cId = c.id || c.Id;
+                                const isActive = activeCommentId === cId;
+                                return (
+                                  <div 
+                                    key={cId || idx} 
+                                    style={{ position: "absolute", left: `${c.positionX ?? c.PositionX}%`, top: `${c.positionY ?? c.PositionY}%`, zIndex: isActive ? 100 : 10 }}
+                                  >
+                                    <div 
+                                      onPointerDown={e => {
+                                        e.currentTarget.setPointerCapture(e.pointerId);
+                                        e.currentTarget.dataset.startX = e.clientX;
+                                        e.currentTarget.dataset.startY = e.clientY;
+                                        e.currentTarget.dataset.isDragging = "false";
+                                        if (isMine) setDraggingCommentId(cId);
+                                      }}
+                                      onPointerMove={e => {
+                                        if (e.currentTarget.hasPointerCapture(e.pointerId) && isMine) {
+                                          const dx = Math.abs(e.clientX - parseFloat(e.currentTarget.dataset.startX));
+                                          const dy = Math.abs(e.clientY - parseFloat(e.currentTarget.dataset.startY));
+                                          if (dx > 3 || dy > 3) {
+                                            e.currentTarget.dataset.isDragging = "true";
+                                            const rect = e.currentTarget.parentElement.parentElement.getBoundingClientRect();
+                                            const newX = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+                                            const newY = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+                                            e.currentTarget.parentElement.style.left = `${newX}%`;
+                                            e.currentTarget.parentElement.style.top = `${newY}%`;
+                                            e.currentTarget.parentElement.dataset.newX = newX;
+                                            e.currentTarget.parentElement.dataset.newY = newY;
+                                          }
+                                        }
+                                      }}
+                                      onPointerUp={e => {
+                                        e.currentTarget.releasePointerCapture(e.pointerId);
+                                        setDraggingCommentId(null);
+                                        if (e.currentTarget.dataset.isDragging === "true") {
+                                          e.currentTarget.dataset.isDragging = "false";
+                                          const parent = e.currentTarget.parentElement;
+                                          if (parent.dataset.newX && parent.dataset.newY) {
+                                            handleUpdateCommentPos(cId, parseFloat(parent.dataset.newX), parseFloat(parent.dataset.newY));
+                                          }
+                                        } else {
+                                          setActiveCommentId(isActive ? null : cId);
+                                        }
+                                      }}
+                                      style={{ width: 24, height: 24, background: isActive ? "#000" : CRIMSON, color: "#fff", borderRadius: "50%", transform: "translate(-50%, -50%)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.3)", cursor: isMine ? "grab" : "pointer", userSelect: "none", touchAction: "none" }} 
+                                      title={!isActive ? "Nhấn để xem" : ""}
+                                    >
+                                      {idx + 1}
+                                    </div>
+                                    
+                                    {/* Popover content */}
+                                    {isActive && (
+                                      <div style={{ position: "absolute", top: 16, left: 16, background: "#fff", padding: 16, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", width: 250, display: "flex", flexDirection: "column", gap: 8, cursor: "default" }} onClick={e => e.stopPropagation()}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                          <img src={c.user?.avatarUrl || c.User?.AvatarUrl || "https://ui-avatars.com/api/?name=User"} style={{ width: 24, height: 24, borderRadius: "50%" }} alt="" />
+                                          <span style={{ fontSize: 13, fontWeight: "bold", color: "#333" }}>{c.user?.fullName || c.User?.FullName}</span>
+                                        </div>
+                                        <div style={{ fontSize: 14, color: "#444", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
+                                          {c.content || c.Content}
+                                        </div>
+                                        {isMine && (
+                                          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                                            <button onClick={() => handleDeleteComment(cId)} style={{ padding: "4px 8px", background: "#fee", color: "#e53e3e", border: "1px solid #fecaca", borderRadius: 4, cursor: "pointer", fontSize: 11, fontWeight: "bold" }}>Xóa</button>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                              {pendingComment && pendingComment.index === imageIndex && (
+                                <div style={{ position: "absolute", left: `${pendingComment.x}%`, top: `${pendingComment.y}%`, zIndex: 100 }}>
+                                  <div style={{ width: 24, height: 24, background: CERULEAN, color: "#fff", borderRadius: "50%", transform: "translate(-50%, -50%)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 12, boxShadow: "0 0 0 4px rgba(26,75,168,0.3)", animation: "pulse 1.5s infinite" }}>
+                                    +
+                                  </div>
+                                  <div style={{ position: "absolute", top: 16, left: 16, background: "#fff", padding: 12, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", width: 250, display: "flex", flexDirection: "column", gap: 8 }} onClick={e => e.stopPropagation()}>
+                                    <textarea 
+                                       autoFocus 
+                                       placeholder="Thêm nhận xét..." 
+                                       value={commentText} 
+                                       onChange={e => setCommentText(e.target.value)} 
+                                       style={{ width: "100%", padding: 8, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, resize: "vertical", minHeight: 60, boxSizing: "border-box" }}
+                                    />
+                                    <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                                       <button onClick={() => {setPendingComment(null); setCommentText("");}} style={{ padding: "6px 12px", background: "transparent", border: "none", color: "#666", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Hủy</button>
+                                       <button onClick={handleSendComment} style={{ padding: "6px 12px", background: CERULEAN, color: "#fff", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>Gửi</button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                        {block.type === "color" && block.data?.colors && (
+                          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", padding: "32px 0" }}>
+                            {block.data.colors.map((c, idx) => (
+                              <div key={idx} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                                <div style={{ width: 80, height: 80, borderRadius: "50%", background: c, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}></div>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>{c}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {block.type === "typography" && block.data?.fontName && (
+                          <div style={{ padding: 32, background: GRAY_BG, borderRadius: 12, textAlign: "center" }}>
+                            <p style={{ fontSize: 14, color: MUTED, marginBottom: 12, textTransform: "uppercase", letterSpacing: 2 }}>{block.data.fontName}</p>
+                            <div style={{ fontSize: 48, fontFamily: block.data.fontName, color: BLACK, lineHeight: 1.2 }}>Aa Bb Cc Dd Ee<br/>0123456789</div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))
+                )}
+              </div>
             )}
           </div>
 
@@ -2134,7 +3035,20 @@ if (mins < 1) return t("justNow");
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}><MessageCircle size={16} /> {comments?.length || 0}</div>
             </div>
 
-            <p style={{ color: "#888", fontSize: 13, margin: "0 0 60px 0" }}>Published: {new Date(art.createdAt || Date.now()).toLocaleDateString()}</p>
+            <p style={{ color: "#888", fontSize: 13, margin: "0 0 16px 0" }}>Published: {new Date(art.createdAt || Date.now()).toLocaleDateString()}</p>
+
+            {art.aiScore != null && (
+              <div style={{ 
+                background: art.aiScore >= 80 ? "linear-gradient(to right, #1a4ba8, #0ea5e9)" : art.aiScore >= 50 ? "linear-gradient(to right, #facc15, #eab308)" : "linear-gradient(to right, #ef4444, #dc2626)", 
+                borderRadius: 6, padding: "6px 14px", display: "flex", alignItems: "center", gap: 6, boxShadow: "0 2px 5px rgba(0,0,0,0.4)", marginBottom: 60 
+              }}>
+                <ShieldCheck size={16} color={art.aiScore >= 50 && art.aiScore < 80 ? "#111" : "#fff"} />
+                <span style={{ color: art.aiScore >= 50 && art.aiScore < 80 ? "#111" : "#fff", fontSize: 13, fontWeight: 700, letterSpacing: "0.5px" }}>
+                  AI ANALYSIS (Originality: {art.aiScore}%)
+                </span>
+              </div>
+            )}
+            {art.aiScore == null && <div style={{ marginBottom: 60 }} />}
 
             {/* Tác giả & Related Artworks */}
             <div style={{ width: "100%", display: "flex", flexDirection: "column", borderTop: "1px solid #333", paddingTop: 40 }}>
@@ -2220,6 +3134,13 @@ if (mins < 1) return t("justNow");
               <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, marginBottom: 40, display: "flex", gap: 16, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
                 <img src={authUser?.image || authUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
                 <div style={{ flex: 1 }}>
+                  {pendingComment && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, background: "#eef4ff", padding: "8px 12px", borderRadius: 6, color: CERULEAN, fontSize: 13, fontWeight: "bold" }}>
+                      <MapPin size={16} />
+                      Đang nhận xét tại tọa độ trên Ảnh {pendingComment.index + 1}
+                      <button onClick={() => setPendingComment(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: MUTED }}>Huỷ bỏ</button>
+                    </div>
+                  )}
                   <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="What are your thoughts on this project?" style={{ width: "100%", padding: "12px", borderRadius: 6, border: "1px solid #CCC", outline: "none", resize: "vertical", minHeight: 80, boxSizing: "border-box", fontSize: 14, fontFamily: "inherit" }} />
                   <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
                     <button onClick={handleSendComment} onMouseDown={e => e.currentTarget.style.transform = "scale(0.95)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} disabled={sendingComment || !commentText.trim()} style={{ background: "#E8E8E8", color: "#666", border: "none", padding: "10px 24px", borderRadius: 20, fontSize: 14, fontWeight: "bold", cursor: commentText.trim() ? "pointer" : "not-allowed", transition: "all 0.2s, transform 0.1s", ...(commentText.trim() && { background: "#0057ff", color: "#fff" }) }}>{sendingComment ? "Posting..." : "Post a Comment"}</button>
@@ -2230,18 +3151,32 @@ if (mins < 1) return t("justNow");
               {/* Danh sách bình luận */}
               <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
                 {comments?.length === 0 && <p style={{ fontSize: 13, color: "#999", textAlign: "center", padding: "20px 0" }}>{t("noComments")}</p>}
-                {comments?.map(c => (
-                  <div key={c.id || Math.random()} style={{ display: "flex", gap: 16 }}>
-                    <img onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} src={c.user?.image || c.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                        <span onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} style={{ fontWeight: "bold", color: "#191919", fontSize: 14, cursor: "pointer", textDecoration: "none" }} onMouseEnter={e=>e.currentTarget.style.textDecoration="underline"} onMouseLeave={e=>e.currentTarget.style.textDecoration="none"}>{c.user?.fullName}</span>
-                        <span style={{ fontSize: 12, color: "#888" }}>• {new Date(c.createdAt).toLocaleDateString()}</span>
+                {comments?.map((c, idx) => {
+                  let badgeNum = "";
+                  if (c.positionX != null && c.targetImageIndex != null) {
+                    // find index amongst same image comments to display number
+                    const imageComments = comments.filter(x => x.targetImageIndex === c.targetImageIndex && x.positionX != null);
+                    badgeNum = imageComments.findIndex(x => x.id === c.id) + 1;
+                  }
+                  
+                  return (
+                    <div key={c.id || Math.random()} style={{ display: "flex", gap: 16 }}>
+                      <img onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} src={c.user?.image || c.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
+                      <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                          <span onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} style={{ fontWeight: "bold", color: "#191919", fontSize: 14, cursor: "pointer", textDecoration: "none" }} onMouseEnter={e=>e.currentTarget.style.textDecoration="underline"} onMouseLeave={e=>e.currentTarget.style.textDecoration="none"}>{c.user?.fullName}</span>
+                          <span style={{ fontSize: 12, color: "#888" }}>• {new Date(c.createdAt).toLocaleDateString()}</span>
+                          {badgeNum && (
+                            <span style={{ background: CRIMSON, color: "#fff", fontSize: 10, padding: "2px 6px", borderRadius: 10, fontWeight: "bold" }}>
+                              Marker #{badgeNum} on Image {c.targetImageIndex + 1}
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ margin: 0, color: "#444", fontSize: 14, lineHeight: 1.6 }}>{c.content}</p>
                       </div>
-                      <p style={{ margin: 0, color: "#444", fontSize: 14, lineHeight: 1.6 }}>{c.content}</p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -7688,6 +8623,16 @@ function TimelineSection({ entries: propEntries, slug }) {
     }).catch(() => { setFetchedEntries([]); setFetchDone(true); });
   }, [slug]);
 
+  const [activeIndex, setActiveIndex] = useState(0);
+  const isTransitioning = useRef(false);
+  const stripRef = useRef(null);
+  const cardsRef = useRef(null);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartScroll = useRef(0);
+  const autoCenterTimer = useRef(null);
+  const cardDragStart = useRef(0);
+
   const rawEntries = fetchedEntries || [];
   if (!fetchDone || rawEntries.length === 0) {
     return null;
@@ -7707,16 +8652,6 @@ function TimelineSection({ entries: propEntries, slug }) {
     monthColor: monthColors[e.month] ? monthColors[e.month][0] : '#dbeafe',
     monthText: monthColors[e.month] ? monthColors[e.month][1] : '#1e40af',
   }));
-
-  const [activeIndex, setActiveIndex] = useState(0);
-  const isTransitioning = useRef(false);
-  const stripRef = useRef(null);
-  const cardsRef = useRef(null);
-  const isDragging = useRef(false);
-  const dragStartX = useRef(0);
-  const dragStartScroll = useRef(0);
-  const autoCenterTimer = useRef(null);
-  const cardDragStart = useRef(0);
 
   function goTo(newIdx) {
     if (isTransitioning.current || newIdx === activeIndex) return;
@@ -8214,6 +9149,11 @@ export default function App() {
       {page === "dashboard" && (
         userRole === "student" ? (
           <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />
+        ) : <AccessDenied setPage={setPage} />
+      )}
+      {page === "moodboards" && (
+        userRole === "student" ? (
+          <StudentMoodboardsPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />
         ) : <AccessDenied setPage={setPage} />
       )}
       {page === "upload" && (

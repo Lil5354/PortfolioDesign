@@ -2,9 +2,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cerulean: #1a4ba8;
-  --color-darkblue: #0d2e6e;
-  --color-crimson: #8B1A1A;
+  --color-cerulean: #077E9E; /* UEF Deep Cerulean */
+  --color-darkblue: #055F78; /* UEF Dark Cerulean */
+  --color-crimson: #8B1A1A; /* UEF Dark Red */
   --color-graybg: #F8F8F8;
   --color-graylight: #E0E0E0;
   --color-black: #212121;
