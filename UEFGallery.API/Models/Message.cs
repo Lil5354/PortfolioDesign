@@ -20,6 +20,8 @@ public class Message
 
     public string? Purpose { get; set; }
 
+    public string? Status { get; set; } // pending, processing, completed
+
     public string Content { get; set; } = string.Empty;
 
     public bool IsRead { get; set; }

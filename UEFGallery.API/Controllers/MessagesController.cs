@@ -76,6 +76,7 @@ public class MessagesController : ControllerBase
             SenderEmail = dto.SenderEmail,
             SenderCompany = dto.SenderCompany,
             Purpose = dto.Purpose,
+            Status = "pending",
             Content = dto.Content,
             IsRead = false,
             IsArchived = false,
@@ -107,6 +108,7 @@ public class MessagesController : ControllerBase
                 SenderEmail = dto.SenderEmail,
                 SenderCompany = dto.SenderCompany,
                 Purpose = dto.Purpose,
+                Status = "pending",
                 Content = dto.Content,
                 IsRead = true, // they sent it
                 IsArchived = false,
@@ -173,6 +175,26 @@ public class MessagesController : ControllerBase
 
         return Ok(new { success = true });
     }
+
+    [HttpPatch("{id}/status")]
+    [Authorize]
+    public async Task<IActionResult> UpdateStatus(string id, [FromBody] UpdateMessageStatusDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var message = await _context.Messages.FirstOrDefaultAsync(m => m.Id == id && m.RecipientId == userId);
+
+        if (message == null) return NotFound();
+
+        message.Status = dto.Status;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { success = true, status = message.Status });
+    }
+}
+
+public class UpdateMessageStatusDto
+{
+    public required string Status { get; set; }
 }
 
 public class SendMessageDto

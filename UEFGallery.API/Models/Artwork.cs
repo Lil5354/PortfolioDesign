@@ -32,6 +32,8 @@ public class Artwork
 
     public string CoverImageUrl { get; set; } = string.Empty;
 
+    public string? OriginalCoverUrl { get; set; }
+
     public string? WatermarkImageUrl { get; set; }
 
     public List<string>? FileUrls { get; set; }

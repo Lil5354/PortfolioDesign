@@ -51,6 +51,14 @@ public class ArtworksController : ControllerBase
         if (!string.IsNullOrEmpty(tool)) query = query.Where(a => a.ToolsUsed.Contains(tool));
         if (!string.IsNullOrEmpty(year)) query = query.Where(a => a.AcademicYear == year);
         if (!string.IsNullOrEmpty(userId)) query = query.Where(a => a.UserId == userId);
+        
+        if (Request.Query.ContainsKey("isPending"))
+        {
+            if (bool.TryParse(Request.Query["isPending"], out bool isPendingVal))
+            {
+                query = query.Where(a => a.IsPending == isPendingVal);
+            }
+        }
 
         if (sort == "most_likes")
         {
@@ -69,13 +77,14 @@ public class ArtworksController : ControllerBase
             {
                 a.Id,
                 a.Title,
-                a.Description,
                 a.CoverImageUrl,
+                a.OriginalCoverUrl,
                 a.Subject,
                 a.AcademicYear,
                 a.ToolsUsed,
                 a.IsHighlighted,
                 a.IsPublic,
+                a.IsPending,
                 a.LikeCount,
                 a.ViewCount,
                 a.CreatedAt,
@@ -121,10 +130,14 @@ public class ArtworksController : ControllerBase
         object? gradeData = null;
         if (grade != null)
         {
+            var role = User.FindFirstValue(ClaimTypes.Role);
+            bool canSeePrivate = role == "admin" || grade.LecturerId == userId;
+            
             gradeData = new {
                 grade.Id,
                 grade.Score,
-                grade.Comment,
+                Comment = (!grade.IsVisibleToStudent && !canSeePrivate) ? null : grade.Comment,
+                grade.IsVisibleToStudent,
                 grade.CreatedAt,
                 Lecturer = new { grade.Lecturer.Id, FullName = grade.Lecturer.FullName ?? "User", Email = grade.Lecturer.Email }
             };
@@ -148,12 +161,14 @@ public class ArtworksController : ControllerBase
             artwork.Title,
             artwork.Description,
             artwork.CoverImageUrl,
+            artwork.OriginalCoverUrl,
             artwork.Subject,
             artwork.Semester,
             artwork.AcademicYear,
             artwork.ToolsUsed,
             artwork.IsHighlighted,
             artwork.IsPublic,
+            artwork.IsPending,
             artwork.LikeCount,
             artwork.ViewCount,
             artwork.CreatedAt,
@@ -302,11 +317,14 @@ public class ArtworksController : ControllerBase
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
         var grade = await _context.Grades.FirstOrDefaultAsync(g => g.ArtworkId == id && g.LecturerId == userId);
+        var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.Id == id);
+        if (artwork == null) return NotFound();
 
         if (grade != null)
         {
             grade.Score = (decimal)dto.Score;
             grade.Comment = dto.Comment ?? "";
+            grade.IsVisibleToStudent = dto.IsVisibleToStudent;
             grade.UpdatedAt = DateTime.UtcNow;
         }
         else
@@ -318,11 +336,19 @@ public class ArtworksController : ControllerBase
                 LecturerId = userId,
                 Score = (decimal)dto.Score,
                 Comment = dto.Comment ?? "",
+                IsVisibleToStudent = dto.IsVisibleToStudent,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
             _context.Grades.Add(grade);
         }
+
+        // Grading approves the artwork
+        artwork.IsPending = false;
+        
+        // If Lecturer forces public, or if we want to let student do it later, we don't change IsPublic here.
+        // We will just leave IsPublic as is, giving student the ability to publicize it.
+        artwork.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
@@ -332,6 +358,7 @@ public class ArtworksController : ControllerBase
         {
             score = grade.Score,
             comment = grade.Comment,
+            isVisibleToStudent = grade.IsVisibleToStudent,
             lecturer = new
             {
                 fullName = lecturer?.FullName,
@@ -378,9 +405,9 @@ public class ArtworksController : ControllerBase
             Semester = dto.Semester,
             AcademicYear = dto.AcademicYear,
             Tags = dto.Tags ?? new List<string>(),
-            Collaborators = dto.Collaborators ?? new List<string>(),
             CollaboratorIds = dto.CollaboratorIds ?? new List<string>(),
             CoverImageUrl = dto.CoverImageUrl,
+            OriginalCoverUrl = dto.OriginalCoverUrl,
             WatermarkImageUrl = dto.WatermarkImageUrl,
             FileUrls = dto.FileUrls ?? new List<string>(),
             WatermarkText = dto.WatermarkText,
@@ -417,6 +444,92 @@ public class ArtworksController : ControllerBase
         await _context.SaveChangesAsync();
         return StatusCode(201, artwork);
     }
+
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateArtwork(string id, [FromBody] UpdateArtworkDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.Id == id);
+        if (artwork == null) return NotFound();
+
+        // Check ownership or admin
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (artwork.UserId != userId && role != "admin") return Forbid();
+
+        // Apply academic grading rule: cannot make public if pending
+        if (dto.IsPublic.HasValue)
+        {
+            if (dto.IsPublic.Value == true && artwork.IsPending && role != "admin")
+            {
+                return BadRequest(new { error = "Tác phẩm đang chờ duyệt, chưa thể công khai." });
+            }
+            artwork.IsPublic = dto.IsPublic.Value;
+        }
+
+        if (dto.Title != null) artwork.Title = dto.Title;
+        if (dto.Description != null) artwork.Description = dto.Description;
+        if (dto.ToolsUsed != null) artwork.ToolsUsed = dto.ToolsUsed;
+        if (dto.Subject != null) artwork.Subject = dto.Subject;
+        if (dto.Semester != null) artwork.Semester = dto.Semester;
+        if (dto.AcademicYear != null) artwork.AcademicYear = dto.AcademicYear;
+        if (!string.IsNullOrEmpty(dto.CoverImageUrl)) artwork.CoverImageUrl = dto.CoverImageUrl;
+        if (!string.IsNullOrEmpty(dto.OriginalCoverUrl)) artwork.OriginalCoverUrl = dto.OriginalCoverUrl;
+        if (dto.WatermarkImageUrl != null) artwork.WatermarkImageUrl = dto.WatermarkImageUrl;
+        if (dto.FileUrls != null) artwork.FileUrls = dto.FileUrls;
+        if (dto.WatermarkText != null) artwork.WatermarkText = dto.WatermarkText;
+        if (dto.WatermarkPosition != null) artwork.WatermarkPosition = dto.WatermarkPosition;
+
+        artwork.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return Ok(artwork);
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize]
+    public async Task<IActionResult> DeleteArtwork(string id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.Id == id);
+        if (artwork == null) return NotFound();
+
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (artwork.UserId != userId && role != "admin") return Forbid();
+
+        _context.Artworks.Remove(artwork);
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true });
+    }
+
+    [HttpPatch("{id}/visibility")]
+    [Authorize]
+    public async Task<IActionResult> ToggleVisibility(string id, [FromBody] UpdateVisibilityDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.Id == id);
+        if (artwork == null) return NotFound();
+
+        var role = User.FindFirstValue(ClaimTypes.Role);
+        if (artwork.UserId != userId && role != "admin") return Forbid();
+
+        if (dto.IsPublic && artwork.IsPending && role != "admin")
+        {
+            return BadRequest(new { error = "Tác phẩm đang chờ duyệt, chưa thể công khai." });
+        }
+
+        artwork.IsPublic = dto.IsPublic;
+        artwork.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return Ok(new { success = true, isPublic = artwork.IsPublic });
+    }
 }
 
 public class CreateArtworkDto
@@ -428,9 +541,9 @@ public class CreateArtworkDto
     public string? Semester { get; set; }
     public string? AcademicYear { get; set; }
     public List<string>? Tags { get; set; }
-    public List<string>? Collaborators { get; set; }
     public List<string>? CollaboratorIds { get; set; }
     public required string CoverImageUrl { get; set; }
+    public string? OriginalCoverUrl { get; set; }
     public string? WatermarkImageUrl { get; set; }
     public List<string>? FileUrls { get; set; }
     public string? WatermarkText { get; set; }
@@ -439,13 +552,38 @@ public class CreateArtworkDto
     public bool? IsAiConfirmed { get; set; }
 }
 
+public class UpdateArtworkDto
+{
+    public string? Title { get; set; }
+    public string? Description { get; set; }
+    public List<string>? ToolsUsed { get; set; }
+    public string? Subject { get; set; }
+    public string? Semester { get; set; }
+    public string? AcademicYear { get; set; }
+    public List<string>? Tags { get; set; }
+    public List<string>? CollaboratorIds { get; set; }
+    public string? CoverImageUrl { get; set; }
+    public string? OriginalCoverUrl { get; set; }
+    public string? WatermarkImageUrl { get; set; }
+    public List<string>? FileUrls { get; set; }
+    public string? WatermarkText { get; set; }
+    public string? WatermarkPosition { get; set; }
+    public bool? IsPublic { get; set; }
+}
+
 public class CreateCommentDto
 {
     public required string Content { get; set; }
+}
+
+public class UpdateVisibilityDto
+{
+    public bool IsPublic { get; set; }
 }
 
 public class GradeArtworkDto
 {
     public float Score { get; set; }
     public string? Comment { get; set; }
+    public bool IsVisibleToStudent { get; set; } = false;
 }

@@ -965,10 +965,10 @@ function PortfolioPage({ setPage, pageParams }) {
   );
 }
 
-function ToggleSwitch({ isOn, onToggle }) {
+function ToggleSwitch({ isOn, onToggle, disabled = false }) {
   return (
-    <div onClick={onToggle} style={{ width: 38, height: 20, borderRadius: 10, background: isOn ? CERULEAN : GRAY_LIGHT, cursor: "pointer", position: "relative", transition: "background .2s", flexShrink: 0 }}>
-      <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: isOn ? 20 : 2, transition: "left .2s", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
+    <div onClick={disabled ? undefined : onToggle} style={{ width: 38, height: 20, borderRadius: 10, background: disabled ? "#e5e7eb" : (isOn ? CERULEAN : GRAY_LIGHT), cursor: disabled ? "not-allowed" : "pointer", position: "relative", transition: "background .2s", flexShrink: 0, opacity: disabled ? 0.6 : 1 }}>
+      <div style={{ width: 16, height: 16, borderRadius: "50%", background: disabled ? "#f9fafb" : "#fff", position: "absolute", top: 2, left: isOn ? 20 : 2, transition: "left .2s", boxShadow: disabled ? "none" : "0 2px 4px rgba(0,0,0,0.1)" }} />
     </div>
   );
 }
@@ -980,6 +980,9 @@ function DashboardSidebar({ activePage, setPage, userData }) {
     { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
     { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
   ];
+  if (userData?.role === "lecturer" || userData?.role === "admin") {
+      items.splice(1, 0, { icon: <CheckCircle size={18} />, label: "Chấm điểm (Chờ duyệt)", page: "pending_artworks" });
+  }
   const profileName = userData?.fullName || userData?.name || t("student");
   const profileAvatar = userData?.avatarUrl || userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
   const studentYear = t("student");
@@ -1083,7 +1086,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                   <div style={{ position: "relative", background: GRAY_BG }}>
                     <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail", { artworkId: art.id })} />
                     <div style={{ position: "absolute", top: 8, left: 8 }}>
-                      <span style={{ background: art.isPublic ? "#e0eaff" : "#F8F8F8", color: art.isPublic ? CERULEAN : MUTED, fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPublic ? "#a8bce0" : GRAY_LIGHT}` }}>{art.isPublic ? t("public") : t("private")}</span>
+                      <span style={{ background: art.isPending ? "#fffBEB" : (art.isPublic ? "#e0eaff" : "#F8F8F8"), color: art.isPending ? "#b45309" : (art.isPublic ? CERULEAN : MUTED), fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: `1px solid ${art.isPending ? "#fcd34d" : (art.isPublic ? "#a8bce0" : GRAY_LIGHT)}` }}>{art.isPending ? t("pending") : (art.isPublic ? t("public") : t("private"))}</span>
                     </div>
                   </div>
                   <div style={{ padding: "12px 14px" }}>
@@ -1097,7 +1100,16 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 10, borderTop: `1px solid ${GRAY_LIGHT}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ fontSize: 11, color: MUTED }}>{t("public")}</span>
-                        <ToggleSwitch isOn={art.isPublic} onToggle={() => {}} />
+                        <ToggleSwitch isOn={art.isPublic} disabled={art.isPending} onToggle={() => {
+                          if (art.isPending) {
+                            alert("Tác phẩm đang chờ duyệt, chưa thể công khai.");
+                            return;
+                          }
+                          api.artworks.toggleVisibility(art.id, { isPublic: !art.isPublic })
+                             .then(() => {
+                                setArtworksList(prev => prev.map(a => a.id === art.id ? { ...a, isPublic: !a.isPublic } : a));
+                             });
+                        }} />
                       </div>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button onClick={() => { setActiveArtworkId(art.id); setTimeout(() => setPage("edit_artwork"), 50); }} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1250,7 +1262,38 @@ function UploadPage({ setPage, setActiveArtworkId }) {
       submitTags.push("IS_EBOOK");
     }
 
+    const generateWatermarkDataURL = async (imgUrl, text) => {
+      const img = new window.Image();
+      img.crossOrigin = "anonymous";
+      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imgUrl; });
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      const wmText = text || "UEF";
+      const wmSize = Math.max(Math.min(canvas.width, canvas.height) * 0.04, 14);
+      ctx.font = `bold ${wmSize}px sans-serif`;
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
+      const tw = ctx.measureText(wmText).width;
+      const pad = 20;
+      const bx = canvas.width - pad;
+      const by = canvas.height - pad;
+      const bh = wmSize * 1.8;
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.beginPath();
+      ctx.roundRect(bx - tw - pad, by - bh, tw + pad, bh, 6);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.fillText(wmText, bx, by - bh / 2 + wmSize * 0.35);
+      return canvas.toDataURL("image/jpeg", 0.92);
+    };
+
     try {
+      const finalWatermarkText = defaultWatermarkText || "UEF";
+      const watermarkedCover = await generateWatermarkDataURL(coverImage, finalWatermarkText);
+
       const newArtwork = await api.artworks.create({
         title: title.trim(),
         description: description.trim() || null,
@@ -1262,8 +1305,9 @@ function UploadPage({ setPage, setActiveArtworkId }) {
         collaborators: friends.map(f => f.fullName || f),
         collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: allFileUrls,
-        coverImageUrl: coverImage,
-        watermarkText: defaultWatermarkText || "UEF",
+        coverImageUrl: watermarkedCover,
+        originalCoverUrl: coverImage,
+        watermarkText: finalWatermarkText,
         watermarkPosition: "bottom-right",
         isPublic: false,
         isAiConfirmed: checked1,
@@ -1654,6 +1698,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [sendingComment, setSendingComment] = useState(false);
   const [gradeScore, setGradeScore] = useState("");
   const [gradeComment, setGradeComment] = useState("");
+  const [gradeIsVisible, setGradeIsVisible] = useState(false);
   const [existingGrade, setExistingGrade] = useState(null);
   const [savingGrade, setSavingGrade] = useState(false);
   const ebookViewerRef = useRef(null);
@@ -1744,6 +1789,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       if (res.grade) {
         setGradeScore(String(res.grade.score));
         setGradeComment(res.grade.comment || "");
+        setGradeIsVisible(res.grade.isVisibleToStudent || false);
       }
       setLoading(false);
     }).catch(() => {
@@ -1833,6 +1879,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       const result = await api.artworks.grade(activeArtworkId, {
         score: scoreVal,
         comment: gradeComment || null,
+        isVisibleToStudent: gradeIsVisible
       });
       setExistingGrade(result);
       setActionSuccessToast("Cập nhật điểm thành công!");
@@ -2142,7 +2189,7 @@ if (mins < 1) return t("justNow");
                   </div>
                   {existingGrade.comment && (
                     <div>
-                      <h4 style={{ fontSize: 13, fontWeight: 700, color: BLACK, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Nhận xét từ Giảng viên</h4>
+                      <h4 style={{ fontSize: 13, fontWeight: 700, color: BLACK, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 }}>Nhận xét từ Giảng viên {existingGrade.isVisibleToStudent === false && <span style={{ color: CRIMSON, fontSize: 11 }}>(Kín)</span>}</h4>
                       <p style={{ margin: 0, fontSize: 15, color: "#333", lineHeight: 1.6, fontStyle: "italic" }}>
                         "{existingGrade.comment}"
                       </p>
@@ -2155,9 +2202,13 @@ if (mins < 1) return t("justNow");
               {["lecturer", "admin"].includes(authUser?.role) && (
                 <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, marginBottom: 40, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
                   <h3 style={{ fontSize: 16, fontWeight: "bold", marginBottom: 16, color: "#191919", display: "flex", alignItems: "center", gap: 8 }}><PenTool size={18} /> {existingGrade ? t("updateGrade") : t("gradeThisArtwork")}</h3>
-                  <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+                  <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
                     <input type="text" value={gradeScore} onChange={e => setGradeScore(e.target.value.replace(/[^0-9.,]/g, ''))} placeholder={t("scoreLabel")} style={{ width: 100, padding: "12px", borderRadius: 6, border: "1px solid #CCC", outline: "none", fontSize: 14 }} />
                     <input type="text" value={gradeComment} onChange={e => setGradeComment(e.target.value)} placeholder={t("feedbackOptional")} style={{ flex: 1, padding: "12px", borderRadius: 6, border: "1px solid #CCC", outline: "none", fontSize: 14 }} />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+                    <input type="checkbox" id="gradeVisible" checked={gradeIsVisible} onChange={e => setGradeIsVisible(e.target.checked)} style={{ cursor: "pointer" }} />
+                    <label htmlFor="gradeVisible" style={{ fontSize: 13, color: MUTED, cursor: "pointer" }}>Cho phép sinh viên xem nhận xét này (Công khai nhận xét)</label>
                   </div>
                   <button onClick={handleSaveGrade} disabled={savingGrade} onMouseDown={e => e.currentTarget.style.transform = "scale(0.95)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} style={{ background: savingGrade ? "#999" : "#191919", color: "#fff", border: "none", padding: "12px 24px", borderRadius: 20, fontSize: 14, fontWeight: "bold", cursor: savingGrade ? "not-allowed" : "pointer", transition: "transform 0.1s" }}>
                     {savingGrade ? "Đang xử lý..." : t("submitGrade")}
@@ -2371,6 +2422,14 @@ if (mins < 1) return t("justNow");
                   </button>
                 ))}
               </div>
+              {canSeeGrade && art.originalCoverUrl && (
+                <div className="mt-4 pt-4 border-t border-[#E0E0E0]">
+                  <button onClick={() => { saveAs(art.originalCoverUrl, `${art.title || "artwork"}_original.jpg`); setShowDownloadModal(false); }}
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-lg border-2 border-dashed border-[#1a4ba8] hover:bg-[#eef4ff] transition-all cursor-pointer text-[#1a4ba8] font-bold text-sm">
+                    <Download size={16} /> Tải bản gốc (Không Watermark)
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -3555,6 +3614,61 @@ function AdminDashboardPage({ setPage }) {
 
 
 
+function PendingArtworksPage({ setPage, userData }) {
+  const [artworks, setArtworks] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    api.artworks.list({ limit: "50", isPending: "true" }).then(res => {
+      setArtworks(res.artworks || []);
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
+  }, []);
+
+  return (
+    <div style={{ display: "flex", height: "100vh", background: GRAY_BG }}>
+      <DashboardSidebar activePage="pending_artworks" setPage={setPage} userData={userData} />
+      <div style={{ flex: 1, padding: "32px 40px", overflow: "auto" }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>Chấm điểm (Chờ duyệt)</h2>
+        <p style={{ color: MUTED, fontSize: 13, marginBottom: 28 }}>Danh sách các tác phẩm sinh viên nộp đang chờ giảng viên chấm điểm và phê duyệt.</p>
+
+        {loading ? <GlobalLoading /> : artworks.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px", background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>
+            <p style={{ color: MUTED }}>Không có tác phẩm nào đang chờ duyệt.</p>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+            {artworks.map(art => (
+              <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                <div style={{ position: "relative", background: GRAY_BG }}>
+                  <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail", { artworkId: art.id })} />
+                  <div style={{ position: "absolute", top: 8, left: 8 }}>
+                    <span style={{ background: "#fffBEB", color: "#b45309", fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: "1px solid #fcd34d" }}>Chờ duyệt</span>
+                  </div>
+                </div>
+                <div style={{ padding: "12px 14px" }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                  <p style={{ fontSize: 11, color: MUTED, margin: "0 0 8px" }}>Sinh viên: <span style={{ fontWeight: 600, color: BLACK }}>{art.user?.fullName}</span></p>
+                  <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                    <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.subject}</span>
+                    <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.academicYear}</span>
+                  </div>
+                  <button onClick={() => setPage("detail", { artworkId: art.id })} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    Vào chấm điểm
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function MessagesPage({ setPage, userData }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -3593,6 +3707,15 @@ function MessagesPage({ setPage, userData }) {
       setMessages(prev => prev.map(m => m.id === id ? { ...m, isArchived: false } : m));
     } catch (e) {
       alert("Lỗi khôi phục: " + (e?.message || t("pleaseTryAgain")));
+    }
+  };
+
+  const handleUpdateStatus = async (id, status) => {
+    try {
+      await api.messages.updateStatus(id, { status });
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, status } : m));
+    } catch (e) {
+      alert("Lỗi cập nhật trạng thái: " + (e?.message || t("pleaseTryAgain")));
     }
   };
 
@@ -3671,7 +3794,12 @@ function MessagesPage({ setPage, userData }) {
                     <div style={{ paddingTop: 16 }}>
                       {msg.purpose === 'order' ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                          <h4 style={{ fontSize: 13, fontWeight: 700, color: CRIMSON, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Yêu cầu đặt hàng tác phẩm</h4>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <h4 style={{ fontSize: 13, fontWeight: 700, color: CRIMSON, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Yêu cầu đặt hàng tác phẩm</h4>
+                            {msg.status === "processing" && <span style={{ background: "#FEF3C7", color: "#D97706", fontSize: 11, padding: "2px 8px", borderRadius: 12, fontWeight: 600 }}>Đang xử lý</span>}
+                            {msg.status === "completed" && <span style={{ background: "#ECFDF5", color: "#10B981", fontSize: 11, padding: "2px 8px", borderRadius: 12, fontWeight: 600 }}>Hoàn thành</span>}
+                            {(!msg.status || msg.status === "pending") && <span style={{ background: GRAY_BG, color: MUTED, fontSize: 11, padding: "2px 8px", borderRadius: 12, fontWeight: 600 }}>Chờ xử lý</span>}
+                          </div>
                           {(() => {
                             try {
                               const data = JSON.parse(msg.content);
@@ -3716,16 +3844,35 @@ function MessagesPage({ setPage, userData }) {
                     </div>
                     <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                       {msg.purpose === 'order' ? (
+                        <>
                         <button onClick={() => {
-                          const data = JSON.parse(msg.content);
-                          if (data.artworkId) {
-                            setPage("detail", { artworkId: data.artworkId });
-                          } else {
-                            setPage("messages");
-                          }
+                          try {
+                            const data = JSON.parse(msg.content);
+                            if (data.artworkId) {
+                              setPage("detail", { artworkId: data.artworkId });
+                            } else {
+                              setPage("messages");
+                            }
+                          } catch {}
                         }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
                           <Mail size={14} /> {t("viewArtwork")}
                         </button>
+                        {msg.status !== "completed" && (
+                          <button onClick={() => handleUpdateStatus(msg.id, "processing")} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${CERULEAN}`, background: msg.status === "processing" ? CERULEAN : "#fff", color: msg.status === "processing" ? "#fff" : CERULEAN, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            Đang xử lý
+                          </button>
+                        )}
+                        {msg.status !== "completed" && (
+                          <button onClick={() => handleUpdateStatus(msg.id, "completed")} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid #10B981`, background: "#fff", color: "#10B981", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            Hoàn thành
+                          </button>
+                        )}
+                        {msg.status === "completed" && (
+                           <span style={{ padding: "8px 16px", borderRadius: 8, background: "#ECFDF5", color: "#10B981", fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                             <Check size={14} /> Đã hoàn thành
+                           </span>
+                        )}
+                        </>
                       ) : (
                         <a
                           href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(
@@ -4029,8 +4176,7 @@ function AdminUsersPage({ setPage }) {
 
   const handleSaveUser = async () => {
     try {
-      // Mock API call to update user
-      await api.admin.setUserRole(editModal.user.id, editModal.user.role); // Mock for update
+      await api.admin.updateUser(editModal.user.id, editModal.user);
       alert("Đã lưu thông tin tài khoản thành công!");
       fetchUsers();
     } catch(e) {
@@ -4078,10 +4224,46 @@ function AdminUsersPage({ setPage }) {
     }
   };
 
-  const handleImportFile = (e) => {
+  const handleImportFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setImportFileName(file.name);
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const json = XLSX.utils.sheet_to_json(worksheet);
+          
+          const payload = json.map(row => {
+            const roleStr = (row["Vai trò"] || row["Role"] || "").toLowerCase();
+            return {
+              fullName: row["Họ tên"] || row["FullName"] || row["Họ và tên"] || "Imported User",
+              email: row["Email"] || row["email"] || `user_${Date.now()}@uef.edu.vn`,
+              role: roleStr.includes("giảng viên") ? "lecturer" : roleStr.includes("quản trị") ? "admin" : "student",
+              studentId: row["MSSV"] || row["Mã sinh viên"] || row["StudentId"] || null
+            };
+          });
+
+          await api.admin.importUsers(payload);
+          alert("Đã import dữ liệu thành công!");
+          fetchUsers();
+          setImportFileName("");
+        } catch (err) {
+          alert("Lỗi khi xử lý file: " + (err.message || ""));
+          setImportFileName("");
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } catch (err) {
+      alert("Lỗi import: " + (err.message || ""));
+      setImportFileName("");
+    }
+
     e.target.value = "";
   };
 
@@ -4148,7 +4330,7 @@ function AdminUsersPage({ setPage }) {
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm text-[#666666]">{u.email}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="relative inline-flex w-40">
                       <select
                         value={u.role}
@@ -8065,6 +8247,9 @@ export default function App() {
       {page === "about" && <AboutPage setPage={setPage} isLoggedIn={isLoggedIn} />}
       {page === "messages" && (
         isLoggedIn ? <MessagesPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />
+      )}
+      {page === "pending_artworks" && (
+        isLoggedIn && (userRole === "lecturer" || userRole === "admin") ? <PendingArtworksPage setPage={setPage} userData={userData} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "edit_artwork" && (
         isLoggedIn ? <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} /> : <AccessDenied setPage={setPage} />
