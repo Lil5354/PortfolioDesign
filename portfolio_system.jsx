@@ -3916,7 +3916,7 @@ function AuthPage({ setPage, onLoginSuccess }) {
   };
 
   const handleGoogleLogin = () => {
-    setLoginError("Tính năng đăng nhập bằng Google hiện chưa khả dụng trong bản thử nghiệm. Vui lòng sử dụng Đăng nhập bằng Email.");
+    window.location.href = "http://localhost:5000/api/auth/signin/google";
   };
 
   const demoAccounts = {
@@ -6346,19 +6346,34 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {collections.length === 0 && (
-            <div className="col-span-full py-20 text-center border-2 border-dashed border-[#E0E0E0] rounded-2xl bg-[#F8F8F8]">
-              <Folder className="mx-auto text-[#1a4ba8] mb-4 opacity-50" size={48} />
-              <h3 className="text-lg font-bold text-[#212121] mb-2">{t("noCollectionsYet", "Chưa có bộ sưu tập nào")}</h3>
-              <p className="text-[#666666] mb-6 max-w-md mx-auto">
-                {t("createCollectionPrompt", "Hãy tạo bộ sưu tập mới để lưu trữ và xuất file báo cáo tổng hợp các ấn phẩm.")}
-              </p>
-              <button
-                onClick={() => onQuickCreateCollection && onQuickCreateCollection()}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1a4ba8] text-white rounded-xl font-bold hover:bg-[#0d2e6e] transition-colors shadow-sm cursor-pointer"
-              >
-                <Plus size={18} />
-                {t("createNewCollection", "Tạo Bộ Sưu Tập Mới")}
-              </button>
+            <div className="col-span-full py-24 px-6 text-center border border-indigo-100/60 rounded-3xl bg-gradient-to-br from-[#f8fafe] via-white to-[#f0f4ff] shadow-sm relative overflow-hidden group">
+              {/* Background decorative blobs */}
+              <div className="absolute top-0 left-0 w-64 h-64 bg-blue-100/40 rounded-full mix-blend-multiply filter blur-3xl opacity-0 group-hover:opacity-70 transition-opacity duration-700 -translate-x-1/2 -translate-y-1/2"></div>
+              <div className="absolute bottom-0 right-0 w-64 h-64 bg-indigo-100/40 rounded-full mix-blend-multiply filter blur-3xl opacity-0 group-hover:opacity-70 transition-opacity duration-700 translate-x-1/2 translate-y-1/2"></div>
+              
+              <div className="relative z-10">
+                <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] mb-8 relative">
+                  <div className="absolute inset-0 rounded-full border border-[#1a4ba8]/10 animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite]"></div>
+                  <div className="w-16 h-16 bg-[#f0f4ff] rounded-full flex items-center justify-center">
+                    <FolderPlus className="text-[#1a4ba8]" size={32} strokeWidth={1.5} />
+                  </div>
+                </div>
+                
+                <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#1a4ba8] to-[#0d2e6e] tracking-tight mb-3">
+                  Chưa có bộ sưu tập nào
+                </h3>
+                <p className="text-[#666666] text-base mb-8 max-w-md mx-auto leading-relaxed">
+                  Hãy tạo bộ sưu tập mới để lưu trữ, phân loại và xuất bản các ấn phẩm đồ án xuất sắc nhất.
+                </p>
+                
+                <button
+                  onClick={() => onQuickCreateCollection && onQuickCreateCollection()}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#1a4ba8] text-white rounded-full font-bold hover:bg-[#0d2e6e] shadow-[0_8px_20px_-6px_rgba(26,75,168,0.4)] hover:shadow-[0_14px_25px_-6px_rgba(26,75,168,0.5)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
+                >
+                  <Plus size={20} strokeWidth={2.5} />
+                  {t("createNewCollection", "Tạo Bộ Sưu Tập Mới")}
+                </button>
+              </div>
             </div>
           )}
           {collections.map((c) => {

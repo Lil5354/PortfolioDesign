@@ -7,7 +7,10 @@ using Microsoft.IdentityModel.Tokens;
 using UEFGallery.API.Data;
 using UEFGallery.API.Models;
 using BCrypt.Net;
-
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
 namespace UEFGallery.API.Controllers;
 
 [ApiController]
@@ -21,6 +24,62 @@ public class AuthController : ControllerBase
     {
         _context = context;
         _configuration = configuration;
+    }
+
+    [HttpGet("signin/google")]
+    [AllowAnonymous]
+    public IActionResult SignInWithGoogle()
+    {
+        var redirectUrl = Url.Action(nameof(GoogleResponse), "Auth");
+        var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+
+    [HttpGet("callback/google")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleResponse()
+    {
+        var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        if (!result.Succeeded)
+            return BadRequest(new { message = "Lỗi xác thực từ Google." });
+
+        var claims = result.Principal?.Identities.FirstOrDefault()?.Claims;
+        var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+        var name = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+        var picture = claims?.FirstOrDefault(c => c.Type == "urn:google:picture")?.Value 
+                      ?? claims?.FirstOrDefault(c => c.Type == "picture")?.Value;
+
+        if (string.IsNullOrEmpty(email))
+            return BadRequest(new { message = "Không lấy được email từ Google." });
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+        {
+            user = new User
+            {
+                Id = Guid.NewGuid().ToString(),
+                Email = email,
+                PasswordHash = "", // OAuth users don't have passwords
+                FullName = name ?? "Google User",
+                AvatarUrl = picture ?? $"https://api.dicebear.com/7.x/avataaars/svg?seed={name?.ToLower()}",
+                Role = Role.student,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
+        else if (!user.IsActive)
+        {
+            return BadRequest(new { message = "Tài khoản của bạn đã bị khóa." });
+        }
+
+        var token = GenerateJwtToken(user);
+        
+        // Redirect to frontend with token
+        var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+        return Redirect($"{frontendUrl}/?token={token}");
     }
 
     [HttpPost("register")]
@@ -83,6 +142,17 @@ public class AuthController : ControllerBase
         if (user == null || !isPasswordValid)
             return Unauthorized(new { message = "Email hoặc mật khẩu không chính xác." });
 
+        var jwtString = GenerateJwtToken(user);
+
+        return Ok(new
+        {
+            Token = jwtString,
+            User = new { user.Id, user.Email, user.FullName, user.Role }
+        });
+    }
+
+    private string GenerateJwtToken(User user)
+    {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"] ?? "your_super_secret_key_that_is_long_enough");
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -99,13 +169,7 @@ public class AuthController : ControllerBase
         };
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
-        var jwtString = tokenHandler.WriteToken(token);
-
-        return Ok(new
-        {
-            Token = jwtString,
-            User = new { user.Id, user.Email, user.FullName, user.Role }
-        });
+        return tokenHandler.WriteToken(token);
     }
 }
 

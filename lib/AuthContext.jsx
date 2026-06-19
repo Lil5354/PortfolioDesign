@@ -48,7 +48,13 @@ export function AuthProvider({ children }) {
     refreshSession(); 
     
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('code') || urlParams.has('state') || window.location.hash) {
+    const tokenParam = urlParams.get('token');
+    if (tokenParam) {
+      localStorage.setItem("token", tokenParam);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    if (tokenParam || urlParams.has('code') || urlParams.has('state') || window.location.hash) {
       setTimeout(() => refreshSession(), 500);
       setTimeout(() => refreshSession(), 1500);
       setTimeout(() => refreshSession(), 3000);
