@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UEFGallery.API.Data;
@@ -12,9 +13,11 @@ using UEFGallery.API.Data;
 namespace UEFGallery.API.Migrations
 {
     [DbContext(typeof(GalleryDbContext))]
-    partial class GalleryDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260617045733_Phase3Badges")]
+    partial class Phase3Badges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -206,11 +209,6 @@ namespace UEFGallery.API.Migrations
                         .HasColumnType("text")
                         .HasColumnName("name");
 
-                    b.Property<string>("TextColor")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("text_color");
-
                     b.HasKey("Id")
                         .HasName("pk_badges");
 
@@ -319,29 +317,6 @@ namespace UEFGallery.API.Migrations
                         .HasDatabaseName("ix_comments_user_id");
 
                     b.ToTable("comments", (string)null);
-                });
-
-            modelBuilder.Entity("UEFGallery.API.Models.Follow", b =>
-                {
-                    b.Property<string>("FollowerId")
-                        .HasColumnType("text")
-                        .HasColumnName("follower_id");
-
-                    b.Property<string>("FollowedId")
-                        .HasColumnType("text")
-                        .HasColumnName("followed_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.HasKey("FollowerId", "FollowedId")
-                        .HasName("pk_follows");
-
-                    b.HasIndex("FollowedId")
-                        .HasDatabaseName("ix_follows_followed_id");
-
-                    b.ToTable("follows", (string)null);
                 });
 
             modelBuilder.Entity("UEFGallery.API.Models.Grade", b =>
@@ -973,7 +948,7 @@ namespace UEFGallery.API.Migrations
             modelBuilder.Entity("UEFGallery.API.Models.ArtworkBadge", b =>
                 {
                     b.HasOne("UEFGallery.API.Models.Artwork", "Artwork")
-                        .WithMany("ArtworkBadges")
+                        .WithMany()
                         .HasForeignKey("ArtworkId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -1043,27 +1018,6 @@ namespace UEFGallery.API.Migrations
                     b.Navigation("Artwork");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("UEFGallery.API.Models.Follow", b =>
-                {
-                    b.HasOne("UEFGallery.API.Models.User", "Followed")
-                        .WithMany("Followers")
-                        .HasForeignKey("FollowedId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_follows_users_followed_id");
-
-                    b.HasOne("UEFGallery.API.Models.User", "Follower")
-                        .WithMany("Following")
-                        .HasForeignKey("FollowerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_follows_users_follower_id");
-
-                    b.Navigation("Followed");
-
-                    b.Navigation("Follower");
                 });
 
             modelBuilder.Entity("UEFGallery.API.Models.Grade", b =>
@@ -1187,8 +1141,6 @@ namespace UEFGallery.API.Migrations
 
             modelBuilder.Entity("UEFGallery.API.Models.Artwork", b =>
                 {
-                    b.Navigation("ArtworkBadges");
-
                     b.Navigation("CollectionItems");
 
                     b.Navigation("Comments");
@@ -1217,10 +1169,6 @@ namespace UEFGallery.API.Migrations
                     b.Navigation("Collections");
 
                     b.Navigation("Comments");
-
-                    b.Navigation("Followers");
-
-                    b.Navigation("Following");
 
                     b.Navigation("GradesGiven");
 

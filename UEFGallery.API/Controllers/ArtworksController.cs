@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using UEFGallery.API.Data;
 using UEFGallery.API.Models;
+using UEFGallery.API.Services.Background;
 
 namespace UEFGallery.API.Controllers;
 
@@ -12,10 +13,65 @@ namespace UEFGallery.API.Controllers;
 public class ArtworksController : ControllerBase
 {
     private readonly GalleryDbContext _context;
+    private readonly FanoutEventChannel _fanoutChannel;
 
-    public ArtworksController(GalleryDbContext context)
+    public ArtworksController(GalleryDbContext context, FanoutEventChannel fanoutChannel)
     {
         _context = context;
+        _fanoutChannel = fanoutChannel;
+    }
+
+    [HttpGet("feed")]
+    [Authorize]
+    public async Task<IActionResult> GetFeed([FromQuery] int page = 1, [FromQuery] int limit = 20)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(currentUserId)) return Unauthorized();
+
+        var skip = (page - 1) * limit;
+
+        var followingIds = await _context.Follows
+            .Where(f => f.FollowerId == currentUserId)
+            .Select(f => f.FollowedId)
+            .ToListAsync();
+
+        if (!followingIds.Any())
+        {
+            return Ok(new { artworks = new List<object>(), total = 0, page, limit, totalPages = 0 });
+        }
+
+        var query = _context.Artworks
+            .Include(a => a.User)
+            .Where(a => followingIds.Contains(a.UserId) && a.IsPublic && !a.IsPending);
+
+        var total = await query.CountAsync();
+        var artworks = await query
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip(skip)
+            .Take(limit)
+            .Select(a => new
+            {
+                a.Id,
+                a.Title,
+                a.Subject,
+                a.CoverImageUrl,
+                a.ToolsUsed,
+                a.Tags,
+                a.LikeCount,
+                a.ViewCount,
+                a.CreatedAt,
+                User = new { a.User.Id, a.User.FullName, a.User.StudentId, a.User.AvatarUrl, PortfolioSettings = a.User.PortfolioSettings }
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            artworks,
+            total,
+            page,
+            limit,
+            totalPages = (int)Math.Ceiling((double)total / limit)
+        });
     }
 
     [HttpGet]
@@ -27,6 +83,7 @@ public class ArtworksController : ControllerBase
         [FromQuery] string? userId = null,
         [FromQuery] string? collaboratorId = null,
         [FromQuery] string? q = null,
+        [FromQuery] bool? hasBadge = null,
         [FromQuery] int page = 1,
         [FromQuery] int limit = 12)
     {
@@ -51,6 +108,11 @@ public class ArtworksController : ControllerBase
         if (!string.IsNullOrEmpty(tool)) query = query.Where(a => a.ToolsUsed.Contains(tool));
         if (!string.IsNullOrEmpty(year)) query = query.Where(a => a.AcademicYear == year);
         if (!string.IsNullOrEmpty(userId)) query = query.Where(a => a.UserId == userId);
+        if (hasBadge == true)
+        {
+            var badgeQuery = _context.ArtworkBadges.Select(ab => ab.ArtworkId).Distinct();
+            query = query.Where(a => badgeQuery.Contains(a.Id));
+        }
         
         if (Request.Query.ContainsKey("isPending"))
         {
@@ -90,7 +152,8 @@ public class ArtworksController : ControllerBase
                 a.CreatedAt,
                 a.Tags,
                 a.FileUrls,
-                User = new { a.User.Id, a.User.FullName, a.User.StudentId, a.User.AvatarUrl }
+                Badges = _context.ArtworkBadges.Where(ab => ab.ArtworkId == a.Id).Select(ab => new { ab.Badge.Id, ab.Badge.Name, ab.Badge.ColorCode }).ToList(),
+                User = new { a.User.Id, a.User.FullName, a.User.StudentId, a.User.AvatarUrl, PortfolioSettings = a.User.PortfolioSettings }
             })
             .ToListAsync();
 
@@ -110,6 +173,8 @@ public class ArtworksController : ControllerBase
         var artwork = await _context.Artworks
             .Include(a => a.User)
             .ThenInclude(u => u.PortfolioSettings)
+            .Include(a => a.ArtworkBadges)
+            .ThenInclude(ab => ab.Badge)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (artwork == null) return NotFound();
@@ -164,7 +229,7 @@ public class ArtworksController : ControllerBase
             c.PositionY,
             c.TargetImageIndex,
             c.CreatedAt,
-            User = new { c.User.Id, FullName = c.User.FullName ?? "User", c.User.AvatarUrl }
+            User = new { c.User.Id, FullName = c.User.FullName ?? "User", c.User.AvatarUrl, PortfolioSettings = c.User.PortfolioSettings }
         }).ToList();
 
         var response = new
@@ -192,6 +257,7 @@ public class ArtworksController : ControllerBase
             artwork.AiGeneratedPct,
             isLiked = isLiked,
             Grade = gradeData,
+            Badges = artwork.ArtworkBadges.Select(ab => new { ab.Badge.Id, ab.Badge.Name, ab.Badge.ColorCode, ab.Badge.LecturerId }).ToList(),
             Comments = filteredComments,
             User = new { artwork.User.Id, artwork.User.FullName, artwork.User.StudentId, artwork.User.AvatarUrl, PortfolioSettings = artwork.User.PortfolioSettings }
         };
@@ -222,7 +288,7 @@ public class ArtworksController : ControllerBase
             .Where(a => a.IsPublic && a.Id != id && a.UserId == artwork.UserId)
             .OrderByDescending(a => a.ViewCount)
             .Take(limit)
-            .Select(a => new { a.Id, a.Title, a.CoverImageUrl, a.Subject, a.IsPublic, User = new { a.User.FullName, a.User.AvatarUrl } })
+            .Select(a => new { a.Id, a.Title, a.CoverImageUrl, a.Subject, a.IsPublic, User = new { a.User.Id, a.User.FullName, a.User.AvatarUrl, PortfolioSettings = a.User.PortfolioSettings } })
             .ToListAsync();
 
         return Ok(related);
@@ -305,7 +371,7 @@ public class ArtworksController : ControllerBase
             c.PositionY,
             c.TargetImageIndex,
             c.CreatedAt,
-            User = new { c.User.Id, FullName = c.User.FullName ?? "User", AvatarUrl = c.User.AvatarUrl }
+            User = new { c.User.Id, FullName = c.User.FullName ?? "User", AvatarUrl = c.User.AvatarUrl, PortfolioSettings = c.User.PortfolioSettings }
         }).ToList();
 
         return Ok(filteredComments);
@@ -344,7 +410,7 @@ public class ArtworksController : ControllerBase
                 comment.PositionY, 
                 comment.TargetImageIndex, 
                 comment.CreatedAt, 
-                User = new { user.Id, FullName = user.FullName ?? "User", user.AvatarUrl } 
+                User = new { user.Id, FullName = user.FullName ?? "User", user.AvatarUrl, PortfolioSettings = user.PortfolioSettings }
             }
         });
     }
@@ -535,12 +601,16 @@ public class ArtworksController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role);
         if (artwork.UserId != userId && role != "admin") return Forbid();
 
-        // Apply academic grading rule: cannot make public if pending
+        bool becamePublic = false;
         if (dto.IsPublic.HasValue)
         {
-            if (dto.IsPublic.Value == true && artwork.IsPending && role != "admin")
+            if (dto.IsPublic.Value == true && !artwork.IsPublic && role != "admin")
             {
-                return BadRequest(new { error = "Tác phẩm đang chờ duyệt, chưa thể công khai." });
+                return BadRequest(new { error = "Sinh viên không được tự động công khai ấn phẩm." });
+            }
+            if (dto.IsPublic.Value && !artwork.IsPublic)
+            {
+                becamePublic = true;
             }
             artwork.IsPublic = dto.IsPublic.Value;
         }
@@ -562,7 +632,78 @@ public class ArtworksController : ControllerBase
         artwork.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+
+        if (becamePublic)
+        {
+            var actorName = User.FindFirstValue("FullName") ?? "Ai đó";
+            await _fanoutChannel.AddEventAsync(new FanoutEvent { ArtworkId = artwork.Id, ActorId = artwork.UserId, ActorName = actorName, ArtworkTitle = artwork.Title ?? "Tác phẩm mới" });
+        }
+
         return Ok(artwork);
+    }
+
+    [HttpPost("{id}/report")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ReportArtwork(string id, [FromBody] ReportArtworkDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var artwork = await _context.Artworks.FindAsync(id);
+        if (artwork == null) return NotFound(new { message = "Artwork not found" });
+
+        var report = new Report
+        {
+            Id = Guid.NewGuid().ToString(),
+            ArtworkId = id,
+            UserId = userId,
+            ViolationType = dto.ViolationType ?? "Other",
+            Detail = dto.Detail,
+            Status = ReportStatus.pending,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Reports.Add(report);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Report submitted successfully", report });
+    }
+
+    [HttpGet("{id}/reports")]
+    [Authorize(Roles = "admin,lecturer")]
+    public async Task<IActionResult> GetReports(string id)
+    {
+        var reports = await _context.Reports
+            .Include(r => r.User)
+            .Where(r => r.ArtworkId == id)
+            .Select(r => new {
+                r.Id,
+                r.ViolationType,
+                r.Detail,
+                r.Status,
+                r.CreatedAt,
+                User = r.User != null ? new { r.User.Id, r.User.FullName, r.User.Email, r.User.AvatarUrl } : null
+            })
+            .ToListAsync();
+        return Ok(reports);
+    }
+
+    [HttpPatch("{id}/reports/{reportId}/status")]
+    [Authorize(Roles = "admin,lecturer")]
+    public async Task<IActionResult> UpdateReportStatus(string id, string reportId, [FromBody] UpdateReportStatusDto dto)
+    {
+        var report = await _context.Reports.FirstOrDefaultAsync(r => r.Id == reportId && r.ArtworkId == id);
+        if (report == null) return NotFound(new { message = "Report not found" });
+
+        if (Enum.TryParse<ReportStatus>(dto.Status, true, out var parsedStatus))
+        {
+            report.Status = parsedStatus;
+            report.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Report status updated", report });
+        }
+        return BadRequest(new { message = "Invalid status" });
     }
 
     [HttpDelete("{id}")]
@@ -577,6 +718,21 @@ public class ArtworksController : ControllerBase
 
         var role = User.FindFirstValue(ClaimTypes.Role);
         if (artwork.UserId != userId && role != "admin") return Forbid();
+
+        var relatedCollectionItems = _context.CollectionItems.Where(c => c.ArtworkId == id);
+        _context.CollectionItems.RemoveRange(relatedCollectionItems);
+        var relatedBadges = _context.ArtworkBadges.Where(b => b.ArtworkId == id);
+        _context.ArtworkBadges.RemoveRange(relatedBadges);
+        var relatedLikes = _context.Likes.Where(l => l.ArtworkId == id);
+        _context.Likes.RemoveRange(relatedLikes);
+        var relatedComments = _context.Comments.Where(c => c.ArtworkId == id);
+        _context.Comments.RemoveRange(relatedComments);
+        var relatedNotifications = _context.Notifications.Where(n => n.ReferenceId == id && n.ReferenceType == "artwork");
+        _context.Notifications.RemoveRange(relatedNotifications);
+        var relatedGrades = _context.Grades.Where(g => g.ArtworkId == id);
+        _context.Grades.RemoveRange(relatedGrades);
+        var relatedReports = _context.Reports.Where(r => r.ArtworkId == id);
+        _context.Reports.RemoveRange(relatedReports);
 
         _context.Artworks.Remove(artwork);
         await _context.SaveChangesAsync();
@@ -596,17 +752,35 @@ public class ArtworksController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role);
         if (artwork.UserId != userId && role != "admin") return Forbid();
 
-        if (dto.IsPublic && artwork.IsPending && role != "admin")
+        if (dto.IsPublic && !artwork.IsPublic && role != "admin")
         {
-            return BadRequest(new { error = "Tác phẩm đang chờ duyệt, chưa thể công khai." });
+            return BadRequest(new { error = "Sinh viên không được tự động công khai ấn phẩm." });
         }
-
+        bool becamePublic = dto.IsPublic && !artwork.IsPublic;
         artwork.IsPublic = dto.IsPublic;
         artwork.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+
+        if (becamePublic)
+        {
+            var actorName = User.FindFirstValue("FullName") ?? "Ai đó";
+            await _fanoutChannel.AddEventAsync(new FanoutEvent { ArtworkId = artwork.Id, ActorId = artwork.UserId, ActorName = actorName, ArtworkTitle = artwork.Title ?? "Tác phẩm mới" });
+        }
+
         return Ok(new { success = true, isPublic = artwork.IsPublic });
     }
+}
+
+public class ReportArtworkDto
+{
+    public string ViolationType { get; set; } = string.Empty;
+    public string? Detail { get; set; }
+}
+
+public class UpdateReportStatusDto
+{
+    public required string Status { get; set; }
 }
 
 public class CreateArtworkDto

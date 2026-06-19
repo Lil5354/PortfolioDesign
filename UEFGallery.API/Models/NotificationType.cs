@@ -13,4 +13,5 @@ public enum NotificationType
     report_resolved,
     collaborator_tag,
     new_order,
+    new_post_from_following,
 }

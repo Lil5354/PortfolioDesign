@@ -54,7 +54,7 @@ public class UsersController : ControllerBase
         var searchLower = q.ToLower();
         var users = await _context.Users
             .Where(u => u.FullName.ToLower().Contains(searchLower) || (u.Email.ToLower().Contains(searchLower)))
-            .Select(u => new { u.Id, u.FullName, u.AvatarUrl, u.Email })
+            .Select(u => new { u.Id, u.FullName, u.AvatarUrl, u.Email, PortfolioSettings = u.PortfolioSettings })
             .Take(10)
             .ToListAsync();
 
@@ -166,6 +166,58 @@ public class UsersController : ControllerBase
 
         await _context.SaveChangesAsync();
         return Ok(new { message = "Đổi mật khẩu thành công." });
+    }
+    [HttpPost("{id}/follow")]
+    [Authorize]
+    public async Task<IActionResult> FollowUser(string id)
+    {
+        var followerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (followerId == null || followerId == id) return BadRequest(new { error = "Invalid action." });
+
+        var targetUser = await _context.Users.FindAsync(id);
+        if (targetUser == null) return NotFound(new { error = "User not found." });
+
+        var exists = await _context.Follows.AnyAsync(f => f.FollowerId == followerId && f.FollowedId == id);
+        if (!exists)
+        {
+            _context.Follows.Add(new Follow { FollowerId = followerId, FollowedId = id });
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok(new { success = true });
+    }
+
+    [HttpDelete("{id}/follow")]
+    [Authorize]
+    public async Task<IActionResult> UnfollowUser(string id)
+    {
+        var followerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (followerId == null) return BadRequest();
+
+        var follow = await _context.Follows.FirstOrDefaultAsync(f => f.FollowerId == followerId && f.FollowedId == id);
+        if (follow != null)
+        {
+            _context.Follows.Remove(follow);
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok(new { success = true });
+    }
+
+    [HttpGet("{id}/followers")]
+    public async Task<IActionResult> GetFollowers(string id)
+    {
+        var followerIds = await _context.Follows.Where(f => f.FollowedId == id).Select(f => f.FollowerId).ToListAsync();
+        var followers = await _context.Users.Where(u => followerIds.Contains(u.Id)).Select(u => new { u.Id, u.FullName, u.AvatarUrl, u.Major }).ToListAsync();
+        return Ok(followers);
+    }
+
+    [HttpGet("{id}/following")]
+    public async Task<IActionResult> GetFollowing(string id)
+    {
+        var followedIds = await _context.Follows.Where(f => f.FollowerId == id).Select(f => f.FollowedId).ToListAsync();
+        var following = await _context.Users.Where(u => followedIds.Contains(u.Id)).Select(u => new { u.Id, u.FullName, u.AvatarUrl, u.Major }).ToListAsync();
+        return Ok(following);
     }
 }
 

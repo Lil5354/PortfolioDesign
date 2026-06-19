@@ -80,4 +80,8 @@ public class User
 
     public ICollection<CollectionItem> Collections { get; set; } = new List<CollectionItem>();
 
+    public ICollection<Follow> Followers { get; set; } = new List<Follow>();
+
+    public ICollection<Follow> Following { get; set; } = new List<Follow>();
+
 }

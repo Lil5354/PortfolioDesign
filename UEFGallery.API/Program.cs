@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using UEFGallery.API.Data;
+using UEFGallery.API.Services.Background;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,10 @@ builder.Services.AddCors(options =>
                   .AllowCredentials();
         });
 });
+
+// Register Fanout Background Service
+builder.Services.AddSingleton<FanoutEventChannel>();
+builder.Services.AddHostedService<FanoutBackgroundService>();
 
 var app = builder.Build();
 

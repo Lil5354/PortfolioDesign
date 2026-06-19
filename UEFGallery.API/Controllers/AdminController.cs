@@ -21,42 +21,90 @@ public class AdminController : ControllerBase
     [HttpGet("stats")]
     public async Task<IActionResult> GetStats()
     {
-        var usersCount = await _context.Users.CountAsync();
-        var artworksCount = await _context.Artworks.CountAsync();
-        var viewsCount = await _context.Artworks.SumAsync(a => a.ViewCount);
+        var totalAccounts = await _context.Users.CountAsync();
+        var publishedArtworks = await _context.Artworks.CountAsync(a => a.IsPublic && !a.IsPending);
+        var reportedArtworks = await _context.Artworks.CountAsync(a => a.Reports.Any());
         var likesCount = await _context.Likes.CountAsync();
+        var commentsCount = await _context.Comments.CountAsync();
 
         return Ok(new
         {
-            TotalUsers = usersCount,
-            TotalArtworks = artworksCount,
-            TotalViews = viewsCount,
-            TotalLikes = likesCount
+            PublishedArtworks = publishedArtworks,
+            ReportedArtworks = reportedArtworks,
+            TotalAccounts = totalAccounts,
+            TotalInteractions = likesCount + commentsCount
         });
     }
 
     [HttpGet("artworks")]
-    public async Task<IActionResult> GetArtworks([FromQuery] int page = 1)
+    public async Task<IActionResult> GetArtworks([FromQuery] int page = 1, [FromQuery] int limit = 20, [FromQuery] string? q = null, [FromQuery] string? tab = "all", [FromQuery] string? subject = "Tất cả", [FromQuery] string? year = "Tất cả")
     {
-        var limit = 20;
         var skip = (page - 1) * limit;
 
-        var query = _context.Artworks.Include(a => a.User);
-        
+        var query = _context.Artworks.Include(a => a.User).Include(a => a.Reports).AsQueryable();
+
+        if (!string.IsNullOrEmpty(q))
+        {
+            var qLower = q.ToLower();
+            query = query.Where(a => a.Title.ToLower().Contains(qLower) || (a.User != null && a.User.FullName.ToLower().Contains(qLower)));
+        }
+
+        if (subject != "Tất cả" && !string.IsNullOrEmpty(subject))
+        {
+            query = query.Where(a => a.Subject == subject);
+        }
+
+        if (year != "Tất cả" && !string.IsNullOrEmpty(year))
+        {
+            query = query.Where(a => a.AcademicYear == year);
+        }
+
+        var allCount = await query.CountAsync();
+        var pendingCount = await query.CountAsync(a => a.IsPending);
+        var hiddenCount = await query.CountAsync(a => !a.IsPublic && !a.IsPending);
+        var highlightCount = await query.CountAsync(a => a.IsHighlighted);
+        var reportedCount = await query.CountAsync(a => a.Reports.Any());
+
+        if (tab == "pending") query = query.Where(a => a.IsPending);
+        else if (tab == "hidden") query = query.Where(a => !a.IsPublic && !a.IsPending);
+        else if (tab == "highlight") query = query.Where(a => a.IsHighlighted);
+        else if (tab == "reported") query = query.Where(a => a.Reports.Any());
+
         var total = await query.CountAsync();
-        var artworks = await query
+        
+        var artworksWithCount = await query
             .OrderByDescending(a => a.CreatedAt)
             .Skip(skip)
             .Take(limit)
+            .Select(a => new {
+                a.Id, a.Title, a.Description, a.UserId, a.IsPublic, a.IsPending, a.IsHighlighted, a.CreatedAt, a.UpdatedAt, a.CoverImageUrl, a.FileUrls, a.Subject, a.AcademicYear, a.ToolsUsed,
+                User = new {
+                    Id = a.User.Id,
+                    FullName = a.User.FullName,
+                    Email = a.User.Email,
+                    AvatarUrl = a.User.AvatarUrl
+                },
+                _count = new { reports = a.Reports.Count() }
+            })
             .ToListAsync();
 
         return Ok(new
         {
-            artworks,
+            artworks = artworksWithCount,
             total,
             page,
-            totalPages = (int)Math.Ceiling(total / (double)limit)
+            limit,
+            totalPages = (int)Math.Ceiling(total / (double)limit),
+            counts = new { all = allCount, pending = pendingCount, hidden = hiddenCount, highlight = highlightCount, reported = reportedCount }
         });
+    }
+
+    [HttpGet("test-reports")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetTestReports()
+    {
+        var reports = await _context.Reports.ToListAsync();
+        return Ok(reports);
     }
 
     [HttpGet("users")]

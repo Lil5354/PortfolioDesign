@@ -190,6 +190,44 @@ public class PortfoliosController : ControllerBase
         });
     }
 
+    [HttpGet("{slug}/stats")]
+    public async Task<IActionResult> GetPortfolioStats(string slug)
+    {
+        var user = await _context.Users
+            .Include(u => u.PortfolioSettings)
+            .FirstOrDefaultAsync(u => 
+                (u.PortfolioSettings != null && u.PortfolioSettings.PortfolioSlug == slug) || 
+                u.Id == slug || 
+                u.StudentId == slug);
+
+        if (user == null) return NotFound();
+
+        var myArtworks = await _context.Artworks
+            .Where(a => a.UserId == user.Id)
+            .ToListAsync();
+
+        var followersCount = await _context.Follows.CountAsync(f => f.FollowedId == user.Id);
+        var followingCount = await _context.Follows.CountAsync(f => f.FollowerId == user.Id);
+
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        bool isFollowing = false;
+        if (!string.IsNullOrEmpty(currentUserId))
+        {
+            isFollowing = await _context.Follows.AnyAsync(f => f.FollowerId == currentUserId && f.FollowedId == user.Id);
+        }
+
+        return Ok(new
+        {
+            totalArtworks = myArtworks.Count,
+            totalViews = myArtworks.Sum(a => a.ViewCount),
+            totalLikes = myArtworks.Sum(a => a.LikeCount),
+            publicArtworks = myArtworks.Count(a => a.IsPublic),
+            followers = followersCount,
+            following = followingCount,
+            isFollowing = isFollowing
+        });
+    }
+
     [HttpPost("{slug}/contact")]
     public async Task<IActionResult> Contact(string slug, [FromBody] ContactDto dto)
     {

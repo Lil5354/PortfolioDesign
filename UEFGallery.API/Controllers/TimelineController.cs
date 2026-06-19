@@ -47,12 +47,47 @@ public class TimelineController : ControllerBase
             Title = dto.Title,
             Description = dto.Description,
             Year = dto.Year,
-            Month = "",
-            Tags = new List<string>(),
-            CreatedAt = DateTime.UtcNow
+            Month = dto.Month ?? "",
+            Tags = dto.Tags ?? new List<string>(),
+            LinkUrl = dto.LinkUrl,
+            LinkLabel = dto.LinkLabel,
+            ImageUrl = dto.ImageUrl,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
         _context.TimelineEntrys.Add(entry);
+        await _context.SaveChangesAsync();
+
+        return Ok(entry);
+    }
+
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> UpdateEntry(string id, [FromBody] TimelineEntryDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var entry = await _context.TimelineEntrys.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+
+        if (entry == null) return NotFound();
+
+        entry.Title = dto.Title;
+        entry.Description = dto.Description;
+        entry.Year = dto.Year;
+        entry.Month = dto.Month ?? "";
+        entry.Tags = dto.Tags ?? new List<string>();
+        entry.LinkUrl = dto.LinkUrl;
+        entry.LinkLabel = dto.LinkLabel;
+        entry.ImageUrl = dto.ImageUrl;
+        entry.UpdatedAt = DateTime.UtcNow;
+
+        // Ensure CreatedAt is UTC to avoid Npgsql Unspecified kind exception
+        if (entry.CreatedAt.Kind == DateTimeKind.Unspecified)
+        {
+            entry.CreatedAt = DateTime.SpecifyKind(entry.CreatedAt, DateTimeKind.Utc);
+        }
+
+        _context.TimelineEntrys.Update(entry);
         await _context.SaveChangesAsync();
 
         return Ok(entry);
@@ -79,4 +114,9 @@ public class TimelineEntryDto
     public required string Title { get; set; }
     public string? Description { get; set; }
     public string Year { get; set; } = string.Empty;
+    public string? Month { get; set; }
+    public List<string>? Tags { get; set; }
+    public string? LinkUrl { get; set; }
+    public string? LinkLabel { get; set; }
+    public string? ImageUrl { get; set; }
 }

@@ -18,12 +18,12 @@ import autoTable from "jspdf-autotable";
 import HTMLFlipBook from 'react-pageflip';
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
-  Settings, Trash2, Edit2, Search, X, Check, ArrowDownCircle, ExternalLink,
+  Settings, Trash2, Edit2, Search, X, Check, CheckCircle, ArrowDownCircle, ExternalLink,
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive, ArchiveRestore,
   GraduationCap, Rocket, Upload, Menu, ShoppingCart, Languages,
-  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight, ChevronLeft, ThumbsUp, MessageCircle, Package, FileText, Tag, Download, FolderInput, FolderPlus
+  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight, ChevronLeft, ThumbsUp, MessageCircle, Package, FileText, Tag, Download, FolderInput, FolderPlus, AlertTriangle
 } from "lucide-react";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -109,7 +109,13 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
       </div>
       <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
         {navItems.map((item) => (
-          <button key={item.id} onClick={() => setPage(item.id)} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#1a4ba8] border-b-2 border-[#1a4ba8]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
+          <button key={item.id} onClick={() => {
+            if (item.id === "portfolio") {
+              setPage("portfolio", { portfolioSlug: userData?.portfolioSettings?.portfolioSlug });
+            } else {
+              setPage(item.id);
+            }
+          }} className={`pb-1 transition-colors ${isActive(item.id) ? "text-[#1a4ba8] border-b-2 border-[#1a4ba8]" : "text-gray-500 hover:text-[#212121]"}`}>{item.label}</button>
         ))}
       </nav>
       <button className="md:hidden flex items-center cursor-pointer text-[#666666] hover:text-[#212121]" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
@@ -181,7 +187,14 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
         <div ref={mobileMenuRef} className="fixed top-14 left-0 right-0 bg-white border-b border-[#E0E0E0] shadow-lg z-40 md:hidden">
           <div className="flex flex-col py-2">
             {navItems.map((item) => (
-              <button key={item.id} onClick={() => { setPage(item.id); setIsMobileMenuOpen(false); }} className={`px-6 py-3 text-sm font-medium text-left transition-colors ${isActive(item.id) ? "text-[#1a4ba8] bg-[#eef4ff]" : "text-gray-600 hover:bg-[#F8F8F8]"}`}>{item.label}</button>
+              <button key={item.id} onClick={() => {
+                if (item.id === "portfolio") {
+                  setPage("portfolio", { portfolioSlug: userData?.portfolioSettings?.portfolioSlug });
+                } else {
+                  setPage(item.id);
+                }
+                setIsMobileMenuOpen(false);
+              }} className={`px-6 py-3 text-sm font-medium text-left transition-colors ${isActive(item.id) ? "text-[#1a4ba8] bg-[#eef4ff]" : "text-gray-600 hover:bg-[#F8F8F8]"}`}>{item.label}</button>
             ))}
             {isLoggedIn && (
               <>
@@ -305,10 +318,12 @@ function MasonryGrid({
 }
 
 function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
-  const [filters, setFilters] = useState({ category: "Tất cả", year: "Tất cả", tool: "Tất cả", sort: "newest", q: "" });
+  const { user: authUser } = useAuth();
+  const [filters, setFilters] = useState({ category: "Tất cả", year: "Tất cả", tool: "Tất cả", sort: "newest", q: "", hasBadge: false });
   const [page, setPageNum] = useState(1);
   const [data, setData] = useState({ artworks: [], total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
+  const [feedMode, setFeedMode] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [showYearTool, setShowYearTool] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
@@ -316,6 +331,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const [navbarHeight, setNavbarHeight] = useState(0);
 
   const fetchId = useRef(0);
+  const observerTarget = useRef(null);
 
   useEffect(() => {
     const measure = () => {
@@ -342,7 +358,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       .catch(() => {});
   }, []);
 
-  const [limit] = useState(12);
+  const [limit] = useState(15);
 
   useEffect(() => {
     const id = ++fetchId.current;
@@ -352,7 +368,11 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
     if (filters.year !== "Tất cả") params.year = filters.year;
     if (filters.tool !== "Tất cả") params.tool = filters.tool;
     if (filters.q.trim()) params.q = filters.q.trim();
-    api.artworks.list(params).then(res => {
+    if (filters.hasBadge) params.hasBadge = true;
+
+    const fetchMethod = feedMode && authUser ? api.artworks.feed(params) : api.artworks.list(params);
+
+    fetchMethod.then(res => {
       if (id === fetchId.current) { 
         setData(prev => ({
           ...res,
@@ -361,7 +381,28 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
         setLoading(false); 
       }
     }).catch(() => { if (id === fetchId.current) setLoading(false); });
-  }, [filters, page, limit]);
+  }, [filters, page, limit, feedMode, authUser]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !loading && data.page < data.totalPages) {
+          setPageNum(p => p + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [loading, data.page, data.totalPages]);
 
   const setFilter = (key, val) => {
     setFilters(prev => ({ ...prev, [key]: val }));
@@ -380,6 +421,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
     isPublic: a.isPublic,
     category: a.subject,
     isAiVerified: a.isAiVerified,
+    badges: a.badges || [],
   }));
 
   const paginate = (p) => setPageNum(Math.max(1, Math.min(p, data.totalPages || 1)));
@@ -409,6 +451,11 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           </div>
 
           <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+            {authUser && (
+              <button onClick={() => { setFeedMode(!feedMode); setPageNum(1); }} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${feedMode ? UEF_BLUE : GRAY_LIGHT}`, background: feedMode ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: feedMode ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s", marginRight: 8, display: "flex", alignItems: "center", gap: 4 }}>
+                <Users size={12} /> Đang theo dõi
+              </button>
+            )}
             <button onClick={() => setFilter("sort", "newest")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "newest" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "newest" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("newest")}</button>
             <button onClick={() => setFilter("sort", "most_likes")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "most_likes" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("mostLiked")}</button>
           </div>
@@ -424,8 +471,12 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             <select value={filters.tool} onChange={e => setFilter("tool", e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
               {toolsList.map(toolItem => <option key={toolItem} value={toolItem}>{toolItem === "Tất cả" ? `${t("tools")}: ${t("all")}` : toolItem}</option>)}
             </select>
+            <label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", fontSize: 11, color: BLACK, fontWeight: 500, userSelect: "none" }}>
+              <input type="checkbox" checked={filters.hasBadge} onChange={e => setFilter("hasBadge", e.target.checked)} style={{ cursor: "pointer" }} />
+              Chỉ hiện bài có Huy hiệu
+            </label>
             {activeFilterCount > 0 && (
-              <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); }} style={{ padding: "3px 8px", borderRadius: 6, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
+              <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); setFilter("hasBadge", false); }} style={{ padding: "3px 8px", borderRadius: 6, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
             )}
           </div>
         )}
@@ -502,6 +553,12 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                           <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.5px" }}>AI VERIFIED</span>
                         </div>
                       )}
+                      {(art.badges && art.badges.length > 0) && art.badges.map(b => (
+                        <div key={b.id || b.name} style={{ background: b.colorCode || CERULEAN, color: b.textColor || "#fff", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 5px rgba(0,0,0,0.2)" }}>
+                          <Star size={10} color="#fff" fill="#fff" />
+                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{b.name}</span>
+                        </div>
+                      ))}
                     </div>
                     {onBookmarkClick && hoveredId === art.id && (
                       <button
@@ -537,16 +594,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             </div>
             {data.page < data.totalPages && (
               <div
-                ref={el => {
-                  if (!el) return;
-                  const observer = new IntersectionObserver(entries => {
-                    if (entries[0].isIntersecting && !loading) {
-                      setPageNum(p => p + 1);
-                    }
-                  }, { threshold: 0.1 });
-                  observer.observe(el);
-                  return () => observer.disconnect();
-                }}
+                ref={observerTarget}
                 style={{ height: 20 }}
               >
               </div>
@@ -559,7 +607,8 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 }
 
 function PortfolioPage({ setPage, pageParams }) {
-    const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const { user: authUser } = useAuth();
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -570,29 +619,35 @@ function PortfolioPage({ setPage, pageParams }) {
   const [portfolioSettingsData, setPortfolioSettingsData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState(t("allArtworks"));
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [modalType, setModalType] = useState(null);
+  const [modalUsers, setModalUsers] = useState([]);
 
   const hashSlug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
   const slug = pageParams?.portfolioSlug || hashSlug;
   const titleByYear = { "Năm 1": t("freshmanDesigner"), "Năm 2": t("internDesigner"), "Năm 3": t("professionalDesigner"), "Năm 4": t("seniorDesigner"), "Tốt nghiệp": t("graduateDesigner") };
 
   useEffect(() => {
+    setIsFollowing(portfolioData?.stats?.isFollowing || false);
+    setFollowersCount(portfolioData?.stats?.followers || 0);
+  }, [portfolioData?.stats]);
+
+  useEffect(() => {
     setLoading(true);
     setPortfolioSettingsData(null);
     const fetchFn = slug ? api.portfolios.get(slug) : api.portfolios.me();
-    const artworksFn = slug ? api.portfolios.artworks(slug, { limit: "50" }) : api.users.myArtworks().then(data => ({ artworks: data }));
     const statsFn = slug ? api.portfolios.stats(slug) : Promise.resolve({});
 
     Promise.all([
       fetchFn.catch(() => null),
-      artworksFn.catch(() => ({ artworks: [] })),
       statsFn.catch(() => ({})),
-    ]).then(([pData, artRes, pStats]) => {
+    ]).then(([pData, pStats]) => {
       if (pData) {
         pData.stats = { ...(pData.stats || {}), ...pStats };
-        if (pData.allArtworks) setPortfolioArtworks(pData.allArtworks);
+        if (pData.artworks) setPortfolioArtworks(pData.artworks);
         setPortfolioData(pData);
       }
-      if (artRes?.artworks) setPortfolioArtworks(artRes.artworks);
       setLoading(false);
     }).catch(() => setLoading(false));
 
@@ -617,6 +672,42 @@ function PortfolioPage({ setPage, pageParams }) {
 
   const { stats, featuredArtworks, privateGrade } = portfolioData;
   const pUser = portfolioData.user || portfolioData;
+
+  const toggleFollow = async () => {
+    if (!authUser) {
+      alert(t("loginWithEmailToUse") || "Vui lòng đăng nhập để sử dụng tính năng này.");
+      return;
+    }
+    if (!slug || !pUser?.id || authUser.id === pUser.id) return;
+    try {
+      if (isFollowing) {
+        await api.users.unfollow(pUser.id);
+        setIsFollowing(false);
+        setFollowersCount(prev => prev - 1);
+      } else {
+        await api.users.follow(pUser.id);
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+      }
+    } catch (e) {
+      console.error(e);
+      alert(t("pleaseTryAgain") || "Vui lòng thử lại");
+    }
+  };
+
+  const openFollowModal = async (type) => {
+    if (!pUser?.id) return;
+    setModalType(type);
+    try {
+      const data = type === 'followers' 
+        ? await api.users.followers(pUser.id)
+        : await api.users.following(pUser.id);
+      setModalUsers(data || []);
+    } catch (e) {
+      console.error(e);
+      setModalUsers([]);
+    }
+  };
   const pSettings = portfolioData.portfolioSettings || portfolioData.settings || {};
   const profile = {
     fullName: pUser?.fullName || t("student"),
@@ -631,15 +722,19 @@ function PortfolioPage({ setPage, pageParams }) {
   const socialLinks = [
     socialLinksRaw.behance && { label: "Behance", href: socialLinksRaw.behance, icon: "globe" },
     socialLinksRaw.linkedin && { label: "LinkedIn", href: socialLinksRaw.linkedin, icon: "link" },
-    profile.email && portfolioSettings?.showEmail && { label: t("email"), href: `mailto:${profile.email}`, icon: "mail" },
+    profile.email && pSettings?.showEmail && { label: t("email"), href: `mailto:${profile.email}`, icon: "mail" },
   ].filter(Boolean);
+
+  const explicitFeaturedArtworks = (pSettings?.featuredArtworkIds || [])
+    .map(id => (portfolioArtworks || []).find(a => a.id === id))
+    .filter(Boolean);
 
   const highlightWorks = (portfolioArtworks || []).filter(a => a.isHighlighted).slice(0, 2);
   const topLikedWorks = (portfolioArtworks || []).filter(a => !a.isHighlighted).sort((a, b) => (b.likeCount || 0) - (a.likeCount || 0)).slice(0, 2);
   const extraWorks = highlightWorks.length >= 2 ? highlightWorks : [...highlightWorks, ...topLikedWorks].slice(0, 2);
   const allFeatured = (portfolioArtworks && portfolioArtworks.length > 0)
-    ? [...(featuredArtworks || []), ...extraWorks.filter(ex => !(featuredArtworks || []).some(f => f.id === ex.id))]
-    : artworks.slice(0, 3);
+    ? [...explicitFeaturedArtworks, ...extraWorks.filter(ex => !explicitFeaturedArtworks.some(f => f.id === ex.id))]
+    : [];
     
   const featuredWorks = allFeatured.slice(0, 10).map((a, i) => {
     return {
@@ -667,17 +762,7 @@ function PortfolioPage({ setPage, pageParams }) {
         likes: a.likeCount || 0,
         isPublic: a.isPublic !== false
       }))
-    : artworks.map(a => ({
-        id: a.id,
-        title: a.title,
-        img: a.img,
-        tools: [a.tool, a.category].filter(Boolean),
-        tags: [a.category].filter(Boolean),
-        student: a.student,
-        views: a.likes || 0,
-        likes: a.likes || 0,
-        isPublic: a.isPublic !== false
-      }));
+    : [];
 
   const handleContactSubmit = async () => {
     if (!contactName || !contactEmail || !contactContent) return;
@@ -751,7 +836,7 @@ function PortfolioPage({ setPage, pageParams }) {
               </div>
 
               <p className="text-base sm:text-lg text-[#666666] font-medium mb-2">
-                {titleByYear[portfolioSettingsData?.portfolioSettings?.yearLevel || portfolioSettingsData?.yearLevel || pSettings?.yearLevel || "Năm 3"]} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || pSettings?.major || t("graphicDesign")} • UEF
+                {profile.profileHeadline} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || pSettings?.major || t("graphicDesign")} • UEF
               </p>
               <p className="text-sm sm:text-[15px] text-[#444444] leading-relaxed max-w-2xl">
                 {profile.bio}
@@ -789,16 +874,39 @@ function PortfolioPage({ setPage, pageParams }) {
                 >
                   {t("contact")}
                 </button>
+                {slug && authUser?.id !== pUser?.id && (
+                  <button 
+                    onClick={toggleFollow}
+                    className={`px-5 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
+                      isFollowing 
+                        ? "border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] hover:bg-[#EAEAEA]"
+                        : "border-[#1a4ba8] text-[#1a4ba8] bg-blue-50 hover:bg-blue-100"
+                    }`}
+                  >
+                    {isFollowing ? "Bỏ theo dõi" : "Theo dõi"}
+                  </button>
+                )}
                 <button className="px-5 py-2.5 rounded-xl border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:bg-[#F8F8F8] transition-colors">
                   {t("share")}
                 </button>
               </div>
 
-              {/* quick stats (giữ tinh thần thiết kế cũ) */}
+              {/* quick stats */}
               <div className="mt-10 flex flex-wrap gap-8 border-t border-[#E0E0E0] pt-6">
-                {[{ label: t("artworks"), val: stats?.artworkCount || 0 }, { label: t("views"), val: stats?.viewCount?.toLocaleString() || "0" }, { label: t("likes"), val: stats?.likeCount?.toLocaleString() || "0" }].map((s) => (
-                  <div key={s.label} className="flex items-end gap-2">
-                    <span className="text-2xl font-extrabold text-[#212121] tracking-tight">{s.val}</span>
+                {[
+                  { label: t("artworks"), val: stats?.totalArtworks || 0 }, 
+                  { label: t("views"), val: stats?.totalViews?.toLocaleString() || "0" }, 
+                  { label: t("likes"), val: stats?.totalLikes?.toLocaleString() || "0" },
+                  { label: "Người theo dõi", val: followersCount?.toLocaleString() || "0", isClickable: true },
+                  { label: "Đang theo dõi", val: stats?.following?.toLocaleString() || "0", isClickable: true }
+                ].map((s) => (
+                  <div key={s.label} className="flex items-end gap-2" 
+                       onClick={() => {
+                         if (s.label === 'Người theo dõi') openFollowModal('followers');
+                         if (s.label === 'Đang theo dõi') openFollowModal('following');
+                       }}
+                       style={{ cursor: s.isClickable ? 'pointer' : 'default' }}>
+                    <span className="text-2xl font-extrabold text-[#212121] tracking-tight hover:opacity-80">{s.val}</span>
                     <span className="text-sm text-[#666666] pb-0.5">{s.label}</span>
                   </div>
                 ))}
@@ -842,7 +950,7 @@ function PortfolioPage({ setPage, pageParams }) {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 }}>
-            {featuredWorks.map((art) => (
+            {featuredWorks.length > 0 ? featuredWorks.map((art) => (
               <div
                 key={art.id}
                 onClick={() => setPage && setPage("detail", { artworkId: art.id })}
@@ -872,7 +980,11 @@ function PortfolioPage({ setPage, pageParams }) {
                   </div>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div style={{ gridColumn: "1 / -1", padding: "40px 0", textAlign: "center", color: "#999", fontSize: 14 }}>
+                Chưa có đồ án nổi bật nào.
+              </div>
+            )}
           </div>
         </section>
 
@@ -906,42 +1018,54 @@ function PortfolioPage({ setPage, pageParams }) {
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 }}>
-          {allPortfolioWorks.filter(art => {
-            if (activeCategory === t("allArtworks")) return true;
-            const c = activeCategory.toLowerCase();
-            return (art.tools || []).some(t => typeof t === 'string' && t.toLowerCase().includes(c)) || 
-                   (art.tags || []).some(t => typeof t === 'string' && t.toLowerCase().includes(c));
-          }).map((art) => (
-            <div
-              key={art.id}
-              onClick={() => setPage && setPage("detail", { artworkId: art.id })}
-              style={{ cursor: "pointer", transition: "transform .15s" }}
-              onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-              onMouseLeave={e => e.currentTarget.style.transform = "none"}
-            >
-              <div style={{ position: "relative", borderRadius: 4, overflow: "hidden", background: "#f8f8f8" }}>
-                {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }} /> : (
-                  <div style={{ width: "100%", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontSize: 12 }}>{t("noImage")}</div>
-                )}
-                {!art.isPublic && (
-                  <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
-                    <Lock size={10} color="#fff" />
-                    <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
+          {(() => {
+            const filtered = allPortfolioWorks.filter(art => {
+              if (activeCategory === t("allArtworks")) return true;
+              const c = activeCategory.toLowerCase();
+              return (art.tools || []).some(t => typeof t === 'string' && t.toLowerCase().includes(c)) || 
+                     (art.tags || []).some(t => typeof t === 'string' && t.toLowerCase().includes(c));
+            });
+
+            if (filtered.length === 0) {
+              return (
+                <div style={{ gridColumn: "1 / -1", padding: "60px 0", textAlign: "center", color: "#999", fontSize: 14 }}>
+                  {t("noArtworks")}
+                </div>
+              );
+            }
+
+            return filtered.map((art) => (
+              <div
+                key={art.id}
+                onClick={() => setPage && setPage("detail", { artworkId: art.id })}
+                style={{ cursor: "pointer", transition: "transform .15s" }}
+                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                onMouseLeave={e => e.currentTarget.style.transform = "none"}
+              >
+                <div style={{ position: "relative", borderRadius: 4, overflow: "hidden", background: "#f8f8f8" }}>
+                  {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }} /> : (
+                    <div style={{ width: "100%", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontSize: 12 }}>{t("noImage")}</div>
+                  )}
+                  {!art.isPublic && (
+                    <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
+                      <Lock size={10} color="#fff" />
+                      <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
+                    </div>
+                  )}
+                </div>
+                <p style={{ margin: "8px 0 2px", fontSize: 14, fontWeight: 600, color: "#212121", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 13, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                    <Eye size={13} color="#999" />
+                    <span style={{ fontSize: 12, color: "#666" }}>{art.views}</span>
+                    <Heart size={12} color="#ccc" />
+                    <span style={{ fontSize: 12, color: "#666" }}>{art.likes}</span>
                   </div>
-                )}
-              </div>
-              <p style={{ margin: "8px 0 2px", fontSize: 14, fontWeight: 600, color: "#212121", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: 13, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                  <Eye size={13} color="#999" />
-                  <span style={{ fontSize: 12, color: "#666" }}>{art.views}</span>
-                  <Heart size={12} color="#ccc" />
-                  <span style={{ fontSize: 12, color: "#666" }}>{art.likes}</span>
                 </div>
               </div>
-            </div>
-          ))}
+            ));
+          })()}
         </div>
         <div style={{ height: 64 }} />
       </main>
@@ -992,6 +1116,39 @@ function PortfolioPage({ setPage, pageParams }) {
           </div>
         </div>
       )}
+      {/* Followers Modal */}
+      {modalType && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md h-[480px] flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-[#212121]">
+                {modalType === 'followers' ? 'Người theo dõi' : 'Đang theo dõi'}
+              </h3>
+              <button onClick={() => setModalType(null)} className="p-2 hover:bg-gray-100 rounded-full">
+                <X size={20} color="#666" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2">
+              {modalUsers.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">Chưa có ai</p>
+              ) : (
+                modalUsers.map(u => (
+                  <div key={u.id} 
+                       className="flex items-center gap-3 p-3 hover:bg-[#F8F8F8] rounded-xl cursor-pointer transition-colors border border-transparent hover:border-[#EAEAEA]" 
+                       onClick={() => { setModalType(null); setPage && setPage("portfolio", { portfolioSlug: u.id }); }}>
+                    <img src={u.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(u.fullName || "User") + "&background=random"} 
+                         className="w-12 h-12 rounded-full object-cover border border-[#E0E0E0]" />
+                    <div>
+                      <p className="font-semibold text-[15px] text-[#212121] leading-tight">{u.fullName}</p>
+                      <p className="text-xs text-[#666666] mt-0.5">{u.major || "Thành viên"}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1013,7 +1170,7 @@ function DashboardSidebar({ activePage, setPage, userData }) {
     { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
   ];
   if (userData?.role === "lecturer" || userData?.role === "admin") {
-      items.splice(1, 0, { icon: <CheckCircle size={18} />, label: "Chấm điểm (Chờ duyệt)", page: "pending_artworks" });
+      items.splice(1, 0, { icon: <CheckCircle size={18} />, label: "Chấm điểm", page: "pending_artworks" });
   }
   const profileName = userData?.fullName || userData?.name || t("student");
   const profileAvatar = userData?.avatarUrl || userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
@@ -1382,6 +1539,144 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
   );
 }
 
+function BadgesPage({ setPage, userData }) {
+  const [badges, setBadges] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newBadge, setNewBadge] = useState({ name: "", colorCode: "#1A4BA8", textColor: "#FFFFFF" });
+  const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (!userData?.id) return;
+    api.badges.list(userData.id).then(res => {
+      setBadges(res);
+      setLoading(false);
+    }).catch(e => {
+      console.error(e);
+      setLoading(false);
+    });
+  }, [userData]);
+
+  const handleCreateBadge = async () => {
+    if (!newBadge.name) return;
+    setCreating(true);
+    try {
+      const created = await api.badges.create({ ...newBadge, lecturerId: userData.id });
+      setBadges([created, ...badges]);
+      setNewBadge({ name: "", colorCode: "#1A4BA8", textColor: "#FFFFFF" });
+    } catch (e) {
+      alert("Error creating badge: " + e.message);
+    }
+    setCreating(false);
+  };
+
+  const handleDeleteBadge = async (badgeId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa huy hiệu này? Huy hiệu sẽ bị gỡ khỏi tất cả các đồ án đã được cấp.")) return;
+    try {
+      await api.badges.delete(badgeId, userData.id);
+      setBadges(badges.filter(b => b.id !== badgeId));
+    } catch (e) {
+      alert("Lỗi khi xóa huy hiệu: " + e.message);
+    }
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-white relative">
+      <AdminSidebar active="badges" setPage={setPage} />
+
+      <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Quản lý Huy hiệu</h2>
+            <p style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>Tạo và quản lý các huy hiệu dành tặng cho đồ án xuất sắc.</p>
+          </div>
+        </div>
+
+        <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: `1px solid ${GRAY_LIGHT}`, marginBottom: 32 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 16px", color: BLACK }}>Tạo Huy hiệu mới</h3>
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Tên Huy hiệu</label>
+              <input 
+                type="text" 
+                placeholder="VD: Top 10 Branding, Best Concept..." 
+                value={newBadge.name}
+                onChange={e => setNewBadge({ ...newBadge, name: e.target.value })}
+                style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14 }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: 16 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Màu nền</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input 
+                    type="color" 
+                    value={newBadge.colorCode}
+                    onChange={e => setNewBadge({ ...newBadge, colorCode: e.target.value })}
+                    style={{ width: 40, height: 40, padding: 0, border: "none", borderRadius: 8, cursor: "pointer" }}
+                  />
+                  <input 
+                    type="text" 
+                    value={newBadge.colorCode.toUpperCase()}
+                    onChange={e => setNewBadge({ ...newBadge, colorCode: e.target.value })}
+                    style={{ width: 90, padding: "10px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, textTransform: "uppercase" }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Màu chữ</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input 
+                    type="color" 
+                    value={newBadge.textColor}
+                    onChange={e => setNewBadge({ ...newBadge, textColor: e.target.value })}
+                    style={{ width: 40, height: 40, padding: 0, border: "none", borderRadius: 8, cursor: "pointer" }}
+                  />
+                  <input 
+                    type="text" 
+                    value={newBadge.textColor.toUpperCase()}
+                    onChange={e => setNewBadge({ ...newBadge, textColor: e.target.value })}
+                    style={{ width: 90, padding: "10px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, textTransform: "uppercase" }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 22 }}>
+              <button 
+                onClick={handleCreateBadge} 
+                disabled={creating || !newBadge.name}
+                style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: (creating || !newBadge.name) ? "not-allowed" : "pointer", opacity: (creating || !newBadge.name) ? 0.6 : 1 }}
+              >
+                {creating ? "Đang tạo..." : "Tạo Huy hiệu"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 16px", color: BLACK }}>Huy hiệu của bạn</h3>
+          {loading ? <GlobalLoading /> : (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+              {badges.length === 0 ? (
+                <p style={{ color: MUTED, fontSize: 14 }}>Chưa có huy hiệu nào được tạo.</p>
+              ) : (
+                badges.map(b => (
+                  <div key={b.id} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 100, background: b.colorCode, color: b.textColor || "#fff", fontSize: 13, fontWeight: 600, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", paddingRight: 36 }}>
+                    <Star size={14} fill={b.textColor || "#fff"} />
+                    {b.name}
+                    <div onClick={() => handleDeleteBadge(b.id)} style={{ position: "absolute", right: 6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.15)", color: b.textColor || "#fff", transition: "all .2s" }} onMouseEnter={e => e.currentTarget.style.background="rgba(0,0,0,0.3)"} onMouseLeave={e => e.currentTarget.style.background="rgba(0,0,0,0.15)"}>
+                      <X size={12} strokeWidth={3} />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userData }) {
     const [artworksList, setArtworksList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1470,21 +1765,28 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ fontSize: 11, color: MUTED }}>{t("public")}</span>
                         <ToggleSwitch isOn={art.isPublic} disabled={art.isPending} onToggle={() => {
-                          if (art.isPending) {
-                            alert("Tác phẩm đang chờ duyệt, chưa thể công khai.");
+                          if (!art.isPublic) {
+                            alert("Sinh viên không được tự động công khai ấn phẩm. Vui lòng liên hệ ban quản trị.");
                             return;
                           }
-                          api.artworks.toggleVisibility(art.id, { isPublic: !art.isPublic })
+                          api.artworks.toggleVisibility(art.id, false)
                              .then(() => {
-                                setArtworksList(prev => prev.map(a => a.id === art.id ? { ...a, isPublic: !a.isPublic } : a));
-                             });
+                                setArtworksList(prev => prev.map(a => a.id === art.id ? { ...a, isPublic: false } : a));
+                             })
+                             .catch(err => alert(err?.message || "Lỗi cập nhật trạng thái"));
                         }} />
                       </div>
                       <div style={{ display: "flex", gap: 6 }}>
                         <button onClick={() => { setActiveArtworkId(art.id); setTimeout(() => setPage("edit_artwork"), 50); }} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
                         </button>
-                        <button style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid #F5C5C5`, background: "#FEF2F2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <button onClick={() => {
+                          if (confirm("Bạn có chắc chắn muốn xóa ấn phẩm này không?")) {
+                            api.artworks.delete(art.id)
+                              .then(() => setArtworksList(prev => prev.filter(a => a.id !== art.id)))
+                              .catch(err => alert(err?.message || "Lỗi xóa ấn phẩm"));
+                          }
+                        }} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid #F5C5C5`, background: "#FEF2F2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Trash2 size={14} color={CRIMSON} strokeWidth={1.5} />
                         </button>
                       </div>
@@ -2283,6 +2585,15 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const currentUserId = authUser?.id;
   const currentUserRole = authUser?.role;
   const canGrade = currentUserRole === "lecturer" || currentUserRole === "admin";
+  
+  const [lecturerBadges, setLecturerBadges] = useState([]);
+  const [assigningBadge, setAssigningBadge] = useState(false);
+
+  useEffect(() => {
+    if (canGrade && currentUserId) {
+      api.badges.list(currentUserId).then(setLecturerBadges).catch(console.error);
+    }
+  }, [canGrade, currentUserId]);
 
   // Debug log
   useEffect(() => {
@@ -2366,6 +2677,25 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
       setLikeCount(prev => wasLiked ? prev + 1 : Math.max(0, prev - 1));
     }
     setLiking(false);
+  };
+
+  const handleAssignBadge = async (badgeId) => {
+    if (assigningBadge) return;
+    setAssigningBadge(true);
+    try {
+      const res = await api.badges.assign(badgeId, activeArtworkId);
+      if (res.status === "assigned") {
+        const badge = lecturerBadges.find(b => b.id === badgeId);
+        if (badge) {
+          setArt(prev => ({ ...prev, badges: [...(prev.badges || []), badge] }));
+        }
+      } else {
+        setArt(prev => ({ ...prev, badges: (prev.badges || []).filter(b => b.id !== badgeId) }));
+      }
+    } catch (e) {
+      alert("Error assigning badge: " + e.message);
+    }
+    setAssigningBadge(false);
   };
 
   const handleSendComment = async () => {
@@ -2882,6 +3212,24 @@ if (mins < 1) return t("justNow");
                         {block.type === "text" && (
                           <div style={{ fontSize: 16, lineHeight: 1.8, color: "#333", whiteSpace: "pre-wrap" }}>{block.content}</div>
                         )}
+                        {block.type === "color" && block.data?.colors && (
+                          <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center", margin: "32px 0" }}>
+                            {block.data.colors.map(color => (
+                              <div key={color} style={{ width: 120, height: 120, borderRadius: "50%", background: color, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 16, color: "#fff", fontWeight: "bold", textShadow: "0 1px 4px rgba(0,0,0,0.6)", fontSize: 16 }}>
+                                {color}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {block.type === "typography" && block.data?.fontName && (
+                          <div style={{ padding: 48, border: "1px solid #eee", borderRadius: 16, textAlign: "center", background: "#f8fafc", margin: "32px 0", boxShadow: "inset 0 2px 10px rgba(0,0,0,0.02)" }}>
+                            <link href={`https://fonts.googleapis.com/css2?family=${block.data.fontName.replace(/ /g, '+')}:wght@400;700&display=swap`} rel="stylesheet" />
+                            <h1 style={{ fontFamily: `"${block.data.fontName}", sans-serif`, fontSize: 100, margin: "0 0 16px 0", color: "#1e293b", lineHeight: 1 }}>Aa</h1>
+                            <p style={{ fontFamily: `"${block.data.fontName}", sans-serif`, fontSize: 28, fontWeight: "bold", margin: "0 0 12px 0", color: "#334155" }}>{block.data.fontName}</p>
+                            <p style={{ fontFamily: `"${block.data.fontName}", sans-serif`, fontSize: 18, color: "#64748b", margin: 0, letterSpacing: 3 }}>A B C D E F G H I J K L M N O P Q R S T U V W X Y Z</p>
+                            <p style={{ fontFamily: `"${block.data.fontName}", sans-serif`, fontSize: 18, color: "#64748b", margin: "12px 0 0 0", letterSpacing: 4 }}>0 1 2 3 4 5 6 7 8 9</p>
+                          </div>
+                        )}
                         {block.type === "image" && block.data?.url && (() => {
                           const imageIndex = 1000 + i;
                           const imageComments = comments?.filter(c => c.targetImageIndex === imageIndex && c.positionX != null) || [];
@@ -3228,6 +3576,16 @@ if (mins < 1) return t("justNow");
               {/* Description Card */}
               <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
                 <h3 style={{ fontSize: 16, fontWeight: "bold", margin: "0 0 12px 0", color: "#191919" }}>{art.title}</h3>
+                {(art.badges && art.badges.length > 0) && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+                    {art.badges.map(b => (
+                      <div key={b.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 100, background: b.colorCode, color: b.textColor || "#fff", fontSize: 11, fontWeight: 600, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                        <Star size={12} fill={b.textColor || "#fff"} />
+                        {b.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <p style={{ fontSize: 14, color: "#666", lineHeight: 1.6, marginBottom: 16 }}>
                   {isDescExpanded ? art.description : (art.description?.slice(0, 100) || "") + ((art.description?.length || 0) > 100 ? "..." : "")}
                 </p>
@@ -3286,6 +3644,35 @@ if (mins < 1) return t("justNow");
               <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>Tools</span>
             </div>
 
+            {canGrade && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", position: "relative" }} onMouseEnter={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'block'; }} onMouseLeave={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'none'; }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                  <Star size={18} color="#fff" fill="#fff" />
+                </div>
+                <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff", whiteSpace: "nowrap" }}>Tặng Huy hiệu</span>
+                
+                {/* Dropdown Menu Huy Hiệu */}
+                <div className="badge-menu" style={{ display: "none", position: "absolute", top: 0, right: "100%", marginRight: 16, background: "#fff", borderRadius: 8, padding: 12, minWidth: 200, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", zIndex: 200 }}>
+                  <h4 style={{ margin: "0 0 10px", fontSize: 13, color: BLACK, fontWeight: 700 }}>Huy hiệu của bạn</h4>
+                  {lecturerBadges.length === 0 ? (
+                    <p style={{ margin: 0, fontSize: 12, color: MUTED }}>Bạn chưa tạo huy hiệu nào.</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {lecturerBadges.map(b => {
+                        const isAssigned = (art.badges || []).some(ab => ab.id === b.id);
+                        return (
+                          <div key={b.id} onClick={() => handleAssignBadge(b.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, background: isAssigned ? b.colorCode : GRAY_BG, color: isAssigned ? (b.textColor || "#fff") : BLACK, fontSize: 13, fontWeight: 600, cursor: assigningBadge ? "wait" : "pointer" }}>
+                            <Star size={14} fill={isAssigned ? (b.textColor || "#fff") : "none"} color={isAssigned ? (b.textColor || "#fff") : BLACK} />
+                            {b.name}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={() => onBookmarkClick(art.id)}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
                 <Folder size={18} color="#191919" fill={isBookmarked ? "#191919" : "none"} />
@@ -3305,6 +3692,13 @@ if (mins < 1) return t("justNow");
                 <ThumbsUp size={24} color="#fff" fill={isLiked ? "#fff" : "none"} />
               </div>
               <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>{likeCount || 0}</span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", marginTop: 12 }} onClick={() => setShowReport(true)}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                <AlertTriangle size={18} color="#191919" />
+              </div>
+              <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>Report</span>
             </div>
 
           </div>
@@ -3371,26 +3765,61 @@ if (mins < 1) return t("justNow");
       )}
 
       {showReport && (
-        <div className="fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4" onClick={() => setShowReport(false)}>
+        <div className="fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4" onClick={() => !sendingReport && setShowReport(false)}>
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
               <h3 className="text-base font-bold text-[#212121]">{t("reportArtwork")}</h3>
-              <button onClick={() => setShowReport(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={18} /></button>
+              <button disabled={sendingReport} onClick={() => setShowReport(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer disabled:opacity-50"><X size={18} /></button>
             </div>
             <div className="p-5">
-              <p className="text-sm text-[#212121] mb-3">{t("reportReason")}:</p>
+              <p className="text-sm text-[#212121] mb-3 font-semibold">Vui lòng chọn lý do báo cáo:</p>
               <div className="flex flex-col gap-2 mb-5">
-                {["Inappropriate Content", "Copyright Violation", "Spam", "Other"].map(reason => (
-                  <label key={reason} className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="reportReason" className="w-4 h-4 text-[#1a4ba8]" />
-                    <span className="text-sm text-[#212121]">{reason}</span>
+                {[
+                  { id: "Inappropriate Content", label: "Nội dung phản cảm / Không phù hợp" },
+                  { id: "Copyright Violation", label: "Vi phạm bản quyền" },
+                  { id: "Spam", label: "Spam / Quảng cáo rác" },
+                  { id: "Other", label: "Lý do khác" }
+                ].map(reason => (
+                  <label key={reason.id} className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="radio" 
+                      name="reportReason" 
+                      className="w-4 h-4 text-[#1a4ba8]" 
+                      checked={reportType === reason.id}
+                      onChange={() => setReportType(reason.id)}
+                      disabled={sendingReport}
+                    />
+                    <span className="text-sm text-[#212121]">{reason.label}</span>
                   </label>
                 ))}
               </div>
-              <textarea placeholder={t("additionalDetails")} className="w-full border border-[#E0E0E0] rounded-lg p-3 text-sm min-h-[100px] outline-none focus:border-[#1a4ba8] mb-4"></textarea>
+              <textarea 
+                placeholder="Cung cấp thêm chi tiết (Không bắt buộc)..." 
+                className="w-full border border-[#E0E0E0] rounded-lg p-3 text-sm min-h-[100px] outline-none focus:border-[#1a4ba8] mb-4"
+                value={reportDetail}
+                onChange={e => setReportDetail(e.target.value)}
+                disabled={sendingReport}
+              ></textarea>
               <div className="flex justify-end gap-3">
-                <button onClick={() => setShowReport(false)} className="px-4 py-2 rounded-lg text-sm font-semibold text-[#666666] hover:bg-[#F5F5F5]">{t("cancel")}</button>
-                <button onClick={() => { setShowReport(false); alert(t("reportSubmitted")); }} className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#d32f2f] hover:bg-[#b71c1c]">{t("submitReport")}</button>
+                <button disabled={sendingReport} onClick={() => setShowReport(false)} className="px-4 py-2 rounded-lg text-sm font-semibold text-[#666666] hover:bg-[#F5F5F5] disabled:opacity-50">Hủy</button>
+                <button 
+                  disabled={sendingReport || !reportType} 
+                  onClick={() => {
+                    setSendingReport(true);
+                    api.artworks.report(activeArtworkId, { violationType: reportType, detail: reportDetail })
+                      .then(() => {
+                        setShowReport(false);
+                        setReportType("");
+                        setReportDetail("");
+                        alert("Gửi báo cáo thành công! Chúng tôi sẽ xem xét ấn phẩm này.");
+                      })
+                      .catch(err => alert("Có lỗi xảy ra: " + (err.message || "Không thể gửi báo cáo")))
+                      .finally(() => setSendingReport(false));
+                  }} 
+                  className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#d32f2f] hover:bg-[#b71c1c] disabled:opacity-50"
+                >
+                  {sendingReport ? "Đang xử lý..." : "Gửi báo cáo"}
+                </button>
               </div>
             </div>
           </div>
@@ -3449,32 +3878,7 @@ if (mins < 1) return t("justNow");
         </div>
       )}
 
-      {showReport && (
-        <div className="fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4" onClick={() => setShowReport(false)}>
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
-              <h3 className="text-base font-bold text-[#212121]">{t("reportArtwork")}</h3>
-              <button onClick={() => setShowReport(false)} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={18} /></button>
-            </div>
-            <div className="p-5">
-              <p className="text-sm text-[#212121] mb-3">{t("reportReason")}:</p>
-              <div className="flex flex-col gap-2 mb-5">
-                {["Inappropriate Content", "Copyright Violation", "Spam", "Other"].map(reason => (
-                  <label key={reason} className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="reportReason" className="w-4 h-4 text-[#1a4ba8]" />
-                    <span className="text-sm text-[#212121]">{reason}</span>
-                  </label>
-                ))}
-              </div>
-              <textarea placeholder={t("additionalDetails")} className="w-full border border-[#E0E0E0] rounded-lg p-3 text-sm min-h-[100px] outline-none focus:border-[#1a4ba8] mb-4"></textarea>
-              <div className="flex justify-end gap-3">
-                <button onClick={() => setShowReport(false)} className="px-4 py-2 rounded-lg text-sm font-semibold text-[#666666] hover:bg-[#F5F5F5]">{t("cancel")}</button>
-                <button onClick={() => { setShowReport(false); alert(t("reportSubmitted")); }} className="px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#d32f2f] hover:bg-[#b71c1c]">{t("submitReport")}</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 
@@ -3512,26 +3916,12 @@ function AuthPage({ setPage, onLoginSuccess }) {
   };
 
   const handleGoogleLogin = () => {
-    fetch("/api/auth/csrf").then(r => r.json()).then(data => {
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = "/api/auth/signin/google";
-      const cbInput = document.createElement("input");
-      cbInput.name = "callbackUrl";
-      cbInput.value = window.location.origin + "/";
-      form.appendChild(cbInput);
-      const csrfInput = document.createElement("input");
-      csrfInput.name = "csrfToken";
-      csrfInput.value = data.csrfToken;
-      form.appendChild(csrfInput);
-      document.body.appendChild(form);
-      form.submit();
-    });
+    setLoginError("Tính năng đăng nhập bằng Google hiện chưa khả dụng trong bản thử nghiệm. Vui lòng sử dụng Đăng nhập bằng Email.");
   };
 
   const demoAccounts = {
     student: { email: "sv@uef.edu.vn", password: "test123" },
-    lecturer: { email: "tainv@uef.edu.vn", password: "test123" },
+    lecturer: { email: "admin@uef.edu.vn", password: "test123" },
     admin: { email: "admin@uef.edu.vn", password: "test123" },
   };
 
@@ -4374,7 +4764,7 @@ function AdminDashboardPage({ setPage }) {
   const categoryCounts = [];
   const recent = recentActivity.slice(0, 4).map(a => ({
     color: a.isPublic ? "#1a4ba8" : "#8B1A1A",
-    text: `${a.user?.fullName || "User"} ${a.isPublic ? t("approvedArtwork") : t("justPosted")} "${(a.title || "").slice(0, 30)}"`,
+    text: `${a.user?.fullName || "User"} ${a.isPublic ? "đã duyệt tác phẩm" : "vừa đăng tải"} "${(a.title || "").slice(0, 30)}"`,
   }));
 
   const statusBadge = (s) => {
@@ -4564,10 +4954,10 @@ function PendingArtworksPage({ setPage, userData }) {
   }, []);
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: GRAY_BG }}>
-      <DashboardSidebar activePage="pending_artworks" setPage={setPage} userData={userData} />
-      <div style={{ flex: 1, padding: "32px 40px", overflow: "auto" }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>Chấm điểm (Chờ duyệt)</h2>
+    <div className="flex h-screen overflow-hidden bg-white relative">
+      <AdminSidebar active="pending_artworks" setPage={setPage} />
+      <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>Chấm điểm</h2>
         <p style={{ color: MUTED, fontSize: 13, marginBottom: 28 }}>Danh sách các tác phẩm sinh viên nộp đang chờ giảng viên chấm điểm và phê duyệt.</p>
 
         {loading ? <GlobalLoading /> : artworks.length === 0 ? (
@@ -4842,15 +5232,18 @@ function MessagesPage({ setPage, userData }) {
 }
 
 function AdminSidebar({ active, setPage }) {
-    const items = [
-    { icon: <LayoutDashboard size={18} />, label: t("overview"), page: "admin" },
-    { icon: <Users size={18} />, label: t("accounts"), page: "admin_users" },
-    { icon: <ShoppingCart size={18} />, label: t("orders"), page: "admin_orders" },
-    { icon: <ShieldAlert size={18} />, label: t("artworkWarnings"), page: "admin_artworks" },
-    { icon: <Folder size={18} />, label: t("collectionManagement"), page: "admin_export" },
-    { icon: <FileBadge size={18} />, label: t("watermarkSettings"), page: "admin_watermark" },
-    { icon: <Settings size={18} />, label: "Layout Settings", page: "admin_layout" },
-  ];
+  const userRole = localStorage.getItem("userRole") || "admin";
+  const items = [
+    { icon: <LayoutDashboard size={18} />, label: "Tổng quan", page: "admin", roles: ["admin", "lecturer"] },
+    { icon: <CheckCircle size={18} />, label: "Chấm điểm", page: "pending_artworks", roles: ["admin", "lecturer"] },
+    { icon: <FileBadge size={18} />, label: "Quản lý huy hiệu", page: "badges", roles: ["admin", "lecturer"] },
+    { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users", roles: ["admin"] },
+    { icon: <ShoppingCart size={18} />, label: "Đơn hàng", page: "admin_orders", roles: ["admin"] },
+    { icon: <ShieldAlert size={18} />, label: "Cảnh cáo ấn phẩm", page: "admin_artworks", roles: ["admin", "lecturer"] },
+    { icon: <Folder size={18} />, label: "Quản lý bộ sưu tập", page: "admin_export", roles: ["admin"] },
+    { icon: <Settings size={18} />, label: "Cài đặt Watermark", page: "admin_watermark", roles: ["admin"] },
+    { icon: <Settings size={18} />, label: "Cài đặt Layout", page: "admin_layout", roles: ["admin"] },
+  ].filter(item => item.roles.includes(userRole));
 
   return (
     <div className="w-64 bg-[#F8F8F8] border-r border-[#E0E0E0] flex-shrink-0 flex flex-col h-full overflow-y-auto">
@@ -5423,7 +5816,9 @@ function AdminUsersPage({ setPage }) {
 }
 
 function AdminArtworksPage({ setPage }) {
-    const [items, setItems] = useState([]);
+  const [data, setData] = useState({ artworks: [], totalPages: 0, counts: { all: 0, reported: 0, pending: 0, hidden: 0, highlight: 0 } });
+  const [page, setPageNum] = useState(1);
+  const [limit] = useState(20);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
   const [query, setQuery] = useState("");
@@ -5435,53 +5830,68 @@ function AdminArtworksPage({ setPage }) {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, mode: "delete", artId: null });
   const [galleryIdx, setGalleryIdx] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
-
-  const handleOpenGallery = (idx) => {
-    const imgs = [selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean);
-    setGalleryImages(imgs);
-    setGalleryIdx(idx);
-  };
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
 
-  const fetchArtworks = (params = {}) => {
+  const observerTarget = useRef(null);
+  const fetchId = useRef(0);
+
+  const fetchArtworks = () => {
+    const id = ++fetchId.current;
     setLoading(true);
-    api.admin.artworks({ limit: 200, ...params }).then(res => {
-      const raw = res.artworks || [];
-      setItems(raw);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    const params = { page, limit, tab: activeTab };
+    if (query.trim()) params.q = query.trim();
+    if (filterSubject !== t("all")) params.subject = filterSubject;
+    if (filterYear !== t("all")) params.year = filterYear;
+    
+    api.admin.artworks(params).then(res => {
+      if (id === fetchId.current) {
+        setData(prev => ({
+          ...res,
+          artworks: page === 1 ? (res.artworks || []) : [...(prev.artworks || []), ...(res.artworks || [])],
+          counts: res.counts || { all: 0, reported: 0, pending: 0, hidden: 0, highlight: 0 }
+        }));
+        setLoading(false);
+      }
+    }).catch(() => { if (id === fetchId.current) setLoading(false); });
   };
 
-  useEffect(() => { fetchArtworks({}); }, []);
+  useEffect(() => {
+    fetchArtworks();
+  }, [page, limit, activeTab, query, filterSubject, filterYear]);
 
   useEffect(() => {
-    const params = {};
-    if (query.trim()) params.q = query.trim();
-    fetchArtworks(params);
-  }, [query]);
+    setPageNum(1);
+    setSelectedIds([]);
+  }, [activeTab, query, filterSubject, filterYear]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && !loading && (data.page || 1) < (data.totalPages || 0)) {
+          setPageNum(p => p + 1);
+        }
+      },
+      { threshold: 0.1 }
+    );
+    if (observerTarget.current) observer.observe(observerTarget.current);
+    return () => { if (observerTarget.current) observer.unobserve(observerTarget.current); };
+  }, [loading, data.page, data.totalPages]);
+
+  const filtered = data.artworks || [];
+  const selected = filtered.find((a) => a.id === selectedId) ?? null;
+
+  const handleOpenGallery = (idx) => {
+    const imgs = [selected?.coverImageUrl, ...(selected?.fileUrls || [])].filter(Boolean);
+    setGalleryImages(imgs);
+    setGalleryIdx(idx);
+  };
 
   useEffect(() => {
     if (!selectedId) { setReports([]); return; }
     setReportsLoading(true);
     api.artworks.reports(selectedId).then(setReports).catch(() => setReports([])).finally(() => setReportsLoading(false));
   }, [selectedId]);
-
-  const tabMap = { all: "all", reported: "reported", pending: "pending", hidden: "hidden", highlight: "highlight" };
-  const filtered = items.filter(a => {
-    if (activeTab === "hidden") return !a.isPublic && !a.isPending;
-    if (activeTab === "pending") return a.isPending;
-    if (activeTab === "highlight") return a.isHighlighted;
-    if (activeTab === "reported") return (a._count?.reports || 0) > 0;
-    return true;
-  }).filter(a => {
-    if (!query.trim()) return true;
-    const q = query.toLowerCase();
-    return (a.title || '').toLowerCase().includes(q) || (a.user?.fullName || '').toLowerCase().includes(q);
-}).filter(a => filterSubject === t("all") ? true : a.subject === filterSubject)
-      .filter(a => filterYear === t("all") ? true : a.academicYear === filterYear);
-
-  const selected = items.find((a) => a.id === selectedId) ?? null;
 
   const toggleSelectAll = (checked) => {
     setSelectedIds(checked ? filtered.map((a) => a.id) : []);
@@ -5539,13 +5949,7 @@ function AdminArtworksPage({ setPage }) {
   };
 
   const tabCount = (key) => {
-    return items.filter(a => {
-      if (key === "hidden") return !a.isPublic && !a.isPending;
-      if (key === "pending") return a.isPending;
-      if (key === "highlight") return a.isHighlighted;
-      if (key === "reported") return (a._count?.reports || 0) > 0;
-      return true;
-    }).length;
+    return data.counts ? (data.counts[key] || 0) : 0;
   };
 
   const FilterSelect = ({ value, onChange, children }) => (
@@ -7125,31 +7529,43 @@ function AboutPage({ setPage, isLoggedIn }) {
       
       {/* HERO SECTION */}
       <section className="relative min-h-[70vh] pt-16 pb-10 px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 items-center overflow-hidden bg-[#f9fafc]">
-        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_55%_80%_at_100%_50%,rgba(214,232,255,0.6)_0%,transparent_70%),radial-gradient(ellipse_35%_40%_at_5%_90%,rgba(155,28,28,0.06)_0%,transparent_60%)]"></div>
+        <div className="absolute inset-0 z-0">
+          <div className="absolute -top-20 -left-20 w-80 h-80 bg-red-500 rounded-full mix-blend-multiply filter blur-[120px] opacity-15"></div>
+          <div className="absolute top-40 left-1/4 w-80 h-80 bg-blue-600 rounded-full mix-blend-multiply filter blur-[120px] opacity-15"></div>
+          <div className="absolute top-10 right-10 w-[500px] h-[500px] bg-[#d6e8ff] rounded-full mix-blend-multiply filter blur-[120px] opacity-40"></div>
+        </div>
         
-        <div className="relative z-10 lg:pr-12">
-          <div className="inline-flex items-center gap-2 bg-[#d6e8ff] text-[#0d2e6e] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-5 animate-[fadeUp_0.5s_ease-out]">
-            <span className="w-1.5 h-1.5 bg-[#1e6fd9] rounded-full animate-ping"></span>
-            {t("aboutFacultyUef")}
+        <div className="relative z-10 lg:pl-10 xl:pl-24 lg:pr-8">
+          <div className="inline-flex items-center gap-3 bg-gradient-to-r from-red-50 to-blue-50 border border-red-100 text-[#0d2e6e] px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-6 animate-[fadeUp_0.5s_ease-out] shadow-sm">
+            <span className="w-2 h-2 bg-gradient-to-r from-red-500 to-blue-600 rounded-full animate-pulse"></span>
+            Khoa Thiết Kế Đồ Họa UEF
           </div>
-          <h1 className="text-5xl lg:text-7xl font-extrabold leading-[1.1] text-[#0a0c0f] mb-4 tracking-tight animate-[fadeUp_0.7s_ease-out]">
+          
+          <h1 className="text-5xl lg:text-7xl font-extrabold leading-[1.1] text-[#0a0c0f] mb-6 tracking-tight animate-[fadeUp_0.7s_ease-out]">
             {aboutHero?.title ? (
               aboutHero.title.split('\n').map((line, i) => (
                 <React.Fragment key={i}>{i > 0 && <br/>}{line}</React.Fragment>
               ))
             ) : (
-              <>{t("aboutHeroExplore")}<br/><span className="text-[#1a4ba8]">{t("aboutHeroExcellentProjects")}</span><br/>{t("aboutHeroFromUefStudents")}</>
+              <>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0a0c0f] to-[#1a4ba8]">{t("aboutHeroExplore")}</span><br/>
+                <span className="relative inline-block mt-2">
+                  <span className="absolute -bottom-2 left-0 w-full h-4 bg-red-100 -z-10 transform skew-x-[-12deg]"></span>
+                  <span className="text-red-600">{t("aboutHeroExcellentProjects")}</span>
+                </span><br/>
+                {t("aboutHeroFromUefStudents")}
+              </>
             )}
           </h1>
-          <p className="text-[#666] text-base leading-relaxed max-w-[460px] mb-6 animate-[fadeUp_0.9s_ease-out]">
-            {aboutHero?.description || <>{t("aboutHeroDesc1")} <strong className="text-[#1a4ba8]">{t("aboutHeroDesc2")}</strong></>}
+          <p className="text-[#555] text-lg leading-relaxed max-w-[540px] mb-8 font-medium border-l-[3px] border-red-500 pl-5 py-2 bg-gradient-to-r from-red-50/40 to-transparent animate-[fadeUp_0.9s_ease-out]">
+            {aboutHero?.description || <>{t("aboutHeroDesc1")} <strong className="text-red-600">{t("aboutHeroDesc2")}</strong></>}
           </p>
-          <div className="flex flex-wrap gap-3 mb-3 animate-[fadeUp_1.1s_ease-out]">
-            <a href={isLoggedIn ? undefined : "#audience"} onClick={(e) => { if (isLoggedIn) { e.preventDefault(); setPage("dashboard"); } }} className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#0d2e6e] text-white rounded-xl font-bold text-[15px] hover:bg-[#1a4ba8] hover:-translate-y-1 transition-all shadow-lg shadow-[#0d2e6e]/20 hover:shadow-[#1a4ba8]/40 duration-300 cursor-pointer">
-              {t("aboutExploreNow")} <ArrowRight size={16} />
+          <div className="flex flex-wrap gap-4 mb-4 animate-[fadeUp_1.1s_ease-out]">
+            <a href={isLoggedIn ? undefined : "#audience"} onClick={(e) => { if (isLoggedIn) { e.preventDefault(); setPage("dashboard"); } }} className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#1a4ba8] to-blue-700 text-white rounded-full font-bold text-[15px] hover:shadow-xl hover:shadow-blue-500/30 transition-all transform hover:-translate-y-0.5 cursor-pointer">
+              {t("aboutExploreNow")} <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
             </a>
             {!isLoggedIn && (
-              <button onClick={() => setPage("auth")} className="inline-flex items-center px-7 py-3.5 bg-transparent border-2 border-[#e2e6ec] text-[#0a0c0f] rounded-xl font-bold text-[15px] hover:border-[#1a4ba8] hover:text-[#1a4ba8] transition-colors">
+              <button onClick={() => setPage("auth")} className="inline-flex items-center px-8 py-4 bg-white border-2 border-gray-200 text-[#0a0c0f] rounded-full font-bold text-[15px] hover:border-red-500 hover:text-red-600 transition-colors">
                 Đăng nhập
               </button>
             )}
@@ -8634,10 +9050,7 @@ function TimelineSection({ entries: propEntries, slug }) {
   const cardDragStart = useRef(0);
 
   const rawEntries = fetchedEntries || [];
-  if (!fetchDone || rawEntries.length === 0) {
-    return null;
-  }
-
+  
   const timelineData = rawEntries.map(e => ({
     id: e.id,
     year: e.year || '',
@@ -8968,6 +9381,7 @@ export default function App() {
     image: authUser.avatarUrl || authUser.image || "",
     avatarUrl: authUser.avatarUrl || authUser.image || "",
     id: authUser.id || "",
+    portfolioSettings: authUser.portfolioSettings || null,
   } : null;
 
   // Xử lý OAuth callback - force refresh session sau khi redirect từ Google
@@ -9156,6 +9570,11 @@ export default function App() {
           <StudentMoodboardsPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />
         ) : <AccessDenied setPage={setPage} />
       )}
+      {page === "badges" && (
+        (userRole === "lecturer" || userRole === "admin") ? (
+          <BadgesPage setPage={setPage} userData={userData} />
+        ) : <AccessDenied setPage={setPage} />
+      )}
       {page === "upload" && (
         isLoggedIn ? (userRole === "student" ? (
           <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />
@@ -9220,7 +9639,14 @@ export default function App() {
         (userRole === "admin" || userRole === "lecturer") ? <AdminWatermarkPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "admin_layout" && (
-        (userRole === "admin" || userRole === "lecturer") ? <LayoutSettings setPage={setPage} /> : <AccessDenied setPage={setPage} />
+        (userRole === "admin" || userRole === "lecturer") ? (
+          <div className="flex h-screen bg-[#F8F8F8] overflow-hidden">
+            <AdminSidebar active="admin_layout" setPage={setPage} />
+            <div className="flex-1 overflow-y-auto">
+              <LayoutSettings setPage={setPage} />
+            </div>
+          </div>
+        ) : <AccessDenied setPage={setPage} />
       )}
       {page === "collection_export_config" && (
         (userRole === "admin" || userRole === "lecturer") ? (

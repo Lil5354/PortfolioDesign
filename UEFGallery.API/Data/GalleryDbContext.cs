@@ -21,6 +21,10 @@ public class GalleryDbContext : DbContext
     public DbSet<Models.SiteSection> SiteSections { get; set; }
     public DbSet<Models.SiteSectionItem> SiteSectionItems { get; set; }
 
+    public DbSet<Models.Badge> Badges { get; set; }
+    public DbSet<Models.ArtworkBadge> ArtworkBadges { get; set; }
+    public DbSet<Models.Follow> Follows { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -40,7 +44,9 @@ public class GalleryDbContext : DbContext
         modelBuilder.Entity<Models.SiteSection>().Property(x => x.Id).HasColumnName("section_id");
         modelBuilder.Entity<Models.SiteSectionItem>().Property(x => x.Id).HasColumnName("item_id");
         modelBuilder.Entity<Models.SiteSectionItem>().Property(x => x.Content).HasColumnType("jsonb");
+        modelBuilder.Entity<Models.PortfolioSetting>().Property(x => x.SocialLinks).HasColumnType("jsonb");
         modelBuilder.Entity<Models.SiteSetting>().Property(x => x.Id).HasColumnName("setting_id");
+        modelBuilder.Entity<Models.Badge>().Property(x => x.Id).HasColumnName("badge_id");
 
         // Explicitly set column types and conversion for Enums
         modelBuilder.Entity<Models.User>().Property(x => x.Role).HasColumnType("\"Role\"").HasConversion<string>();
@@ -49,7 +55,36 @@ public class GalleryDbContext : DbContext
         modelBuilder.Entity<Models.PortfolioSetting>().Property(x => x.DisplayOrder).HasColumnType("\"DisplayOrder\"").HasConversion<string>();
         modelBuilder.Entity<Models.Like>().Property(x => x.ReactionType).HasColumnType("\"ReactionType\"").HasConversion<string>();
         
-        // Add fluent API configurations here if needed
-        // Add fluent API configurations here if needed
+        // ArtworkBadge Configuration
+        modelBuilder.Entity<Models.ArtworkBadge>()
+            .HasKey(ab => new { ab.ArtworkId, ab.BadgeId });
+
+        modelBuilder.Entity<Models.ArtworkBadge>()
+            .HasOne(ab => ab.Artwork)
+            .WithMany(a => a.ArtworkBadges)
+            .HasForeignKey(ab => ab.ArtworkId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Models.ArtworkBadge>()
+            .HasOne(ab => ab.Badge)
+            .WithMany(b => b.ArtworkBadges)
+            .HasForeignKey(ab => ab.BadgeId)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Models.Follow>()
+            .HasKey(f => new { f.FollowerId, f.FollowedId });
+
+        modelBuilder.Entity<Models.Follow>()
+            .HasOne(f => f.Follower)
+            .WithMany(u => u.Following)
+            .HasForeignKey(f => f.FollowerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Models.Follow>()
+            .HasOne(f => f.Followed)
+            .WithMany(u => u.Followers)
+            .HasForeignKey(f => f.FollowedId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        modelBuilder.Entity<Models.Follow>().ToTable("follows");
     }
 }

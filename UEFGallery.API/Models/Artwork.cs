@@ -58,6 +58,9 @@ public class Artwork
 
     public int ViewCount { get; set; }
 
+    // Navigation
+    public ICollection<ArtworkBadge> ArtworkBadges { get; set; } = new List<ArtworkBadge>();
+
     public int LikeCount { get; set; }
 
     public string? PortfolioSlug { get; set; }
