@@ -1591,8 +1591,9 @@ export function TranslationProvider({ children }) {
   const [, forceUpdate] = useState(0);
 
   useEffect(() => {
-    _subscribers.push(forceUpdate);
-    return () => { _subscribers = _subscribers.filter(fn => fn !== forceUpdate); };
+    const triggerUpdate = () => forceUpdate(prev => prev + 1);
+    _subscribers.push(triggerUpdate);
+    return () => { _subscribers = _subscribers.filter(fn => fn !== triggerUpdate); };
   }, []);
 
   return React.createElement(I18nContext.Provider, {

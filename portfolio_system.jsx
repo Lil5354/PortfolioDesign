@@ -436,7 +436,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             style={{ display: "flex", alignItems: "center", gap: 4, padding: "7px 12px", borderRadius: 8, border: `1px solid ${showYearTool || activeFilterCount > 0 ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || activeFilterCount > 0 ? `${UEF_BLUE}08` : "#fff", color: UEF_BLUE, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s", flexShrink: 0 }}
           >
             <Filter size={14} />
-            {t("filter")}
+            <span>{t("filter")}</span>
             {activeFilterCount > 0 && (
               <span style={{ marginLeft: 2, background: UEF_BLUE, color: "#fff", fontSize: 10, fontWeight: 700, width: 17, height: 17, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{activeFilterCount}</span>
             )}
@@ -453,14 +453,14 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
             {authUser && (
               <button onClick={() => { setFeedMode(!feedMode); setPageNum(1); }} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${feedMode ? UEF_BLUE : GRAY_LIGHT}`, background: feedMode ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: feedMode ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s", marginRight: 8, display: "flex", alignItems: "center", gap: 4 }}>
-                <Users size={12} /> Đang theo dõi
+                <Users size={12} /> <span>Đang theo dõi</span>
               </button>
             )}
             <button onClick={() => setFilter("sort", "newest")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "newest" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "newest" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("newest")}</button>
             <button onClick={() => setFilter("sort", "most_likes")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "most_likes" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("mostLiked")}</button>
           </div>
 
-          <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}>{data.total} {t("artworksFound")}</span>
+          <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}><span>{data.total}</span> <span>{t("artworksFound")}</span></span>
           </div>
 
         {showYearTool && (
@@ -473,7 +473,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             </select>
             <label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", fontSize: 11, color: BLACK, fontWeight: 500, userSelect: "none" }}>
               <input type="checkbox" checked={filters.hasBadge} onChange={e => setFilter("hasBadge", e.target.checked)} style={{ cursor: "pointer" }} />
-              Chỉ hiện bài có Huy hiệu
+              <span>Chỉ hiện bài có Huy hiệu</span>
             </label>
             {activeFilterCount > 0 && (
               <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); setFilter("hasBadge", false); }} style={{ padding: "3px 8px", borderRadius: 6, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
