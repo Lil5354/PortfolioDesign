@@ -8,7 +8,7 @@ namespace UEFGallery.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "admin")]
+[Authorize(Roles = "admin,lecturer")]
 public class AdminController : ControllerBase
 {
     private readonly GalleryDbContext _context;
@@ -24,6 +24,7 @@ public class AdminController : ControllerBase
         var totalAccounts = await _context.Users.CountAsync();
         var publishedArtworks = await _context.Artworks.CountAsync(a => a.IsPublic && !a.IsPending);
         var reportedArtworks = await _context.Artworks.CountAsync(a => a.Reports.Any());
+        var pendingArtworks = await _context.Artworks.CountAsync(a => a.IsPending);
         var likesCount = await _context.Likes.CountAsync();
         var commentsCount = await _context.Comments.CountAsync();
 
@@ -31,6 +32,7 @@ public class AdminController : ControllerBase
         {
             PublishedArtworks = publishedArtworks,
             ReportedArtworks = reportedArtworks,
+            PendingArtworks = pendingArtworks,
             TotalAccounts = totalAccounts,
             TotalInteractions = likesCount + commentsCount
         });
@@ -107,8 +109,9 @@ public class AdminController : ControllerBase
         return Ok(reports);
     }
 
+
     [HttpGet("users")]
-    [AllowAnonymous]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> GetUsers([FromQuery] int page = 1)
     {
         var limit = 20;
@@ -141,6 +144,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPatch("users/{id}/lock")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> LockUser(string id, [FromBody] LockUserDto dto)
     {
         var user = await _context.Users.FindAsync(id);
@@ -153,6 +157,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpDelete("users/{id}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> DeleteUser(string id)
     {
         var user = await _context.Users.FindAsync(id);
@@ -165,6 +170,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPatch("users/{id}/role")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> UpdateUserRole(string id, [FromBody] UpdateUserRoleDto dto)
     {
         var user = await _context.Users.FindAsync(id);
@@ -180,6 +186,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPut("users/{id}")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> UpdateUser(string id, [FromBody] UpdateUserDto dto)
     {
         var user = await _context.Users.FindAsync(id);
@@ -204,6 +211,7 @@ public class AdminController : ControllerBase
     }
 
     [HttpPost("users/bulk")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> BulkImportUsers([FromBody] List<ImportUserDto> dtos)
     {
         var users = new List<User>();

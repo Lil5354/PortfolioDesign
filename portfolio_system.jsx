@@ -165,7 +165,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("admin"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {t("adminDashboard")}</div>
+                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("admin"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {userRole === "lecturer" ? "Dashboard Giảng viên" : t("adminDashboard")}</div>
                       <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
                     </>
                   )}
@@ -4739,7 +4739,9 @@ function AdminOrdersPage({ setPage }) {
 }
 
 function AdminDashboardPage({ setPage }) {
-    const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, totalInteractions: 0 });
+  const { user: authUser } = useAuth();
+  const userRole = authUser?.role || "admin";
+  const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, pendingArtworks: 0, totalInteractions: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -4754,7 +4756,12 @@ function AdminDashboardPage({ setPage }) {
     }).catch(() => setLoading(false));
   }, []);
 
-  const stats = [
+  const stats = userRole === "lecturer" ? [
+    { label: "Đã duyệt", value: adminStats.publishedArtworks || 0, hint: "Tổng ấn phẩm đã duyệt", accent: "#1a4ba8" },
+    { label: "Cần chấm điểm", value: adminStats.pendingArtworks || 0, hint: "Ấn phẩm đang chờ chấm", accent: "#212121" },
+    { label: "Bị báo cáo", value: adminStats.reportedArtworks || 0, hint: "Cần xem xét xử lý", accent: "#8B1A1A" },
+    { label: "Lượt tương tác", value: (adminStats.totalInteractions || 0).toLocaleString(), hint: "Lượt thích và bình luận", accent: "#0d2e6e" },
+  ] : [
     { label: t("publishedArtworks"), value: adminStats.publishedArtworks || 0, hint: t("totalPublishedArtworks"), accent: "#1a4ba8" },
     { label: t("reportedArtworks"), value: adminStats.reportedArtworks || 0, hint: t("needsProcessing"), accent: "#8B1A1A" },
     { label: t("totalAccounts"), value: adminStats.totalAccounts || 0, hint: "SV + GV + Admin", accent: "#212121" },
@@ -4780,8 +4787,8 @@ function AdminDashboardPage({ setPage }) {
       <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[#212121]">{t("adminOverview")}</h2>
-            <p className="text-sm text-[#666666] mt-1">{t("adminDescription")}</p>
+            <h2 className="text-2xl font-bold text-[#212121]">{userRole === "lecturer" ? "Tổng quan Giảng Viên" : t("adminOverview")}</h2>
+            <p className="text-sm text-[#666666] mt-1">{userRole === "lecturer" ? "Theo dõi và quản lý các hoạt động dành cho giảng viên." : t("adminDescription")}</p>
           </div>
           <button onClick={async () => {
               const doc = new jsPDF();
@@ -5232,15 +5239,16 @@ function MessagesPage({ setPage, userData }) {
 }
 
 function AdminSidebar({ active, setPage }) {
-  const userRole = localStorage.getItem("userRole") || "admin";
+  const { user: authUser } = useAuth();
+  const userRole = authUser?.role || "admin";
   const items = [
     { icon: <LayoutDashboard size={18} />, label: "Tổng quan", page: "admin", roles: ["admin", "lecturer"] },
     { icon: <CheckCircle size={18} />, label: "Chấm điểm", page: "pending_artworks", roles: ["admin", "lecturer"] },
-    { icon: <FileBadge size={18} />, label: "Quản lý huy hiệu", page: "badges", roles: ["admin", "lecturer"] },
+    { icon: <FileBadge size={18} />, label: "Quản lý huy hiệu", page: "badges", roles: ["admin"] },
     { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users", roles: ["admin"] },
     { icon: <ShoppingCart size={18} />, label: "Đơn hàng", page: "admin_orders", roles: ["admin"] },
     { icon: <ShieldAlert size={18} />, label: "Cảnh cáo ấn phẩm", page: "admin_artworks", roles: ["admin", "lecturer"] },
-    { icon: <Folder size={18} />, label: "Quản lý bộ sưu tập", page: "admin_export", roles: ["admin"] },
+    { icon: <Folder size={18} />, label: "Quản lý bộ sưu tập", page: "admin_export", roles: ["admin", "lecturer"] },
     { icon: <Settings size={18} />, label: "Cài đặt Watermark", page: "admin_watermark", roles: ["admin"] },
     { icon: <Settings size={18} />, label: "Cài đặt Layout", page: "admin_layout", roles: ["admin"] },
   ].filter(item => item.roles.includes(userRole));
@@ -5248,8 +5256,8 @@ function AdminSidebar({ active, setPage }) {
   return (
     <div className="w-64 bg-[#F8F8F8] border-r border-[#E0E0E0] flex-shrink-0 flex flex-col h-full overflow-y-auto">
       <div className="p-6 border-b border-[#E0E0E0]">
-        <h3 className="font-bold text-[#212121] text-sm uppercase tracking-wider">{t("adminPanel")}</h3>
-        <p className="text-xs text-[#666666] mt-1">{t("adminSystem")}</p>
+        <h3 className="font-bold text-[#212121] text-sm uppercase tracking-wider">{userRole === "lecturer" ? "Trang Giảng Viên" : t("adminPanel")}</h3>
+        <p className="text-xs text-[#666666] mt-1">{userRole === "lecturer" ? "Lecturer Dashboard" : t("adminSystem")}</p>
       </div>
       <div className="py-4">
         {items.map(item => (
