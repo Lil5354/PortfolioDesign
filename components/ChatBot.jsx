@@ -34,23 +34,23 @@ function renderMessage(text) {
     if (prefix === '•') {
       return (
         <div key={i} className="flex gap-2 leading-relaxed">
-          <span className="text-gray-400 shrink-0 mt-0.5">•</span>
-          <span className="text-gray-800 text-sm" dangerouslySetInnerHTML={{ __html: content.trim() }} />
+          <span className="opacity-50 shrink-0 mt-0.5">•</span>
+          <span className="text-sm" dangerouslySetInnerHTML={{ __html: content.trim() }} />
         </div>
       );
     }
     if (numMatch) {
       return (
         <div key={i} className="flex gap-2 leading-relaxed">
-          <span className="text-gray-400 shrink-0 mt-0.5 text-xs font-medium min-w-[18px]">{prefix}.</span>
-          <span className="text-gray-800 text-sm" dangerouslySetInnerHTML={{ __html: content.trim() }} />
+          <span className="opacity-50 shrink-0 mt-0.5 text-xs font-medium min-w-[18px]">{prefix}.</span>
+          <span className="text-sm" dangerouslySetInnerHTML={{ __html: content.trim() }} />
         </div>
       );
     }
 
     return (
       <div key={i} className="leading-relaxed">
-        <span className="text-gray-800 text-sm" dangerouslySetInnerHTML={{ __html: content }} />
+        <span className="text-sm" dangerouslySetInnerHTML={{ __html: content }} />
       </div>
     );
   });
@@ -180,7 +180,7 @@ export default function ChatBot({ userRole = "employer" }) {
         .slice(-20)
         .map((m) => ({ role: m.role, content: m.content }));
 
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg, sessionId, role: userRole, history }),

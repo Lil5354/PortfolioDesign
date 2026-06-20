@@ -9,3 +9,8 @@ node_modules/
 cookies.txt
 BUG_LOG.md
 *LMS_files/
+
+api_keys_backup.txt
+
+UEFGallery.API/bin/
+UEFGallery.API/obj/

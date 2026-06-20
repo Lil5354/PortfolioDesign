@@ -182,7 +182,7 @@ export default function ChatBot({ userRole = "employer" }) {
         .slice(-20) // tối đa 20 tin gần nhất
         .map((m) => ({ role: m.role, content: m.content }));
 
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

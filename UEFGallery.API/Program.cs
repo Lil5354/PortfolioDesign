@@ -37,6 +37,9 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Register GeminiService
+builder.Services.AddHttpClient<UEFGallery.API.Services.GeminiService>();
+
 // Configure DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
                        ?? "Host=localhost;Database=uefgallery;Username=postgres;Password=postgres";
