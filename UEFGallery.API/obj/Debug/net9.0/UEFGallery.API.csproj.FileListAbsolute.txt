@@ -144,3 +144,7 @@ C:\TÀI LIỆU NĂM CUỐI VÀ CV\prototype\UEFGallery.API\obj\Debug\net9.0\ref\
 C:\TÀI LIỆU NĂM CUỐI VÀ CV\prototype\UEFGallery.API\bin\Debug\net9.0\CloudinaryDotNet.dll
 C:\TÀI LIỆU NĂM CUỐI VÀ CV\prototype\UEFGallery.API\bin\Debug\net9.0\Newtonsoft.Json.dll
 C:\TÀI LIỆU NĂM CUỐI VÀ CV\prototype\UEFGallery.API\bin\Debug\net9.0\EFCore.NamingConventions.dll
+C:\TÀI LIỆU NĂM CUỐI VÀ CV\prototype\UEFGallery.API\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.Google.dll
+C:\TÀI LIỆU NĂM CUỐI VÀ CV\prototype\UEFGallery.API\bin\Debug\net9.0\BouncyCastle.Cryptography.dll
+C:\TÀI LIỆU NĂM CUỐI VÀ CV\prototype\UEFGallery.API\bin\Debug\net9.0\MailKit.dll
+C:\TÀI LIỆU NĂM CUỐI VÀ CV\prototype\UEFGallery.API\bin\Debug\net9.0\MimeKit.dll

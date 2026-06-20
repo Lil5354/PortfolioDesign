@@ -1164,7 +1164,7 @@ function ToggleSwitch({ isOn, onToggle, disabled = false }) {
 function DashboardSidebar({ activePage, setPage, userData }) {
     const items = [
     { icon: <Image size={18} />, label: t("myArtworks"), page: "dashboard" },
-    { icon: <Bookmark size={18} />, label: "Bộ sưu tập (Moodboard)", page: "moodboards" },
+    { icon: <Bookmark size={18} />, label: "Moodboard", page: "moodboards" },
     { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
     { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
     { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
@@ -1446,7 +1446,7 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
         ) : (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-              <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Bộ sưu tập (Moodboards)</h2>
+              <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Moodboard</h2>
               <div style={{ display: "flex", gap: 16 }}>
                 <div style={{ position: "relative" }}>
                   <Search size={16} style={{ position: "absolute", left: 12, top: 10, color: MUTED }} />
@@ -1472,8 +1472,8 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
                 <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#f0f4ff", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
                   <Bookmark size={40} color={CERULEAN} strokeWidth={1.5} />
                 </div>
-                <h3 style={{ margin: "0 0 8px 0", fontSize: 18, color: BLACK, fontWeight: 700 }}>Chưa có bộ sưu tập nào</h3>
-                <p style={{ margin: "0 0 24px 0", fontSize: 14, textAlign: "center", maxWidth: 400 }}>Hãy khám phá các tác phẩm trên hệ thống và lưu lại những ý tưởng tuyệt vời nhất vào bộ sưu tập của riêng bạn.</p>
+                <h3 style={{ margin: "0 0 8px 0", fontSize: 18, color: BLACK, fontWeight: 700 }}>Chưa có Moodboard nào</h3>
+                <p style={{ margin: "0 0 24px 0", fontSize: 14, textAlign: "center", maxWidth: 400 }}>Hãy khám phá các tác phẩm trên hệ thống và lưu lại những ý tưởng tuyệt vời nhất vào Moodboard của riêng bạn.</p>
                 <button onClick={() => setPage("gallery")} style={{ background: CERULEAN, color: "#fff", border: "none", padding: "12px 28px", borderRadius: 30, cursor: "pointer", fontWeight: "bold", fontSize: 15, display: "flex", alignItems: "center", gap: 8, transition: "0.2s", boxShadow: "0 4px 12px rgba(0,87,255,0.2)" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.05)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
                   Khám phá Gallery
                 </button>
@@ -2810,7 +2810,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   };
 
   const timeAgo = (dateStr) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
+    if (!dateStr) return "";
+    const dStr = (!dateStr.endsWith('Z') && !dateStr.includes('+')) ? dateStr + 'Z' : dateStr;
+    const diff = Date.now() - new Date(dStr).getTime();
     const mins = Math.floor(diff / 60000);
 if (mins < 1) return t("justNow");
       if (mins < 60) return t("minutesAgo").replace("{mins}", mins);
@@ -3203,24 +3205,18 @@ if (mins < 1) return t("justNow");
                     </div>
                   );
                 })}
+              </div>
+            )}
 
-                {/* Render Blocks */}
-                {parsedBlocks && parsedBlocks.length > 0 && (
+            {/* Render Blocks */}
+            {parsedBlocks && parsedBlocks.length > 0 && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "40px 60px", background: "#fff" }}>
                     {parsedBlocks.map((block, i) => (
                       <div key={block.id || i} style={{ width: "100%" }}>
                         {block.type === "text" && (
                           <div style={{ fontSize: 16, lineHeight: 1.8, color: "#333", whiteSpace: "pre-wrap" }}>{block.content}</div>
                         )}
-                        {block.type === "color" && block.data?.colors && (
-                          <div style={{ display: "flex", gap: 24, flexWrap: "wrap", justifyContent: "center", margin: "32px 0" }}>
-                            {block.data.colors.map(color => (
-                              <div key={color} style={{ width: 120, height: 120, borderRadius: "50%", background: color, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 16, color: "#fff", fontWeight: "bold", textShadow: "0 1px 4px rgba(0,0,0,0.6)", fontSize: 16 }}>
-                                {color}
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        {/* Removed duplicate ugly color block */}
                         {block.type === "typography" && block.data?.fontName && (
                           <div style={{ padding: 48, border: "1px solid #eee", borderRadius: 16, textAlign: "center", background: "#f8fafc", margin: "32px 0", boxShadow: "inset 0 2px 10px rgba(0,0,0,0.02)" }}>
                             <link href={`https://fonts.googleapis.com/css2?family=${block.data.fontName.replace(/ /g, '+')}:wght@400;700&display=swap`} rel="stylesheet" />
@@ -3354,18 +3350,11 @@ if (mins < 1) return t("justNow");
                             ))}
                           </div>
                         )}
-                        {block.type === "typography" && block.data?.fontName && (
-                          <div style={{ padding: 32, background: GRAY_BG, borderRadius: 12, textAlign: "center" }}>
-                            <p style={{ fontSize: 14, color: MUTED, marginBottom: 12, textTransform: "uppercase", letterSpacing: 2 }}>{block.data.fontName}</p>
-                            <div style={{ fontSize: 48, fontFamily: block.data.fontName, color: BLACK, lineHeight: 1.2 }}>Aa Bb Cc Dd Ee<br/>0123456789</div>
-                          </div>
-                        )}
+                        {/* Removed duplicate ugly typography block */}
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
-            )}
           </div>
 
           {/* KHU VỰC THÔNG SỐ ẤN PHẨM (Nền đen) */}
@@ -3624,7 +3613,7 @@ if (mins < 1) return t("justNow");
         <div style={{ width: 80, marginLeft: 20 }}>
           <div style={{ position: "sticky", top: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, zIndex: 100 }}>
             
-            <div style={{ position: "relative", marginBottom: 12, cursor: "pointer" }} className="sidebar-item" onClick={() => setIsFollowing(!isFollowing)}>
+            <div style={{ position: "relative", cursor: "pointer" }} className="sidebar-item" onClick={() => setIsFollowing(!isFollowing)}>
               <img onClick={(e) => { e.stopPropagation(); setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 44, height: 44, borderRadius: "50%", border: "2px solid #191919", objectFit: "cover" }} />
               {!isFollowing && <div style={{ position: "absolute", bottom: -4, right: -4, width: 20, height: 20, borderRadius: "50%", background: "#0057ff", color: "#fff", border: "2px solid #191919", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", padding: 0 }}>+</div>}
               <span className="tooltip" style={{ position: "absolute", bottom: -20, left: "50%", transform: "translateX(-50%)", fontSize: 11, fontWeight: "bold", color: "#fff", opacity: 0, transition: "opacity 0.2s", pointerEvents: "none", whiteSpace: "nowrap" }}>{isFollowing ? "Following" : "Follow"}</span>
@@ -3635,13 +3624,6 @@ if (mins < 1) return t("justNow");
                 <Mail size={18} color="#191919" />
               </div>
               <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>Order</span>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <PenTool size={18} color="#191919" />
-              </div>
-              <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>Tools</span>
             </div>
 
             {canGrade && (
@@ -3687,14 +3669,14 @@ if (mins < 1) return t("justNow");
               <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>Share</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", marginTop: 12 }} onClick={handleLike}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={handleLike}>
               <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#0057ff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s", transform: animatingLike ? "scale(1.2)" : "scale(1)" }} onMouseEnter={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1.1)"}} onMouseLeave={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1)"}}>
                 <ThumbsUp size={24} color="#fff" fill={isLiked ? "#fff" : "none"} />
               </div>
               <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>{likeCount || 0}</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", marginTop: 12 }} onClick={() => setShowReport(true)}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={() => setShowReport(true)}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
                 <AlertTriangle size={18} color="#191919" />
               </div>

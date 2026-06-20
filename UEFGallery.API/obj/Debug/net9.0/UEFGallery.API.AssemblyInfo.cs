@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UEFGallery.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bb40f44e303ee4c52c756909ad800aa0e2991dd7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+08c20e79908bdbc6190d5277b11155002303b69a")]
 [assembly: System.Reflection.AssemblyProductAttribute("UEFGallery.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UEFGallery.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

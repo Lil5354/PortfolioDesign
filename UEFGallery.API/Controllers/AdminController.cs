@@ -79,7 +79,7 @@ public class AdminController : ControllerBase
             .Skip(skip)
             .Take(limit)
             .Select(a => new {
-                a.Id, a.Title, a.Description, a.UserId, a.IsPublic, a.IsPending, a.IsHighlighted, a.CreatedAt, a.UpdatedAt, a.CoverImageUrl, a.FileUrls, a.Subject, a.AcademicYear, a.ToolsUsed,
+                a.Id, a.Title, a.Description, a.UserId, a.IsPublic, a.IsPending, a.IsHighlighted, a.CreatedAt, a.UpdatedAt, a.CoverImageUrl, a.FileUrls, a.Subject, a.AcademicYear, a.ToolsUsed, a.BlocksJson,
                 User = new {
                     Id = a.User.Id,
                     FullName = a.User.FullName,

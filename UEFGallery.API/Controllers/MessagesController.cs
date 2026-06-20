@@ -91,7 +91,9 @@ public class MessagesController : ControllerBase
             Id = Guid.NewGuid().ToString(),
             UserId = recipientId,
             Type = dto.Purpose == "order" ? NotificationType.new_order : NotificationType.new_message,
-            Content = $"Bạn có đơn đặt hàng / liên hệ mới từ {dto.SenderName}",
+            Content = dto.Purpose == "order" 
+                ? $"Đơn đặt hàng mới cho tác phẩm của bạn từ {dto.SenderName}" 
+                : $"Bạn có liên hệ mới từ {dto.SenderName} qua Portfolio",
             CreatedAt = DateTime.UtcNow
         };
         _context.Notifications.Add(notification);

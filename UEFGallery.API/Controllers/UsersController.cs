@@ -80,7 +80,8 @@ public class UsersController : ControllerBase
                 a.IsPublic,
                 a.LikeCount,
                 a.ViewCount,
-                a.CreatedAt
+                a.CreatedAt,
+                a.BlocksJson
             })
             .ToListAsync();
 

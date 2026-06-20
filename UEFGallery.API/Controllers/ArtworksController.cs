@@ -59,7 +59,9 @@ public class ArtworksController : ControllerBase
                 a.Tags,
                 a.LikeCount,
                 a.ViewCount,
+                a.IsPublic,
                 a.CreatedAt,
+                a.BlocksJson,
                 User = new { a.User.Id, a.User.FullName, a.User.StudentId, a.User.AvatarUrl, PortfolioSettings = a.User.PortfolioSettings }
             })
             .ToListAsync();
@@ -152,6 +154,7 @@ public class ArtworksController : ControllerBase
                 a.CreatedAt,
                 a.Tags,
                 a.FileUrls,
+                a.BlocksJson,
                 Badges = _context.ArtworkBadges.Where(ab => ab.ArtworkId == a.Id).Select(ab => new { ab.Badge.Id, ab.Badge.Name, ab.Badge.ColorCode }).ToList(),
                 User = new { a.User.Id, a.User.FullName, a.User.StudentId, a.User.AvatarUrl, PortfolioSettings = a.User.PortfolioSettings }
             })
@@ -585,6 +588,57 @@ public class ArtworksController : ControllerBase
 
         await _context.SaveChangesAsync();
         return StatusCode(201, artwork);
+    }
+
+    [HttpGet("seed-test")]
+    public async Task<IActionResult> SeedTestArtwork()
+    {
+        var user = await _context.Users.FirstOrDefaultAsync();
+        if (user == null) return BadRequest("No users found");
+
+        var blocks = new List<object>
+        {
+            new { id = "b1", type = "text", content = "Đây là khối văn bản (Text Block).\nNó có thể dùng để giới thiệu về Case Study, mục tiêu của dự án, hoặc giải thích về quá trình thiết kế." },
+            new { id = "b2", type = "image", data = new { url = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop" } },
+            new { id = "b3", type = "color", data = new { colors = new[] { "#1a4ba8", "#0ea5e9", "#facc15", "#dc2626" } } },
+            new { id = "b4", type = "typography", data = new { fontName = "Montserrat" } },
+            new { id = "b5", type = "text", content = "Kết luận: Bằng cách sử dụng Typography Montserrat và bảng màu hiện đại, dự án mang lại cảm giác năng động và chuyên nghiệp." }
+        };
+
+        var artwork = new Artwork
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserId = user.Id,
+            Title = "Full Case Study Builder Demo",
+            Description = "A test artwork containing all blocks for UI testing.",
+            ToolsUsed = new List<string> { "Figma", "Photoshop", "Illustrator" },
+            Subject = "Thiết kế Đồ họa",
+            Semester = "HK1",
+            AcademicYear = "2024-2025",
+            Tags = new List<string> { "UI/UX", "Branding", "Case Study" },
+            CollaboratorIds = new List<string>(),
+            CoverImageUrl = "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=2071&auto=format&fit=crop",
+            OriginalCoverUrl = "https://images.unsplash.com/photo-1626785774573-4b799315345d?q=80&w=2071&auto=format&fit=crop",
+            WatermarkImageUrl = "",
+            FileUrls = new List<string> { "https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=2074&auto=format&fit=crop" },
+            BlocksJson = System.Text.Json.JsonSerializer.Serialize(blocks),
+            WatermarkText = "TEST",
+            WatermarkPosition = "bottom-right",
+            IsPublic = true,
+            IsPending = false,
+            IsHighlighted = false,
+            IsAiConfirmed = true,
+            AiScore = 95,
+            AiGeneratedPct = 5,
+            IsAiVerified = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Artworks.Add(artwork);
+        await _context.SaveChangesAsync();
+        
+        return Ok(artwork);
     }
 
     [HttpPut("{id}")]

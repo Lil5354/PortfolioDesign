@@ -33,7 +33,9 @@ const TYPE_COLORS = {
 };
 
 function timeAgo(dateStr) {
-  const diff = Date.now() - new Date(dateStr).getTime();
+  if (!dateStr) return "";
+  const dStr = (!dateStr.endsWith('Z') && !dateStr.includes('+')) ? dateStr + 'Z' : dateStr;
+  const diff = Date.now() - new Date(dStr).getTime();
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "Vừa xong";
   if (mins < 60) return `${mins} phút trước`;
@@ -101,18 +103,16 @@ export default function NotificationBell({ setPage }) {
 
     switch (n.type) {
       case 'new_order':
-        if (n.referenceId) {
-          setPage("messages");
-        }
+      case 'new_message':
+      case 'message':
+        setPage("messages");
         break;
       case 'artwork':
         if (n.referenceId) {
           setPage("detail", { artworkId: n.referenceId });
         }
         break;
-      case 'message':
-        setPage("messages");
-        break;
+
       case 'report':
         setPage("admin_artworks");
         break;

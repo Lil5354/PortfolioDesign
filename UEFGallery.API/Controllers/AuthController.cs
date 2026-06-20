@@ -11,6 +11,9 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
+using MimeKit;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 namespace UEFGallery.API.Controllers;
 
 [ApiController]
@@ -151,6 +154,123 @@ public class AuthController : ControllerBase
         });
     }
 
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        if (user == null)
+            return BadRequest(new { message = "Email không tồn tại trong hệ thống." });
+
+        // Generate a random 6-digit code or use a fixed one for prototyping
+        var code = new Random().Next(100000, 999999).ToString();
+        
+        user.ResetCode = code;
+        user.ResetCodeExpires = DateTime.UtcNow.AddMinutes(15);
+        await _context.SaveChangesAsync();
+
+        var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST") ?? "smtp.gmail.com";
+        var smtpPort = int.TryParse(Environment.GetEnvironmentVariable("SMTP_PORT"), out var port) ? port : 587;
+        var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER");
+        var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASS");
+        var smtpFrom = Environment.GetEnvironmentVariable("SMTP_FROM") ?? "noreply@uef.edu.vn";
+
+        if (!string.IsNullOrEmpty(smtpUser) && !string.IsNullOrEmpty(smtpPass))
+        {
+            try
+            {
+                // Parse "Name <email@domain.com>" format
+                string fromEmail = smtpFrom;
+                string fromName = "UEF Design Gallery";
+                if (smtpFrom.Contains("<") && smtpFrom.Contains(">"))
+                {
+                    var parts = smtpFrom.Split('<');
+                    fromName = parts[0].Trim();
+                    fromEmail = parts[1].Replace(">", "").Trim();
+                }
+
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(fromName, fromEmail));
+                message.To.Add(new MailboxAddress("", dto.Email));
+                message.Subject = "Mã xác nhận đặt lại mật khẩu - UEF Design Gallery";
+
+                var bodyBuilder = new BodyBuilder
+                {
+                    HtmlBody = $@"
+                        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaec; border-radius: 8px;'>
+                            <h2 style='color: #1a4ba8; text-align: center;'>UEF Design Gallery</h2>
+                            <h3>Xin chào {user.FullName},</h3>
+                            <p>Bạn vừa yêu cầu đặt lại mật khẩu cho tài khoản liên kết với email này.</p>
+                            <p>Mã xác nhận của bạn là:</p>
+                            <div style='background-color: #f4f6f8; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1a4ba8; border-radius: 6px; margin: 20px 0;'>
+                                {code}
+                            </div>
+                            <p>Mã này sẽ hết hạn sau 15 phút. Nếu bạn không yêu cầu đặt lại mật khẩu, xin vui lòng bỏ qua email này.</p>
+                            <hr style='border: none; border-top: 1px solid #eaeaec; margin: 20px 0;' />
+                            <p style='font-size: 12px; color: #666; text-align: center;'>Đây là email tự động, vui lòng không trả lời.</p>
+                        </div>"
+                };
+                message.Body = bodyBuilder.ToMessageBody();
+
+                using (var client = new SmtpClient())
+                {
+                    // Ignore self-signed certs (e.g., from antivirus/proxy)
+                    client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+
+                    await client.ConnectAsync(smtpHost, smtpPort, SecureSocketOptions.Auto);
+                    await client.AuthenticateAsync(smtpUser, smtpPass);
+                    await client.SendAsync(message);
+                    await client.DisconnectAsync(true);
+                }
+
+                Console.WriteLine($"[EMAIL SENT] Password reset code for {dto.Email}: {code}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EMAIL ERROR] Failed to send email to {dto.Email}: {ex}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"[MOCK EMAIL] Password reset code for {dto.Email}: {code}");
+        }
+
+        return Ok(new { message = "Mã xác thực đã được gửi." });
+    }
+
+    [HttpPost("verify-reset-code")]
+    [AllowAnonymous]
+    public async Task<IActionResult> VerifyResetCode([FromBody] VerifyResetCodeDto dto)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        if (user == null)
+            return BadRequest(new { message = "Email không tồn tại." });
+
+        if (user.ResetCode != dto.Code || user.ResetCodeExpires < DateTime.UtcNow)
+            return BadRequest(new { message = "Mã xác thực không hợp lệ hoặc đã hết hạn." });
+
+        return Ok(new { message = "Mã xác thực hợp lệ." });
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        if (user == null)
+            return BadRequest(new { message = "Email không tồn tại." });
+
+        if (user.ResetCode != dto.Code || user.ResetCodeExpires < DateTime.UtcNow)
+            return BadRequest(new { message = "Mã xác thực không hợp lệ hoặc đã hết hạn." });
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+        user.ResetCode = null;
+        user.ResetCodeExpires = null;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Đặt lại mật khẩu thành công." });
+    }
+
     private string GenerateJwtToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -179,6 +299,24 @@ public class RegisterDto
     public required string Password { get; set; }
     public required string FullName { get; set; }
     public string? Role { get; set; }
+}
+
+public class ForgotPasswordDto
+{
+    public required string Email { get; set; }
+}
+
+public class VerifyResetCodeDto
+{
+    public required string Email { get; set; }
+    public required string Code { get; set; }
+}
+
+public class ResetPasswordDto
+{
+    public required string Email { get; set; }
+    public required string Code { get; set; }
+    public required string Password { get; set; }
 }
 
 public class LoginDto
