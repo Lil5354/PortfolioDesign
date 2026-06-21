@@ -328,6 +328,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const [showYearTool, setShowYearTool] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
   const [categoryCovers, setCategoryCovers] = useState({});
+  const [toolCovers, setToolCovers] = useState({});
   const [navbarHeight, setNavbarHeight] = useState(0);
 
   const fetchId = useRef(0);
@@ -354,7 +355,28 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   useEffect(() => {
     fetch("/api/artworks/category-covers")
       .then(r => r.json())
-      .then(setCategoryCovers)
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map = {};
+          data.forEach(item => { map[item.subject] = item.coverImageUrl; });
+          setCategoryCovers(map);
+        } else {
+          setCategoryCovers(data);
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/artworks/tool-covers")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map = {};
+          data.forEach(item => { map[item.tool] = item.coverImageUrl; });
+          setToolCovers(map);
+        } else {
+          setToolCovers(data);
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -429,35 +451,35 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   return (
     <div style={{ background: "#fff" }}>
       <div style={{ position: "sticky", top: navbarHeight, background: "#fff", zIndex: 40, borderBottom: `1px solid ${GRAY_LIGHT}` }}>
-        <div style={{ padding: "12px 24px 0", maxWidth: 1480, margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <div style={{ padding: "16px 32px 0", width: "100%", boxSizing: "border-box" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
             <button
             onClick={() => setShowYearTool(v => !v)}
-            style={{ display: "flex", alignItems: "center", gap: 4, padding: "7px 12px", borderRadius: 8, border: `1px solid ${showYearTool || activeFilterCount > 0 ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || activeFilterCount > 0 ? `${UEF_BLUE}08` : "#fff", color: UEF_BLUE, fontSize: 12, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s", flexShrink: 0 }}
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "14px 20px", borderRadius: 999, border: `1px solid ${showYearTool || activeFilterCount > 0 ? UEF_BLUE : GRAY_LIGHT}`, background: showYearTool || activeFilterCount > 0 ? `${UEF_BLUE}08` : "#fff", color: UEF_BLUE, fontSize: 15, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", transition: "all .15s", flexShrink: 0 }}
           >
-            <Filter size={14} />
+            <Filter size={18} />
             <span>{t("filter")}</span>
             {activeFilterCount > 0 && (
-              <span style={{ marginLeft: 2, background: UEF_BLUE, color: "#fff", fontSize: 10, fontWeight: 700, width: 17, height: 17, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{activeFilterCount}</span>
+              <span style={{ marginLeft: 4, background: UEF_BLUE, color: "#fff", fontSize: 12, fontWeight: 700, width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{activeFilterCount}</span>
             )}
           </button>
 
           <div style={{ position: "relative", flex: 1 }}>
-            <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: MUTED, pointerEvents: "none" }} />
-            <input value={filters.q} onChange={e => setFilter("q", e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "7px 32px 7px 32px", borderRadius: 8, border: searchFocused ? `1px solid ${UEF_BLUE}` : `1px solid ${GRAY_LIGHT}`, fontSize: 13, outline: "none", background: GRAY_BG, color: BLACK, boxSizing: "border-box", transition: "all .15s" }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+            <Search size={20} style={{ position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)", color: "#666", pointerEvents: "none" }} />
+            <input value={filters.q} onChange={e => setFilter("q", e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "16px 52px", borderRadius: 999, border: searchFocused ? `1px solid ${UEF_BLUE}` : `1px solid transparent`, fontSize: 16, outline: "none", background: "#f9f9f9", color: BLACK, boxSizing: "border-box", transition: "all .15s", fontWeight: 500 }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
             {filters.q && (
-              <button onClick={() => setFilter("q", "")} style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: MUTED, padding: 4, display: "flex" }}><X size={13} /></button>
+              <button onClick={() => setFilter("q", "")} style={{ position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: MUTED, padding: 4, display: "flex" }}><X size={18} /></button>
             )}
           </div>
 
-          <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
             {authUser && (
-              <button onClick={() => { setFeedMode(!feedMode); setPageNum(1); }} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${feedMode ? UEF_BLUE : GRAY_LIGHT}`, background: feedMode ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: feedMode ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s", marginRight: 8, display: "flex", alignItems: "center", gap: 4 }}>
-                <Users size={12} /> <span>Đang theo dõi</span>
+              <button onClick={() => { setFeedMode(!feedMode); setPageNum(1); }} style={{ padding: "10px 18px", borderRadius: 999, border: `1px solid ${feedMode ? UEF_BLUE : GRAY_LIGHT}`, background: feedMode ? UEF_BLUE : "#fff", fontSize: 14, cursor: "pointer", color: feedMode ? "#fff" : BLACK, fontWeight: 600, whiteSpace: "nowrap", transition: "all .15s", marginRight: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                <Users size={16} /> <span>Đang theo dõi</span>
               </button>
             )}
-            <button onClick={() => setFilter("sort", "newest")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "newest" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "newest" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("newest")}</button>
-            <button onClick={() => setFilter("sort", "most_likes")} style={{ padding: "5px 10px", borderRadius: 6, border: `1px solid ${filters.sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 11, cursor: "pointer", color: filters.sort === "most_likes" ? "#fff" : BLACK, fontWeight: 500, whiteSpace: "nowrap", transition: "all .15s" }}>{t("mostLiked")}</button>
+            <button onClick={() => setFilter("sort", "newest")} style={{ padding: "10px 18px", borderRadius: 999, border: `1px solid ${filters.sort === "newest" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "newest" ? UEF_BLUE : "#fff", fontSize: 14, cursor: "pointer", color: filters.sort === "newest" ? "#fff" : BLACK, fontWeight: 600, whiteSpace: "nowrap", transition: "all .15s" }}>{t("newest")}</button>
+            <button onClick={() => setFilter("sort", "most_likes")} style={{ padding: "10px 18px", borderRadius: 999, border: `1px solid ${filters.sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 14, cursor: "pointer", color: filters.sort === "most_likes" ? "#fff" : BLACK, fontWeight: 600, whiteSpace: "nowrap", transition: "all .15s" }}>{t("mostLiked")}</button>
           </div>
 
           <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}><span>{data.total}</span> <span>{t("artworksFound")}</span></span>
@@ -467,9 +489,6 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
             <select value={filters.year} onChange={e => setFilter("year", e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
               {years.map(y => <option key={y} value={y}>{y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}</option>)}
-            </select>
-            <select value={filters.tool} onChange={e => setFilter("tool", e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
-              {toolsList.map(toolItem => <option key={toolItem} value={toolItem}>{toolItem === "Tất cả" ? `${t("tools")}: ${t("all")}` : toolItem}</option>)}
             </select>
             <label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", fontSize: 11, color: BLACK, fontWeight: 500, userSelect: "none" }}>
               <input type="checkbox" checked={filters.hasBadge} onChange={e => setFilter("hasBadge", e.target.checked)} style={{ cursor: "pointer" }} />
@@ -481,10 +500,10 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           </div>
         )}
 
-        <div style={{ marginBottom: 16 }}>
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none", msOverflowStyle: "none" }}>
             <style>{`.gallery-cat-scroll::-webkit-scrollbar { display: none; }`}</style>
-            <div className="gallery-cat-scroll" style={{ display: "flex", gap: 6, minWidth: "100%" }}>
+            <div className="gallery-cat-scroll" style={{ display: "flex", gap: 12, minWidth: "100%" }}>
               {categories.map(cat => {
                 const coverUrl = cat !== "Tất cả" ? categoryCovers[cat] : null;
                 const isActive = filters.category === cat;
@@ -493,24 +512,72 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                     key={cat}
                     onClick={() => setFilter("category", cat)}
                     style={{
-                      position: "relative", padding: "5px 16px", borderRadius: 8,
-                      border: isActive ? `2px solid ${UEF_BLUE}` : "2px solid transparent",
-                      cursor: "pointer", fontWeight: isActive ? 700 : 500, fontSize: 12,
-                      color: UEF_WHITE, whiteSpace: "nowrap", flexShrink: 0,
-                      transition: "all .2s", textShadow: "0 1px 4px rgba(0,0,0,0.5)",
-                      boxShadow: isActive ? "0 4px 14px rgba(26,75,168,0.25)" : "0 1px 3px rgba(0,0,0,0.08)",
-                      transform: isActive ? "scale(1.04)" : "scale(1)", letterSpacing: "0.3px",
+                      position: "relative",
+                      padding: "0 20px",
+                      height: 44,
+                      borderRadius: 6,
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      color: UEF_WHITE,
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      transition: "all .2s",
                       overflow: "hidden",
-                      background: coverUrl ? "#1a1a2e" : (isActive ? UEF_BLUE : "#333"),
+                      background: isActive ? UEF_BLUE : "#222",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    {coverUrl && (
+                    {coverUrl && !isActive && (
                       <>
-                        <img src={coverUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.35 }} />
-                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.55)" }} />
+                        <img src={coverUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} />
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
                       </>
                     )}
-                    <span style={{ position: "relative", zIndex: 1 }}>{cat}</span>
+                    <span style={{ position: "relative", zIndex: 1, textShadow: coverUrl && !isActive ? "0 1px 4px rgba(0,0,0,0.9)" : "none" }}>{cat}</span>
+                  </button>
+                );
+              })}
+            </div>
+            
+            <div className="gallery-cat-scroll" style={{ display: "flex", gap: 12, minWidth: "100%", marginTop: 16 }}>
+              {toolsList.map(toolItem => {
+                const coverUrl = toolItem !== "Tất cả" ? toolCovers[toolItem] : null;
+                const isActive = filters.tool === toolItem;
+                return (
+                  <button
+                    key={toolItem}
+                    onClick={() => setFilter("tool", toolItem)}
+                    style={{
+                      position: "relative",
+                      padding: "0 20px",
+                      height: 44,
+                      borderRadius: 6,
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      color: UEF_WHITE,
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      transition: "all .2s",
+                      overflow: "hidden",
+                      background: isActive ? UEF_BLUE : "#222",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {coverUrl && !isActive && (
+                      <>
+                        <img src={coverUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} />
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
+                      </>
+                    )}
+                    <span style={{ position: "relative", zIndex: 1, textShadow: coverUrl && !isActive ? "0 1px 4px rgba(0,0,0,0.9)" : "none" }}>{toolItem === "Tất cả" ? "Tất cả Phần mềm" : toolItem}</span>
                   </button>
                 );
               })}
@@ -520,7 +587,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       </div>
       </div>
 
-      <div style={{ padding: "16px 24px 64px", maxWidth: 1480, margin: "0 auto" }}>
+      <div style={{ padding: "24px 32px 64px", width: "100%", boxSizing: "border-box" }}>
         {loading && page === 1 ? (
           <GlobalLoading />
         ) : mapped.length === 0 ? (
@@ -553,13 +620,23 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                           <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.5px" }}>AI VERIFIED</span>
                         </div>
                       )}
-                      {(art.badges && art.badges.length > 0) && art.badges.map(b => (
-                        <div key={b.id || b.name} style={{ background: b.colorCode || CERULEAN, color: b.textColor || "#fff", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 5px rgba(0,0,0,0.2)" }}>
-                          <Star size={10} color="#fff" fill="#fff" />
-                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.5px", textTransform: "uppercase" }}>{b.name}</span>
-                        </div>
-                      ))}
                     </div>
+
+                    {/* BADGE ON TOP RIGHT */}
+                    {(art.badges && art.badges.length > 0) && (
+                      <div className="group" style={{ position: "absolute", top: 0, right: 16, zIndex: 10 }}>
+                        <div style={{ width: 32, height: 44, background: art.badges[0].colorCode || "#B49A65", color: art.badges[0].textColor || "#fff", clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)", display: "flex", justifyContent: "center", paddingTop: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
+                          {art.badges[0].name?.substring(0, 2).toUpperCase() || "GR"}
+                        </div>
+                        <div className="absolute top-full mt-1 right-0 bg-white text-black p-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none" style={{ borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
+                          <div style={{ position: "absolute", bottom: "100%", right: 10, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #fff" }} />
+                          <div style={{ fontSize: 10, fontWeight: "bold", color: "#888", marginBottom: 4, textTransform: "uppercase" }}>FEATURED IN</div>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: "#0057ff" }}>
+                            {art.badges[0].name} <span style={{ color: "#aaa", fontWeight: "normal" }}>— {new Date(art.badges[0].assignedAt || art.createdAt).toLocaleDateString('en-GB')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {onBookmarkClick && hoveredId === art.id && (
                       <button
                         onClick={(e) => { e.stopPropagation(); onBookmarkClick(art); }}
@@ -2512,6 +2589,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [animatingLike, setAnimatingLike] = useState(false);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowingAnimPlaying, setIsFollowingAnimPlaying] = useState(false);
   const [actionSuccessToast, setActionSuccessToast] = useState("");
   const [commentText, setCommentText] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
@@ -2570,6 +2648,37 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   });
   const [sendingOrder, setSendingOrder] = useState(false);
   const [navbarHeight, setNavbarHeight] = useState(0);
+
+  const [categoryCovers, setCategoryCovers] = useState({});
+  const [toolCovers, setToolCovers] = useState({});
+
+  useEffect(() => {
+    fetch("/api/artworks/category-covers")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map = {};
+          data.forEach(item => { map[item.subject] = item.coverImageUrl; });
+          setCategoryCovers(map);
+        } else {
+          setCategoryCovers(data);
+        }
+      })
+      .catch(() => {});
+
+    fetch("/api/artworks/tool-covers")
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const map = {};
+          data.forEach(item => { map[item.tool] = item.coverImageUrl; });
+          setToolCovers(map);
+        } else {
+          setToolCovers(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
   useEffect(() => { const h = (e) => { if (e.key === 'Escape') setShowFullscreen(false); }; window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h); }, []);
 
   useEffect(() => {
@@ -2922,7 +3031,8 @@ if (mins < 1) return t("justNow");
   const canSeeGrade = isAuthor || canGrade;
 
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(5px)", display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden" }}>
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(5px)", zIndex: -1, pointerEvents: "none" }} />
       {actionSuccessToast && (
         <div style={{ position: "fixed", bottom: 40, right: 40, background: "#4CAF50", color: "#fff", padding: "16px 24px", borderRadius: 12, zIndex: 10000, fontWeight: "bold", boxShadow: "0 8px 24px rgba(0,0,0,0.2)", transition: "all 0.3s", display: "flex", alignItems: "center", gap: 12 }}>
           <Check size={20} />
@@ -2934,18 +3044,84 @@ if (mins < 1) return t("justNow");
         <X size={24} />
       </button>
 
-      {/* Nút Prev / Next (Nếu có) */}
-      <button style={{ position: "fixed", top: "50%", left: 24, transform: "translateY(-50%)", zIndex: 1010, background: "rgba(0,0,0,0.5)", border: "none", color: "#fff", width: 48, height: 48, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.8)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.5)"}>
-        <ChevronLeft size={24} />
-      </button>
-      <button style={{ position: "fixed", top: "50%", right: 24, transform: "translateY(-50%)", zIndex: 1010, background: "rgba(0,0,0,0.5)", border: "none", color: "#fff", width: 48, height: 48, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.8)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(0,0,0,0.5)"}>
-        <ChevronRight size={24} />
-      </button>
+      <style>{`
+        @keyframes followCheck {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.3); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
 
       <div style={{ display: "flex", width: "100%", justifyContent: "center", position: "relative", minHeight: "100vh" }}>
         
+        {/* Nút Prev / Next dạng cố định 2 bên */}
+        <div style={{ position: "fixed", bottom: 40, left: 0, width: "calc(50vw - min(50vw - 100px, 700px))", zIndex: 1010, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none" }}>
+          <button onClick={() => setPage("gallery")} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: "none", outline: "none" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
+            <ChevronLeft size={20} />
+          </button>
+          <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", textShadow: "none" }}>Previous</span>
+        </div>
+
+        <div style={{ position: "fixed", bottom: 40, right: 0, width: "calc(50vw - min(50vw - 100px, 700px))", zIndex: 1010, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none" }}>
+          <button onClick={() => setPage("gallery")} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: "none", outline: "none" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
+            <ChevronRight size={20} />
+          </button>
+          <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", textShadow: "none" }}>Next</span>
+        </div>
+
         {/* CỘT CHÍNH (Nội dung) */}
-        <div style={{ flex: 1, maxWidth: 1200, display: "flex", flexDirection: "column", background: "#f9f9f9" }}>
+        <div style={{ width: "calc(100% - 200px)", maxWidth: 1400, display: "flex", flexDirection: "column", background: "#151515", margin: "0 auto", paddingBottom: 60 }}>
+          
+          {/* BEHANCE HEADER */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", background: "#191919", color: "#fff", width: "100%", zIndex: 50, position: "relative" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <img onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", cursor: "pointer", border: "2px solid #333" }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span style={{ fontSize: 16, fontWeight: "bold", color: "#fff" }}>{art.title}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#bbb" }}>
+                  <span onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} style={{ cursor: "pointer", color: "#fff", fontWeight: 500 }}>{art.user?.fullName}</span>
+                  <span style={{ background: "#0057ff", color: "#fff", fontSize: 9, padding: "2px 4px", borderRadius: 4, fontWeight: "bold" }}>PRO</span>
+                  <span>•</span>
+                  <span onClick={() => {
+                    if (!isFollowing) {
+                      setIsFollowing(true);
+                      setIsFollowingAnimPlaying(true);
+                      setTimeout(() => setIsFollowingAnimPlaying(false), 2500);
+                    } else {
+                      setIsFollowing(false);
+                      setIsFollowingAnimPlaying(false);
+                    }
+                  }} style={{ color: isFollowing ? "#bbb" : "#0057ff", fontWeight: "bold", cursor: "pointer", transition: "color 0.2s" }}>
+                    {isFollowing ? "Following" : "Follow"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* HEADER RIGHT SIDE (Badges & Actions) */}
+            <div style={{ display: "flex", alignItems: "center", gap: 16, paddingRight: (art.badges && art.badges.length > 0) ? 48 : 0 }}>
+              <button style={{ background: "rgba(255,255,255,0.1)", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: "bold", cursor: "pointer", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"} onClick={() => {
+                 if (navigator.clipboard) navigator.clipboard.writeText(window.location.href);
+                 setShareToast(true);
+                 setTimeout(() => setShareToast(false), 2000);
+              }}>Share Work</button>
+              
+              {(art.badges && art.badges.length > 0) && (
+                <div className="group" style={{ position: "absolute", top: 0, right: 24, zIndex: 60, cursor: "pointer" }}>
+                   <div style={{ width: 36, height: 48, background: art.badges[0].colorCode || "#B49A65", color: art.badges[0].textColor || "#fff", clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)", display: "flex", justifyContent: "center", paddingTop: 10, fontWeight: "bold", fontSize: 14 }}>
+                      {art.badges[0].name?.substring(0, 2).toUpperCase() || "GR"}
+                   </div>
+                   <div className="absolute top-full mt-2 bg-white text-black p-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none" style={{ borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.2)", right: -10 }}>
+                      <div style={{ position: "absolute", bottom: "100%", right: 22, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #fff" }} />
+                      <div style={{ fontSize: 10, fontWeight: "bold", color: "#888", marginBottom: 4, textTransform: "uppercase" }}>FEATURED IN</div>
+                      <div style={{ fontSize: 13, fontWeight: "bold", color: "#0057ff" }}>
+                        {art.badges[0].name} <span style={{ color: "#aaa", fontWeight: "normal" }}>— {new Date(art.badges[0].assignedAt || art.createdAt).toLocaleDateString('en-GB')}</span>
+                      </div>
+                   </div>
+                </div>
+              )}
+            </div>
+          </div>
           
           {/* CÁC ẢNH HOẶC E-BOOK */}
           <div style={{ display: "flex", flexDirection: "column", width: "100%", background: (art.isEbook || art.tags?.includes("IS_EBOOK")) ? "#F0F2F5" : "transparent" }}>
@@ -3012,18 +3188,18 @@ if (mins < 1) return t("justNow");
                   });
 
                   return (
-                    <div style={{ padding: "16px 24px", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 16, background: "#fff", borderBottom: "1px solid #eee" }}>
+                    <div style={{ padding: "16px 24px", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 16, background: "#151515", borderBottom: "1px solid #333" }}>
                       {currentUserId === art.user?.id && uniqueLecturers.length > 0 && (
                         <div style={{ position: "relative" }}>
                           <button 
                             onClick={() => setShowLecturerFilter(!showLecturerFilter)}
-                            style={{ padding: "8px 16px", borderRadius: 20, border: "1px solid #ddd", background: "#f9f9f9", color: "#333", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "0.2s" }}
-                            onMouseEnter={e => e.currentTarget.style.background = "#fff"}
-                            onMouseLeave={e => e.currentTarget.style.background = "#f9f9f9"}
+                            style={{ padding: "8px 16px", borderRadius: 20, border: "1px solid #444", background: "#222", color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "0.2s" }}
+                            onMouseEnter={e => e.currentTarget.style.background = "#333"}
+                            onMouseLeave={e => e.currentTarget.style.background = "#222"}
                           >
-                            <User size={16} color="#666" />
+                            <User size={16} color="#aaa" />
                             {filterLecturerId ? uniqueLecturers.find(l => (l.id || l.Id) === filterLecturerId)?.fullName || uniqueLecturers.find(l => (l.id || l.Id) === filterLecturerId)?.FullName || "Giảng viên" : "Tất cả nhận xét"}
-                            <ChevronDown size={14} color="#666" />
+                            <ChevronDown size={14} color="#aaa" />
                           </button>
                           {showLecturerFilter && (
                             <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 8, background: "#fff", borderRadius: 12, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", width: 220, zIndex: 1000, overflow: "hidden", border: "1px solid #eee", display: "flex", flexDirection: "column" }}>
@@ -3062,7 +3238,7 @@ if (mins < 1) return t("justNow");
                             setPinpointMode(!pinpointMode);
                             if (pinpointMode) setPendingComment(null);
                           }} 
-                          style={{ background: pinpointMode ? CERULEAN : "#f0f0f0", color: pinpointMode ? "#fff" : "#333", border: "none", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8 }}>
+                          style={{ background: pinpointMode ? CERULEAN : "#222", color: pinpointMode ? "#fff" : "#fff", border: pinpointMode ? "none" : "1px solid #444", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8 }}>
                           {currentUserRole === "lecturer" || currentUserRole === "admin" ? (
                              <><MapPin size={16} /> {pinpointMode ? "Tắt Pinpoint Comment" : "Bật Pinpoint Comment"}</>
                           ) : (
@@ -3403,10 +3579,28 @@ if (mins < 1) return t("justNow");
               {/* Related Artworks Grid */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                 {relatedArtworks.slice(0,4).map(rArt => (
-                  <div key={rArt.id} onClick={() => setPage("detail", { artworkId: rArt.id })} style={{ cursor: "pointer", borderRadius: 8, overflow: "hidden", background: "#222", position: "relative" }}>
+                  <div key={rArt.id} onClick={() => setPage("detail", { artworkId: rArt.id })} onMouseEnter={e => e.currentTarget.lastChild.style.opacity = 1} onMouseLeave={e => e.currentTarget.lastChild.style.opacity = 0} style={{ cursor: "pointer", borderRadius: 8, overflow: "hidden", background: "#222", position: "relative" }}>
                     <img src={rArt.coverImageUrl} style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }} />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 50%)", opacity: 0, transition: "opacity 0.3s ease-in-out", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: 16 }}>
+                      <span style={{ color: "#fff", fontSize: 14, fontWeight: "bold", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{rArt.title}</span>
+                      <div style={{ display: "flex", gap: 12, color: "#ccc", fontSize: 12, fontWeight: "bold" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><ThumbsUp size={12} /> {rArt.likes || 0}</span>
+                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><MessageCircle size={12} /> {rArt.comments?.length || 0}</span>
+                        <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Eye size={12} /> {rArt.viewCount || rArt._count?.views || 0}</span>
+                      </div>
+                    </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Nút Prev / Next nằm ở cuối trang */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", marginTop: 40, borderTop: "1px solid #333", paddingTop: 30 }}>
+                <button onClick={() => setPage("gallery")} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", padding: "12px 24px", borderRadius: 30, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontWeight: "bold", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
+                  <ChevronLeft size={20} /> Về thư viện
+                </button>
+                <button onClick={() => setPage("gallery")} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", padding: "12px 24px", borderRadius: 30, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontWeight: "bold", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
+                  Xem tiếp <ChevronRight size={20} />
+                </button>
               </div>
             </div>
           </div>
@@ -3565,16 +3759,7 @@ if (mins < 1) return t("justNow");
               {/* Description Card */}
               <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
                 <h3 style={{ fontSize: 16, fontWeight: "bold", margin: "0 0 12px 0", color: "#191919" }}>{art.title}</h3>
-                {(art.badges && art.badges.length > 0) && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
-                    {art.badges.map(b => (
-                      <div key={b.id} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 100, background: b.colorCode, color: b.textColor || "#fff", fontSize: 11, fontWeight: 600, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
-                        <Star size={12} fill={b.textColor || "#fff"} />
-                        {b.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
+
                 <p style={{ fontSize: 14, color: "#666", lineHeight: 1.6, marginBottom: 16 }}>
                   {isDescExpanded ? art.description : (art.description?.slice(0, 100) || "") + ((art.description?.length || 0) > 100 ? "..." : "")}
                 </p>
@@ -3591,14 +3776,38 @@ if (mins < 1) return t("justNow");
                 <p style={{ margin: 0, fontSize: 12, color: "#888" }}>Published: {new Date(art.createdAt || Date.now()).toLocaleDateString()}</p>
               </div>
 
-              {/* Tools */}
+              {/* Tools & Creative Fields */}
               <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
                 <span style={{ fontSize: 11, fontWeight: "bold", color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, display: "block" }}>Tools</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 32 }}>
+                  {art.toolsUsed?.map((tool, i) => {
+                    const tLower = tool.toLowerCase();
+                    let iconBg = "#333", iconColor = "#fff", short = tool.substring(0, 2);
+                    if (tLower.includes('photoshop')) { iconBg = '#001e36'; iconColor = '#31a8ff'; short = 'Ps'; }
+                    else if (tLower.includes('illustrator')) { iconBg = '#330000'; iconColor = '#ff9a00'; short = 'Ai'; }
+                    else if (tLower.includes('indesign')) { iconBg = '#49021f'; iconColor = '#ff3366'; short = 'Id'; }
+                    else if (tLower.includes('after effects')) { iconBg = '#00005b'; iconColor = '#9999ff'; short = 'Ae'; }
+                    else if (tLower.includes('lightroom')) { iconBg = '#000000'; iconColor = '#31a8ff'; short = 'Lr'; }
+                    else if (tLower.includes('figma')) { iconBg = '#f24e1e'; iconColor = '#fff'; short = 'Fi'; }
+
+                    return (
+                      <div key={i} style={{ position: "relative", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", gap: 12, overflow: "hidden", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+                        <img src={toolCovers[tool] || art.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400"} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.5, filter: "blur(2px) grayscale(0.5)", transform: "scale(1.1)" }} />
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(20,20,20,0.7)" }} />
+                        <div style={{ position: "relative", zIndex: 1, width: 28, height: 28, background: iconBg, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor, fontWeight: "bold", fontSize: 13, border: `1px solid ${iconColor}40` }}>{short}</div>
+                        <span style={{ position: "relative", zIndex: 1, color: "#fff", fontWeight: 800, fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.8)", letterSpacing: "0.2px" }}>{tool}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <span style={{ fontSize: 11, fontWeight: "bold", color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, display: "block" }}>Creative Fields</span>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {art.toolsUsed?.map((tool, i) => (
-                    <div key={i} style={{ background: "#191919", borderRadius: 8, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 28, height: 28, background: "#0057ff", borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: 12 }}>{tool.substring(0,2)}</div>
-                      <span style={{ color: "#fff", fontWeight: "bold", fontSize: 15 }}>{tool}</span>
+                  {Array.from(new Set([art.category, ...(art.tags || [])])).filter(Boolean).slice(0, 4).map((field, i) => (
+                    <div key={i} style={{ position: "relative", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+                      <img src={categoryCovers[field] || art.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400"} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.6, transform: "scale(1.1)", filter: "brightness(0.7) contrast(1.2)" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
+                      <span style={{ position: "relative", zIndex: 1, color: "#fff", fontWeight: 900, fontSize: 15, textShadow: "0 2px 8px rgba(0,0,0,0.9)", letterSpacing: "0.5px", textAlign: "center" }}>{field}</span>
                     </div>
                   ))}
                 </div>
@@ -3609,29 +3818,97 @@ if (mins < 1) return t("justNow");
 
         </div>
 
-        {/* STICKY RIGHT SIDEBAR */}
-        <div style={{ width: 80, marginLeft: 20 }}>
-          <div style={{ position: "sticky", top: 40, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, zIndex: 100 }}>
+        {/* FIXED RIGHT SIDEBAR */}
+        <div style={{ position: "fixed", right: 0, top: "45%", transform: "translateY(-50%)", width: "calc(50vw - min(50vw - 100px, 700px))", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, zIndex: 1010, pointerEvents: "none" }}>
             
-            <div style={{ position: "relative", cursor: "pointer" }} className="sidebar-item" onClick={() => setIsFollowing(!isFollowing)}>
-              <img onClick={(e) => { e.stopPropagation(); setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 44, height: 44, borderRadius: "50%", border: "2px solid #191919", objectFit: "cover" }} />
-              {!isFollowing && <div style={{ position: "absolute", bottom: -4, right: -4, width: 20, height: 20, borderRadius: "50%", background: "#0057ff", color: "#fff", border: "2px solid #191919", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", padding: 0 }}>+</div>}
-              <span className="tooltip" style={{ position: "absolute", bottom: -20, left: "50%", transform: "translateX(-50%)", fontSize: 11, fontWeight: "bold", color: "#fff", opacity: 0, transition: "opacity 0.2s", pointerEvents: "none", whiteSpace: "nowrap" }}>{isFollowing ? "Following" : "Follow"}</span>
+            <div style={{ position: "relative", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "auto" }} className="sidebar-item" onClick={() => {
+              if (!isFollowing) {
+                setIsFollowing(true);
+                setIsFollowingAnimPlaying(true);
+                setTimeout(() => setIsFollowingAnimPlaying(false), 2500);
+              } else {
+                setIsFollowing(false);
+                setIsFollowingAnimPlaying(false);
+              }
+            }}>
+              <img onClick={(e) => { e.stopPropagation(); setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 40, height: 40, borderRadius: "50%", border: "2px solid #191919", objectFit: "cover", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"} />
+              
+              {(!isFollowing || isFollowingAnimPlaying) && (
+                <div style={{ position: "absolute", bottom: 20, right: -4, width: 20, height: 20, borderRadius: "50%", background: "#0057ff", color: "#fff", border: "2px solid #191919", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", padding: 0, transition: "background 0.3s" }}>
+                  {isFollowing ? <Check size={12} style={{ animation: "followCheck 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)" }} /> : <span style={{ lineHeight: 0.8 }}>+</span>}
+                </div>
+              )}
+              
+              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", whiteSpace: "nowrap" }}>{isFollowing ? "Following" : "Follow"}</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={() => setShowOrderModal(true)}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", pointerEvents: "auto" }} onClick={() => setShowOrderModal(true)}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <Mail size={18} color="#191919" />
+                <Mail size={16} color="#191919" />
               </div>
-              <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>Order</span>
+              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Hire</span>
             </div>
+
+            {/* TOOLS BUTTON */}
+            {(() => {
+              let toolsList = art.toolsUsed || art.tools || (art.tool ? art.tool.split(',').map(t => t.trim()).filter(Boolean) : []);
+              // Fallback for prototype so the user can see the design
+              if (toolsList.length === 0) {
+                toolsList = ["Illustrator", "Photoshop", "Stock"];
+              }
+              
+              const getToolInfo = (toolName) => {
+                const name = toolName.toLowerCase();
+                if (name.includes('illustrator') || name === 'ai') return { id: 'Ai', bg: '#330000', color: '#ff9a00', name: 'Illustrator' };
+                if (name.includes('photoshop') || name === 'ps') return { id: 'Ps', bg: '#001e36', color: '#31a8ff', name: 'Photoshop' };
+                if (name.includes('premiere') || name === 'pr') return { id: 'Pr', bg: '#1a1a4b', color: '#9999ff', name: 'Premiere Pro' };
+                if (name.includes('figma')) return { id: 'Fg', bg: '#1e1e1e', color: '#0acf83', name: 'Figma' };
+                if (name.includes('blender') || name === 'bl') return { id: 'Bl', bg: '#2f2f2f', color: '#ea7600', name: 'Blender' };
+                if (name.includes('procreate')) return { id: 'Pr', bg: '#1a1a1a', color: '#5b5b5b', name: 'Procreate' };
+                if (name.includes('stock') || name === 'st') return { id: 'St', bg: '#0f2026', color: '#00a3f5', name: 'Stock' };
+                if (name.includes('after effects') || name === 'ae') return { id: 'Ae', bg: '#00005b', color: '#9999ff', name: 'After Effects' };
+                return { id: toolName.substring(0, 2).toUpperCase(), bg: '#333', color: '#fff', name: toolName };
+              };
+              
+              const firstTool = getToolInfo(toolsList[0]);
+              
+              return (
+                <div className="group" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", position: "relative", pointerEvents: "auto" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                    <div style={{ width: 22, height: 22, borderRadius: 4, background: firstTool.bg, color: firstTool.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: 13, fontFamily: "sans-serif" }}>
+                      {firstTool.id}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Tools</span>
+                  
+                  {/* Tool Popup */}
+                  <div className="absolute top-1/2 right-full -translate-y-1/2 mr-4 bg-white text-black p-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ borderRadius: 8, width: 220, zIndex: 100, boxShadow: "0 8px 30px rgba(0,0,0,0.2)" }}>
+                    <div style={{ position: "absolute", top: "50%", right: -6, transform: "translateY(-50%)", width: 0, height: 0, borderTop: "6px solid transparent", borderBottom: "6px solid transparent", borderLeft: "6px solid #fff" }} />
+                    <div style={{ fontSize: 10, fontWeight: "bold", color: "#888", marginBottom: 12, textTransform: "uppercase" }}>Tools</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      {toolsList.map(t => {
+                        const info = getToolInfo(t);
+                        return (
+                          <div key={t} style={{ display: "flex", alignItems: "center", gap: 12, background: "#151515", borderRadius: 6, padding: "8px 12px" }}>
+                            <div style={{ width: 24, height: 24, borderRadius: 4, background: info.bg, color: info.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: 14, fontFamily: "sans-serif" }}>
+                              {info.id}
+                            </div>
+                            <span style={{ fontSize: 14, fontWeight: "bold", color: "#fff" }}>{info.name}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {canGrade && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", position: "relative" }} onMouseEnter={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'block'; }} onMouseLeave={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'none'; }}>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", position: "relative", pointerEvents: "auto" }} onMouseEnter={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'block'; }} onMouseLeave={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'none'; }}>
                 <div style={{ width: 40, height: 40, borderRadius: "50%", background: CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                  <Star size={18} color="#fff" fill="#fff" />
+                  <Star size={16} color="#fff" fill="#fff" />
                 </div>
-                <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff", whiteSpace: "nowrap" }}>Tặng Huy hiệu</span>
+                <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", whiteSpace: "nowrap" }}>Badge</span>
                 
                 {/* Dropdown Menu Huy Hiệu */}
                 <div className="badge-menu" style={{ display: "none", position: "absolute", top: 0, right: "100%", marginRight: 16, background: "#fff", borderRadius: 8, padding: 12, minWidth: 200, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", zIndex: 200 }}>
@@ -3655,35 +3932,34 @@ if (mins < 1) return t("justNow");
               </div>
             )}
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={() => onBookmarkClick(art.id)}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", pointerEvents: "auto" }} onClick={() => onBookmarkClick(art.id)}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <Folder size={18} color="#191919" fill={isBookmarked ? "#191919" : "none"} />
+                <Folder size={16} color="#191919" fill={isBookmarked ? "#191919" : "none"} />
               </div>
-              <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>Save</span>
+              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Save</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={handleShare}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", pointerEvents: "auto" }} onClick={handleShare}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <Upload size={18} color="#191919" />
+                <Upload size={16} color="#191919" />
               </div>
-              <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>Share</span>
+              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Share</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={handleLike}>
-              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#0057ff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s", transform: animatingLike ? "scale(1.2)" : "scale(1)" }} onMouseEnter={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1.1)"}} onMouseLeave={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1)"}}>
-                <ThumbsUp size={24} color="#fff" fill={isLiked ? "#fff" : "none"} />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", marginTop: 8, pointerEvents: "auto" }} onClick={handleLike}>
+              <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#0057ff", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)", transform: animatingLike ? "scale(1.2) rotate(-10deg)" : "scale(1)", boxShadow: isLiked ? "0 0 20px rgba(0,87,255,0.4)" : "none" }} onMouseEnter={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1.1)"}} onMouseLeave={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1)"}}>
+                <ThumbsUp size={20} color="#fff" fill={isLiked ? "#fff" : "none"} />
               </div>
-              <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>{likeCount || 0}</span>
+              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>{likeCount || 0}</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" }} onClick={() => setShowReport(true)}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", pointerEvents: "auto" }} onClick={() => setShowReport(true)}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <AlertTriangle size={18} color="#191919" />
+                <AlertTriangle size={16} color="#191919" />
               </div>
-              <span style={{ fontSize: 12, fontWeight: "bold", color: "#fff" }}>Report</span>
+              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Report</span>
             </div>
 
-          </div>
         </div>
 
       </div>
