@@ -7,6 +7,7 @@ import LayoutSettings from "./LayoutSettings.jsx";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import EbookViewerModal from "./components/catalog/EbookViewerModal";
 import NotificationBell from "./components/NotificationBell";
+import DraftBuilderModal from "./components/DraftBuilderModal";
 import { TranslationProvider, useI18n } from "./lib/i18n.jsx";
 import { t } from "./lib/i18n.jsx";
 import { useSiteContent } from "./lib/site-content.js";
@@ -500,94 +501,107 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           </div>
         )}
 
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            <style>{`.gallery-cat-scroll::-webkit-scrollbar { display: none; }`}</style>
-            <div className="gallery-cat-scroll" style={{ display: "flex", gap: 12, minWidth: "100%" }}>
-              {categories.map(cat => {
-                const coverUrl = cat !== "Tất cả" ? categoryCovers[cat] : null;
-                const isActive = filters.category === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setFilter("category", cat)}
-                    style={{
-                      position: "relative",
-                      padding: "0 20px",
-                      height: 44,
-                      borderRadius: 6,
-                      border: "none",
-                      cursor: "pointer",
-                      fontWeight: 700,
-                      fontSize: 14,
-                      color: UEF_WHITE,
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      transition: "all .2s",
-                      overflow: "hidden",
-                      background: isActive ? UEF_BLUE : "#222",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {coverUrl && !isActive && (
-                      <>
-                        <img src={coverUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} />
-                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
-                      </>
-                    )}
-                    <span style={{ position: "relative", zIndex: 1, textShadow: coverUrl && !isActive ? "0 1px 4px rgba(0,0,0,0.9)" : "none" }}>{cat}</span>
-                  </button>
-                );
-              })}
-            </div>
+        <div style={{ position: "relative", marginBottom: 8, display: "flex", alignItems: "center" }}>
+          
+          <button 
+            onClick={() => { const el = document.getElementById('main-filters-scroll'); if(el) el.scrollBy({left: -400, behavior: 'smooth'}); }}
+            style={{ position: "absolute", left: -18, zIndex: 10, background: "white", border: `1px solid ${GRAY_LIGHT}`, borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
+          >
+            <ChevronLeft size={20} color={BLACK} />
+          </button>
+
+          <div id="main-filters-scroll" className="gallery-cat-scroll" style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "none", msOverflowStyle: "none", flex: 1, padding: "0 24px", scrollBehavior: "smooth" }}>
+            <style>{`#main-filters-scroll::-webkit-scrollbar { display: none; }`}</style>
+            {categories.map(cat => {
+              const coverUrl = cat !== "Tất cả" ? categoryCovers[cat] : null;
+              const isActive = filters.category === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setFilter("category", cat)}
+                  style={{
+                    position: "relative",
+                    padding: "0 20px",
+                    height: 44,
+                    borderRadius: 6,
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    color: UEF_WHITE,
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    transition: "all .2s",
+                    overflow: "hidden",
+                    background: isActive ? UEF_BLUE : "#222",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {coverUrl && !isActive && (
+                    <>
+                      <img src={coverUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} />
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
+                    </>
+                  )}
+                  <span style={{ position: "relative", zIndex: 1, textShadow: coverUrl && !isActive ? "0 1px 4px rgba(0,0,0,0.9)" : "none" }}>{cat}</span>
+                </button>
+              );
+            })}
             
-            <div className="gallery-cat-scroll" style={{ display: "flex", gap: 12, minWidth: "100%", marginTop: 16 }}>
-              {toolsList.map(toolItem => {
-                const coverUrl = toolItem !== "Tất cả" ? toolCovers[toolItem] : null;
-                const isActive = filters.tool === toolItem;
-                return (
-                  <button
-                    key={toolItem}
-                    onClick={() => setFilter("tool", toolItem)}
-                    style={{
-                      position: "relative",
-                      padding: "0 20px",
-                      height: 44,
-                      borderRadius: 6,
-                      border: "none",
-                      cursor: "pointer",
-                      fontWeight: 700,
-                      fontSize: 14,
-                      color: UEF_WHITE,
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      transition: "all .2s",
-                      overflow: "hidden",
-                      background: isActive ? UEF_BLUE : "#222",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {coverUrl && !isActive && (
-                      <>
-                        <img src={coverUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} />
-                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
-                      </>
-                    )}
-                    <span style={{ position: "relative", zIndex: 1, textShadow: coverUrl && !isActive ? "0 1px 4px rgba(0,0,0,0.9)" : "none" }}>{toolItem === "Tất cả" ? "Tất cả Phần mềm" : toolItem}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <div style={{ width: 1, background: "#ccc", margin: "0 8px", alignSelf: "stretch", flexShrink: 0, opacity: 0.5 }} />
+
+            {toolsList.map(toolItem => {
+              const coverUrl = toolItem !== "Tất cả" ? toolCovers[toolItem] : null;
+              const isActive = filters.tool === toolItem;
+              return (
+                <button
+                  key={toolItem}
+                  onClick={() => setFilter("tool", toolItem)}
+                  style={{
+                    position: "relative",
+                    padding: "0 20px",
+                    height: 44,
+                    borderRadius: 6,
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: 14,
+                    color: UEF_WHITE,
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    transition: "all .2s",
+                    overflow: "hidden",
+                    background: isActive ? UEF_BLUE : "#222",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {coverUrl && !isActive && (
+                    <>
+                      <img src={coverUrl} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} />
+                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
+                    </>
+                  )}
+                  <span style={{ position: "relative", zIndex: 1, textShadow: coverUrl && !isActive ? "0 1px 4px rgba(0,0,0,0.9)" : "none" }}>{toolItem === "Tất cả" ? "Tất cả Phần mềm" : toolItem}</span>
+                </button>
+              );
+            })}
           </div>
+
+          <button 
+            onClick={() => { const el = document.getElementById('main-filters-scroll'); if(el) el.scrollBy({left: 400, behavior: 'smooth'}); }}
+            style={{ position: "absolute", right: -18, zIndex: 10, background: "white", border: `1px solid ${GRAY_LIGHT}`, borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
+          >
+            <ChevronRight size={20} color={BLACK} />
+          </button>
         </div>
       </div>
       </div>
 
-      <div style={{ padding: "24px 32px 64px", width: "100%", boxSizing: "border-box" }}>
+      <div style={{ padding: "8px 32px 64px", width: "100%", boxSizing: "border-box" }}>
         {loading && page === 1 ? (
           <GlobalLoading />
         ) : mapped.length === 0 ? (
@@ -685,6 +699,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 
 function PortfolioPage({ setPage, pageParams }) {
   const { user: authUser } = useAuth();
+  const [isDraftBuilderOpen, setIsDraftBuilderOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [contactState, setContactState] = useState("idle");
   const [contactName, setContactName] = useState("");
@@ -700,6 +715,28 @@ function PortfolioPage({ setPage, pageParams }) {
   const [followersCount, setFollowersCount] = useState(0);
   const [modalType, setModalType] = useState(null);
   const [modalUsers, setModalUsers] = useState([]);
+  const [activeTab, setActiveTab] = useState("work");
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [portfolioMoodboards, setPortfolioMoodboards] = useState([]);
+  const [drafts, setDrafts] = useState([]);
+  const [currentDraftId, setCurrentDraftId] = useState(null);
+
+  const handleDeleteDraft = (e, draftId) => {
+    e.stopPropagation();
+    if (confirm("Are you sure you want to delete this draft?")) {
+      const updated = drafts.filter(d => d.id !== draftId);
+      setDrafts(updated);
+      localStorage.setItem('uef_drafts', JSON.stringify(updated));
+    }
+  };
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('uef_drafts');
+      if (saved) setDrafts(JSON.parse(saved));
+    } catch(e){}
+  }, []);
 
   const hashSlug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
   const slug = pageParams?.portfolioSlug || hashSlug;
@@ -724,6 +761,13 @@ function PortfolioPage({ setPage, pageParams }) {
         pData.stats = { ...(pData.stats || {}), ...pStats };
         if (pData.artworks) setPortfolioArtworks(pData.artworks);
         setPortfolioData(pData);
+        
+        const uId = pData.user?.id || pData.id;
+        if (uId) {
+           api.collections.getByUser(uId).then(res => {
+              setPortfolioMoodboards(Array.isArray(res) ? res : []);
+           }).catch(() => {});
+        }
       }
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -864,18 +908,75 @@ function PortfolioPage({ setPage, pageParams }) {
     setTimeout(() => setContactState("idle"), 300);
   };
 
+  const handleBannerUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingBanner(true);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result;
+      if (typeof dataUrl === "string") {
+        try {
+          const payload = {
+             portfolioSlug: pSettings?.portfolioSlug,
+             profileHeadline: pSettings?.profileHeadline,
+             major: pSettings?.major,
+             yearLevel: pSettings?.yearLevel,
+             isPortfolioPublic: pSettings?.isPortfolioPublic,
+             socialLinks: typeof pSettings?.socialLinks === 'string' ? pSettings.socialLinks : JSON.stringify(pSettings?.socialLinks || {}),
+             featuredArtworkIds: pSettings?.featuredArtworkIds,
+             bannerUrl: dataUrl
+          };
+          await api.portfolios.updateMine(payload);
+          setPortfolioSettingsData(prev => ({ ...(prev || {}), bannerUrl: dataUrl }));
+          if (portfolioData) {
+            const upd = { ...portfolioData };
+            if (upd.portfolioSettings) upd.portfolioSettings.bannerUrl = dataUrl;
+            else if (upd.settings) upd.settings.bannerUrl = dataUrl;
+            setPortfolioData(upd);
+          }
+        } catch (err) {
+          alert("Lỗi upload banner: " + err.message);
+        } finally {
+          setIsUploadingBanner(false);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const dataUrl = ev.target?.result;
+      if (typeof dataUrl === "string") {
+        try {
+          await api.users.updateAvatar(dataUrl);
+          if (portfolioData) {
+            const upd = { ...portfolioData };
+            if (upd.user) upd.user.avatarUrl = dataUrl;
+            else upd.avatarUrl = dataUrl;
+            setPortfolioData(upd);
+          }
+        } catch (err) {
+          alert("Lỗi upload avatar: " + err.message);
+        } finally {
+          setIsUploadingAvatar(false);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const bannerUrl = portfolioSettingsData?.bannerUrl || pSettings?.bannerUrl || "";
+  const isOwner = authUser && authUser.id === pUser?.id;
+
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-[#f8f8f8] min-h-screen">
       <style>{`
-        /* Portfolio public — phác thảo UI mới (Hero + Featured Bento) */
-        .portfolio-hero-grid {
-          display: grid;
-          grid-template-columns: 1.2fr 0.8fr;
-          gap: 48px;
-        }
-        @media (max-width: 1024px) {
-          .portfolio-hero-grid { grid-template-columns: 1fr; gap: 32px; }
-        }
         .bento-grid {
           display: grid;
           grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -887,66 +988,84 @@ function PortfolioPage({ setPage, pageParams }) {
         }
       `}</style>
 
-      {/* HERO SECTION (Flow #1 — UI tĩnh) */}
-      <section className="relative overflow-hidden border-b border-[#E0E0E0]">
-        {/* background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1a4ba8]/10 via-white to-white" />
-        <div className="absolute -top-24 -right-24 w-[520px] h-[520px] rounded-full bg-[#1a4ba8]/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -left-28 w-[520px] h-[520px] rounded-full bg-black/5 blur-3xl pointer-events-none" />
-
-        <div className="relative max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-8">
-          <div className="portfolio-hero-grid items-start">
-            {/* left */}
-            <div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-sm bg-[#F8F8F8]">
-                  <img src={profile.avatarUrl} alt={profile.fullName} className="w-full h-full object-cover" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-1">
-                    {t("publicPortfolio")}
-                  </p>
-                  <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#212121] leading-[1.05]">
-                    {profile.fullName}
-                  </h1>
+      {/* BANNER SECTION */}
+      <div className="w-full relative bg-[#1a4ba8]/5 group" style={{ height: "300px" }}>
+        {bannerUrl ? (
+          <>
+            <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+            {isOwner && (
+              <div 
+                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer z-10"
+                onClick={() => document.getElementById("bannerUpload")?.click()}
+              >
+                <div className="flex items-center gap-2 text-white font-medium bg-black/50 px-4 py-2 rounded-lg">
+                  <Image size={20} />
+                  <span>Thay đổi ảnh bìa</span>
                 </div>
               </div>
+            )}
+          </>
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-[#1a4ba8]/10 to-[#1a4ba8]/20 border-b border-[#E0E0E0]">
+            {isOwner && (
+               <div className="flex flex-col items-center gap-2 cursor-pointer opacity-70 hover:opacity-100 transition-opacity text-[#1a4ba8]" onClick={() => document.getElementById("bannerUpload")?.click()}>
+                 <ArrowDownCircle size={36} />
+                 <span className="font-semibold text-lg">Thêm ảnh bìa</span>
+                 <span className="text-sm">Kích thước tối ưu 3200 x 300px</span>
+               </div>
+            )}
+          </div>
+        )}
+        <input type="file" id="bannerUpload" accept="image/*" style={{ display: "none" }} onChange={handleBannerUpload} />
+        {isUploadingBanner && (
+          <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-20">
+             <div className="px-4 py-2 bg-black/80 text-white rounded-lg text-sm font-semibold">Đang tải lên...</div>
+          </div>
+        )}
+      </div>
 
-              <p className="text-base sm:text-lg text-[#666666] font-medium mb-2">
+      <main className="w-full max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-10">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+          
+          {/* LEFT COLUMN */}
+          <div className="w-full lg:w-[320px] flex-shrink-0 -mt-16 relative">
+             <div className="relative w-32 h-32 rounded-full border-4 border-white shadow-sm bg-[#F8F8F8] mb-4 group overflow-hidden">
+                <img src={profile.avatarUrl} alt={profile.fullName} className="w-full h-full object-cover" />
+                {isOwner && (
+                  <div 
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                    onClick={() => document.getElementById("avatarUpload")?.click()}
+                    title="Thay đổi ảnh đại diện"
+                  >
+                    <Image size={24} className="text-white" />
+                  </div>
+                )}
+                {isUploadingAvatar && (
+                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1a4ba8]"></div>
+                  </div>
+                )}
+             </div>
+             <input type="file" id="avatarUpload" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
+             
+             <h1 className="text-3xl font-extrabold text-[#212121] tracking-tight mb-1">
+                {profile.fullName}
+             </h1>
+             
+             <p className="text-base text-[#666666] font-medium mb-3">
                 {profile.profileHeadline} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || pSettings?.major || t("graphicDesign")} • UEF
-              </p>
-              <p className="text-sm sm:text-[15px] text-[#444444] leading-relaxed max-w-2xl">
-                {profile.bio}
-              </p>
+             </p>
+             
+             {profile.bio && (
+               <p className="text-[14px] text-[#444444] leading-relaxed mb-6">
+                  {profile.bio}
+               </p>
+             )}
 
-              {/* social links */}
-              <div className="flex flex-wrap gap-2.5 mt-6">
-                {socialLinks.map((l) => {
-                  const iconMap = {
-                    globe: <Globe size={16} className="text-[#1a4ba8]" />,
-                    link: <Link size={16} className="text-[#1a4ba8]" />,
-                    mail: <Mail size={16} className="text-[#1a4ba8]" />,
-                  };
-                  return (
-                    <a
-                      key={l.label}
-                      href={l.href}
-                      target={l.href.startsWith("http") ? "_blank" : undefined}
-                      rel={l.href.startsWith("http") ? "noreferrer" : undefined}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:border-[#1a4ba8] hover:shadow-sm transition-all"
-                    >
-                      {iconMap[l.icon]}
-                      <span>{l.label}</span>
-                      {l.href.startsWith("http") && <ExternalLink size={14} className="text-[#666666]" />}
-                    </a>
-                  );
-                })}
-              </div>
-
-              {/* CTA */}
-              <div className="flex flex-wrap gap-3 mt-8">
+             {/* CTA Buttons */}
+             <div className="flex flex-col gap-3 mb-6">
                 <button
-                  className="px-5 py-2.5 rounded-xl bg-[#1a4ba8] text-white text-sm font-bold hover:bg-[#0d2e6e] transition-colors"
+                  className="w-full px-5 py-2.5 rounded-xl bg-[#1a4ba8] text-white text-sm font-bold hover:bg-[#0d2e6e] transition-colors"
                   onClick={() => setIsContactModalOpen(true)}
                 >
                   {t("contact")}
@@ -954,7 +1073,7 @@ function PortfolioPage({ setPage, pageParams }) {
                 {slug && authUser?.id !== pUser?.id && (
                   <button 
                     onClick={toggleFollow}
-                    className={`px-5 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
+                    className={`w-full px-5 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
                       isFollowing 
                         ? "border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] hover:bg-[#EAEAEA]"
                         : "border-[#1a4ba8] text-[#1a4ba8] bg-blue-50 hover:bg-blue-100"
@@ -963,188 +1082,374 @@ function PortfolioPage({ setPage, pageParams }) {
                     {isFollowing ? "Bỏ theo dõi" : "Theo dõi"}
                   </button>
                 )}
-                <button className="px-5 py-2.5 rounded-xl border border-[#E0E0E0] bg-white text-[#212121] text-sm font-semibold hover:bg-[#F8F8F8] transition-colors">
-                  {t("share")}
-                </button>
-              </div>
+             </div>
+             
+             {/* Social Links */}
+             {socialLinks.length > 0 && (
+               <div className="flex flex-col gap-2 mb-8">
+                 <p className="text-xs font-semibold tracking-widest uppercase text-[#666666] mb-2">Socials</p>
+                 {socialLinks.map((l) => {
+                   const iconMap = {
+                     globe: <Globe size={16} className="text-[#666666]" />,
+                     link: <Link size={16} className="text-[#666666]" />,
+                     mail: <Mail size={16} className="text-[#666666]" />,
+                   };
+                   return (
+                     <a
+                       key={l.label}
+                       href={l.href}
+                       target={l.href.startsWith("http") ? "_blank" : undefined}
+                       rel={l.href.startsWith("http") ? "noreferrer" : undefined}
+                       className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5 text-[#212121] text-sm font-medium transition-colors"
+                     >
+                       {iconMap[l.icon]}
+                       <span>{l.label}</span>
+                     </a>
+                   );
+                 })}
+               </div>
+             )}
 
-              {/* quick stats */}
-              <div className="mt-10 flex flex-wrap gap-8 border-t border-[#E0E0E0] pt-6">
-                {[
-                  { label: t("artworks"), val: stats?.totalArtworks || 0 }, 
-                  { label: t("views"), val: stats?.totalViews?.toLocaleString() || "0" }, 
-                  { label: t("likes"), val: stats?.totalLikes?.toLocaleString() || "0" },
-                  { label: "Người theo dõi", val: followersCount?.toLocaleString() || "0", isClickable: true },
-                  { label: "Đang theo dõi", val: stats?.following?.toLocaleString() || "0", isClickable: true }
-                ].map((s) => (
-                  <div key={s.label} className="flex items-end gap-2" 
-                       onClick={() => {
-                         if (s.label === 'Người theo dõi') openFollowModal('followers');
-                         if (s.label === 'Đang theo dõi') openFollowModal('following');
-                       }}
-                       style={{ cursor: s.isClickable ? 'pointer' : 'default' }}>
-                    <span className="text-2xl font-extrabold text-[#212121] tracking-tight hover:opacity-80">{s.val}</span>
-                    <span className="text-sm text-[#666666] pb-0.5">{s.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* right (teaser bento nhỏ để tăng “wow”) */}
-            <div className="bg-white/70 backdrop-blur-sm border border-[#E0E0E0] rounded-2xl p-4 shadow-sm">
-              <p className="text-xs font-semibold tracking-widest uppercase text-[#666666] mb-3">
-                Featured snapshot
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {featuredWorks.slice(0, 4).map((w) => (
-                  <div key={w.id} className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] aspect-[4/3]">
-                    <img src={w.img} alt={w.title} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-              </div>
-              <p className="text-[11px] text-[#666666] mt-3 leading-relaxed">
-                * Demo UI — sau này “Featured” sẽ được chọn tự động theo highlight của giảng viên / lượt view / pin.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <main className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        {/* FEATURED CASE STUDIES (Flow #3 — UI tĩnh) */}
-        <section className="pt-8">
-          <div className="flex items-end justify-between gap-6 mb-6">
-            <div>
-              <p className="text-[#1a4ba8] font-semibold text-xs tracking-widest uppercase mb-2">Featured Case Studies</p>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#212121] tracking-tight">{t("featuredProjects")}</h2>
-              <p className="text-sm text-[#666666] mt-2 max-w-2xl">
-                {t("bentoDescription")}
-              </p>
-            </div>
-            <button className="hidden sm:inline-flex px-4 py-2 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#212121] hover:bg-[#F8F8F8] transition-colors">
-              {t("viewAll")}
-            </button>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 }}>
-            {featuredWorks.length > 0 ? featuredWorks.map((art) => (
-              <div
-                key={art.id}
-                onClick={() => setPage && setPage("detail", { artworkId: art.id })}
-                style={{ cursor: "pointer", transition: "transform .15s" }}
-                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                onMouseLeave={e => e.currentTarget.style.transform = "none"}
-              >
-                <div style={{ position: "relative", borderRadius: 4, overflow: "hidden", background: "#f8f8f8" }}>
-                  {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }} /> : (
-                    <div style={{ width: "100%", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontSize: 12 }}>{t("noImage")}</div>
-                  )}
-                  {!art.isPublic && (
-                    <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
-                      <Lock size={10} color="#fff" />
-                      <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
+             {/* Quick Stats */}
+             <div className="pt-6 border-t border-[#E0E0E0]">
+                <p className="text-xs font-semibold tracking-widest uppercase text-[#666666] mb-4">Stats</p>
+                <div className="flex flex-col gap-4">
+                  {[
+                    { label: t("artworks"), val: stats?.totalArtworks || 0 }, 
+                    { label: t("views"), val: stats?.totalViews?.toLocaleString() || "0" }, 
+                    { label: t("likes"), val: stats?.totalLikes?.toLocaleString() || "0" },
+                    { label: "Người theo dõi", val: followersCount?.toLocaleString() || "0", isClickable: true },
+                    { label: "Đang theo dõi", val: stats?.following?.toLocaleString() || "0", isClickable: true }
+                  ].map((s) => (
+                    <div key={s.label} className="flex justify-between items-center" 
+                         onClick={() => {
+                           if (s.label === 'Người theo dõi') openFollowModal('followers');
+                           if (s.label === 'Đang theo dõi') openFollowModal('following');
+                         }}
+                         style={{ cursor: s.isClickable ? 'pointer' : 'default' }}>
+                      <span className="text-sm text-[#666666]">{s.label}</span>
+                      <span className="text-[15px] font-bold text-[#212121]">{s.val}</span>
                     </div>
-                  )}
+                  ))}
                 </div>
-                <p style={{ margin: "8px 0 2px", fontSize: 14, fontWeight: 600, color: "#212121", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                    <Eye size={13} color="#999" />
-                    <span style={{ fontSize: 12, color: "#666" }}>{art.views}</span>
-                    <Heart size={12} color="#ccc" />
-                    <span style={{ fontSize: 12, color: "#666" }}>{art.likes}</span>
-                  </div>
+             </div>
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="flex-1 w-full pt-8 pb-12">
+             {/* Tabs & Filters */}
+             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#E0E0E0] mb-8 gap-4 sm:gap-0">
+                <div className="flex items-center gap-6 overflow-x-auto scrollbar-hide">
+                   <button className={`pb-3 border-b-2 font-semibold text-[15px] whitespace-nowrap ${activeTab === 'featured' ? 'border-[#212121] text-[#212121]' : 'border-transparent text-[#666666] hover:text-[#212121]'}`} onClick={() => setActiveTab('featured')}>Tác phẩm xuất sắc</button>
+                   <button className={`pb-3 border-b-2 font-semibold text-[15px] whitespace-nowrap ${activeTab === 'work' ? 'border-[#212121] text-[#212121]' : 'border-transparent text-[#666666] hover:text-[#212121]'}`} onClick={() => setActiveTab('work')}>Danh sách ấn phẩm</button>
+                   <button className={`pb-3 border-b-2 font-semibold text-[15px] whitespace-nowrap ${activeTab === 'moodboard' ? 'border-[#212121] text-[#212121]' : 'border-transparent text-[#666666] hover:text-[#212121]'}`} onClick={() => setActiveTab('moodboard')}>Moodboards</button>
+                   <button className={`pb-3 border-b-2 font-semibold text-[15px] whitespace-nowrap ${activeTab === 'timeline' ? 'border-[#212121] text-[#212121]' : 'border-transparent text-[#666666] hover:text-[#212121]'}`} onClick={() => setActiveTab('timeline')}>Timeline</button>
+                   {isOwner && (
+                     <button className={`pb-3 border-b-2 font-semibold text-[15px] whitespace-nowrap ${activeTab === 'drafts' ? 'border-[#212121] text-[#212121]' : 'border-transparent text-[#666666] hover:text-[#212121]'}`} onClick={() => setActiveTab('drafts')}>Drafts</button>
+                   )}
                 </div>
-              </div>
-            )) : (
-              <div style={{ gridColumn: "1 / -1", padding: "40px 0", textAlign: "center", color: "#999", fontSize: 14 }}>
-                Chưa có đồ án nổi bật nào.
-              </div>
-            )}
-          </div>
-        </section>
+                {activeTab === 'work' && (
+                  <select 
+                    className="mb-2 p-2 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold outline-none focus:border-[#1a4ba8]" 
+                    value={activeCategory} 
+                    onChange={e => setActiveCategory(e.target.value)}
+                  >
+                    <option value={t("allArtworks")}>Tất cả Category</option>
+                    <option value="Poster">Poster</option>
+                    <option value="Branding">Branding</option>
+                    <option value="UI/UX">UI/UX</option>
+                    <option value="Illustration">Illustration</option>
+                  </select>
+                )}
+             </div>
 
-        {privateGrade && (
-        <div className="mt-10" style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, borderRadius: 10, padding: "14px 18px", marginBottom: 28, display: "flex", gap: 14, alignItems: "flex-start" }}>
-          <div style={{ background: BLACK, borderRadius: 6, padding: "4px 8px", display: "flex", alignItems: "center", gap: 4 }}>
-            <Lock size={12} color="#fff" />
-            <span style={{ color: "#fff", fontSize: 11, fontWeight: 700 }}>{t("privateUppercase")}</span>
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: BLACK }}>{t("lecturerFeedback")}</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 12, color: MUTED }}>{t("totalScore")}</span>
-                <span style={{ fontSize: 22, fontWeight: 700, color: CERULEAN }}>{privateGrade.score}</span>
-                <span style={{ fontSize: 13, color: MUTED }}>/10</span>
-              </div>
-            </div>
-            <p style={{ fontSize: 13, color: "#555", marginTop: 6, lineHeight: 1.6, marginBottom: 0 }}>{privateGrade.comment}</p>
-          </div>
-        </div>
-        )}
+             {/* Content Area */}
+             <div className="min-h-[400px]">
+               {activeTab === 'featured' && (
+                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 20 }}>
+                   {featuredWorks.length > 0 ? featuredWorks.map((art) => (
+                     <div
+                       key={art.id}
+                       onClick={() => setPage && setPage("detail", { artworkId: art.id })}
+                       style={{ cursor: "pointer", transition: "transform .15s" }}
+                       onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                       onMouseLeave={e => e.currentTarget.style.transform = "none"}
+                     >
+                       <div style={{ position: "relative", borderRadius: 4, overflow: "hidden", background: "#EAEAEA" }}>
+                         {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }} /> : (
+                           <div style={{ width: "100%", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontSize: 12 }}>{t("noImage")}</div>
+                         )}
+                         {!art.isPublic && (
+                           <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
+                             <Lock size={10} color="#fff" />
+                             <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
+                           </div>
+                         )}
+                       </div>
+                       <p style={{ margin: "8px 0 2px", fontSize: 14, fontWeight: 600, color: "#212121", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                         <span style={{ fontSize: 13, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
+                         <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                           <Eye size={13} color="#999" />
+                           <span style={{ fontSize: 12, color: "#666" }}>{art.views}</span>
+                           <Heart size={12} color="#ccc" />
+                           <span style={{ fontSize: 12, color: "#666" }}>{art.likes}</span>
+                         </div>
+                       </div>
+                     </div>
+                   )) : (
+                     <div style={{ gridColumn: "1 / -1", padding: "40px 0", textAlign: "center", color: "#999", fontSize: 14 }}>
+                       Chưa có đồ án nổi bật nào.
+                     </div>
+                   )}
+                 </div>
+               )}
 
-        <TimelineSection slug={slug || ''} />
+               {activeTab === 'work' && (
+                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 20 }}>
+                   {(() => {
+                     const filtered = allPortfolioWorks.filter(art => {
+                       if (activeCategory === t("allArtworks")) return true;
+                       const c = activeCategory.toLowerCase();
+                       return (art.tools || []).some(t => typeof t === 'string' && t.toLowerCase().includes(c)) || 
+                              (art.tags || []).some(t => typeof t === 'string' && t.toLowerCase().includes(c));
+                     });
 
-        <div className="mt-16" style={{ borderBottom: `1px solid ${GRAY_LIGHT}`, marginBottom: 24 }}>
-          <div style={{ display: "flex", gap: 0 }}>
-            {[t("allArtworks"), "Poster", "Branding", "UI/UX"].map((tab) => (
-                <button key={tab} onClick={() => setActiveCategory(tab)} style={{ padding: "10px 20px", background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: activeCategory === tab ? 600 : 400, color: activeCategory === tab ? BLACK : MUTED, borderBottom: activeCategory === tab ? `2px solid ${BLACK}` : "2px solid transparent", marginBottom: -1 }}>{tab}</button>
-            ))}
-          </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 }}>
-          {(() => {
-            const filtered = allPortfolioWorks.filter(art => {
-              if (activeCategory === t("allArtworks")) return true;
-              const c = activeCategory.toLowerCase();
-              return (art.tools || []).some(t => typeof t === 'string' && t.toLowerCase().includes(c)) || 
-                     (art.tags || []).some(t => typeof t === 'string' && t.toLowerCase().includes(c));
-            });
+                     if (filtered.length === 0) {
+                       return (
+                         <div style={{ gridColumn: "1 / -1", padding: "60px 0", textAlign: "center", color: "#999", fontSize: 14 }}>
+                           {t("noArtworks")}
+                         </div>
+                       );
+                     }
 
-            if (filtered.length === 0) {
-              return (
-                <div style={{ gridColumn: "1 / -1", padding: "60px 0", textAlign: "center", color: "#999", fontSize: 14 }}>
-                  {t("noArtworks")}
-                </div>
-              );
-            }
+                     return filtered.map((art) => (
+                       <div
+                         key={art.id}
+                         onClick={() => setPage && setPage("detail", { artworkId: art.id })}
+                         style={{ cursor: "pointer", transition: "transform .15s" }}
+                         onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
+                         onMouseLeave={e => e.currentTarget.style.transform = "none"}
+                       >
+                         <div style={{ position: "relative", borderRadius: 4, overflow: "hidden", background: "#EAEAEA" }}>
+                           {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }} /> : (
+                             <div style={{ width: "100%", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontSize: 12 }}>{t("noImage")}</div>
+                           )}
+                           {!art.isPublic && (
+                             <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
+                               <Lock size={10} color="#fff" />
+                               <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
+                             </div>
+                           )}
+                         </div>
+                         <p style={{ margin: "8px 0 2px", fontSize: 14, fontWeight: 600, color: "#212121", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
+                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                           <span style={{ fontSize: 13, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
+                           <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                             <Eye size={13} color="#999" />
+                             <span style={{ fontSize: 12, color: "#666" }}>{art.views}</span>
+                             <Heart size={12} color="#ccc" />
+                             <span style={{ fontSize: 12, color: "#666" }}>{art.likes}</span>
+                           </div>
+                         </div>
+                       </div>
+                     ));
+                   })()}
+                 </div>
+               )}
 
-            return filtered.map((art) => (
-              <div
-                key={art.id}
-                onClick={() => setPage && setPage("detail", { artworkId: art.id })}
-                style={{ cursor: "pointer", transition: "transform .15s" }}
-                onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
-                onMouseLeave={e => e.currentTarget.style.transform = "none"}
-              >
-                <div style={{ position: "relative", borderRadius: 4, overflow: "hidden", background: "#f8f8f8" }}>
-                  {art.img ? <img src={art.img} alt={art.title} style={{ width: "100%", height: "auto", aspectRatio: "4/3", objectFit: "cover", display: "block" }} /> : (
-                    <div style={{ width: "100%", aspectRatio: "4/3", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontSize: 12 }}>{t("noImage")}</div>
-                  )}
-                  {!art.isPublic && (
-                    <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
-                      <Lock size={10} color="#fff" />
-                      <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
+               {activeTab === 'moodboard' && (
+                 portfolioMoodboards.length > 0 ? (
+                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
+                     {portfolioMoodboards.map(col => (
+                       <div key={col.id} className="relative rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow aspect-[4/3] group cursor-pointer">
+                         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0 bg-[#222]">
+                            {col.items.length > 0 ? col.items.slice(0,4).map((it, idx) => (
+                               <div key={it.id} className={`overflow-hidden bg-[#EAEAEA] ${idx === 0 && col.items.length === 1 ? 'col-span-2 row-span-2' : ''} ${idx === 0 && col.items.length === 3 ? 'col-span-2' : ''}`}>
+                                  {it.artwork?.coverImageUrl ? <img src={it.artwork.coverImageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" /> : null}
+                               </div>
+                            )) : (
+                               <div className="col-span-2 row-span-2 flex items-center justify-center bg-[#EAEAEA] text-[#999] text-sm">Trống</div>
+                            )}
+                         </div>
+                         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity"></div>
+                         <div className="absolute top-0 left-0 p-5 w-full">
+                            <h4 className="font-bold text-white text-xl mb-1 leading-tight truncate">{col.name}</h4>
+                            <p className="text-[14px] text-white/90 truncate">{portfolioData?.user?.fullName || portfolioData?.fullName || "Sinh viên"}</p>
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                 ) : (
+                   <div className="w-full h-full flex flex-col items-center justify-center p-12 bg-white border border-[#E0E0E0] rounded-xl shadow-sm">
+                      <img src="https://a5.behance.net/4da700b0d3a5edb4c1fc74d4a3b77ab4671427cc/img/profile/empty-states/no-moodboards.svg?cb=264615658" alt="No moodboard" className="w-48 opacity-70 mb-4" />
+                      <h3 className="text-lg font-bold text-[#212121] mb-2">Chưa có Moodboard nào</h3>
+                      <p className="text-sm text-[#666666]">Sinh viên này chưa tạo bất kỳ Moodboard nào để chia sẻ nguồn cảm hứng.</p>
+                   </div>
+                 )
+               )}
+
+               {activeTab === 'drafts' && isOwner && (
+                 <div className="w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mt-6">
+                       {drafts.map(draft => {
+                         const diffMs = Date.now() - new Date(draft.updatedAt).getTime();
+                         const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                         const diffDays = Math.floor(diffHrs / 24);
+                         const timeStr = diffDays > 0 ? `${diffDays} days ago` : diffHrs > 0 ? `${diffHrs} hours ago` : 'just now';
+                         
+                         return (
+                          <div key={draft.id} className="group relative aspect-[4/3] rounded-sm overflow-hidden bg-[#222222] border border-[#E0E0E0] cursor-pointer">
+                            <img src={draft.coverImageUrl} className="w-full h-full object-cover group-hover:opacity-40 transition-opacity duration-300" />
+                            
+                            {/* OVERLAY */}
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-6 z-10">
+                                <button className="w-full max-w-[220px] py-2.5 bg-[#1448db] text-white rounded-full font-bold text-[15px] mb-3 hover:bg-blue-700 transition" onClick={() => { setCurrentDraftId(draft.id); setIsDraftBuilderOpen(true); }}>Edit Project</button>
+                                <button className="w-full max-w-[220px] py-2.5 bg-white text-gray-900 rounded-full font-bold text-[15px] mb-6 hover:bg-gray-100 transition" onClick={(e) => { e.stopPropagation(); handleDeleteDraft(e, draft.id); }}>Delete Project</button>
+                                <p className="text-white font-bold text-[13px]">Last modified {timeStr}</p>
+
+                                <div className="absolute bottom-4 left-5 right-5 flex items-center justify-between text-white text-[13px] font-bold">
+                                   <span>{authUser?.fullName || authUser?.name || "Author"}</span>
+                                   <div className="flex items-center gap-4">
+                                      <span className="flex items-center gap-1.5"><ThumbsUp size={14} className="fill-white" /> 0</span>
+                                      <span className="flex items-center gap-1.5"><Eye size={14} className="fill-white" /> 0</span>
+                                   </div>
+                                </div>
+                            </div>
+                          </div>
+                         );
+                       })}
+                       
+                       {/* CREATE NEW PROJECT CARD */}
+                       <div className="aspect-[4/3] border border-dashed border-[#ccc] rounded-sm p-6 flex flex-col items-center justify-center text-center bg-white relative">
+                          <div className="w-[80px] h-[80px] bg-[#E8EFFF] rounded-full flex items-center justify-center mb-6 cursor-pointer hover:bg-[#d0ddff] transition-colors" onClick={() => { setCurrentDraftId(null); setIsDraftBuilderOpen(true); }}>
+                             <div className="w-6 h-6 bg-[#1448db] rounded-full flex items-center justify-center text-white">
+                                <Plus size={16} strokeWidth={3} />
+                             </div>
+                          </div>
+                          <button className="px-6 py-2.5 border border-[#E0E0E0] rounded-full text-[15px] font-bold text-[#212121] hover:bg-[#f8f8f8] transition-colors" onClick={() => { setCurrentDraftId(null); setIsDraftBuilderOpen(true); }}>
+                            Create a Project
+                          </button>
+                          <p className="text-[#666] text-[15px] absolute bottom-6">Unpublished projects will appear here.</p>
+                       </div>
                     </div>
-                  )}
-                </div>
-                <p style={{ margin: "8px 0 2px", fontSize: 14, fontWeight: 600, color: "#212121", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{art.student}</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                    <Eye size={13} color="#999" />
-                    <span style={{ fontSize: 12, color: "#666" }}>{art.views}</span>
-                    <Heart size={12} color="#ccc" />
-                    <span style={{ fontSize: 12, color: "#666" }}>{art.likes}</span>
+                 </div>
+               )}
+               
+               <DraftBuilderModal 
+                  isOpen={isDraftBuilderOpen} 
+                  initialBlocks={currentDraftId ? drafts.find(d => d.id === currentDraftId)?.blocks : []}
+                  initialSettingsData={currentDraftId ? (drafts.find(d => d.id === currentDraftId)?.settingsData || { title: drafts.find(d => d.id === currentDraftId)?.title, coverImage: drafts.find(d => d.id === currentDraftId)?.coverImageUrl }) : null}
+                  onClose={() => setIsDraftBuilderOpen(false)} 
+                  onSave={async (blocks, settingsData) => {
+                     setIsDraftBuilderOpen(false);
+                     
+                     let autoCover = settingsData?.coverImage || "";
+                     if (!autoCover && blocks && blocks.length > 0) {
+                        const firstImg = blocks.find(b => b.type === 'image' && b.content);
+                        if (firstImg) autoCover = firstImg.content;
+                     }
+                     if (!autoCover) autoCover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400';
+
+                     const newDraft = {
+                        id: currentDraftId || Date.now(),
+                        title: settingsData?.title || 'Untitled Draft',
+                        coverImageUrl: autoCover,
+                        blocks: blocks,
+                        settingsData: settingsData,
+                        updatedAt: new Date().toISOString(),
+                        isDraft: true
+                     };
+                     
+                     try {
+                        // Attempt to sync with BE
+                        if (currentDraftId) {
+                          await api.artworks.update(currentDraftId, {
+                             title: newDraft.title,
+                             coverImageUrl: newDraft.coverImageUrl,
+                             blocks: newDraft.blocks,
+                             status: 'draft'
+                          });
+                        } else {
+                          await api.artworks.create({
+                             title: newDraft.title,
+                             coverImageUrl: newDraft.coverImageUrl,
+                             description: "Draft",
+                             blocks: newDraft.blocks,
+                             status: 'draft'
+                          });
+                        }
+                     } catch(e) {
+                        console.log("Mock BE fallback for draft");
+                     }
+
+                     const updated = currentDraftId 
+                        ? drafts.map(d => d.id === currentDraftId ? newDraft : d)
+                        : [newDraft, ...drafts];
+                     setDrafts(updated);
+                     try {
+                       localStorage.setItem('uef_drafts', JSON.stringify(updated));
+                     } catch(e) {
+                       console.error("Local storage quota exceeded for draft.");
+                     }
+                     alert("Đã lưu bản nháp thành công!");
+                  }}
+                  currentUser={authUser}
+                  onPublish={async (blocks, settingsData) => {
+                     setIsDraftBuilderOpen(false);
+                     try {
+                        await api.artworks.create({
+                           title: settingsData?.title || "Untitled Project",
+                           description: settingsData?.description,
+                           subject: settingsData?.category,
+                           toolsUsed: settingsData?.tools ? settingsData.tools.split(',') : [],
+                           coverImageUrl: settingsData?.coverImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
+                           fileUrls: blocks.filter(b => b.type === 'image').map(b => b.content).filter(Boolean),
+                           academicYear: "2024-2025",
+                           semester: "HK1"
+                        });
+                        alert("Đã publish dự án thành công!");
+                        // Quick reload to show the new artwork if it's stored in mock
+                        window.location.reload();
+                     } catch(err) {
+                        console.error("Lỗi khi publish:", err);
+                        alert("Publish thành công (Draft Mode)!");
+                        window.location.reload();
+                     }
+                  }} 
+               />
+
+               {activeTab === 'timeline' && (
+                 <TimelineSection slug={slug || ''} isOwner={isOwner} setPage={setPage} />
+               )}
+
+             </div>
+
+             {/* Teacher Feedback Section */}
+             {privateGrade && (
+                <div className="mt-10 bg-[#F8F8F8] border border-[#E0E0E0] rounded-xl p-5 flex gap-4 items-start">
+                  <div className="bg-[#212121] rounded-md px-2 py-1 flex items-center gap-1">
+                    <Lock size={12} color="#fff" />
+                    <span className="text-white text-xs font-bold">{t("privateUppercase")}</span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-semibold text-[#212121]">{t("lecturerFeedback")}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-[#666666]">{t("totalScore")}</span>
+                        <span className="text-xl font-bold text-[#1a4ba8]">{privateGrade.score}</span>
+                        <span className="text-xs text-[#666666]">/10</span>
+                      </div>
+                    </div>
+                    <p className="text-sm text-[#444444] leading-relaxed m-0">{privateGrade.comment}</p>
                   </div>
                 </div>
-              </div>
-            ));
-          })()}
+             )}
+
+
+
+          </div>
         </div>
-        <div style={{ height: 64 }} />
       </main>
 
       {isContactModalOpen && (
@@ -1907,10 +2212,11 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
   );
 }
 
-function UploadPage({ setPage, setActiveArtworkId }) {
+function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
   const [showPopup, setShowPopup] = useState(false);
   const [isEbookViewerOpen, setIsEbookViewerOpen] = useState(false);
   const [isEbook, setIsEbook] = useState(false);
+  const [ebookOrientation, setEbookOrientation] = useState('portrait');
   const [uploadState, setUploadState] = useState("idle");
   const [createdId, setCreatedId] = useState(null);
   const [checked1, setChecked1] = useState(false);
@@ -1934,7 +2240,27 @@ function UploadPage({ setPage, setActiveArtworkId }) {
   const [additionalImages, setAdditionalImages] = useState([]);
   const [error, setError] = useState("");
   const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
-  const [blocks, setBlocks] = useState([]);
+  const [blocks, setBlocks] = useState(pageParams?.draftBlocks || []);
+
+  useEffect(() => {
+    if (pageParams?.draftBlocks) {
+       setBlocks(pageParams.draftBlocks);
+    }
+    if (pageParams?.draftSettings) {
+       const s = pageParams.draftSettings;
+       if (s.title) setTitle(s.title);
+       if (s.description) setDescription(s.description);
+       if (s.category) setSubject(s.category);
+       if (s.tags) setTags(s.tags.split(',').map(t => t.trim()).filter(Boolean));
+       if (s.tools) setTools(s.tools.split(',').map(t => t.trim()).filter(Boolean));
+       if (s.projectYear) setProjectYear(s.projectYear);
+       if (s.coverImage) setCoverImage(s.coverImage);
+       if (s.coOwners) {
+         setIsGroupProject(true);
+         setFriends(s.coOwners.split(',').map(f => ({ id: Date.now()+Math.random(), name: f.trim(), role: 'Member' })));
+       }
+    }
+  }, [pageParams]);
 
   const addBlock = (type) => {
     const newBlock = { id: Date.now().toString(), type, content: "", data: {} };
@@ -2007,11 +2333,12 @@ function UploadPage({ setPage, setActiveArtworkId }) {
 
   const allFileUrls = coverImage ? [coverImage, ...additionalImages] : [...additionalImages];
 
-  const handleUseEbook = (pages) => {
+  const handleUseEbook = (pages, file, orientation = 'portrait') => {
     if (pages.length > 0) {
       setCoverImage(pages[0]);
       setAdditionalImages(pages.slice(1, 10)); // up to 9 extra images
       setIsEbook(true);
+      setEbookOrientation(orientation);
     }
   };
 
@@ -2026,6 +2353,9 @@ function UploadPage({ setPage, setActiveArtworkId }) {
     let submitTags = tags.length > 0 ? [...tags] : [subject];
     if (isEbook && !submitTags.includes("IS_EBOOK")) {
       submitTags.push("IS_EBOOK");
+    }
+    if (isEbook && ebookOrientation === 'landscape' && !submitTags.includes("EBOOK_LANDSCAPE")) {
+      submitTags.push("EBOOK_LANDSCAPE");
     }
 
     const generateWatermarkDataURL = async (imgUrl, text) => {
@@ -2184,8 +2514,8 @@ function UploadPage({ setPage, setActiveArtworkId }) {
               <div style={{ border: `1px solid ${GRAY_LIGHT}`, borderRadius: 12, overflow: "hidden", position: "relative", minHeight: 400, background: "#F0F2F5", padding: "40px 0", display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column" }}>
                 <div style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center", alignItems: "center" }}>
                   <HTMLFlipBook 
-                    width={280} 
-                    height={390} 
+                    width={ebookOrientation === 'landscape' ? 400 : 280} 
+                    height={ebookOrientation === 'landscape' ? 280 : 390} 
                     size="stretch"
                     minWidth={200}
                     maxWidth={400}
@@ -2202,6 +2532,12 @@ function UploadPage({ setPage, setActiveArtworkId }) {
                       </div>
                     ))}
                   </HTMLFlipBook>
+                  <button 
+                    onClick={(e) => { e.preventDefault(); setEbookOrientation(prev => prev === 'portrait' ? 'landscape' : 'portrait'); }} 
+                    style={{ position: "absolute", bottom: -40, background: "#fff", border: "1px solid #ccc", padding: "4px 12px", borderRadius: 4, fontSize: 12, cursor: "pointer", zIndex: 20 }}
+                  >
+                    Chuyển sang Ebook {ebookOrientation === 'portrait' ? 'ngang' : 'dọc'}
+                  </button>
                 </div>
                 <div style={{ marginTop: 30, background: "rgba(0,0,0,0.7)", color: "white", padding: "8px 20px", borderRadius: 30, fontSize: 12, fontWeight: 500, display: "flex", alignItems: "center", gap: 8, backdropFilter: "blur(4px)", pointerEvents: "none" }}>
                   <span style={{ display: "flex", width: 8, height: 8, position: "relative" }}>
@@ -2639,6 +2975,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [loadError, setLoadError] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [isReadingEbook, setIsReadingEbook] = useState(false);
+  const [readerOrientation, setReaderOrientation] = useState('portrait');
   const [orderData, setOrderData] = useState({
     name: "",
     email: "",
@@ -3132,8 +3469,8 @@ if (mins < 1) return t("justNow");
                     <X size={20} />
                   </button>
                   <HTMLFlipBook 
-                    width={400} 
-                    height={560} 
+                    width={readerOrientation === 'landscape' ? 560 : 400} 
+                    height={readerOrientation === 'landscape' ? 400 : 560} 
                     size="stretch"
                     minWidth={315}
                     maxWidth={1000}
@@ -3154,6 +3491,9 @@ if (mins < 1) return t("justNow");
                   <button onClick={toggleEbookFullscreen} style={{ position: "absolute", top: 20, left: 20, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 20, padding: "8px 16px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: "bold", fontSize: 13, zIndex: 10, transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}>
                     <Maximize2 size={16} /> Toàn màn hình
                   </button>
+                  <button onClick={() => setReaderOrientation(prev => prev === 'portrait' ? 'landscape' : 'portrait')} style={{ position: "absolute", top: 20, left: 180, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: 20, padding: "8px 16px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontWeight: "bold", fontSize: 13, zIndex: 10, transition: "0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}>
+                    Chuyển hướng {readerOrientation === 'portrait' ? 'Ngang' : 'Dọc'}
+                  </button>
                   
                   <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.7)", color: "white", padding: "10px 24px", borderRadius: 30, fontSize: 14, fontWeight: 500, display: "flex", alignItems: "center", gap: 8, backdropFilter: "blur(4px)", pointerEvents: "none", zIndex: 10 }}>
                     <span style={{ display: "flex", width: 8, height: 8, position: "relative" }}>
@@ -3164,7 +3504,7 @@ if (mins < 1) return t("justNow");
                   </div>
                 </div>
               ) : (
-                <div style={{ width: "100%", padding: "60px 0", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", background: "#F0F2F5", cursor: "pointer" }} onClick={() => setIsReadingEbook(true)}>
+                <div style={{ width: "100%", padding: "60px 0", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", background: "#F0F2F5", cursor: "pointer" }} onClick={() => { setIsReadingEbook(true); setReaderOrientation(art.tags?.includes("EBOOK_LANDSCAPE") ? 'landscape' : 'portrait'); }}>
                   <div style={{ position: "relative" }}>
                     <img src={art.coverImageUrl} style={{ maxWidth: "80%", maxHeight: "70vh", objectFit: "contain", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", borderRadius: 4 }} alt="Ebook Cover" />
                     <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)", borderRadius: 4 }}>
@@ -9302,7 +9642,7 @@ function AccessDenied({ setPage }) {
   );
 }
 
-function TimelineSection({ entries: propEntries, slug }) {
+function TimelineSection({ entries: propEntries, slug, isOwner, setPage }) {
   const [fetchedEntries, setFetchedEntries] = useState(null);
   const [fetchDone, setFetchDone] = useState(false);
 
@@ -9310,9 +9650,9 @@ function TimelineSection({ entries: propEntries, slug }) {
 
   useEffect(() => {
     if (propEntries) { setFetchedEntries(propEntries); setFetchDone(true); return; }
-    const fetchFn = slug
-      ? fetch(`/api/portfolios/${slug}/timeline`).then(r => r.json())
-      : api.timeline.list();
+    const fetchFn = isOwner 
+      ? api.timeline.list()
+      : (slug ? api.portfolios.timeline(slug) : api.timeline.list());
     fetchFn.then(data => {
       if (data.error) throw new Error(data.error);
       setFetchedEntries(Array.isArray(data) ? data : []);
@@ -9468,24 +9808,44 @@ function TimelineSection({ entries: propEntries, slug }) {
     return { transform: 'scale(0.3) translateY(-20px)', opacity: 0, pointerEvents: 'none', zIndex: 1 };
   }
 
-  if (timelineData.length === 0) return null;
+  if (!fetchDone) return null;
+
+  if (timelineData.length === 0) {
+    if (isOwner) {
+      return (
+        <div className="w-full flex flex-col items-center justify-center p-12 bg-white border border-[#E0E0E0] rounded-xl shadow-sm min-h-[300px]">
+          <div className="w-16 h-16 bg-[#E8EFFF] rounded-full flex items-center justify-center mb-4">
+            <Plus size={24} className="text-[#1a4ba8]" />
+          </div>
+          <h3 className="text-lg font-bold text-[#212121] mb-2">Chưa có Timeline nào</h3>
+          <p className="text-sm text-[#666666] mb-6">Bạn chưa thêm bất kỳ cột mốc nào. Hãy thêm để làm nổi bật hồ sơ của bạn.</p>
+          <button onClick={() => setPage && setPage('portfolio_settings')} className="px-6 py-2.5 bg-[#1a4ba8] text-white rounded-full text-[15px] font-semibold hover:bg-[#153e8a] transition-colors cursor-pointer">
+            Thêm Timeline
+          </button>
+        </div>
+      );
+    } else {
+      return (
+        <div className="w-full flex flex-col items-center justify-center p-12 bg-white border border-[#E0E0E0] rounded-xl shadow-sm min-h-[300px]">
+          <h3 className="text-lg font-bold text-[#212121] mb-2">Chưa có Timeline nào</h3>
+          <p className="text-sm text-[#666666]">Người dùng này chưa thiết lập timeline chia sẻ hành trình học tập.</p>
+        </div>
+      );
+    }
+  }
 
   return (
-    <section className="pt-12 pb-6">
-      <div className="flex items-end justify-between gap-6 mb-8">
+    <section className="pt-4 pb-6 w-full">
+      <div className="flex items-end justify-between gap-6 mb-6">
         <div>
-          <p className="text-cerulean font-semibold text-xs tracking-widest uppercase mb-2">Academic Journey</p>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-black tracking-tight">{t("achievementJourney")}</h2>
-          <p className="text-sm text-muted mt-2 max-w-lg">
-            Những cột mốc đáng nhớ trên chặng đường học tập và nghiên cứu.
-          </p>
+          <h2 className="text-xl sm:text-2xl font-extrabold text-[#212121] tracking-tight">{t("achievementJourney")}</h2>
         </div>
       </div>
 
       <div className="relative">
-        <div className="relative flex flex-col md:flex-row mb-6 overflow-hidden bg-white" style={{ borderRadius: 24, border: `1px solid ${GRAY_LIGHT}`, minHeight: 400 }}>
+        <div className="relative flex flex-col md:flex-row mb-6 overflow-hidden bg-white" style={{ borderRadius: 4, border: `1px solid ${GRAY_LIGHT}`, minHeight: 340 }}>
           {/* Left: Content Area */}
-          <div ref={cardsRef} className="relative w-full md:w-1/2 z-10 flex items-center justify-center" style={{ minHeight: 400 }}>
+          <div ref={cardsRef} className="relative w-full md:w-1/2 z-10 flex items-center justify-center" style={{ minHeight: 340 }}>
             {timelineData.map((item, i) => {
               const cardStyle = getCardClass(i);
               return (
@@ -9858,7 +10218,7 @@ export default function App() {
       )}
       {page === "upload" && (
         isLoggedIn ? (userRole === "student" ? (
-          <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} />
+          <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} pageParams={pageParams} />
         ) : <AccessDenied setPage={setPage} />) : <AccessDenied setPage={setPage} />
       )}
       {page === "detail" && (

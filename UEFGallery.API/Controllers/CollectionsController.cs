@@ -65,6 +65,50 @@ public class CollectionsController : ControllerBase
         return Ok(grouped);
     }
 
+    [HttpGet("user/{userId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetCollectionsByUser(string userId)
+    {
+        var items = await _context.CollectionItems
+            .Include(c => c.Artwork)
+            .ThenInclude(a => a.User)
+            .Where(c => c.LecturerId == userId)
+            .OrderByDescending(c => c.AddedAt)
+            .ToListAsync();
+
+        var grouped = items.GroupBy(x => x.CollectionName ?? "Untitled")
+            .Select(g => new
+            {
+                id = g.Key,
+                name = g.Key,
+                theme = g.FirstOrDefault()?.Theme ?? "Classic",
+                curatorEssay = g.FirstOrDefault()?.CuratorEssay ?? "",
+                items = g.Select(x => new
+                {
+                    id = x.Id,
+                    artworkId = x.ArtworkId,
+                    note = x.Note,
+                    isHidden = false,
+                    category = x.Artwork?.Subject,
+                    award = "Không có",
+                    artwork = x.Artwork == null ? null : new
+                    {
+                        id = x.ArtworkId,
+                        title = x.Artwork.Title,
+                        coverImageUrl = x.Artwork.CoverImageUrl,
+                        subject = x.Artwork.Subject,
+                        user = new
+                        {
+                            fullName = x.Artwork.User?.FullName,
+                            email = x.Artwork.User?.Email
+                        }
+                    }
+                }).Where(x => x.artwork != null).ToList()
+            });
+
+        return Ok(grouped);
+    }
+
     [HttpPost]
     [Authorize]
     public IActionResult CreateCollection([FromBody] CreateCollectionDto dto)

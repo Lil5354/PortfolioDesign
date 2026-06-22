@@ -20,6 +20,8 @@ public class PortfolioSetting
 
     public string? ProfileHeadline { get; set; }
 
+    public string? BannerUrl { get; set; }
+
     public string? SocialLinks { get; set; }
 
     public bool ContactEnabled { get; set; }

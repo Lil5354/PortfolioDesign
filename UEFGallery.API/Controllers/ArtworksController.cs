@@ -524,6 +524,27 @@ public class ArtworksController : ControllerBase
         return Ok(categories);
     }
 
+    [HttpGet("tool-covers")]
+    public async Task<IActionResult> GetToolCovers()
+    {
+        var artworks = await _context.Artworks
+            .Where(a => a.IsPublic && a.ToolsUsed != null && a.ToolsUsed.Any())
+            .Select(a => new { a.ToolsUsed, a.CoverImageUrl, a.ViewCount })
+            .ToListAsync();
+
+        var toolCovers = artworks
+            .SelectMany(a => a.ToolsUsed.Select(t => new { Tool = t, a.CoverImageUrl, a.ViewCount }))
+            .GroupBy(x => x.Tool)
+            .Select(g => new
+            {
+                tool = g.Key,
+                coverImageUrl = g.OrderByDescending(x => x.ViewCount).Select(x => x.CoverImageUrl).FirstOrDefault()
+            })
+            .ToList();
+
+        return Ok(toolCovers);
+    }
+
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> CreateArtwork([FromBody] CreateArtworkDto dto)

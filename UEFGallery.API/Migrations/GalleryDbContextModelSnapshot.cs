@@ -555,6 +555,10 @@ namespace UEFGallery.API.Migrations
                         .HasColumnType("text")
                         .HasColumnName("setting_id");
 
+                    b.Property<string>("BannerUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("banner_url");
+
                     b.Property<bool>("ContactEnabled")
                         .HasColumnType("boolean")
                         .HasColumnName("contact_enabled");
@@ -589,7 +593,7 @@ namespace UEFGallery.API.Migrations
                         .HasColumnName("show_email");
 
                     b.Property<string>("SocialLinks")
-                        .HasColumnType("text")
+                        .HasColumnType("jsonb")
                         .HasColumnName("social_links");
 
                     b.Property<DateTime>("UpdatedAt")

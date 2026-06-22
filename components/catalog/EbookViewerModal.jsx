@@ -11,6 +11,7 @@ export default function EbookViewerModal({ isOpen, onClose, onUseEbook }) {
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [orientation, setOrientation] = useState('portrait');
   
   const fileInputRef = useRef(null);
   const viewerRef = useRef(null);
@@ -45,6 +46,12 @@ export default function EbookViewerModal({ isOpen, onClose, onUseEbook }) {
       
       const numPages = pdf.numPages;
       const loadedPages = [];
+
+      if (numPages > 0) {
+        const firstPage = await pdf.getPage(1);
+        const firstViewport = firstPage.getViewport({ scale: 1.0 });
+        setOrientation(firstViewport.width > firstViewport.height ? 'landscape' : 'portrait');
+      }
 
       for (let i = 1; i <= numPages; i++) {
         const page = await pdf.getPage(i);
@@ -102,7 +109,7 @@ export default function EbookViewerModal({ isOpen, onClose, onUseEbook }) {
             {pages.length > 0 && (
               <>
                 {onUseEbook && (
-                  <button onClick={() => { onUseEbook(pages, pdfFile); onClose(); }} className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-[#1a4ba8] hover:bg-[#0d2e6e] flex items-center gap-2 shadow-md transition-colors">
+                  <button onClick={() => { onUseEbook(pages, pdfFile, orientation); onClose(); }} className="px-5 py-2 rounded-xl text-sm font-bold text-white bg-[#1a4ba8] hover:bg-[#0d2e6e] flex items-center gap-2 shadow-md transition-colors">
                     <CheckCircle2 size={18} /> Xác nhận & Sử dụng
                   </button>
                 )}
@@ -159,8 +166,8 @@ export default function EbookViewerModal({ isOpen, onClose, onUseEbook }) {
           {!loading && pages.length > 0 && (
             <div className="w-full h-full flex items-center justify-center">
               <HTMLFlipBook 
-                width={450} 
-                height={630} 
+                width={orientation === 'landscape' ? 630 : 450} 
+                height={orientation === 'landscape' ? 450 : 630} 
                 size="stretch"
                 minWidth={315}
                 maxWidth={1000}

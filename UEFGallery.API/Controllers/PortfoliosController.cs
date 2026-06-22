@@ -126,6 +126,7 @@ public class PortfoliosController : ControllerBase
                 YearLevel = dto.YearLevel,
                 IsPortfolioPublic = dto.IsPortfolioPublic ?? true,
                 FeaturedArtworkIds = dto.FeaturedArtworkIds,
+                BannerUrl = dto.BannerUrl,
                 UpdatedAt = DateTime.UtcNow
             };
             _context.PortfolioSettings.Add(settings);
@@ -138,7 +139,8 @@ public class PortfoliosController : ControllerBase
             settings.Major = dto.Major ?? settings.Major;
             settings.YearLevel = dto.YearLevel ?? settings.YearLevel;
             if (dto.IsPortfolioPublic.HasValue) settings.IsPortfolioPublic = dto.IsPortfolioPublic.Value;
-            settings.FeaturedArtworkIds = dto.FeaturedArtworkIds ?? settings.FeaturedArtworkIds;
+            if (dto.FeaturedArtworkIds != null) settings.FeaturedArtworkIds = dto.FeaturedArtworkIds;
+            if (dto.BannerUrl != null) settings.BannerUrl = dto.BannerUrl;
             settings.UpdatedAt = DateTime.UtcNow;
         }
 
@@ -272,6 +274,7 @@ public class PortfolioSettingDto
     public string? YearLevel { get; set; }
     public bool? IsPortfolioPublic { get; set; }
     public List<string>? FeaturedArtworkIds { get; set; }
+    public string? BannerUrl { get; set; }
 }
 
 public class VisibilityDto
