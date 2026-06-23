@@ -5811,7 +5811,7 @@ function AdminDashboardPage({ setPage }) {
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.subject || ""}</td>
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("vi-VN") : ""}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(aStatus)}`}>{aStatus}</span>
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap ${statusBadge(aStatus)}`}>{aStatus}</span>
                       </td>
                     </tr>
                   );
