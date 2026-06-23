@@ -554,7 +554,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                 <Play size={24} className="text-gray-800" />
                 <span className="text-[13px] font-medium text-gray-700">Video/Audio</span>
               </button>
-              <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" onClick={() => setShowCollectionDrawer(!showCollectionDrawer)}>
+              <button type="button" className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" onClick={(e) => { e.stopPropagation(); setShowCollectionDrawer(!showCollectionDrawer); }}>
                 <Folder size={24} className="text-[#1a4ba8]" />
                 <span className="text-[13px] font-medium text-[#1a4ba8]">Bộ sưu tập</span>
               </button>
@@ -590,7 +590,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
 
         {/* Collection Drawer Popup */}
         {showCollectionDrawer && (
-          <div className="absolute top-0 right-[300px] w-[320px] h-full bg-white border-l border-gray-200 shadow-2xl z-20 flex flex-col transition-transform print:hidden">
+          <div className="absolute top-0 bg-white border-l border-gray-200 shadow-2xl z-[100] flex flex-col transition-transform print:hidden" style={{ right: '300px', width: '320px', height: '100%' }}>
             <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-[#f8f8f8]">
               <h3 className="font-bold text-gray-800">Ảnh từ Bộ sưu tập</h3>
               <button onClick={() => setShowCollectionDrawer(false)} className="text-gray-500 hover:text-gray-800"><X size={18} /></button>
