@@ -690,7 +690,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
 
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex flex-col bg-[#f8f8f8] overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-[#f8f8f8] overflow-hidden print:static print:overflow-visible print:h-auto print:block print:bg-white">
       {/* HEADER */}
       <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0 shadow-sm z-20 print:hidden">
         <div className="flex items-center gap-4">
@@ -708,7 +708,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
 
       {/* BODY */}
       <div 
-        className="flex flex-1 overflow-hidden relative print:overflow-visible" 
+        className="flex flex-1 overflow-hidden relative print:overflow-visible print:static print:h-auto print:block" 
         onClick={() => { setFocusedBlockId(null); setEditingBlockId(null); }}
         onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; }}
         onDrop={(e) => {
@@ -722,7 +722,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         }}
       >
         {/* WORKSPACE */}
-        <div className="flex-1 overflow-y-auto relative transition-colors" style={{ backgroundColor: projectStyles.backgroundColor }}>
+        <div className="flex-1 overflow-y-auto relative transition-colors print:overflow-visible print:static print:h-auto print:block" style={{ backgroundColor: projectStyles.backgroundColor }}>
           {blocks.length === 0 ? (
             <div className="min-h-full flex flex-col items-center justify-center pt-20 pb-40">
               <h2 className="text-[26px] font-medium text-gray-600 mb-12">Add Photos to create your grid:</h2>
@@ -886,6 +886,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           .print\\:bg-white { background: white !important; }
           .print\\:static { position: static !important; }
           .print\\:overflow-visible { overflow: visible !important; }
+          .print\\:h-auto { height: auto !important; min-height: auto !important; max-height: none !important; }
           .print\\:shadow-none { box-shadow: none !important; }
           .print\\:p-0 { padding: 0 !important; }
           .print\\:mb-0 { margin-bottom: 0 !important; }
