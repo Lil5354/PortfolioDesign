@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle, Move } from "lucide-react";
+import HTMLFlipBook from "react-pageflip";
 
 export default function JournalBuilderModal({ isOpen, onClose, collection, orientation, initialDraft, onSaveDraft, currentUser }) {
   const [blocks, setBlocks] = useState(initialDraft?.blocks || []);
@@ -658,24 +659,83 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                  <div style={{ display: "flex", flexDirection: "column", width: "100%", background: "transparent" }}>
                     <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
 
-                       <div style={{ width: "100%", position: "relative" }}>
-                          <div style={{ width: "100%", background: projectStyles.backgroundColor || "#ffffff", paddingBottom: blocks.length > 0 ? 0 : 400 }}>
-                             {blocks.length === 0 ? (
-                                <div style={{ height: 400, display: "flex", alignItems: "center", justifyContent: "center", color: "#888" }}>
-                                   Empty Project
-                                </div>
-                             ) : (
-                                blocks.map(block => (
-                                   <div key={block.id} style={{ width: block.fullWidth ? "100%" : "min(100%, 1024px)", margin: "0 auto", padding: block.fullWidth ? "0" : `${projectStyles.contentSpacing || 0}px`, marginBottom: 16 }}>
-                                      {block.type === 'image' && block.content && <img src={block.content} style={{ width: "100%", height: "auto", display: "block" }} />}
-                                      {block.type === 'text' && <div style={{ color: "#212121", padding: 16, fontSize: 17, fontFamily: "sans-serif", whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: block.content ? block.content.replace(/\\n/g, '<br/>') : '' }}></div>}
-                                      {block.type === 'grid' && <div style={{ width: "100%", height: 300, background: "rgba(0,0,0,0.05)", border: "1px dashed rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.4)" }}>Grid Preview</div>}
-                                      {block.type === 'video' && <div style={{ width: "100%", height: 300, background: "rgba(0,0,0,0.05)", border: "1px dashed rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.4)" }}>Video/Audio Preview</div>}
-                                   </div>
-                                ))
-                             )}
-                          </div>
-                       </div>
+                       <div style={{ width: "100%", position: "relative", display: "flex", justifyContent: "center", padding: "40px 0" }}>
+                              {blocks.length === 0 ? (
+                                 <div style={{ height: 400, width: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#888", background: projectStyles.backgroundColor || "#ffffff" }}>
+                                    Empty Project
+                                 </div>
+                              ) : (
+                                <HTMLFlipBook 
+                                  width={orientation === 'landscape' ? 800 : 600} 
+                                  height={orientation === 'landscape' ? 600 : 800} 
+                                  size="fixed" 
+                                  minWidth={315} 
+                                  maxWidth={1000} 
+                                  minHeight={400} 
+                                  maxHeight={1533} 
+                                  maxShadowOpacity={0.5} 
+                                  showCover={true} 
+                                  mobileScrollSupport={true}
+                                  className="shadow-2xl mx-auto"
+                                >
+                                   {blocks.map(block => (
+                                      <div key={block.id} className="bg-white overflow-hidden relative shadow-[0_0_20px_rgba(0,0,0,0.1)]" style={{ background: projectStyles.backgroundColor || "#ffffff" }}>
+                                        {block.type === 'image' && block.content && (
+                                          <img src={block.content} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                                        )}
+                                        {block.type === 'text' && (
+                                          <div style={{ color: "#212121", padding: 32, fontSize: 17, fontFamily: "sans-serif", whiteSpace: "pre-wrap", width: "100%", height: "100%", overflowY: "auto" }} dangerouslySetInnerHTML={{ __html: block.content ? block.content.replace(/\n/g, '<br/>') : '' }}></div>
+                                        )}
+                                        {block.type === 'video' && block.content && (
+                                          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyItems: "center" }}>
+                                            {(() => {
+                                              const url = block.content;
+                                              if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+                                                const videoId = url.includes('youtu.be/') ? url.split('youtu.be/')[1].split('?')[0] : new URLSearchParams(new URL(url).search).get('v');
+                                                return <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${videoId}?autoplay=0`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>;
+                                              } else if (url.includes('vimeo.com/')) {
+                                                const videoId = url.split('vimeo.com/')[1].split('?')[0];
+                                                return <iframe src={`https://player.vimeo.com/video/${videoId}`} width="100%" height="100%" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen></iframe>;
+                                              } else if (url.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
+                                                return <video src={url} controls autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }}></video>;
+                                              } else if (url.match(/\.(gif|jpg|jpeg|png|webp)(\?.*)?$/i)) {
+                                                return <img src={url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+                                              }
+                                              return null;
+                                            })()}
+                                          </div>
+                                        )}
+                                        {/* Overlays */}
+                                        {block.overlays?.map(overlay => (
+                                          <div key={overlay.id} style={{ position: 'absolute', left: overlay.x, top: overlay.y, zIndex: 10 }}>
+                                            {overlay.type === 'image' ? (
+                                              <img src={overlay.content} style={{ width: overlay.width || 150, height: 'auto', display: 'block', transform: `scale(${overlay.scale || 1})` }} />
+                                            ) : (
+                                              <div style={{
+                                                fontFamily: overlay.fontFamily || 'Helvetica',
+                                                color: overlay.color || '#000000',
+                                                fontSize: `${overlay.fontSize || 24}px`,
+                                                fontWeight: overlay.fontWeight || 'normal',
+                                                fontStyle: overlay.fontStyle || 'normal',
+                                                textDecoration: overlay.textDecoration || 'none',
+                                                textAlign: overlay.textAlign || 'left',
+                                                whiteSpace: 'pre-wrap'
+                                              }}>
+                                                {overlay.content}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                   ))}
+                                   {blocks.length % 2 !== 0 && (
+                                      <div className="bg-white overflow-hidden relative shadow-[0_0_20px_rgba(0,0,0,0.1)]" style={{ background: projectStyles.backgroundColor || "#ffffff" }}>
+                                         <div className="w-full h-full flex items-center justify-center text-gray-300">End</div>
+                                      </div>
+                                   )}
+                                </HTMLFlipBook>
+                              )}
+                        </div>
                     </div>
                  </div>
 
