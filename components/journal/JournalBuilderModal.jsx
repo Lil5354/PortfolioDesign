@@ -68,7 +68,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
     return (
       <div 
         key={block.id} 
-        className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex items-center justify-center shadow-md`}
+        className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex items-center justify-center shadow-md print:mb-0 print:border-none print:shadow-none print:break-after-page`}
         onMouseEnter={() => setHoveredBlockId(block.id)}
         onMouseLeave={() => setHoveredBlockId(null)}
         style={{ 
@@ -879,7 +879,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
       {/* Print Styles */}
       <style>{`
         @media print {
-          @page { size: ${orientation === 'landscape' ? 'A4 landscape' : 'A4 portrait'}; margin: 0; }
+          @page { size: ${orientation === 'landscape' ? '800px 600px' : '600px 800px'}; margin: 0; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .print\\:hidden { display: none !important; }
           .print\\:block { display: block !important; }
@@ -888,8 +888,10 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           .print\\:overflow-visible { overflow: visible !important; }
           .print\\:shadow-none { box-shadow: none !important; }
           .print\\:p-0 { padding: 0 !important; }
+          .print\\:mb-0 { margin-bottom: 0 !important; }
           .print\\:break-after-page { break-after: page !important; page-break-after: always !important; }
           .print\\:border-transparent { border-color: transparent !important; }
+          .print\\:border-none { border: none !important; }
         }
       `}</style>
     </div>,
