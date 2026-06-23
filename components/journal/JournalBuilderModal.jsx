@@ -3,10 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle } from "lucide-react";
 
 export default function JournalBuilderModal({ isOpen, onClose, collection, orientation, initialDraft, onSaveDraft, currentUser }) {
-  const initialBlocks = initialDraft?.blocks || [];
-  const initialSettingsData = initialDraft?.settingsData || null;
-
-  const [blocks, setBlocks] = useState(initialBlocks);
+  const [blocks, setBlocks] = useState(initialDraft?.blocks || []);
   const [hoveredBlockId, setHoveredBlockId] = useState(null);
   const [focusedBlockId, setFocusedBlockId] = useState(null);
   const [editingBlockId, setEditingBlockId] = useState(null);
@@ -17,23 +14,25 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
 
   const [isStylesModalOpen, setIsStylesModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [projectStyles, setProjectStyles] = useState(initialSettingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
-  const [settingsData, setSettingsData] = useState(initialSettingsData || {
+  const [projectStyles, setProjectStyles] = useState(initialDraft?.settingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
+  const [settingsData, setSettingsData] = useState(initialDraft?.settingsData || {
     coverImage: null, title: '', tags: '', category: '', tools: '', projectYear: 'Năm 3', description: '', license: 'All Rights Reserved', coOwners: ''
   });
 
   useEffect(() => {
     if (isOpen) {
-      setBlocks(initialBlocks?.length ? [...initialBlocks] : []);
-      setSettingsData(initialSettingsData ? { ...initialSettingsData } : {
+      setBlocks(initialDraft?.blocks?.length ? [...initialDraft.blocks] : []);
+      setSettingsData(initialDraft?.settingsData ? { ...initialDraft.settingsData } : {
         coverImage: null, title: '', tags: '', category: '', tools: '', projectYear: 'Năm 3', description: '', license: 'All Rights Reserved', coOwners: ''
       });
-      setProjectStyles(initialSettingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
+      setProjectStyles(initialDraft?.settingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
       setIsPreviewMode(false);
       setIsSettingsModalOpen(false);
       setIsStylesModalOpen(false);
+      setShowCollectionDrawer(false);
     }
-  }, [isOpen, initialBlocks, initialSettingsData]);
+  }, [isOpen]); // Depend only on isOpen so it initializes exactly once when opened
+
   const fileInputRef = useRef(null);
   
   const handleCoverUpload = (e) => {
