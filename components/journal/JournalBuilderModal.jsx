@@ -68,14 +68,18 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
     return (
       <div 
         key={block.id} 
-        className={`relative group ${block.fullWidth ? 'w-full' : 'max-w-5xl mx-auto mb-4'} bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 min-h-[100px] flex items-center justify-center`}
+        className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex items-center justify-center shadow-md`}
         onMouseEnter={() => setHoveredBlockId(block.id)}
         onMouseLeave={() => setHoveredBlockId(null)}
-        style={{ padding: block.fullWidth ? '0' : `${projectStyles.contentSpacing || 0}px` }}
+        style={{ 
+          width: orientation === 'landscape' ? 800 : 600,
+          height: orientation === 'landscape' ? 600 : 800,
+          padding: block.fullWidth ? '0' : `${projectStyles.contentSpacing || 0}px` 
+        }}
       >
         {block.type === 'image' && (
            <div 
-             className="w-full h-full min-h-[300px] bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden"
+             className="w-full h-full bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden"
              onClick={() => setActiveOverlayId(null)}
              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "copy"; }}
              onDrop={(e) => {
@@ -397,7 +401,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
              
              {/* TEXTAREA */}
               <textarea 
-                className="w-full flex-1 min-h-[100px] resize-none p-4 outline-none font-sans bg-transparent" 
+                className="w-full h-full resize-none p-4 outline-none font-sans bg-transparent" 
                 style={{
                   fontFamily: block.styles?.fontFamily || 'Helvetica',
                   color: block.styles?.color || '#b3b3b3',
@@ -416,7 +420,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         )}
         {block.type === 'grid' && (
            <div 
-             className={`w-full h-full min-h-[300px] flex flex-col relative transition-all duration-200 border 
+             className={`w-full h-full flex flex-col relative transition-all duration-200 border 
                ${focusedBlockId === block.id ? 'border-[#2b64ff]' : 
                  hoveredBlockId === block.id ? 'border-dashed border-[#2b64ff]' : 'border-transparent'} bg-white`}
              onClick={(e) => { e.stopPropagation(); setFocusedBlockId(block.id); if (editingBlockId !== block.id) setEditingBlockId(null); }}
@@ -458,13 +462,12 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
               </div>
            </div>
         )}
-         {block.type === 'video' && (
+        {block.type === 'video' && (
             <div 
-              className={`w-full h-full min-h-[100px] relative transition-all duration-200 border 
-                ${editingBlockId === block.id ? 'border-[#b3b3b3]' : 
-                  focusedBlockId === block.id ? 'border-[#b3b3b3]' : 
-                  hoveredBlockId === block.id ? 'border-dashed border-[#2b64ff]' : 'border-transparent'}`}
-              onClick={(e) => { e.stopPropagation(); setFocusedBlockId(block.id); if (editingBlockId !== block.id) setEditingBlockId(null); }}
+              className={`w-full h-full relative transition-all duration-200 border 
+                ${editingBlockId === block.id ? 'border-[#2b64ff]' : 
+                  hoveredBlockId === block.id ? 'border-dashed border-[#2b64ff]' : 'border-transparent'} bg-gray-100 flex items-center justify-center overflow-hidden`}
+              onClick={(e) => { e.stopPropagation(); if (editingBlockId !== block.id) setEditingBlockId(null); }}
               onDoubleClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id); }}
             >
               {focusedBlockId === block.id && editingBlockId !== block.id && (
@@ -597,61 +600,68 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                  mobileScrollSupport={true}
                  className="shadow-2xl"
                >
-                  {blocks.map(block => (
-                     <div key={block.id} className="bg-white overflow-hidden relative shadow-[0_0_20px_rgba(0,0,0,0.1)]" style={{ background: projectStyles.backgroundColor || "#ffffff" }}>
-                       {block.type === 'image' && block.content && (
-                         <img src={block.content} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                       )}
-                       {block.type === 'text' && (
-                         <div style={{ color: "#212121", padding: 32, fontSize: 17, fontFamily: "sans-serif", whiteSpace: "pre-wrap", width: "100%", height: "100%", overflowY: "auto" }} dangerouslySetInnerHTML={{ __html: block.content ? block.content.replace(/\n/g, '<br/>') : '' }}></div>
-                       )}
-                       {block.type === 'video' && block.content && (
-                         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyItems: "center" }}>
-                           {(() => {
-                             const url = block.content;
-                             if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
-                               const videoId = url.includes('youtu.be/') ? url.split('youtu.be/')[1].split('?')[0] : new URLSearchParams(new URL(url).search).get('v');
-                               return <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${videoId}?autoplay=0`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>;
-                             } else if (url.includes('vimeo.com/')) {
-                               const videoId = url.split('vimeo.com/')[1].split('?')[0];
-                               return <iframe src={`https://player.vimeo.com/video/${videoId}`} width="100%" height="100%" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen></iframe>;
-                             } else if (url.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
-                               return <video src={url} controls autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }}></video>;
-                             } else if (url.match(/\.(gif|jpg|jpeg|png|webp)(\?.*)?$/i)) {
-                               return <img src={url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
-                             }
-                             return null;
-                           })()}
+                  {(() => {
+                     const flipbookPages = blocks.map(block => (
+                       <div key={block.id} className="bg-white overflow-hidden relative shadow-[0_0_20px_rgba(0,0,0,0.1)]" style={{ background: projectStyles.backgroundColor || "#ffffff" }}>
+                         {block.type === 'image' && block.content && (
+                           <img src={block.content} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                         )}
+                         {block.type === 'text' && (
+                           <div style={{ color: "#212121", padding: 32, fontSize: 17, fontFamily: "sans-serif", whiteSpace: "pre-wrap", width: "100%", height: "100%", overflowY: "auto" }} dangerouslySetInnerHTML={{ __html: block.content ? block.content.replace(/\n/g, '<br/>') : '' }}></div>
+                         )}
+                         {block.type === 'video' && block.content && (
+                           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyItems: "center" }}>
+                             {(() => {
+                               const url = block.content;
+                               if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+                                 const videoId = url.includes('youtu.be/') ? url.split('youtu.be/')[1].split('?')[0] : new URLSearchParams(new URL(url).search).get('v');
+                                 return <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${videoId}?autoplay=0`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>;
+                               } else if (url.includes('vimeo.com/')) {
+                                 const videoId = url.split('vimeo.com/')[1].split('?')[0];
+                                 return <iframe src={`https://player.vimeo.com/video/${videoId}`} width="100%" height="100%" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen></iframe>;
+                               } else if (url.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
+                                 return <video src={url} controls autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover' }}></video>;
+                               } else if (url.match(/\.(gif|jpg|jpeg|png|webp)(\?.*)?$/i)) {
+                                 return <img src={url} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+                               }
+                               return null;
+                             })()}
+                           </div>
+                         )}
+                         {/* Overlays */}
+                         {block.overlays?.map(overlay => (
+                           <div key={overlay.id} style={{ position: 'absolute', left: overlay.x, top: overlay.y, zIndex: 10 }}>
+                             {overlay.type === 'image' ? (
+                               <img src={overlay.content} style={{ width: overlay.width || 150, height: 'auto', display: 'block', transform: `scale(${overlay.scale || 1})` }} />
+                             ) : (
+                               <div style={{
+                                 fontFamily: overlay.fontFamily || 'Helvetica',
+                                 color: overlay.color || '#000000',
+                                 fontSize: `${overlay.fontSize || 24}px`,
+                                 fontWeight: overlay.fontWeight || 'normal',
+                                 fontStyle: overlay.fontStyle || 'normal',
+                                 textDecoration: overlay.textDecoration || 'none',
+                                 textAlign: overlay.textAlign || 'left',
+                                 whiteSpace: 'pre-wrap'
+                               }}>
+                                 {overlay.content}
+                               </div>
+                             )}
+                           </div>
+                         ))}
+                       </div>
+                     ));
+                     
+                     // Pad pages to be even, and ensure at least 4 pages to prevent react-pageflip blank bugs
+                     while (flipbookPages.length % 2 !== 0 || flipbookPages.length < 4) {
+                       flipbookPages.push(
+                         <div key={`padding-page-${flipbookPages.length}`} className="bg-white overflow-hidden relative shadow-[0_0_20px_rgba(0,0,0,0.1)]" style={{ background: projectStyles.backgroundColor || "#ffffff" }}>
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">End</div>
                          </div>
-                       )}
-                       {/* Overlays */}
-                       {block.overlays?.map(overlay => (
-                         <div key={overlay.id} style={{ position: 'absolute', left: overlay.x, top: overlay.y, zIndex: 10 }}>
-                           {overlay.type === 'image' ? (
-                             <img src={overlay.content} style={{ width: overlay.width || 150, height: 'auto', display: 'block', transform: `scale(${overlay.scale || 1})` }} />
-                           ) : (
-                             <div style={{
-                               fontFamily: overlay.fontFamily || 'Helvetica',
-                               color: overlay.color || '#000000',
-                               fontSize: `${overlay.fontSize || 24}px`,
-                               fontWeight: overlay.fontWeight || 'normal',
-                               fontStyle: overlay.fontStyle || 'normal',
-                               textDecoration: overlay.textDecoration || 'none',
-                               textAlign: overlay.textAlign || 'left',
-                               whiteSpace: 'pre-wrap'
-                             }}>
-                               {overlay.content}
-                             </div>
-                           )}
-                         </div>
-                       ))}
-                     </div>
-                  ))}
-                  {blocks.length % 2 !== 0 && (
-                     <div className="bg-white overflow-hidden relative shadow-[0_0_20px_rgba(0,0,0,0.1)]" style={{ background: projectStyles.backgroundColor || "#ffffff" }}>
-                        <div className="w-full h-full flex items-center justify-center text-gray-300">End</div>
-                     </div>
-                  )}
+                       );
+                     }
+                     return flipbookPages;
+                  })()}
                </HTMLFlipBook>
              )}
            </div>
