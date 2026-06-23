@@ -495,11 +495,13 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
       <div 
         className="flex flex-1 overflow-hidden relative print:overflow-visible" 
         onClick={() => { setFocusedBlockId(null); setEditingBlockId(null); }}
-        onDragOver={(e) => e.preventDefault()}
+        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; }}
         onDrop={(e) => {
           e.preventDefault();
-          if (draggedImg) {
-            setBlocks([...blocks, { id: Date.now().toString(), type: 'image', content: draggedImg, fullWidth: false }]);
+          e.stopPropagation();
+          const src = draggedImg || e.dataTransfer.getData("text/plain");
+          if (src) {
+            setBlocks([...blocks, { id: Date.now().toString(), type: 'image', content: src, fullWidth: false }]);
             setDraggedImg(null);
           }
         }}
