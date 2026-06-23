@@ -7,6 +7,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
   const [hoveredBlockId, setHoveredBlockId] = useState(null);
   const [focusedBlockId, setFocusedBlockId] = useState(null);
   const [editingBlockId, setEditingBlockId] = useState(null);
+  const [activeOverlayId, setActiveOverlayId] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   
   const [showCollectionDrawer, setShowCollectionDrawer] = useState(false);
@@ -72,7 +73,39 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         style={{ padding: block.fullWidth ? '0' : `${projectStyles.contentSpacing || 0}px` }}
       >
         {block.type === 'image' && (
-           <div className="w-full h-full min-h-[300px] bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
+           <div 
+             className="w-full h-full min-h-[300px] bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden"
+             onClick={() => setActiveOverlayId(null)}
+             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "copy"; }}
+             onDrop={(e) => {
+               e.preventDefault();
+               e.stopPropagation();
+               const rect = e.currentTarget.getBoundingClientRect();
+               const x = e.clientX - rect.left;
+               const y = e.clientY - rect.top;
+               
+               const src = draggedImg || e.dataTransfer.getData("text/plain");
+               if (src) {
+                 const newOverlay = { id: Date.now().toString(), type: 'image', content: src, x, y, width: 200, height: 200 };
+                 updateBlock(block.id, { overlays: [...(block.overlays || []), newOverlay] });
+                 setDraggedImg(null);
+               } else {
+                 const overlayType = e.dataTransfer.getData("application/json");
+                 if (overlayType) {
+                   try {
+                     const data = JSON.parse(overlayType);
+                     if (data.type === 'text-overlay') {
+                       const newOverlay = { id: Date.now().toString(), type: 'text', content: 'Văn bản', x, y, fontSize: 24, color: '#000' };
+                       updateBlock(block.id, { overlays: [...(block.overlays || []), newOverlay] });
+                     } else if (data.type === 'move-overlay' && data.blockId === block.id) {
+                       const newOverlays = (block.overlays || []).map(o => o.id === data.overlayId ? { ...o, x: e.clientX - data.offsetX, y: e.clientY - data.offsetY } : o);
+                       updateBlock(block.id, { overlays: newOverlays });
+                     }
+                   } catch(err) {}
+                 }
+               }
+             }}
+           >
              {block.content ? (
                <img src={block.content} alt="Block" className="w-full h-full object-cover" />
              ) : (
@@ -94,6 +127,53 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                   />
                </>
              )}
+
+             {/* RENDER OVERLAYS */}
+             {block.overlays && block.overlays.map(overlay => (
+               <div 
+                 key={overlay.id} 
+                 style={{ position: 'absolute', left: overlay.x, top: overlay.y, cursor: 'move', zIndex: 10 }}
+                 draggable
+                 onDragStart={(e) => {
+                   e.stopPropagation();
+                   e.dataTransfer.setData("application/json", JSON.stringify({ type: 'move-overlay', blockId: block.id, overlayId: overlay.id, offsetX: e.clientX - overlay.x, offsetY: e.clientY - overlay.y }));
+                 }}
+                 onClick={(e) => { e.stopPropagation(); setActiveOverlayId(overlay.id); }}
+               >
+                 {overlay.type === 'image' && (
+                   <img src={overlay.content} style={{ width: overlay.width || 200, height: overlay.height || 200, objectFit: 'cover', border: activeOverlayId === overlay.id ? '2px dashed #1a4ba8' : 'none' }} />
+                 )}
+                 {overlay.type === 'text' && (
+                   activeOverlayId === overlay.id ? (
+                     <input 
+                       autoFocus
+                       value={overlay.content}
+                       onChange={(e) => {
+                         const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, content: e.target.value } : o);
+                         updateBlock(block.id, { overlays: newOverlays });
+                       }}
+                       onBlur={() => setActiveOverlayId(null)}
+                       style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', background: 'transparent', border: '1px dashed #1a4ba8', outline: 'none', minWidth: '150px' }}
+                     />
+                   ) : (
+                     <div style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', border: '1px solid transparent', whiteSpace: 'nowrap' }}>{overlay.content}</div>
+                   )
+                 )}
+                 
+                 {/* Delete button for overlay */}
+                 {activeOverlayId === overlay.id && (
+                   <button 
+                     className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 z-20"
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       updateBlock(block.id, { overlays: block.overlays.filter(o => o.id !== overlay.id) });
+                     }}
+                   >
+                     ×
+                   </button>
+                 )}
+               </div>
+             ))}
            </div>
         )}
         {block.type === 'text' && (
@@ -541,7 +621,12 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                 <Image size={24} className="text-gray-800" />
                 <span className="text-[13px] font-medium text-gray-700">Image</span>
               </button>
-              <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" onClick={() => addBlock('text')}>
+              <button 
+                draggable
+                onDragStart={(e) => { e.dataTransfer.setData("application/json", JSON.stringify({ type: 'text-overlay' })); }}
+                className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" 
+                onClick={() => addBlock('text')}
+              >
                 <Type size={24} className="text-gray-800" />
                 <span className="text-[13px] font-medium text-gray-700">Text</span>
               </button>
