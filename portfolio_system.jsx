@@ -8008,14 +8008,15 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
               const art = gridArtworks[i];
               const slot = i < 2 ? 0 : i < 4 ? 1 : 2;
               const isTall = (i % 2 === 0 && i < 2) || (i % 2 !== 0 && i >= 4);
-              const colClass = [
-                "col-span-1 space-y-3",
-                "col-span-1 space-y-3 pt-4",
-                "col-span-1 space-y-3"
-              ][slot];
-              const aspectClass = isTall ? "aspect-[3/4]" : "aspect-square";
+              const aspectClass = "aspect-[4/5]";
+              
+              const colIndex = i % 3;
+              const animClass = colIndex === 1 
+                ? "animate-[slideDownEntrance_1.2s_ease-out_both]" 
+                : "animate-[slideUpEntrance_1.2s_ease-out_both]";
+
               return (
-                <div key={i} className={colClass}>
+                <div key={i} className={`col-span-1 space-y-3 ${animClass}`}>
                   <div className={`bg-gray-100 rounded-xl overflow-hidden ${aspectClass} ${art ? 'cursor-pointer' : ''}`} onClick={() => { if (art) { setPage("detail", { artworkId: art.id }); } }}>
                     {art ? (
                       <img src={art.coverImageUrl} alt={art.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
@@ -8175,10 +8176,10 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {featuredArtworks.slice(0, 8).map((work, idx) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            {featuredArtworks.slice(0, 10).map((work, idx) => (
               <div key={work.id} className="group cursor-pointer" onClick={() => setPage("detail", { artworkId: work.id })}>
-                <div className={`rounded-xl overflow-hidden mb-4 relative ${idx % 2 === 0 ? 'aspect-square' : 'aspect-[4/5]'}`}>
+                <div className="rounded-lg overflow-hidden mb-3 relative aspect-[4/3] bg-gray-100">
                   <img src={work.coverImageUrl} alt={work.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   {idx === 0 && (
                     <div className="absolute top-3 left-3 bg-[#1a4ba8] text-white text-[10px] font-bold px-2 py-1 rounded">{t("featured")}</div>
