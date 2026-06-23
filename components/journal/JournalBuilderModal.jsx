@@ -749,7 +749,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         </div>
 
         {/* RIGHT SIDEBAR */}
-        <div className="w-[300px] border-l border-gray-200 bg-white flex flex-col shrink-0 overflow-y-auto z-10">
+        <div className="w-[300px] border-l border-gray-200 bg-white flex flex-col shrink-0 overflow-y-auto z-10 print:hidden">
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-3">Add Content</h3>
             <div className="grid grid-cols-2 gap-[1px] bg-gray-200 border border-gray-200 rounded overflow-hidden">
