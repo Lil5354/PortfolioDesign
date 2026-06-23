@@ -84,25 +84,27 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                const x = e.clientX - rect.left;
                const y = e.clientY - rect.top;
                
+               const overlayType = e.dataTransfer.getData("application/json");
+               if (overlayType) {
+                 try {
+                   const data = JSON.parse(overlayType);
+                   if (data.type === 'text-overlay') {
+                     const newOverlay = { id: Date.now().toString(), type: 'text', content: 'Văn bản', x, y, fontSize: 24, color: '#000' };
+                     updateBlock(block.id, { overlays: [...(block.overlays || []), newOverlay] });
+                   } else if (data.type === 'move-overlay' && data.blockId === block.id) {
+                     const newOverlays = (block.overlays || []).map(o => o.id === data.overlayId ? { ...o, x: e.clientX - data.offsetX, y: e.clientY - data.offsetY } : o);
+                     updateBlock(block.id, { overlays: newOverlays });
+                   }
+                   return; // Stop here if it's our internal JSON
+                 } catch(err) {}
+               }
+               
+               // Fallback: It's an image drag from Collection
                const src = draggedImg || e.dataTransfer.getData("text/plain");
                if (src) {
                  const newOverlay = { id: Date.now().toString(), type: 'image', content: src, x, y, width: 200, height: 200 };
                  updateBlock(block.id, { overlays: [...(block.overlays || []), newOverlay] });
                  setDraggedImg(null);
-               } else {
-                 const overlayType = e.dataTransfer.getData("application/json");
-                 if (overlayType) {
-                   try {
-                     const data = JSON.parse(overlayType);
-                     if (data.type === 'text-overlay') {
-                       const newOverlay = { id: Date.now().toString(), type: 'text', content: 'Văn bản', x, y, fontSize: 24, color: '#000' };
-                       updateBlock(block.id, { overlays: [...(block.overlays || []), newOverlay] });
-                     } else if (data.type === 'move-overlay' && data.blockId === block.id) {
-                       const newOverlays = (block.overlays || []).map(o => o.id === data.overlayId ? { ...o, x: e.clientX - data.offsetX, y: e.clientY - data.offsetY } : o);
-                       updateBlock(block.id, { overlays: newOverlays });
-                     }
-                   } catch(err) {}
-                 }
                }
              }}
            >
@@ -132,45 +134,81 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
              {block.overlays && block.overlays.map(overlay => (
                <div 
                  key={overlay.id} 
-                 style={{ position: 'absolute', left: overlay.x, top: overlay.y, cursor: 'move', zIndex: 10 }}
-                 draggable
-                 onDragStart={(e) => {
-                   e.stopPropagation();
-                   e.dataTransfer.setData("application/json", JSON.stringify({ type: 'move-overlay', blockId: block.id, overlayId: overlay.id, offsetX: e.clientX - overlay.x, offsetY: e.clientY - overlay.y }));
-                 }}
+                 style={{ position: 'absolute', left: overlay.x, top: overlay.y, zIndex: 10 }}
                  onClick={(e) => { e.stopPropagation(); setActiveOverlayId(overlay.id); }}
                >
                  {overlay.type === 'image' && (
-                   <img src={overlay.content} style={{ width: overlay.width || 200, height: overlay.height || 200, objectFit: 'cover', border: activeOverlayId === overlay.id ? '2px dashed #1a4ba8' : 'none' }} />
+                   <div className="relative group/overlay">
+                     <img src={overlay.content} style={{ width: overlay.width || 200, height: overlay.height || 200, objectFit: 'cover', border: activeOverlayId === overlay.id ? '2px dashed #1a4ba8' : 'none' }} />
+                     
+                     {/* Move and Delete Icons */}
+                     {activeOverlayId === overlay.id && (
+                       <div className="absolute -top-3 -right-3 flex items-center gap-1 bg-white shadow rounded-full p-1 z-20 border border-gray-200">
+                         <div 
+                           className="w-6 h-6 flex items-center justify-center cursor-move text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full"
+                           draggable
+                           onDragStart={(e) => {
+                             e.stopPropagation();
+                             e.dataTransfer.setData("application/json", JSON.stringify({ type: 'move-overlay', blockId: block.id, overlayId: overlay.id, offsetX: e.clientX - overlay.x, offsetY: e.clientY - overlay.y }));
+                           }}
+                         >
+                           <Move size={14} />
+                         </div>
+                         <div 
+                           className="w-6 h-6 flex items-center justify-center cursor-pointer text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-full"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             updateBlock(block.id, { overlays: block.overlays.filter(o => o.id !== overlay.id) });
+                           }}
+                         >
+                           <X size={14} />
+                         </div>
+                       </div>
+                     )}
+                   </div>
                  )}
                  {overlay.type === 'text' && (
-                   activeOverlayId === overlay.id ? (
-                     <input 
-                       autoFocus
-                       value={overlay.content}
-                       onChange={(e) => {
-                         const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, content: e.target.value } : o);
-                         updateBlock(block.id, { overlays: newOverlays });
-                       }}
-                       onBlur={() => setActiveOverlayId(null)}
-                       style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', background: 'transparent', border: '1px dashed #1a4ba8', outline: 'none', minWidth: '150px' }}
-                     />
-                   ) : (
-                     <div style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', border: '1px solid transparent', whiteSpace: 'nowrap' }}>{overlay.content}</div>
-                   )
-                 )}
-                 
-                 {/* Delete button for overlay */}
-                 {activeOverlayId === overlay.id && (
-                   <button 
-                     className="absolute -top-3 -right-3 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 z-20"
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       updateBlock(block.id, { overlays: block.overlays.filter(o => o.id !== overlay.id) });
-                     }}
-                   >
-                     ×
-                   </button>
+                   <div className="relative group/overlay">
+                     {activeOverlayId === overlay.id ? (
+                       <input 
+                         autoFocus
+                         value={overlay.content}
+                         onChange={(e) => {
+                           const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, content: e.target.value } : o);
+                           updateBlock(block.id, { overlays: newOverlays });
+                         }}
+                         onBlur={() => setActiveOverlayId(null)}
+                         style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', background: 'transparent', border: '1px dashed #1a4ba8', outline: 'none', minWidth: '150px' }}
+                       />
+                     ) : (
+                       <div style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', border: '1px solid transparent', whiteSpace: 'nowrap', minHeight: '32px', minWidth: '50px' }}>{overlay.content}</div>
+                     )}
+                     
+                     {/* Move and Delete Icons */}
+                     {activeOverlayId === overlay.id && (
+                       <div className="absolute -top-6 -right-3 flex items-center gap-1 bg-white shadow rounded-full p-1 z-20 border border-gray-200">
+                         <div 
+                           className="w-6 h-6 flex items-center justify-center cursor-move text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full"
+                           draggable
+                           onDragStart={(e) => {
+                             e.stopPropagation();
+                             e.dataTransfer.setData("application/json", JSON.stringify({ type: 'move-overlay', blockId: block.id, overlayId: overlay.id, offsetX: e.clientX - overlay.x, offsetY: e.clientY - overlay.y }));
+                           }}
+                         >
+                           <Move size={14} />
+                         </div>
+                         <div 
+                           className="w-6 h-6 flex items-center justify-center cursor-pointer text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-full"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             updateBlock(block.id, { overlays: block.overlays.filter(o => o.id !== overlay.id) });
+                           }}
+                         >
+                           <X size={14} />
+                         </div>
+                       </div>
+                     )}
+                   </div>
                  )}
                </div>
              ))}
