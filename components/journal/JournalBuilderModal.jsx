@@ -190,17 +190,23 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                      
                      {/* Text Formatting Toolbar */}
                      {activeOverlayId === overlay.id && (
-                       <div className="absolute bottom-[calc(100%+10px)] left-0 flex items-center gap-1 bg-white shadow-lg border border-gray-200 rounded p-1 z-30" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.preventDefault()}>
-                         <input 
-                           type="color" 
-                           title="Đổi màu chữ"
-                           value={overlay.color || '#000000'} 
+                       <div className="absolute bottom-[calc(100%+10px)] left-0 flex flex-wrap items-center gap-1.5 bg-white shadow-lg border border-gray-200 rounded p-1.5 z-30" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.preventDefault()} style={{ width: 'max-content', maxWidth: '350px' }}>
+                         
+                         {/* Font Family */}
+                         <select 
+                           value={overlay.fontFamily || 'Helvetica'} 
                            onChange={(e) => {
-                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, color: e.target.value } : o);
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontFamily: e.target.value } : o);
                              updateBlock(block.id, { overlays: newOverlays });
                            }}
-                           className="w-6 h-6 p-0 border-0 cursor-pointer rounded bg-transparent" 
-                         />
+                           className="bg-gray-100 px-2 h-7 rounded text-[13px] outline-none cursor-pointer border border-gray-200"
+                         >
+                           <option value="Helvetica">Helvetica</option>
+                           <option value="Arial">Arial</option>
+                           <option value="Times New Roman">Times New Roman</option>
+                           <option value="Courier New">Courier</option>
+                         </select>
+
                          <input 
                            type="number" 
                            title="Cỡ chữ"
@@ -209,15 +215,28 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                              const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontSize: parseInt(e.target.value) || 24 } : o);
                              updateBlock(block.id, { overlays: newOverlays });
                            }}
-                           className="w-12 h-6 px-1 border border-gray-200 rounded text-[13px] outline-none" 
+                           className="w-12 h-7 px-1 border border-gray-200 rounded text-[13px] outline-none bg-gray-50" 
                          />
+                         <input 
+                           type="color" 
+                           title="Đổi màu chữ"
+                           value={overlay.color || '#000000'} 
+                           onChange={(e) => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, color: e.target.value } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className="w-7 h-7 p-0 border-0 cursor-pointer rounded" 
+                         />
+
+                         <div className="w-[1px] h-5 bg-gray-300 mx-1"></div>
+
                          <button 
                            title="In đậm"
                            onClick={() => {
                              const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontWeight: o.fontWeight === 'bold' ? 'normal' : 'bold' } : o);
                              updateBlock(block.id, { overlays: newOverlays });
                            }}
-                           className={`w-6 h-6 flex items-center justify-center rounded ${overlay.fontWeight === 'bold' ? 'bg-gray-200' : 'hover:bg-gray-100'} font-serif font-bold text-[14px]`}
+                           className={`w-7 h-7 flex items-center justify-center rounded ${overlay.fontWeight === 'bold' ? 'bg-gray-300' : 'hover:bg-gray-100'} font-serif font-bold text-[14px]`}
                          >
                            B
                          </button>
@@ -227,10 +246,35 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                              const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontStyle: o.fontStyle === 'italic' ? 'normal' : 'italic' } : o);
                              updateBlock(block.id, { overlays: newOverlays });
                            }}
-                           className={`w-6 h-6 flex items-center justify-center rounded ${overlay.fontStyle === 'italic' ? 'bg-gray-200' : 'hover:bg-gray-100'} font-serif italic text-[14px]`}
+                           className={`w-7 h-7 flex items-center justify-center rounded ${overlay.fontStyle === 'italic' ? 'bg-gray-300' : 'hover:bg-gray-100'} font-serif italic text-[14px]`}
                          >
                            I
                          </button>
+                         <button 
+                           title="Gạch dưới"
+                           onClick={() => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, textDecoration: o.textDecoration === 'underline' ? 'none' : 'underline' } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className={`w-7 h-7 flex items-center justify-center rounded ${overlay.textDecoration === 'underline' ? 'bg-gray-300' : 'hover:bg-gray-100'} font-serif underline text-[14px]`}
+                         >
+                           U
+                         </button>
+
+                         <div className="w-[1px] h-5 bg-gray-300 mx-1"></div>
+
+                         <button onClick={() => {
+                           const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, textAlign: 'left' } : o);
+                           updateBlock(block.id, { overlays: newOverlays });
+                         }} className={`w-7 h-7 flex items-center justify-center rounded ${overlay.textAlign === 'left' ? 'bg-gray-300' : 'hover:bg-gray-100'}`}><AlignLeft size={14} /></button>
+                         <button onClick={() => {
+                           const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, textAlign: 'center' } : o);
+                           updateBlock(block.id, { overlays: newOverlays });
+                         }} className={`w-7 h-7 flex items-center justify-center rounded ${overlay.textAlign === 'center' ? 'bg-gray-300' : 'hover:bg-gray-100'}`}><AlignCenter size={14} /></button>
+                         <button onClick={() => {
+                           const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, textAlign: 'right' } : o);
+                           updateBlock(block.id, { overlays: newOverlays });
+                         }} className={`w-7 h-7 flex items-center justify-center rounded ${overlay.textAlign === 'right' ? 'bg-gray-300' : 'hover:bg-gray-100'}`}><AlignRight size={14} /></button>
                        </div>
                      )}
                      
@@ -287,13 +331,40 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
              {/* When EDITING: Black Toolbar attached to top */}
              {editingBlockId === block.id && (
                <div className="bg-[#1a1a1a] text-[#b3b3b3] flex items-center px-4 py-2.5 text-[13px] font-medium border-b border-[#1a1a1a] flex-wrap gap-y-2 relative w-full z-10">
-                 <div className="flex items-center gap-1 cursor-pointer hover:text-white pr-2">
-                   <span className="text-white font-bold">Paragraph</span> <ChevronDown size={14} />
-                 </div>
-                 <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
-                 <div className="flex items-center gap-1 cursor-pointer hover:text-white px-2">
-                   <span className="text-white font-bold">Helvetica</span> <ChevronDown size={14} />
-                 </div>
+                 <div className="flex items-center pr-2 relative">
+                    <select 
+                      value={block.styles?.textType || 'Paragraph'} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        let fs = block.styles?.fontSize || 17;
+                        let fw = block.styles?.fontWeight || 'normal';
+                        if (val === 'Heading 1') { fs = 32; fw = 'bold'; }
+                        else if (val === 'Heading 2') { fs = 24; fw = 'bold'; }
+                        else if (val === 'Paragraph') { fs = 17; fw = 'normal'; }
+                        updateBlock(block.id, { styles: { ...block.styles, textType: val, fontSize: fs, fontWeight: fw } })
+                      }}
+                      className="bg-transparent text-white font-bold outline-none cursor-pointer appearance-none pr-4"
+                    >
+                      <option value="Paragraph" className="text-black">Paragraph</option>
+                      <option value="Heading 1" className="text-black">Heading 1</option>
+                      <option value="Heading 2" className="text-black">Heading 2</option>
+                    </select>
+                    <ChevronDown size={14} className="absolute right-0 pointer-events-none text-white" />
+                  </div>
+                  <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
+                  <div className="flex items-center px-2 relative">
+                    <select 
+                      value={block.styles?.fontFamily || 'Helvetica'} 
+                      onChange={(e) => updateBlock(block.id, { styles: { ...block.styles, fontFamily: e.target.value } })}
+                      className="bg-transparent text-white font-bold outline-none cursor-pointer appearance-none pr-4"
+                    >
+                      <option value="Helvetica" className="text-black">Helvetica</option>
+                      <option value="Arial" className="text-black">Arial</option>
+                      <option value="Times New Roman" className="text-black">Times New Roman</option>
+                      <option value="Courier New" className="text-black">Courier</option>
+                    </select>
+                    <ChevronDown size={14} className="absolute right-0 pointer-events-none text-white" />
+                  </div>
                  <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
                  <div className="flex items-center gap-1 cursor-pointer hover:text-white px-2">
                     <input type="number" value={block.styles?.fontSize || 17} onChange={(e) => updateBlock(block.id, { styles: { ...block.styles, fontSize: parseInt(e.target.value) || 17 } })} className="w-12 h-6 px-1 border border-gray-600 rounded bg-transparent text-white text-center outline-none" title="Cỡ chữ" />
@@ -327,6 +398,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
               <textarea 
                 className="w-full flex-1 min-h-[100px] resize-none p-4 outline-none font-sans bg-transparent" 
                 style={{
+                  fontFamily: block.styles?.fontFamily || 'Helvetica',
                   color: block.styles?.color || '#b3b3b3',
                   fontSize: `${block.styles?.fontSize || 17}px`,
                   fontWeight: block.styles?.fontWeight || 'normal',
