@@ -134,26 +134,21 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
              {block.overlays && block.overlays.map(overlay => (
                <div 
                  key={overlay.id} 
-                 style={{ position: 'absolute', left: overlay.x, top: overlay.y, zIndex: 10 }}
+                 style={{ position: 'absolute', left: overlay.x, top: overlay.y, zIndex: 10, cursor: (overlay.type === 'image' || activeOverlayId !== overlay.id) ? 'move' : 'default' }}
                  onClick={(e) => { e.stopPropagation(); setActiveOverlayId(overlay.id); }}
+                 draggable={overlay.type === 'image' || activeOverlayId !== overlay.id}
+                 onDragStart={(e) => {
+                   e.stopPropagation();
+                   e.dataTransfer.setData("application/json", JSON.stringify({ type: 'move-overlay', blockId: block.id, overlayId: overlay.id, offsetX: e.clientX - overlay.x, offsetY: e.clientY - overlay.y }));
+                 }}
                >
                  {overlay.type === 'image' && (
                    <div className="relative group/overlay">
                      <img src={overlay.content} style={{ width: overlay.width || 200, height: overlay.height || 200, objectFit: 'cover', border: activeOverlayId === overlay.id ? '2px dashed #1a4ba8' : 'none' }} />
                      
-                     {/* Move and Delete Icons */}
+                     {/* Delete Icon */}
                      {activeOverlayId === overlay.id && (
                        <div className="absolute -top-3 -right-3 flex items-center gap-1 bg-white shadow rounded-full p-1 z-20 border border-gray-200">
-                         <div 
-                           className="w-6 h-6 flex items-center justify-center cursor-move text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full"
-                           draggable
-                           onDragStart={(e) => {
-                             e.stopPropagation();
-                             e.dataTransfer.setData("application/json", JSON.stringify({ type: 'move-overlay', blockId: block.id, overlayId: overlay.id, offsetX: e.clientX - overlay.x, offsetY: e.clientY - overlay.y }));
-                           }}
-                         >
-                           <Move size={14} />
-                         </div>
                          <div 
                            className="w-6 h-6 flex items-center justify-center cursor-pointer text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-full"
                            onClick={(e) => {
@@ -184,19 +179,9 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                        <div style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', border: '1px solid transparent', whiteSpace: 'nowrap', minHeight: '32px', minWidth: '50px' }}>{overlay.content}</div>
                      )}
                      
-                     {/* Move and Delete Icons */}
+                     {/* Delete Icon */}
                      {activeOverlayId === overlay.id && (
                        <div className="absolute -top-6 -right-3 flex items-center gap-1 bg-white shadow rounded-full p-1 z-20 border border-gray-200">
-                         <div 
-                           className="w-6 h-6 flex items-center justify-center cursor-move text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full"
-                           draggable
-                           onDragStart={(e) => {
-                             e.stopPropagation();
-                             e.dataTransfer.setData("application/json", JSON.stringify({ type: 'move-overlay', blockId: block.id, overlayId: overlay.id, offsetX: e.clientX - overlay.x, offsetY: e.clientY - overlay.y }));
-                           }}
-                         >
-                           <Move size={14} />
-                         </div>
                          <div 
                            className="w-6 h-6 flex items-center justify-center cursor-pointer text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-full"
                            onClick={(e) => {
