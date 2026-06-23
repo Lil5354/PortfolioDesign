@@ -89,7 +89,16 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                  try {
                    const data = JSON.parse(overlayType);
                    if (data.type === 'text-overlay') {
-                     const newOverlay = { id: Date.now().toString(), type: 'text', content: 'Văn bản', x, y, fontSize: 24, color: '#000' };
+                     const newOverlay = { 
+                       id: Date.now().toString(), 
+                       type: 'text', 
+                       content: data.content || 'Văn bản', 
+                       x, y, 
+                       fontSize: data.styles?.fontSize || 24, 
+                       color: data.styles?.color || '#000',
+                       fontWeight: data.styles?.fontWeight || 'normal',
+                       fontStyle: data.styles?.fontStyle || 'normal'
+                     };
                      updateBlock(block.id, { overlays: [...(block.overlays || []), newOverlay] });
                    } else if (data.type === 'move-overlay' && data.blockId === block.id) {
                      const newOverlays = (block.overlays || []).map(o => o.id === data.overlayId ? { ...o, x: e.clientX - data.offsetX, y: e.clientY - data.offsetY } : o);
@@ -173,10 +182,56 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                            updateBlock(block.id, { overlays: newOverlays });
                          }}
                          onBlur={() => setActiveOverlayId(null)}
-                         style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', background: 'transparent', border: '1px dashed #1a4ba8', outline: 'none', minWidth: '150px' }}
+                         style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', fontWeight: overlay.fontWeight || 'normal', fontStyle: overlay.fontStyle || 'normal', background: 'transparent', border: '1px dashed #1a4ba8', outline: 'none', minWidth: '150px' }}
                        />
                      ) : (
-                       <div style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', border: '1px solid transparent', whiteSpace: 'nowrap', minHeight: '32px', minWidth: '50px' }}>{overlay.content}</div>
+                       <div style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', fontWeight: overlay.fontWeight || 'normal', fontStyle: overlay.fontStyle || 'normal', border: '1px solid transparent', whiteSpace: 'nowrap', minHeight: '32px', minWidth: '50px' }}>{overlay.content}</div>
+                     )}
+                     
+                     {/* Text Formatting Toolbar */}
+                     {activeOverlayId === overlay.id && (
+                       <div className="absolute bottom-[calc(100%+10px)] left-0 flex items-center gap-1 bg-white shadow-lg border border-gray-200 rounded p-1 z-30" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.preventDefault()}>
+                         <input 
+                           type="color" 
+                           title="Đổi màu chữ"
+                           value={overlay.color || '#000000'} 
+                           onChange={(e) => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, color: e.target.value } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className="w-6 h-6 p-0 border-0 cursor-pointer rounded bg-transparent" 
+                         />
+                         <input 
+                           type="number" 
+                           title="Cỡ chữ"
+                           value={overlay.fontSize || 24} 
+                           onChange={(e) => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontSize: parseInt(e.target.value) || 24 } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className="w-12 h-6 px-1 border border-gray-200 rounded text-[13px] outline-none" 
+                         />
+                         <button 
+                           title="In đậm"
+                           onClick={() => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontWeight: o.fontWeight === 'bold' ? 'normal' : 'bold' } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className={`w-6 h-6 flex items-center justify-center rounded ${overlay.fontWeight === 'bold' ? 'bg-gray-200' : 'hover:bg-gray-100'} font-serif font-bold text-[14px]`}
+                         >
+                           B
+                         </button>
+                         <button 
+                           title="In nghiêng"
+                           onClick={() => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontStyle: o.fontStyle === 'italic' ? 'normal' : 'italic' } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className={`w-6 h-6 flex items-center justify-center rounded ${overlay.fontStyle === 'italic' ? 'bg-gray-200' : 'hover:bg-gray-100'} font-serif italic text-[14px]`}
+                         >
+                           I
+                         </button>
+                       </div>
                      )}
                      
                      {/* Delete Icon */}
@@ -214,6 +269,10 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                  <div 
                    className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-[#2b64ff] flex items-center justify-center cursor-pointer text-white shadow-md z-20 hover:bg-blue-700 transition"
                    onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id); }}
+                   draggable
+                   onDragStart={(e) => {
+                     e.dataTransfer.setData("application/json", JSON.stringify({ type: 'text-overlay', content: block.content, styles: block.styles }));
+                   }}
                  >
                    <Edit2 size={14} />
                  </div>
@@ -237,38 +296,45 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                  </div>
                  <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
                  <div className="flex items-center gap-1 cursor-pointer hover:text-white px-2">
-                   <span className="text-white font-bold">20</span> <ChevronDown size={14} />
-                 </div>
-                 <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
-                 <div className="flex items-center gap-4 px-2">
-                   <button className="hover:text-white flex items-center justify-center border-b-2 border-gray-400 pb-[1px]"><Type size={14} /></button>
-                   <button className="hover:text-white font-serif font-bold text-[15px]">B</button>
-                   <button className="hover:text-white font-serif italic text-[15px]">I</button>
-                   <button className="hover:text-white font-serif underline text-[15px]">U</button>
-                 </div>
-                 <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
-                 <div className="flex items-center gap-4 px-2">
-                   <button className="hover:text-white"><AlignLeft size={16} /></button>
-                   <button className="hover:text-white"><AlignCenter size={16} /></button>
-                   <button className="hover:text-white"><AlignRight size={16} /></button>
-                 </div>
+                    <input type="number" value={block.styles?.fontSize || 17} onChange={(e) => updateBlock(block.id, { styles: { ...block.styles, fontSize: parseInt(e.target.value) || 17 } })} className="w-12 h-6 px-1 border border-gray-600 rounded bg-transparent text-white text-center outline-none" title="Cỡ chữ" />
+                  </div>
+                  <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
+                  <div className="flex items-center gap-2 px-2">
+                    <input type="color" value={block.styles?.color || '#b3b3b3'} onChange={(e) => updateBlock(block.id, { styles: { ...block.styles, color: e.target.value } })} className="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent" title="Màu chữ" />
+                  </div>
+                  <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
+                  <div className="flex items-center gap-4 px-2">
+                    <button className="hover:text-white flex items-center justify-center border-b-2 border-gray-400 pb-[1px]"><Type size={14} /></button>
+                    <button onClick={() => updateBlock(block.id, { styles: { ...block.styles, fontWeight: block.styles?.fontWeight === 'bold' ? 'normal' : 'bold' } })} className={`hover:text-white font-serif font-bold text-[15px] ${block.styles?.fontWeight === 'bold' ? 'text-white' : ''}`}>B</button>
+                    <button onClick={() => updateBlock(block.id, { styles: { ...block.styles, fontStyle: block.styles?.fontStyle === 'italic' ? 'normal' : 'italic' } })} className={`hover:text-white font-serif italic text-[15px] ${block.styles?.fontStyle === 'italic' ? 'text-white' : ''}`}>I</button>
+                    <button onClick={() => updateBlock(block.id, { styles: { ...block.styles, textDecoration: block.styles?.textDecoration === 'underline' ? 'none' : 'underline' } })} className={`hover:text-white font-serif underline text-[15px] ${block.styles?.textDecoration === 'underline' ? 'text-white' : ''}`}>U</button>
+                  </div>
+                  <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
+                  <div className="flex items-center gap-4 px-2">
+                    <button onClick={() => updateBlock(block.id, { styles: { ...block.styles, textAlign: 'left' } })} className={`hover:text-white ${block.styles?.textAlign === 'left' ? 'text-blue-400' : ''}`}><AlignLeft size={16} /></button>
+                    <button onClick={() => updateBlock(block.id, { styles: { ...block.styles, textAlign: 'center' } })} className={`hover:text-white ${block.styles?.textAlign === 'center' ? 'text-blue-400' : ''}`}><AlignCenter size={16} /></button>
+                    <button onClick={() => updateBlock(block.id, { styles: { ...block.styles, textAlign: 'right' } })} className={`hover:text-white ${block.styles?.textAlign === 'right' ? 'text-blue-400' : ''}`}><AlignRight size={16} /></button>
+                  </div>
                  <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
                  <div className="flex items-center gap-4 px-2">
                    <button className="hover:text-white"><Link size={16} /></button>
                    <button className="hover:text-white relative"><Unlink size={16} /></button>
                  </div>
-                 <div className="w-[1px] h-5 bg-gray-700 mx-2"></div>
-                 <div className="flex items-center gap-4 px-2">
-                   <button className="hover:text-white flex items-center gap-[2px]"><Type size={14} /><span className="text-[10px] -ml-1 mt-1 font-bold">x</span></button>
-                   <button className="hover:text-white"><Pilcrow size={16} /></button>
-                 </div>
                </div>
              )}
              
              {/* TEXTAREA */}
-             <textarea 
-               className="w-full flex-1 min-h-[100px] resize-none p-4 outline-none text-[17px] text-[#b3b3b3] placeholder-gray-400 font-sans bg-transparent" 
-               placeholder="Enter your text here..."
+              <textarea 
+                className="w-full flex-1 min-h-[100px] resize-none p-4 outline-none font-sans bg-transparent" 
+                style={{
+                  color: block.styles?.color || '#b3b3b3',
+                  fontSize: `${block.styles?.fontSize || 17}px`,
+                  fontWeight: block.styles?.fontWeight || 'normal',
+                  fontStyle: block.styles?.fontStyle || 'normal',
+                  textDecoration: block.styles?.textDecoration || 'none',
+                  textAlign: block.styles?.textAlign || 'left',
+                }}
+                placeholder="Enter your text here..."
                value={block.content}
                onChange={(e) => updateBlock(block.id, { content: e.target.value })}
                onFocus={() => { setFocusedBlockId(block.id); setEditingBlockId(block.id); }}
