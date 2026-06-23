@@ -14,11 +14,13 @@ public class ArtworksController : ControllerBase
 {
     private readonly GalleryDbContext _context;
     private readonly FanoutEventChannel _fanoutChannel;
+    private readonly UEFGallery.API.Services.ImageEmbeddingService _embeddingService;
 
-    public ArtworksController(GalleryDbContext context, FanoutEventChannel fanoutChannel)
+    public ArtworksController(GalleryDbContext context, FanoutEventChannel fanoutChannel, UEFGallery.API.Services.ImageEmbeddingService embeddingService)
     {
         _context = context;
         _fanoutChannel = fanoutChannel;
+        _embeddingService = embeddingService;
     }
 
     [HttpGet("feed")]
@@ -844,6 +846,85 @@ public class ArtworksController : ControllerBase
         }
 
         return Ok(new { success = true, isPublic = artwork.IsPublic });
+    }
+
+    [HttpPost("visual-search")]
+    public async Task<IActionResult> VisualSearch([FromForm] IFormFile image)
+    {
+        if (image == null || image.Length == 0) return BadRequest("No image provided.");
+
+        try
+        {
+            using var stream = image.OpenReadStream();
+            var vector = await _embeddingService.GetEmbeddingAsync(stream);
+            
+            if (vector == null) return StatusCode(500, "Failed to extract image embeddings.");
+
+            var similarItems = _embeddingService.SearchSimilar(vector, topK: 12);
+            
+            var resultArtworks = new List<object>();
+            foreach (var item in similarItems)
+            {
+                // Must be public artwork
+                var artwork = await _context.Artworks
+                    .Include(a => a.User)
+                    .FirstOrDefaultAsync(a => a.Id == item.ArtworkId && a.IsPublic);
+                    
+                if (artwork != null)
+                {
+                    resultArtworks.Add(new
+                    {
+                        artwork.Id,
+                        artwork.Title,
+                        artwork.CoverImageUrl,
+                        artwork.ViewCount,
+                        artwork.LikeCount,
+                        SimilarityScore = Math.Round(item.Score * 100, 1),
+                        User = new { artwork.User.Id, artwork.User.FullName, artwork.User.AvatarUrl }
+                    });
+                }
+            }
+
+            return Ok(new { items = resultArtworks });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+
+    [HttpGet("index-all")]
+    public async Task<IActionResult> IndexAllArtworks()
+    {
+        if (!_embeddingService.IsReady) return BadRequest("Embedding service is not ready yet.");
+
+        var artworks = await _context.Artworks.Where(a => !string.IsNullOrEmpty(a.CoverImageUrl)).ToListAsync();
+        int count = 0;
+        using var client = new HttpClient();
+
+        foreach (var artwork in artworks)
+        {
+            try
+            {
+                var response = await client.GetAsync(artwork.CoverImageUrl);
+                if (response.IsSuccessStatusCode)
+                {
+                    using var stream = await response.Content.ReadAsStreamAsync();
+                    var vector = await _embeddingService.GetEmbeddingAsync(stream);
+                    if (vector != null)
+                    {
+                        _embeddingService.SaveEmbeddingToCache(artwork.Id, vector);
+                        count++;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore errors for individual artworks
+            }
+        }
+
+        return Ok(new { message = $"Indexed {count} artworks successfully." });
     }
 }
 

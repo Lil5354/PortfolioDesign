@@ -183,31 +183,41 @@ export function LandingPage({ setPage, isLoggedIn, userRole, onLogout }) {
 
       {/* Quotes Ticker */}
       {testimonials.length > 0 && (
-        <div className="bg-[#0d2e6e] py-8 overflow-hidden border-y border-white/10 shadow-inner">
-          <div className="flex gap-10 whitespace-nowrap animate-[ticker_55s_linear_infinite] w-max">
-            {[...Array(2)].map(() => (
-              <>
-                {testimonials.map((item, idx) => {
-                  const c = item.content;
-                  return (
-                    <div key={item.id || idx} className="inline-flex items-center gap-8 px-8 text-white/90 border-r border-white/20 mx-4">
-                      {c.imageUrl && (
-                        <img src={c.imageUrl} alt={c.name} className="w-[140px] h-[140px] rounded-xl object-cover shadow-lg shrink-0 ring-2 ring-white/20" />
-                      )}
-                      <div className="flex flex-col whitespace-normal text-left max-w-sm">
-                        <span className="text-[11px] font-bold text-[#c9a227] tracking-[0.12em] uppercase">Đại diện {c.type} — {c.role}</span>
-                        <span className="text-[14px] font-bold text-white mt-1.5">{c.name}</span>
-                        <span className="text-[12px] text-white/60 mb-1.5">{c.role}</span>
-                        {c.quote && <span className="text-[12.5px] text-white/80 leading-relaxed italic border-l-2 border-[#c9a227] pl-3">"{c.quote}"</span>}
+          <div className="bg-[#0d2e6e] py-6 overflow-hidden border-y border-white/10 shadow-inner">
+            <div className="flex gap-8 whitespace-nowrap animate-[ticker_48s_linear_infinite] w-max">
+              {[...Array(2)].map((_, i) => (
+                <React.Fragment key={i}>
+                  {testimonials.map((item, idx) => {
+                    const c = item.content;
+                    const initials = c.name ? c.name.split(' ').map(n => n[0]).join('').slice(-2).toUpperCase() : '👤';
+                    return (
+                      <div key={item.id || idx} className="inline-flex items-center gap-5 px-8 text-white/90 border-r border-white/20 mx-4">
+                        {c.imageUrl ? (
+                          <img src={c.imageUrl} alt={c.name} className="w-12 h-12 rounded-full object-cover shadow-lg shrink-0 ring-2 ring-[#c9a227]" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1a4ba8] to-[#DA291C] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg">
+                            {initials}
+                          </div>
+                        )}
+                        <div className="flex flex-col whitespace-normal text-left max-w-md">
+                          <span className="text-[12px] font-bold text-[#c9a227] tracking-wide uppercase">
+                            Đại diện {c.type} {c.role ? `— ${c.role}` : ''}
+                          </span>
+                          <span className="text-[13px] font-semibold text-white/95 mt-0.5">{c.name}</span>
+                          {c.quote && (
+                            <span className="text-[12px] text-white/70 mt-1 leading-relaxed italic">
+                              "{c.quote}"
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </>
-            ))}
+                    );
+                  })}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Steps Section */}
       <section className="px-8 py-20 bg-gray-50/50">

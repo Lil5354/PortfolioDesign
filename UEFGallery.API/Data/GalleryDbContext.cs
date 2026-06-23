@@ -43,17 +43,17 @@ public class GalleryDbContext : DbContext
         modelBuilder.Entity<Models.TimelineEntry>().Property(x => x.Id).HasColumnName("entry_id");
         modelBuilder.Entity<Models.SiteSection>().Property(x => x.Id).HasColumnName("section_id");
         modelBuilder.Entity<Models.SiteSectionItem>().Property(x => x.Id).HasColumnName("item_id");
-        modelBuilder.Entity<Models.SiteSectionItem>().Property(x => x.Content).HasColumnType("jsonb");
-        modelBuilder.Entity<Models.PortfolioSetting>().Property(x => x.SocialLinks).HasColumnType("jsonb");
+        // modelBuilder.Entity<Models.SiteSectionItem>().Property(x => x.Content).HasColumnType("jsonb");
+        // modelBuilder.Entity<Models.PortfolioSetting>().Property(x => x.SocialLinks).HasColumnType("jsonb");
         modelBuilder.Entity<Models.SiteSetting>().Property(x => x.Id).HasColumnName("setting_id");
         modelBuilder.Entity<Models.Badge>().Property(x => x.Id).HasColumnName("badge_id");
 
-        // Explicitly set column types and conversion for Enums
-        modelBuilder.Entity<Models.User>().Property(x => x.Role).HasColumnType("\"Role\"").HasConversion<string>();
-        modelBuilder.Entity<Models.Notification>().Property(x => x.Type).HasColumnType("\"NotificationType\"").HasConversion<string>();
-        modelBuilder.Entity<Models.Report>().Property(x => x.Status).HasColumnType("\"ReportStatus\"").HasConversion<string>();
-        modelBuilder.Entity<Models.PortfolioSetting>().Property(x => x.DisplayOrder).HasColumnType("\"DisplayOrder\"").HasConversion<string>();
-        modelBuilder.Entity<Models.Like>().Property(x => x.ReactionType).HasColumnType("\"ReactionType\"").HasConversion<string>();
+        // Explicitly set column types and conversion for Enums (SQLite uses string conversion)
+        modelBuilder.Entity<Models.User>().Property(x => x.Role).HasConversion<string>();
+        modelBuilder.Entity<Models.Notification>().Property(x => x.Type).HasConversion<string>();
+        modelBuilder.Entity<Models.Report>().Property(x => x.Status).HasConversion<string>();
+        modelBuilder.Entity<Models.PortfolioSetting>().Property(x => x.DisplayOrder).HasConversion<string>();
+        modelBuilder.Entity<Models.Like>().Property(x => x.ReactionType).HasConversion<string>();
         
         // ArtworkBadge Configuration
         modelBuilder.Entity<Models.ArtworkBadge>()

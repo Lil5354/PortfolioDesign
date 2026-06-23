@@ -41,7 +41,7 @@ public class PortfoliosController : ControllerBase
                 Major = "Thiết kế Đồ họa",
                 YearLevel = "Tốt nghiệp",
                 IsPortfolioPublic = true,
-                SocialLinks = "{\"behance\":\"https://behance.net/\",\"linkedin\":\"https://linkedin.com/\"}",
+                SocialLinks = "{\"behance\":\"https://behance.net/uef_student\",\"linkedin\":\"https://linkedin.com/in/uef_student\"}",
                 UpdatedAt = DateTime.UtcNow
             };
             _context.PortfolioSettings.Add(user.PortfolioSettings);
@@ -58,6 +58,20 @@ public class PortfoliosController : ControllerBase
             await _context.SaveChangesAsync();
         }
 
+        var followersCount = await _context.Follows.CountAsync(f => f.FollowedId == userId);
+        var followingCount = await _context.Follows.CountAsync(f => f.FollowerId == userId);
+
+        var stats = new
+        {
+            totalArtworks = user.Artworks.Count,
+            totalViews = user.Artworks.Sum(a => a.ViewCount),
+            totalLikes = user.Artworks.Sum(a => a.LikeCount),
+            publicArtworks = user.Artworks.Count(a => a.IsPublic),
+            followers = followersCount,
+            following = followingCount,
+            isFollowing = false
+        };
+
         return Ok(new
         {
             user.Id,
@@ -66,7 +80,8 @@ public class PortfoliosController : ControllerBase
             user.Bio,
             user.Major,
             Settings = user.PortfolioSettings,
-            Artworks = user.Artworks
+            Artworks = user.Artworks,
+            stats = stats
         });
     }
 
@@ -89,7 +104,7 @@ public class PortfoliosController : ControllerBase
                 Major = "Thiết kế Đồ họa",
                 YearLevel = "Tốt nghiệp",
                 IsPortfolioPublic = true,
-                SocialLinks = "{\"behance\":\"https://behance.net/\",\"linkedin\":\"https://linkedin.com/\"}",
+                SocialLinks = "{\"behance\":\"https://behance.net/uef_student\",\"linkedin\":\"https://linkedin.com/in/uef_student\"}",
                 UpdatedAt = DateTime.UtcNow
             };
             _context.PortfolioSettings.Add(settings);
@@ -233,13 +248,19 @@ public class PortfoliosController : ControllerBase
     [HttpPost("{slug}/contact")]
     public async Task<IActionResult> Contact(string slug, [FromBody] ContactDto dto)
     {
-        var portfolio = await _context.PortfolioSettings.Include(p => p.User).FirstOrDefaultAsync(p => p.PortfolioSlug == slug);
-        if (portfolio == null) return NotFound();
+        var user = await _context.Users
+            .Include(u => u.PortfolioSettings)
+            .FirstOrDefaultAsync(u => 
+                (u.PortfolioSettings != null && u.PortfolioSettings.PortfolioSlug == slug) || 
+                u.Id == slug || 
+                u.StudentId == slug);
+
+        if (user == null) return NotFound();
 
         var message = new Message
         {
             Id = Guid.NewGuid().ToString(),
-            RecipientId = portfolio.UserId,
+            RecipientId = user.Id,
             SenderName = dto.SenderName,
             SenderEmail = dto.SenderEmail,
             Purpose = dto.Purpose ?? "contact",
@@ -253,7 +274,7 @@ public class PortfoliosController : ControllerBase
         var notification = new Notification
         {
             Id = Guid.NewGuid().ToString(),
-            UserId = portfolio.UserId,
+            UserId = user.Id,
             Type = NotificationType.new_message,
             Content = $"Bạn có liên hệ mới từ {dto.SenderName} qua Portfolio",
             CreatedAt = DateTime.UtcNow

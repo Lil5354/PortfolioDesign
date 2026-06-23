@@ -24,10 +24,25 @@ import {
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive, ArchiveRestore,
   GraduationCap, Rocket, Upload, Menu, ShoppingCart, Languages,
-  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight, ChevronLeft, ThumbsUp, MessageCircle, Package, FileText, Tag, Download, FolderInput, FolderPlus, AlertTriangle
+  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight, ChevronLeft, ThumbsUp, MessageCircle, Package, FileText, Tag, Download, FolderInput, FolderPlus, AlertTriangle, Camera, ImageIcon, Reply, RefreshCw
 } from "lucide-react";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+
+import iconNam1 from './Logoicon/Năm 1.png';
+import iconNam2 from './Logoicon/Năm 2.png';
+import iconNam3 from './Logoicon/Năm 3.png';
+import iconNamCuoi from './Logoicon/Năm cuối.png';
+import iconTotNghiep from './Logoicon/5.png';
+
+const getBadgeIcon = (badgeName) => {
+  if (badgeName === "Designer Mầm non") return iconNam1;
+  if (badgeName === "Designer Thực tập") return iconNam2;
+  if (badgeName === "Designer Chuyên nghiệp") return iconNam3;
+  if (badgeName === "Designer Tiền bối") return iconNamCuoi;
+  if (badgeName === "Designer Tốt nghiệp") return iconTotNghiep;
+  return null;
+};
 import ChatBot from './components/ChatBot';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -318,11 +333,233 @@ function MasonryGrid({
   );
 }
 
+function ProfileQuickViewModal({ person, onClose, setPage }) {
+  if (!person) return null;
+
+  return (
+    <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000, display: "flex" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(2px)" }} onClick={onClose} />
+      
+      <div style={{ position: "absolute", top: 16, right: 16, bottom: 16, width: 560, background: "#fff", borderRadius: 8, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", animation: "slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)" }}>
+        <style>{`
+          @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+        `}</style>
+        
+        <div style={{ height: 90, background: `url('https://picsum.photos/seed/${person.id}/800/300')`, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }}>
+          <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(4px)" }} onMouseOver={e => e.currentTarget.style.background="rgba(0,0,0,0.7)"} onMouseOut={e => e.currentTarget.style.background="rgba(0,0,0,0.5)"}>
+            <X size={16} />
+          </button>
+        </div>
+        
+        <div style={{ padding: "0 24px 20px", textAlign: "center", position: "relative" }}>
+          <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#fff", padding: 4, margin: "-40px auto 12px", position: "relative", zIndex: 2, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
+            <img src={person.avatarUrl || "https://via.placeholder.com/150"} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} alt="" />
+          </div>
+          
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 4 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", position: "relative" }}>
+              <h2 style={{ fontSize: 18, fontWeight: 800, color: "#191919", margin: 0 }}>{person.fullName}</h2>
+              {(() => {
+                const iconBadge = person.badges?.find(b => getBadgeIcon(b) !== null);
+                const iconSrc = iconBadge ? getBadgeIcon(iconBadge) : null;
+                return iconSrc ? <img src={iconSrc} alt={iconBadge} style={{ height: 20, objectFit: "contain", position: "absolute", left: "100%", marginLeft: 6 }} title={iconBadge} /> : null;
+              })()}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#666", fontSize: 12, marginBottom: 10 }}>
+            <MapPin size={12} />
+            {person.location} <span style={{ margin: "0 4px" }}>•</span> <span style={{ color: "#2e7d32", fontWeight: 600 }}>Responds quickly</span>
+          </div>
+          
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginBottom: 16 }}>
+            {person.badges?.filter(b => getBadgeIcon(b) === null).map(b => {
+              if (b === "Featured") {
+                return (
+                  <span key={b} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, padding: "0 10px", borderRadius: 6, background: "#0057ff", color: "#fff", height: 24, boxSizing: "border-box" }}>
+                    <Star size={12} fill="#fff" color="#fff" /> {b}
+                  </span>
+                );
+              }
+              return (
+                <span key={b} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 700, padding: "0 10px", borderRadius: 6, background: "#f5f8ff", color: "#0057ff", height: 24, boxSizing: "border-box" }}>
+                  {b}
+                </span>
+              );
+            })}
+          </div>
+          
+          <div style={{ display: "flex", gap: 8 }}>
+            <button style={{ flex: 1, padding: "8px", borderRadius: 999, background: "#0057ff", color: "#fff", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background .2s" }} onMouseOver={e => e.currentTarget.style.background="#0047d4"} onMouseOut={e => e.currentTarget.style.background="#0057ff"} onClick={() => { onClose(); setPage("portfolio", { portfolioSlug: person.id, openContact: true }); }}>
+              <Mail size={14} /> Send Inquiry
+            </button>
+            <button style={{ flex: 1, padding: "8px", borderRadius: 999, background: "#fff", color: "#191919", border: "1px solid #e0e0e0", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background .2s" }} onMouseOver={e => e.currentTarget.style.background="#f5f5f5"} onMouseOut={e => e.currentTarget.style.background="#fff"} onClick={() => { onClose(); setPage("portfolio", { portfolioSlug: person.id }); }}>
+              <ExternalLink size={14} /> View Profile
+            </button>
+          </div>
+        </div>
+        
+        <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 24px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            {person.artworks?.map((art, i) => (
+              <div key={i} style={{ borderRadius: 8, overflow: "hidden", aspectRatio: "4/3", cursor: "pointer", position: "relative", background: "#f0f0f0" }} className="group">
+                <img src={art.coverImageUrl || art.CoverImageUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", opacity: 0, transition: "opacity .2s", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "16px 12px" }} className="hover-overlay" onMouseOver={e => e.currentTarget.style.opacity = 1} onMouseOut={e => e.currentTarget.style.opacity = 0}>
+                  <p style={{ margin: "0 0 8px", color: "#fff", fontWeight: 600, fontSize: 13, lineHeight: 1.3, textShadow: "0 1px 3px rgba(0,0,0,0.4)" }}>{art.title || art.Title}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#fff" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Eye size={12} />
+                      <span style={{ fontSize: 11, fontWeight: 500 }}>{(art.viewCount || art.ViewCount) >= 1000 ? ((art.viewCount || art.ViewCount)/1000).toFixed(1) + 'k' : (art.viewCount || art.ViewCount)}</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Heart size={12} />
+                      <span style={{ fontSize: 11, fontWeight: 500 }}>{(art.likeCount || art.LikeCount) >= 1000 ? ((art.likeCount || art.LikeCount)/1000).toFixed(1) + 'k' : (art.likeCount || art.LikeCount)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PeopleGrid({ setPage }) {
+  const [people, setPeople] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPerson, setSelectedPerson] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/users/people")
+      .then(res => res.json())
+      .then(data => { setPeople(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div style={{ padding: 40, textAlign: "center", color: "#666" }}>Đang tải danh sách sinh viên...</div>;
+
+  return (
+    <div style={{ padding: "0 32px 64px", background: "#f9f9f9", minHeight: "100vh" }}>
+      <div style={{ background: "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop')", backgroundSize: "cover", backgroundPosition: "center", borderRadius: 16, padding: "64px 32px", textAlign: "center", color: "#fff", marginBottom: 32, position: "relative", overflow: "hidden" }}>
+        <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12, position: "relative", zIndex: 2 }}>Looking to Hire a Creator?</h2>
+        <p style={{ fontSize: 18, color: "#e0e0e0", position: "relative", zIndex: 2 }}>Over 10,000 students are available for your next big project.</p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
+        {people.map(p => (
+          <div key={p.id} onClick={() => setSelectedPerson(p)} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: "1px solid #e0e0e0", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer" }} onMouseOver={e => {e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"}} onMouseOut={e => {e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"}}>
+            <div style={{ display: "flex", gap: 0, background: "#f0f0f0", position: "relative", marginBottom: 32 }}>
+              {p.artworks && p.artworks.length > 0 ? p.artworks.slice(0, 4).map((art, i) => (
+                <div key={i} style={{ flex: 1, aspectRatio: "1/1", overflow: "hidden", borderRight: i < 3 ? "2px solid #fff" : "none" }}>
+                  <img src={art.coverImageUrl || art.CoverImageUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
+                </div>
+              )) : <div style={{ flex: 1, aspectRatio: "4/1" }} />}
+              <div style={{ position: "absolute", bottom: -40, left: "50%", transform: "translateX(-50%)", width: 84, height: 84, borderRadius: "50%", background: "#fff", padding: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 2 }}>
+                <img src={p.avatarUrl || "https://via.placeholder.com/150"} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} alt="" />
+              </div>
+            </div>
+            
+            <div style={{ padding: "16px 20px 24px", textAlign: "center" }}>
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 4 }}>
+                <div style={{ display: "inline-flex", alignItems: "center", position: "relative" }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: "#191919", margin: 0 }}>{p.fullName}</h3>
+                  {(() => {
+                    const iconBadge = p.badges?.find(b => getBadgeIcon(b) !== null);
+                    const iconSrc = iconBadge ? getBadgeIcon(iconBadge) : null;
+                    return iconSrc ? <img src={iconSrc} alt={iconBadge} style={{ height: 22, objectFit: "contain", position: "absolute", left: "100%", marginLeft: 6 }} title={iconBadge} /> : null;
+                  })()}
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, color: "#777", fontSize: 13, marginBottom: 16 }}>
+                <MapPin size={14} />
+                {p.location}
+              </div>
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
+                {p.badges?.filter(b => getBadgeIcon(b) === null).map(b => {
+                  if (b === "Featured") {
+                    return (
+                      <span key={b} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, padding: "6px 16px", borderRadius: 8, background: "#f5f8ff", color: "#0057ff", height: 32, boxSizing: "border-box" }}>
+                        <Star size={14} fill="#0057ff" color="#0057ff" /> {b}
+                      </span>
+                    );
+                  }
+                  return (
+                    <span key={b} style={{ display: "flex", alignItems: "center", fontSize: 13, fontWeight: 700, padding: "6px 16px", borderRadius: 8, background: "#f5f5f5", color: "#444", height: 32, boxSizing: "border-box" }}>{b}</span>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div style={{ display: "flex", padding: "0 0 20px", width: "85%", margin: "0 auto" }}>
+              <div style={{ flex: 1, textAlign: "center" }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#191919" }}>{p.appreciations >= 1000 ? (p.appreciations/1000).toFixed(1) + 'K' : p.appreciations}</div>
+                <div style={{ fontSize: 12, color: "#777" }}>Appreciations</div>
+              </div>
+              <div style={{ width: 1, background: "#e0e0e0", margin: "6px 0" }} />
+              <div style={{ flex: 1, textAlign: "center" }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#191919" }}>{p.followersCount >= 1000 ? (p.followersCount/1000).toFixed(1) + 'K' : p.followersCount}</div>
+                <div style={{ fontSize: 12, color: "#777" }}>Followers</div>
+              </div>
+              <div style={{ width: 1, background: "#e0e0e0", margin: "6px 0" }} />
+              <div style={{ flex: 1, textAlign: "center" }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: "#191919" }}>{p.projectViews >= 1000 ? (p.projectViews/1000).toFixed(1) + 'K' : p.projectViews}</div>
+                <div style={{ fontSize: 12, color: "#777" }}>Project Views</div>
+              </div>
+            </div>
+
+            <div style={{ padding: "0 20px 24px" }}>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setPage("portfolio", { portfolioSlug: p.id, openContact: true }); }}
+                style={{ width: "100%", padding: "10px", borderRadius: 999, border: "1px solid #ccc", background: "#fff", color: "#191919", fontSize: 15, fontWeight: 700, cursor: "pointer", transition: "background .2s" }} 
+                onMouseOver={e => e.currentTarget.style.background = "#f5f5f5"} 
+                onMouseOut={e => e.currentTarget.style.background = "#fff"}
+              >
+                Message {p.fullName.split(' ')[0]}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <ProfileQuickViewModal person={selectedPerson} onClose={() => setSelectedPerson(null)} setPage={setPage} />
+    </div>
+  );
+}
+
 function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarked }) {
   const { user: authUser } = useAuth();
   const [filters, setFilters] = useState({ category: "Tất cả", year: "Tất cả", tool: "Tất cả", sort: "newest", q: "", hasBadge: false });
+  const [searchTab, setSearchTab] = useState("projects");
   const [page, setPageNum] = useState(1);
   const [data, setData] = useState({ artworks: [], total: 0, totalPages: 0 });
+  const [isVisualSearching, setIsVisualSearching] = useState(false);
+  const [visualSearchResults, setVisualSearchResults] = useState(null);
+  const [showVisualSearchPopup, setShowVisualSearchPopup] = useState(false);
+  const visualSearchInputRef = useRef(null);
+
+  const handleVisualSearch = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsVisualSearching(true);
+    setVisualSearchResults(null);
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const res = await fetch("/api/artworks/visual-search", { method: "POST", body: formData });
+      const d = await res.json();
+      if (res.ok) setVisualSearchResults(d.items || []);
+      else alert(d || "Lỗi tìm kiếm");
+    } catch (err) {
+      alert("Lỗi kết nối");
+    }
+    setIsVisualSearching(false);
+    e.target.value = "";
+  };
   const [loading, setLoading] = useState(true);
   const [feedMode, setFeedMode] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -447,6 +684,19 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
     badges: a.badges || [],
   }));
 
+  const displayData = visualSearchResults 
+    ? visualSearchResults.map(a => ({
+        id: a.id,
+        title: a.title,
+        student: a.user?.fullName || t("student"),
+        img: a.coverImageUrl,
+        likes: a.likeCount || 0,
+        views: a.viewCount || 0,
+        isPublic: true,
+        similarityScore: a.similarityScore
+      }))
+    : mapped;
+
   const paginate = (p) => setPageNum(Math.max(1, Math.min(p, data.totalPages || 1)));
 
   return (
@@ -465,11 +715,81 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             )}
           </button>
 
-          <div style={{ position: "relative", flex: 1 }}>
-            <Search size={20} style={{ position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)", color: "#666", pointerEvents: "none" }} />
-            <input value={filters.q} onChange={e => setFilter("q", e.target.value)} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "16px 52px", borderRadius: 999, border: searchFocused ? `1px solid ${UEF_BLUE}` : `1px solid transparent`, fontSize: 16, outline: "none", background: "#f9f9f9", color: BLACK, boxSizing: "border-box", transition: "all .15s", fontWeight: 500 }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
-            {filters.q && (
-              <button onClick={() => setFilter("q", "")} style={{ position: "absolute", right: 20, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: MUTED, padding: 4, display: "flex" }}><X size={18} /></button>
+          <div style={{ position: "relative", flex: 1, display: "flex", alignItems: "center" }}>
+            <Search size={20} style={{ position: "absolute", left: 24, color: "#444", pointerEvents: "none", zIndex: 2 }} />
+            <input value={filters.q} onChange={e => { setFilter("q", e.target.value); setVisualSearchResults(null); }} placeholder={t("searchArtworkStudentTags")} style={{ width: "100%", padding: "14px 120px 14px 56px", borderRadius: 999, border: searchFocused ? `1px solid ${GRAY_LIGHT}` : `1px solid transparent`, fontSize: 16, outline: "none", background: searchFocused ? "#fff" : "#f3f3f4", color: BLACK, boxSizing: "border-box", transition: "all .2s", fontWeight: 400 }} onFocus={() => setSearchFocused(true)} onBlur={() => setSearchFocused(false)} />
+            
+            <div style={{ position: "absolute", right: 12, display: "flex", alignItems: "center", gap: 12, height: "100%", top: 0 }}>
+              {filters.q && (
+                <button onClick={() => setFilter("q", "")} style={{ background: "none", border: "none", cursor: "pointer", color: MUTED, padding: 4, display: "flex", marginRight: 8 }}><X size={18} /></button>
+              )}
+              
+              <div style={{ display: "flex", gap: 20, alignItems: "center", marginRight: 8 }}>
+                <button onClick={() => setSearchTab("projects")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, color: searchTab === "projects" ? "#191919" : "#888" }}>Tác phẩm</button>
+                <button onClick={() => setSearchTab("people")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, color: searchTab === "people" ? "#191919" : "#888" }}>Sinh viên</button>
+                <div style={{ width: 1, height: 16, background: "#e0e0e0" }} />
+              </div>
+              
+              <button 
+                onClick={() => setShowVisualSearchPopup(!showVisualSearchPopup)} 
+                title="Tìm kiếm bằng hình ảnh (AI Visual Search)"
+                style={{ background: isVisualSearching || showVisualSearchPopup ? `${UEF_BLUE}20` : "none", border: "none", cursor: "pointer", color: isVisualSearching || showVisualSearchPopup ? UEF_BLUE : "#191919", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", transition: "background .2s, color .2s" }}
+                onMouseOver={e => { if(!isVisualSearching && !showVisualSearchPopup) e.currentTarget.style.background = "#e4e4e6" }} 
+                onMouseOut={e => { if(!isVisualSearching && !showVisualSearchPopup) e.currentTarget.style.background = "none" }}
+              >
+                <FolderInput size={22} strokeWidth={1.5} />
+              </button>
+            </div>
+            <input type="file" accept="image/*" ref={visualSearchInputRef} style={{ display: "none" }} onChange={(e) => { setShowVisualSearchPopup(false); handleVisualSearch(e); }} />
+
+            {showVisualSearchPopup && (
+              <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 8, width: 800, maxWidth: "calc(100vw - 40px)", background: "#fff", borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)", zIndex: 100, padding: 24 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: "#191919" }}>Search by Image</span>
+                    <span style={{ background: UEF_BLUE, color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 4, letterSpacing: 0.5 }}>AI</span>
+                  </div>
+                  <button onClick={() => setShowVisualSearchPopup(false)} style={{ background: "none", border: "1px solid #e0e0e0", borderRadius: 4, cursor: "pointer", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", color: "#666" }} onMouseOver={e => e.currentTarget.style.background="#f5f5f5"} onMouseOut={e => e.currentTarget.style.background="none"}>
+                    <X size={16} />
+                  </button>
+                </div>
+                
+                <div 
+                  onClick={() => visualSearchInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDrop={(e) => {
+                    e.preventDefault(); e.stopPropagation();
+                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                      const file = e.dataTransfer.files[0];
+                      const dt = new DataTransfer();
+                      dt.items.add(file);
+                      if (visualSearchInputRef.current) {
+                        visualSearchInputRef.current.files = dt.files;
+                        setShowVisualSearchPopup(false);
+                        handleVisualSearch({ target: visualSearchInputRef.current });
+                      }
+                    }
+                  }}
+                  style={{ background: "#f8faff", border: "1px dashed #c0d0f0", borderRadius: 8, padding: "60px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background .2s" }}
+                  onMouseOver={e => e.currentTarget.style.background = "#f0f4ff"}
+                  onMouseOut={e => e.currentTarget.style.background = "#f8faff"}
+                >
+                  {isVisualSearching ? (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+                      <div className="w-8 h-8 border-4 border-t-[#1a4ba8] border-r-[#1a4ba8] border-b-[#e0e0e0] border-l-[#e0e0e0] rounded-full animate-spin"></div>
+                      <span style={{ fontSize: 16, fontWeight: 600, color: "#191919" }}>Đang phân tích hình ảnh...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: "#191919", marginBottom: 12 }}>Drag and drop an image here</span>
+                      <span style={{ fontSize: 13, color: "#666", marginBottom: 24 }}>File types supported: JPG, PNG, GIF, TIFF, WebP. Max size 10MB</span>
+                      <button style={{ background: "#fff", border: "1px solid #d0d0d0", borderRadius: 999, padding: "8px 24px", fontSize: 14, fontWeight: 600, color: "#191919", cursor: "pointer" }}>
+                        Choose Image
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
@@ -483,7 +803,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
             <button onClick={() => setFilter("sort", "most_likes")} style={{ padding: "10px 18px", borderRadius: 999, border: `1px solid ${filters.sort === "most_likes" ? UEF_BLUE : GRAY_LIGHT}`, background: filters.sort === "most_likes" ? UEF_BLUE : "#fff", fontSize: 14, cursor: "pointer", color: filters.sort === "most_likes" ? "#fff" : BLACK, fontWeight: 600, whiteSpace: "nowrap", transition: "all .15s" }}>{t("mostLiked")}</button>
           </div>
 
-          <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap", flexShrink: 0 }}><span>{data.total}</span> <span>{t("artworksFound")}</span></span>
+
           </div>
 
         {showYearTool && (
@@ -601,15 +921,18 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       </div>
       </div>
 
+      {searchTab === "people" ? (
+        <PeopleGrid setPage={setPage} />
+      ) : (
       <div style={{ padding: "8px 32px 64px", width: "100%", boxSizing: "border-box" }}>
         {loading && page === 1 ? (
           <GlobalLoading />
-        ) : mapped.length === 0 ? (
+        ) : displayData.length === 0 ? (
           <div style={{ textAlign: "center", padding: "60px 0", color: MUTED, fontSize: 14 }}>{t("noArtworksFound")}</div>
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 }}>
-              {mapped.map(art => (
+              {displayData.map(art => (
                 <div
                   key={art.id}
                   onClick={() => setPage("detail", { artworkId: art.id })}
@@ -632,6 +955,12 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                         <div style={{ background: "linear-gradient(to right, #1a4ba8, #0ea5e9)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 5px rgba(0,0,0,0.2)" }}>
                           <ShieldCheck size={10} color="#fff" />
                           <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.5px" }}>AI VERIFIED</span>
+                        </div>
+                      )}
+                      {art.similarityScore && (
+                        <div style={{ background: "#4caf50", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, boxShadow: "0 2px 5px rgba(0,0,0,0.2)" }}>
+                          <ImageIcon size={10} color="#fff" />
+                          <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.5px" }}>GIỐNG {art.similarityScore}%</span>
                         </div>
                       )}
                     </div>
@@ -693,6 +1022,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           </>
         )}
       </div>
+      )}
     </div>
   );
 }
@@ -741,6 +1071,12 @@ function PortfolioPage({ setPage, pageParams }) {
   const hashSlug = (window.location.hash.match(/^#\/portfolio\/(.+)/) || [])[1] || "";
   const slug = pageParams?.portfolioSlug || hashSlug;
   const titleByYear = { "Năm 1": t("freshmanDesigner"), "Năm 2": t("internDesigner"), "Năm 3": t("professionalDesigner"), "Năm 4": t("seniorDesigner"), "Tốt nghiệp": t("graduateDesigner") };
+
+  useEffect(() => {
+    if (pageParams?.openContact) {
+      setIsContactModalOpen(true);
+    }
+  }, [pageParams]);
 
   useEffect(() => {
     setIsFollowing(portfolioData?.stats?.isFollowing || false);
@@ -989,7 +1325,7 @@ function PortfolioPage({ setPage, pageParams }) {
       `}</style>
 
       {/* BANNER SECTION */}
-      <div className="w-full relative bg-[#1a4ba8]/5 group" style={{ height: "300px" }}>
+      <div className="w-full relative bg-[#1a4ba8]/5 group" style={{ height: "220px" }}>
         {bannerUrl ? (
           <>
             <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
@@ -1011,7 +1347,7 @@ function PortfolioPage({ setPage, pageParams }) {
                <div className="flex flex-col items-center gap-2 cursor-pointer opacity-70 hover:opacity-100 transition-opacity text-[#1a4ba8]" onClick={() => document.getElementById("bannerUpload")?.click()}>
                  <ArrowDownCircle size={36} />
                  <span className="font-semibold text-lg">Thêm ảnh bìa</span>
-                 <span className="text-sm">Kích thước tối ưu 3200 x 300px</span>
+                 <span className="text-sm">Kích thước tối ưu 3200 x 410px</span>
                </div>
             )}
           </div>
@@ -1024,115 +1360,117 @@ function PortfolioPage({ setPage, pageParams }) {
         )}
       </div>
 
-      <main className="w-full max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-10">
+      <main className="w-full max-w-[1366px] mx-auto px-4 sm:px-6 lg:px-8 pb-12 relative z-10">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           
           {/* LEFT COLUMN */}
-          <div className="w-full lg:w-[320px] flex-shrink-0 -mt-16 relative">
-             <div className="relative w-32 h-32 rounded-full border-4 border-white shadow-sm bg-[#F8F8F8] mb-4 group overflow-hidden">
-                <img src={profile.avatarUrl} alt={profile.fullName} className="w-full h-full object-cover" />
-                {isOwner && (
-                  <div 
-                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                    onClick={() => document.getElementById("avatarUpload")?.click()}
-                    title="Thay đổi ảnh đại diện"
-                  >
-                    <Image size={24} className="text-white" />
-                  </div>
-                )}
-                {isUploadingAvatar && (
-                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1a4ba8]"></div>
-                  </div>
-                )}
-             </div>
-             <input type="file" id="avatarUpload" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
-             
-             <h1 className="text-3xl font-extrabold text-[#212121] tracking-tight mb-1">
-                {profile.fullName}
-             </h1>
-             
-             <p className="text-base text-[#666666] font-medium mb-3">
-                {profile.profileHeadline} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || pSettings?.major || t("graphicDesign")} • UEF
-             </p>
-             
-             {profile.bio && (
-               <p className="text-[14px] text-[#444444] leading-relaxed mb-6">
-                  {profile.bio}
-               </p>
-             )}
-
-             {/* CTA Buttons */}
-             <div className="flex flex-col gap-3 mb-6">
-                <button
-                  className="w-full px-5 py-2.5 rounded-xl bg-[#1a4ba8] text-white text-sm font-bold hover:bg-[#0d2e6e] transition-colors"
-                  onClick={() => setIsContactModalOpen(true)}
-                >
-                  {t("contact")}
-                </button>
-                {slug && authUser?.id !== pUser?.id && (
-                  <button 
-                    onClick={toggleFollow}
-                    className={`w-full px-5 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
-                      isFollowing 
-                        ? "border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] hover:bg-[#EAEAEA]"
-                        : "border-[#1a4ba8] text-[#1a4ba8] bg-blue-50 hover:bg-blue-100"
-                    }`}
-                  >
-                    {isFollowing ? "Bỏ theo dõi" : "Theo dõi"}
-                  </button>
-                )}
-             </div>
-             
-             {/* Social Links */}
-             {socialLinks.length > 0 && (
-               <div className="flex flex-col gap-2 mb-8">
-                 <p className="text-xs font-semibold tracking-widest uppercase text-[#666666] mb-2">Socials</p>
-                 {socialLinks.map((l) => {
-                   const iconMap = {
-                     globe: <Globe size={16} className="text-[#666666]" />,
-                     link: <Link size={16} className="text-[#666666]" />,
-                     mail: <Mail size={16} className="text-[#666666]" />,
-                   };
-                   return (
-                     <a
-                       key={l.label}
-                       href={l.href}
-                       target={l.href.startsWith("http") ? "_blank" : undefined}
-                       rel={l.href.startsWith("http") ? "noreferrer" : undefined}
-                       className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5 text-[#212121] text-sm font-medium transition-colors"
-                     >
-                       {iconMap[l.icon]}
-                       <span>{l.label}</span>
-                     </a>
-                   );
-                 })}
-               </div>
-             )}
-
-             {/* Quick Stats */}
-             <div className="pt-6 border-t border-[#E0E0E0]">
-                <p className="text-xs font-semibold tracking-widest uppercase text-[#666666] mb-4">Stats</p>
-                <div className="flex flex-col gap-4">
-                  {[
-                    { label: t("artworks"), val: stats?.totalArtworks || 0 }, 
-                    { label: t("views"), val: stats?.totalViews?.toLocaleString() || "0" }, 
-                    { label: t("likes"), val: stats?.totalLikes?.toLocaleString() || "0" },
-                    { label: "Người theo dõi", val: followersCount?.toLocaleString() || "0", isClickable: true },
-                    { label: "Đang theo dõi", val: stats?.following?.toLocaleString() || "0", isClickable: true }
-                  ].map((s) => (
-                    <div key={s.label} className="flex justify-between items-center" 
-                         onClick={() => {
-                           if (s.label === 'Người theo dõi') openFollowModal('followers');
-                           if (s.label === 'Đang theo dõi') openFollowModal('following');
-                         }}
-                         style={{ cursor: s.isClickable ? 'pointer' : 'default' }}>
-                      <span className="text-sm text-[#666666]">{s.label}</span>
-                      <span className="text-[15px] font-bold text-[#212121]">{s.val}</span>
+          <div className="w-full lg:w-[280px] xl:w-[320px] flex-shrink-0 -mt-14 relative z-20">
+            <div className="flex flex-col items-start text-left">
+               <div className="relative w-[110px] h-[110px] rounded-full border-[4px] border-white shadow-sm bg-[#F8F8F8] mb-3 group overflow-hidden">
+                  <img src={profile.avatarUrl} alt={profile.fullName} className="w-full h-full object-cover" />
+                  {isOwner && (
+                    <div 
+                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                      onClick={() => document.getElementById("avatarUpload")?.click()}
+                      title="Thay đổi ảnh đại diện"
+                    >
+                      <Image size={24} className="text-white" />
                     </div>
-                  ))}
-                </div>
-             </div>
+                  )}
+                  {isUploadingAvatar && (
+                    <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#1a4ba8]"></div>
+                    </div>
+                  )}
+               </div>
+               <input type="file" id="avatarUpload" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
+               
+               <h1 className="text-[22px] font-bold text-[#212121] tracking-tight mb-1">
+                  {profile.fullName}
+               </h1>
+               
+               <p className="text-[13px] text-[#666666] font-medium mb-3">
+                  {profile.profileHeadline} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || pSettings?.major || t("graphicDesign")} • UEF
+               </p>
+               
+               {profile.bio && (
+                 <p className="text-[13px] text-[#444444] leading-relaxed mb-6">
+                    {profile.bio}
+                 </p>
+               )}
+            </div>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col gap-3 mb-6 w-full mt-2">
+               <button
+                 className="w-full px-5 py-2.5 rounded-xl bg-[#1a4ba8] text-white text-sm font-bold hover:bg-[#0d2e6e] transition-colors"
+                 onClick={() => setIsContactModalOpen(true)}
+               >
+                 {t("contact")}
+               </button>
+               {slug && authUser?.id !== pUser?.id && (
+                 <button 
+                   onClick={toggleFollow}
+                   className={`w-full px-5 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${
+                     isFollowing 
+                       ? "border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] hover:bg-[#EAEAEA]"
+                       : "border-[#1a4ba8] text-[#1a4ba8] bg-blue-50 hover:bg-blue-100"
+                   }`}
+                 >
+                   {isFollowing ? "Bỏ theo dõi" : "Theo dõi"}
+                 </button>
+               )}
+            </div>
+            
+            {/* Social Links */}
+            {socialLinks.length > 0 && (
+              <div className="flex flex-col gap-2 mb-6 w-full">
+                <p className="text-xs font-semibold tracking-widest uppercase text-[#666666] mb-2">Socials</p>
+                {socialLinks.map((l) => {
+                  const iconMap = {
+                    globe: <Globe size={16} className="text-[#666666]" />,
+                    link: <Link size={16} className="text-[#666666]" />,
+                    mail: <Mail size={16} className="text-[#666666]" />,
+                  };
+                  return (
+                    <a
+                      key={l.label}
+                      href={l.href}
+                      target={l.href.startsWith("http") ? "_blank" : undefined}
+                      rel={l.href.startsWith("http") ? "noreferrer" : undefined}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-black/5 text-[#212121] text-sm font-medium transition-colors"
+                    >
+                      {iconMap[l.icon]}
+                      <span>{l.label}</span>
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Quick Stats */}
+            <div className="pt-5 border-t border-[#E0E0E0] w-full text-left">
+               <p className="text-xs font-semibold tracking-widest uppercase text-[#666666] mb-4">Stats</p>
+               <div className="flex flex-col gap-3">
+                 {[
+                   { label: t("artworks"), val: stats?.totalArtworks || 0 }, 
+                   { label: t("views"), val: stats?.totalViews?.toLocaleString() || "0" }, 
+                   { label: t("likes"), val: stats?.totalLikes?.toLocaleString() || "0" },
+                   { label: "Người theo dõi", val: followersCount?.toLocaleString() || "0", isClickable: true },
+                   { label: "Đang theo dõi", val: stats?.following?.toLocaleString() || "0", isClickable: true }
+                 ].map((s) => (
+                   <div key={s.label} className="flex justify-between items-center" 
+                        onClick={() => {
+                          if (s.label === 'Người theo dõi') openFollowModal('followers');
+                          if (s.label === 'Đang theo dõi') openFollowModal('following');
+                        }}
+                        style={{ cursor: s.isClickable ? 'pointer' : 'default' }}>
+                     <span className="text-sm text-[#666666]">{s.label}</span>
+                     <span className="text-[14px] font-bold text-[#212121]">{s.val}</span>
+                   </div>
+                 ))}
+               </div>
+            </div>
           </div>
 
           {/* RIGHT COLUMN */}
@@ -1882,7 +2220,6 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
                              </div>
                              <span style={{ background: "rgba(255,255,255,0.3)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 20, color: "#fff", fontSize: 12, fontWeight: "bold" }}>{col.items?.length || 0} mục</span>
                           </div>
-                        )}
                       </div>
                     </div>
                   );
@@ -3871,7 +4208,6 @@ if (mins < 1) return t("justNow");
                     ))}
                   </div>
                 )}
-          </div>
 
           {/* KHU VỰC THÔNG SỐ ẤN PHẨM (Nền đen) */}
           <div style={{ background: "#111111", padding: "60px 40px", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -4155,6 +4491,7 @@ if (mins < 1) return t("justNow");
 
             </div>
           </div>
+        </div>
 
         </div>
 
@@ -4519,8 +4856,8 @@ function AuthPage({ setPage, onLoginSuccess }) {
 
   const demoAccounts = {
     student: { email: "sv@uef.edu.vn", password: "test123" },
-    lecturer: { email: "admin@uef.edu.vn", password: "test123" },
-    admin: { email: "admin@uef.edu.vn", password: "test123" },
+    lecturer: { email: "lecturer@uef.edu.vn", password: "lecturer123" },
+    admin: { email: "admin@uef.edu.vn", password: "admin123" },
   };
 
   const autoFillLogin = (role) => {
@@ -5678,9 +6015,9 @@ function MessagesPage({ setPage, userData }) {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {displayedMessages.map(msg => (
-              <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#eef4ff", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#a8bce0"}`, overflow: "hidden" }}>
-                <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
+              <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#f8faff", borderRadius: 12, border: `1px solid ${msg.isRead ? "#eaeaea" : "#cce0ff"}`, overflow: "hidden", transition: "all 0.2s" }}>
+                <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", cursor: "pointer" }} onMouseOver={e => { if (expandedId !== msg.id) e.currentTarget.style.background = msg.isRead ? "#fdfdfd" : "#f0f6ff" }} onMouseOut={e => { e.currentTarget.style.background = "transparent" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: msg.isRead ? "#f0f0f0" : "linear-gradient(135deg, #1a4ba8, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? "#888" : "#fff", fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
                   {(() => {
                     let avatarUrl = null;
                     if (msg.purpose === 'order') {
@@ -5696,83 +6033,69 @@ function MessagesPage({ setPage, userData }) {
                     return nameStr.charAt(0).toUpperCase();
                   })()}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-                      <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.senderName?.replace("To: ", "Gửi đến: ")}</p>
-                      {msg.senderCompany && msg.purpose !== 'order' && <span style={{ fontSize: 13, color: MUTED }}>• {msg.senderCompany}</span>}
+                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+                        <p style={{ fontSize: 14, fontWeight: msg.isRead ? 600 : 700, color: "#1a1a1a", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {msg.senderName?.replace("To: ", "Gửi đến: ")}
+                        </p>
+                        {msg.senderCompany && msg.purpose !== 'order' && <span style={{ fontSize: 12, color: "#666", whiteSpace: "nowrap" }}>• {msg.senderCompany}</span>}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                        <span style={{ fontSize: 12, color: "#888", fontWeight: 500 }}>{formatDate(msg.createdAt)}</span>
+                      </div>
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      {msg.purpose === 'order' && (
-                        <span style={{ background: "#ECFDF5", border: `1px solid #10B981`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: "#059669", whiteSpace: "nowrap" }}>{t("order")}</span>
+                      {msg.purpose === 'order' ? (
+                        <span style={{ fontSize: 11, color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>[{t("order")}]</span>
+                      ) : (
+                        msg.purpose && <span style={{ fontSize: 11, color: "#555", fontWeight: 600, whiteSpace: "nowrap" }}>[{msg.purpose}]</span>
                       )}
-                      {msg.purpose && msg.purpose !== 'order' && <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>}
-                      {msg.purpose === 'order' && (
-                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t("orderArtwork")}</p>
-                      )}
-                      {msg.purpose !== 'order' && msg.content && (
-                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
-                      )}
+                      <p style={{ fontSize: 13, color: msg.isRead ? "#666" : "#333", margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                        {msg.purpose === 'order' ? t("orderArtwork") : (msg.content?.substring(0, 100) || "")}
+                      </p>
                     </div>
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
-                    <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap" }}>{formatDate(msg.createdAt)}</span>
-                    {msg.isRead ? <MailOpen size={14} color={MUTED} /> : <Mail size={14} color={CERULEAN} />}
                   </div>
                 </div>
                 {expandedId === msg.id && (
-                  <div style={{ padding: "0 20px 20px 80px" }}>
-                    <div style={{ paddingTop: 16 }}>
+                  <div style={{ padding: "0 16px 16px 64px" }}>
+                    <div style={{ paddingTop: 8, borderTop: "1px dashed #eaeaea" }}>
+                      {msg.senderEmail && (
+                        <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 6, marginTop: 12 }}>
+                          <span style={{ fontSize: 12, color: "#888" }}>Email:</span>
+                          <a href={`mailto:${msg.senderEmail}`} style={{ fontSize: 13, color: "#1a4ba8", textDecoration: "none", fontWeight: 500 }}>{msg.senderEmail}</a>
+                        </div>
+                      )}
                       {msg.purpose === 'order' ? (
                         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <h4 style={{ fontSize: 13, fontWeight: 700, color: CRIMSON, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Yêu cầu đặt hàng tác phẩm</h4>
-                            {msg.status === "processing" && <span style={{ background: "#FEF3C7", color: "#D97706", fontSize: 11, padding: "2px 8px", borderRadius: 12, fontWeight: 600 }}>Đang xử lý</span>}
-                            {msg.status === "completed" && <span style={{ background: "#ECFDF5", color: "#10B981", fontSize: 11, padding: "2px 8px", borderRadius: 12, fontWeight: 600 }}>Hoàn thành</span>}
-                            {(!msg.status || msg.status === "pending") && <span style={{ background: GRAY_BG, color: MUTED, fontSize: 11, padding: "2px 8px", borderRadius: 12, fontWeight: 600 }}>Chờ xử lý</span>}
+                            <h4 style={{ fontSize: 14, fontWeight: 700, color: CRIMSON, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Yêu cầu đặt hàng tác phẩm</h4>
+                            {msg.status === "processing" && <span style={{ background: "#FEF3C7", color: "#D97706", fontSize: 12, padding: "2px 10px", borderRadius: 12, fontWeight: 700 }}>Đang xử lý</span>}
+                            {msg.status === "completed" && <span style={{ background: "#ECFDF5", color: "#10B981", fontSize: 12, padding: "2px 10px", borderRadius: 12, fontWeight: 700 }}>Hoàn thành</span>}
+                            {(!msg.status || msg.status === "pending") && <span style={{ background: GRAY_BG, color: MUTED, fontSize: 12, padding: "2px 10px", borderRadius: 12, fontWeight: 700 }}>Chờ xử lý</span>}
                           </div>
                           {(() => {
                             try {
                               const data = JSON.parse(msg.content);
                               return (
-                                <div style={{ display: "flex", gap: 24, flexWrap: "wrap", alignItems: "flex-start" }}>
-                                  <div style={{ flex: "0 0 140px", borderRadius: 8, overflow: "hidden", border: "1px solid #EAEAEA" }}>
-                                    <img src={data.artworkImage} alt={data.artworkTitle} style={{ width: "100%", height: 140, objectFit: "cover", display: "block" }} />
-                                  </div>
-                                  <div style={{ flex: 1, minWidth: 250 }}>
-                                    <p style={{ fontSize: 18, fontWeight: 800, color: BLACK, margin: "0 0 12px" }}>{data.artworkTitle}</p>
-                                    
-                                    <div style={{ marginBottom: 16 }}>
-                                      <p style={{ fontWeight: 700, color: CERULEAN, margin: "0 0 4px", textTransform: "uppercase", fontSize: 11, letterSpacing: 0.5 }}>Chi tiết đơn hàng</p>
-                                      <p style={{ fontSize: 14, color: "#333", margin: 0, lineHeight: 1.6 }}>{data.description || t("noDescription")}</p>
-                                    </div>
-
-                                    <div style={{ display: "flex", gap: 24 }}>
-                                      {data.phone && (
-                                        <div>
-                                          <p style={{ fontSize: 11, fontWeight: 700, color: MUTED, margin: "0 0 4px", textTransform: "uppercase" }}>Điện thoại liên hệ</p>
-                                          <a href={`tel:${data.phone}`} style={{ fontSize: 15, fontWeight: 600, color: CERULEAN, textDecoration: "none" }}>{data.phone}</a>
-                                        </div>
-                                      )}
-                                      {data.company && (
-                                        <div>
-                                          <p style={{ fontSize: 11, fontWeight: 700, color: MUTED, margin: "0 0 4px", textTransform: "uppercase" }}>Tổ chức / Công ty</p>
-                                          <p style={{ fontSize: 15, fontWeight: 600, color: BLACK, margin: 0 }}>{data.company}</p>
-                                        </div>
-                                      )}
-                                    </div>
+                                <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fdfdfd", border: "1px solid #eaeaea", borderRadius: 8, padding: 12 }}>
+                                  <img src={data.artworkImage} alt={data.artworkTitle} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 4 }} />
+                                  <div style={{ flex: 1 }}>
+                                    <p style={{ fontSize: 14, fontWeight: 700, color: BLACK, margin: "0 0 4px" }}>{data.artworkTitle}</p>
+                                    <p style={{ fontSize: 12, color: "#444", margin: 0 }}>{data.description || t("noDescription")}</p>
                                   </div>
                                 </div>
                               );
                             } catch {
-                              return <p style={{ fontSize: 15, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>;
+                              return <p style={{ fontSize: 13, color: "#333", margin: 0 }}>{msg.content}</p>;
                             }
                           })()}
                         </div>
                       ) : (
-                        <p style={{ fontSize: 15, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>
+                        <p style={{ fontSize: 13, color: "#333", margin: 0 }}>{msg.content}</p>
                       )}
                     </div>
-                    <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
                       {msg.purpose === 'order' ? (
                         <>
                         <button onClick={() => {
@@ -5784,21 +6107,21 @@ function MessagesPage({ setPage, userData }) {
                               setPage("messages");
                             }
                           } catch {}
-                        }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                          <Mail size={14} /> {t("viewArtwork")}
+                        }} style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: "#1a4ba8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background="#153a85"} onMouseOut={e => e.currentTarget.style.background="#1a4ba8"}>
+                          <ExternalLink size={14} /> Xem tác phẩm
                         </button>
                         {msg.status !== "completed" && (
-                          <button onClick={() => handleUpdateStatus(msg.id, "processing")} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${CERULEAN}`, background: msg.status === "processing" ? CERULEAN : "#fff", color: msg.status === "processing" ? "#fff" : CERULEAN, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <button onClick={() => handleUpdateStatus(msg.id, "processing")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${CERULEAN}`, background: msg.status === "processing" ? CERULEAN : "transparent", color: msg.status === "processing" ? "#fff" : CERULEAN, fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
                             Đang xử lý
                           </button>
                         )}
                         {msg.status !== "completed" && (
-                          <button onClick={() => handleUpdateStatus(msg.id, "completed")} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid #10B981`, background: "#fff", color: "#10B981", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <button onClick={() => handleUpdateStatus(msg.id, "completed")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid #10B981`, background: "transparent", color: "#10B981", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
                             Hoàn thành
                           </button>
                         )}
                         {msg.status === "completed" && (
-                           <span style={{ padding: "8px 16px", borderRadius: 8, background: "#ECFDF5", color: "#10B981", fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                           <span style={{ padding: "6px 12px", borderRadius: 6, background: "#ECFDF5", color: "#10B981", fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
                              <Check size={14} /> Đã hoàn thành
                            </span>
                         )}
@@ -5854,14 +6177,14 @@ function AdminSidebar({ active, setPage }) {
   return (
     <div className="w-64 bg-[#F8F8F8] border-r border-[#E0E0E0] flex-shrink-0 flex flex-col h-full overflow-y-auto">
       <div className="p-6 border-b border-[#E0E0E0]">
-        <h3 className="font-bold text-[#212121] text-sm uppercase tracking-wider">{userRole === "lecturer" ? "Trang Giảng Viên" : t("adminPanel")}</h3>
-        <p className="text-xs text-[#666666] mt-1">{userRole === "lecturer" ? "Lecturer Dashboard" : t("adminSystem")}</p>
+        <h3 className="font-medium text-[#212121] text-[13px] uppercase tracking-wider">{userRole === "lecturer" ? "Trang Giảng Viên" : t("adminPanel")}</h3>
+        <p className="text-[11px] text-[#666666] mt-1">{userRole === "lecturer" ? "Lecturer Dashboard" : t("adminSystem")}</p>
       </div>
       <div className="py-4">
         {items.map(item => (
           <div key={item.label} onClick={() => setPage(item.page)} className={`flex items-center gap-3 px-6 py-3 cursor-pointer border-r-4 ${active === item.page ? 'bg-[#e0eaff] border-[#1a4ba8] text-[#1a4ba8]' : 'border-transparent text-[#212121] hover:bg-white'}`}>
             <span className={active === item.page ? 'text-[#1a4ba8]' : 'text-[#666666]'}>{item.icon}</span>
-            <span className={`text-sm ${active === item.page ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
+            <span className={`text-[13px] ${active === item.page ? 'font-medium' : 'font-normal'}`}>{item.label}</span>
           </div>
         ))}
       </div>
@@ -7874,22 +8197,32 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
 
       {/* Quotes Ticker */}
       {testimonials.length > 0 && (
-        <div className="bg-[#0d2e6e] py-8 overflow-hidden border-y border-white/10 shadow-inner">
-          <div className="flex gap-10 whitespace-nowrap animate-[ticker_55s_linear_infinite] w-max">
+        <div className="bg-[#0d2e6e] py-6 overflow-hidden border-y border-white/10 shadow-inner">
+          <div className="flex gap-8 whitespace-nowrap animate-[ticker_48s_linear_infinite] w-max">
             {[...Array(2)].map((_, repIdx) => (
               <React.Fragment key={repIdx}>
                 {testimonials.map((item, idx) => {
                   const c = item.content;
+                  const initials = c.name ? c.name.split(' ').map(n => n[0]).join('').slice(-2).toUpperCase() : '👤';
                   return (
-                    <div key={item.id || idx} className="inline-flex items-center gap-8 px-8 text-white/90 border-r border-white/20 mx-4">
-                      {c.imageUrl && (
-                        <img src={c.imageUrl} alt={c.name} className="w-[140px] h-[140px] rounded-xl object-cover shadow-lg shrink-0 ring-2 ring-white/20" />
+                    <div key={item.id || idx} className="inline-flex items-center gap-6 px-8 text-white/90 border-r border-white/20 mx-4">
+                      {c.imageUrl ? (
+                        <img src={c.imageUrl} alt={c.name} className="w-24 h-24 rounded-md object-cover shadow-lg shrink-0 ring-2 ring-[#c9a227]/30" />
+                      ) : (
+                        <div className="w-24 h-24 rounded-md bg-gradient-to-br from-[#1a4ba8] to-[#DA291C] flex items-center justify-center text-white font-bold text-xl shrink-0 shadow-lg">
+                          {initials}
+                        </div>
                       )}
-                      <div className="flex flex-col whitespace-normal text-left max-w-sm">
-                        <span className="text-[11px] font-bold text-[#c9a227] tracking-[0.12em] uppercase">Đại diện {c.type || ''} — {c.role || ''}</span>
-                        <span className="text-[14px] font-bold text-white mt-1.5">{c.name}</span>
-                        {c.role && <span className="text-[12px] text-white/60 mb-1.5">{c.role}</span>}
-                        {c.quote && <span className="text-[12.5px] text-white/80 leading-relaxed italic border-l-2 border-[#c9a227] pl-3">"{c.quote}"</span>}
+                      <div className="flex flex-col whitespace-normal text-left max-w-md">
+                        <span className="text-[11px] font-bold text-[#c9a227] tracking-wide uppercase">
+                          {c.type} {c.role ? `— ${c.role}` : ''}
+                        </span>
+                        <span className="text-[14px] font-bold text-white mt-1 mb-1">{c.name}</span>
+                        {c.quote && (
+                          <span className="text-[12px] text-white/80 leading-relaxed italic">
+                            "{c.quote}"
+                          </span>
+                        )}
                       </div>
                     </div>
                   );

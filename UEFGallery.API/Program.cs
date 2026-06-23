@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using UEFGallery.API.Data;
 using UEFGallery.API.Services.Background;
+using UEFGallery.API.Services;
 
 using System.IO;
 
@@ -45,7 +46,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
                        ?? "Host=localhost;Database=uefgallery;Username=postgres;Password=postgres";
 
 builder.Services.AddDbContext<GalleryDbContext>(options =>
-    options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
+    options.UseSqlite(connectionString).UseSnakeCaseNamingConvention());
 
 // Configure JWT Authentication
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "your_super_secret_key_that_is_long_enough";
@@ -86,17 +87,27 @@ builder.Services.AddCors(options =>
 });
 
 // Register Fanout Background Service
+builder.Services.AddSingleton<ImageEmbeddingService>();
 builder.Services.AddSingleton<FanoutEventChannel>();
 builder.Services.AddHostedService<FanoutBackgroundService>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || true) // Force developer exceptions for debugging
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseExceptionHandler(c => c.Run(async context =>
+{
+    var exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    context.Response.StatusCode = 500;
+    context.Response.ContentType = "application/json";
+    await context.Response.WriteAsJsonAsync(new { error = exception?.Message, stack = exception?.StackTrace });
+}));
+
 
 app.UseHttpsRedirection();
 

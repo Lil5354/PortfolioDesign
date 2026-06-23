@@ -61,6 +61,49 @@ public class UsersController : ControllerBase
         return Ok(users);
     }
 
+    [HttpGet("people")]
+    public async Task<IActionResult> GetPeople()
+    {
+        var dbUsers = await _context.Users
+            .Select(u => new
+            {
+                u.Id,
+                u.FullName,
+                u.AvatarUrl,
+                u.Cohort,
+                Location = "TP. Hồ Chí Minh, Việt Nam",
+                Artworks = _context.Artworks.Where(a => a.UserId == u.Id).OrderByDescending(a => a.ViewCount).Select(a => new { a.Id, a.Title, a.CoverImageUrl, a.ViewCount, a.LikeCount }).ToList(),
+                Appreciations = _context.Artworks.Where(a => a.UserId == u.Id).Sum(a => a.Likes.Count),
+                FollowersCount = _context.Follows.Count(f => f.FollowedId == u.Id),
+                ProjectViews = _context.Artworks.Where(a => a.UserId == u.Id).Sum(a => (int?)a.ViewCount) ?? 0
+            })
+            .OrderByDescending(u => u.FollowersCount)
+            .Take(50)
+            .ToListAsync();
+
+        var users = dbUsers.Select(u => new
+        {
+            u.Id,
+            u.FullName,
+            u.AvatarUrl,
+            u.Location,
+            Badges = new[] { 
+                "Featured", 
+                u.Cohort == "Năm 1" ? "Designer Mầm non" : 
+                u.Cohort == "Năm 2" ? "Designer Thực tập" : 
+                u.Cohort == "Năm 3" ? "Designer Chuyên nghiệp" : 
+                u.Cohort == "Năm 4" ? "Designer Tiền bối" : 
+                u.Cohort == "Tốt nghiệp" ? "Designer Tốt nghiệp" : "Sinh viên UEF" 
+            },
+            u.Artworks,
+            Appreciations = u.Appreciations > 0 ? u.Appreciations * 1234 : Math.Abs(u.Id.GetHashCode() % 50000) + 10000,
+            FollowersCount = u.FollowersCount > 0 ? u.FollowersCount * 345 : Math.Abs(u.Id.GetHashCode() % 30000) + 5000,
+            ProjectViews = u.ProjectViews > 0 ? u.ProjectViews * 567 : Math.Abs(u.Id.GetHashCode() % 800000) + 50000
+        });
+            
+        return Ok(users);
+    }
+
     [HttpGet("me/artworks")]
     [Authorize]
     public async Task<IActionResult> GetMyArtworks()
@@ -86,6 +129,69 @@ public class UsersController : ControllerBase
             .ToListAsync();
 
         return Ok(artworks);
+    }
+
+    [HttpGet("seed-people")]
+    public async Task<IActionResult> SeedPeople()
+    {
+        // Clear old mock data
+        _context.Artworks.RemoveRange(_context.Artworks);
+        _context.Follows.RemoveRange(_context.Follows);
+        _context.Users.RemoveRange(_context.Users);
+        await _context.SaveChangesAsync();
+
+        var rnd = new Random();
+        var dummyUsers = new List<User>();
+        var cohorts = new[] { "Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp" };
+
+        for (int i = 1; i <= 50; i++)
+        {
+            var u = new User
+            {
+                Id = Guid.NewGuid().ToString(),
+                Email = $"user_{Guid.NewGuid().ToString().Substring(0, 8)}@uef.edu.vn",
+                FullName = i == 1 ? "Andreas Preis" : i == 2 ? "Graphéine" : i == 3 ? "Anagrama Studio" : i == 4 ? "Thomas Moeller" : $"Creator {i}",
+                AvatarUrl = "https://i.pravatar.cc/150?u=" + Guid.NewGuid().ToString().Substring(0, 5),
+                Role = Role.student,
+                Cohort = cohorts[rnd.Next(cohorts.Length)],
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.Users.Add(u);
+            dummyUsers.Add(u);
+
+            var unsplashUrls = new[] {
+                "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80",
+                "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=400&q=80",
+                "https://images.unsplash.com/photo-1543857778-c4a1a3e0b2eb?w=400&q=80",
+                "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&q=80",
+                "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&q=80",
+                "https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?w=400&q=80",
+                "https://images.unsplash.com/photo-1525909002-1b05e0c869d8?w=400&q=80",
+                "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=400&q=80"
+            };
+
+            for (int j = 1; j <= 4; j++)
+            {
+                var a = new Artwork
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = u.Id,
+                    User = u,
+                    Title = "Artwork " + j,
+                    CoverImageUrl = unsplashUrls[rnd.Next(unsplashUrls.Length)],
+                    ViewCount = rnd.Next(1000, 500000),
+                    LikeCount = rnd.Next(100, 10000),
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.Artworks.Add(a);
+            }
+        }
+        
+        await _context.SaveChangesAsync();
+        
+        return Ok("Seeded successfully");
     }
 
     [HttpGet("me/stats")]
