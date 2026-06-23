@@ -68,7 +68,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
     return (
       <div 
         key={block.id} 
-        className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex items-center justify-center shadow-md print:mb-0 print:border-none print:shadow-none print:break-after-page`}
+        className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex items-center justify-center shadow-md print:mb-0 print:border-none print:shadow-none print:break-after-page print:overflow-hidden`}
         onMouseEnter={() => setHoveredBlockId(block.id)}
         onMouseLeave={() => setHoveredBlockId(null)}
         style={{ 
@@ -742,7 +742,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
               </div>
             </div>
           ) : (
-            <div className={`w-full min-h-full pb-32 ${blocks.length > 0 && blocks[0].fullWidth ? '' : 'pt-12'}`}>
+            <div className={`w-full min-h-full pb-32 ${blocks.length > 0 && blocks[0].fullWidth ? '' : 'pt-12'} print:p-0 print:m-0`}>
               {blocks.map(renderBlock)}
             </div>
           )}
