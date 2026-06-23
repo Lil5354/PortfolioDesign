@@ -457,11 +457,76 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
               </div>
            </div>
         )}
-        {block.type === 'video' && (
-           <div className="w-full h-full min-h-[200px] p-4 border border-dashed border-gray-300 rounded flex items-center justify-center">
-             <span className="text-gray-500 font-medium">Video/Audio Placeholder</span>
-           </div>
-        )}
+         {block.type === 'video' && (
+            <div 
+              className={`w-full h-full min-h-[100px] relative transition-all duration-200 border 
+                ${editingBlockId === block.id ? 'border-[#b3b3b3]' : 
+                  focusedBlockId === block.id ? 'border-[#b3b3b3]' : 
+                  hoveredBlockId === block.id ? 'border-dashed border-[#2b64ff]' : 'border-transparent'}`}
+              onClick={(e) => { e.stopPropagation(); setFocusedBlockId(block.id); if (editingBlockId !== block.id) setEditingBlockId(null); }}
+              onDoubleClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id); }}
+            >
+              {focusedBlockId === block.id && editingBlockId !== block.id && (
+                <div 
+                  className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-[#2b64ff] flex items-center justify-center cursor-pointer text-white shadow-md z-20 hover:bg-blue-700 transition"
+                  onClick={(e) => { e.stopPropagation(); setEditingBlockId(block.id); }}
+                >
+                  <Edit2 size={14} />
+                </div>
+              )}
+
+              {/* Editing Mode: Input URL */}
+              {editingBlockId === block.id || !block.content ? (
+                <div className="w-full h-[200px] bg-[#f8f8f8] flex flex-col items-center justify-center gap-3">
+                  <Play size={32} className="text-gray-400" />
+                  <span className="text-gray-500 font-medium">Embed a Video, Audio, or GIF from a link</span>
+                  <input 
+                    type="text"
+                    placeholder="Paste a YouTube, Vimeo, MP4, or GIF link and press Enter"
+                    className="w-[80%] max-w-[500px] px-4 py-2 border border-gray-300 rounded text-sm text-center outline-none focus:border-[#2b64ff]"
+                    defaultValue={block.content || ''}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        updateBlock(block.id, { content: e.target.value });
+                        setEditingBlockId(null);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  {block.content && (
+                    <button onClick={(e) => { e.stopPropagation(); setEditingBlockId(null); }} className="mt-2 text-xs text-gray-500 hover:text-gray-800 underline">Cancel</button>
+                  )}
+                </div>
+              ) : (
+                /* Display Mode */
+                <div className="w-full relative flex items-center justify-center">
+                  {(() => {
+                    const url = block.content;
+                    if (!url) return null;
+                    if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+                      const videoId = url.includes('youtu.be/') ? url.split('youtu.be/')[1].split('?')[0] : new URLSearchParams(new URL(url).search).get('v');
+                      return <iframe width="100%" height="500" src={`https://www.youtube.com/embed/${videoId}?autoplay=0`} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>;
+                    } else if (url.includes('vimeo.com/')) {
+                      const videoId = url.split('vimeo.com/')[1].split('?')[0];
+                      return <iframe src={`https://player.vimeo.com/video/${videoId}`} width="100%" height="500" frameBorder="0" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen></iframe>;
+                    } else if (url.match(/\.(mp4|webm|ogg)(\?.*)?$/i)) {
+                      return <video src={url} controls autoPlay loop muted playsInline style={{ maxWidth: '100%', maxHeight: '600px' }}></video>;
+                    } else if (url.match(/\.(gif|jpg|jpeg|png|webp)(\?.*)?$/i)) {
+                      return <img src={url} style={{ maxWidth: '100%', maxHeight: '600px', objectFit: 'contain' }} />;
+                    } else {
+                      return (
+                        <div className="w-full h-[200px] bg-red-50 flex flex-col items-center justify-center gap-2 border border-red-200">
+                          <span className="text-red-500 font-medium">Link format not supported or recognized.</span>
+                          <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 underline mb-2 break-all px-4 text-center">{url}</a>
+                          <button onClick={() => setEditingBlockId(block.id)} className="text-sm bg-white border border-gray-300 px-3 py-1 rounded hover:bg-gray-50">Edit Link</button>
+                        </div>
+                      );
+                    }
+                  })()}
+                </div>
+              )}
+            </div>
+         )}
         
         {/* Floating Actions on Hover */}
         {hoveredBlockId === block.id && (
