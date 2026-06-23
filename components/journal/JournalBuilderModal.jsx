@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle } from "lucide-react";
+import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle, Move } from "lucide-react";
 
 export default function JournalBuilderModal({ isOpen, onClose, collection, orientation, initialDraft, onSaveDraft, currentUser }) {
   const [blocks, setBlocks] = useState(initialDraft?.blocks || []);
