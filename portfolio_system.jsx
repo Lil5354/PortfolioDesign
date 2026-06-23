@@ -8,6 +8,8 @@ import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import EbookViewerModal from "./components/catalog/EbookViewerModal";
 import NotificationBell from "./components/NotificationBell";
 import DraftBuilderModal from "./components/DraftBuilderModal";
+import JournalSettingsModal from "./components/journal/JournalSettingsModal";
+import JournalBuilderModal from "./components/journal/JournalBuilderModal";
 import { TranslationProvider, useI18n } from "./lib/i18n.jsx";
 import { t } from "./lib/i18n.jsx";
 import { useSiteContent } from "./lib/site-content.js";
@@ -10394,6 +10396,39 @@ export default function App() {
   const [activeCollectionId, setActiveCollectionId] = useState(null);
   const [catalogCollection, setCatalogCollection] = useState(null);
 
+  // New Journal Builder states
+  const [journalCollection, setJournalCollection] = useState(null);
+  const [showJournalSettings, setShowJournalSettings] = useState(false);
+  const [showJournalBuilder, setShowJournalBuilder] = useState(false);
+  const [journalOrientation, setJournalOrientation] = useState('portrait');
+  const [journalDraft, setJournalDraft] = useState(null);
+
+  const handleOpenJournalFlow = (c) => {
+    setJournalCollection(c);
+    const savedDrafts = JSON.parse(localStorage.getItem('uef_journal_drafts') || '{}');
+    const draft = savedDrafts[c.id];
+    if (draft) {
+      if (window.confirm("Bạn có một bản nháp thiết kế tập san chưa hoàn thành cho bộ sưu tập này. Bạn có muốn tiếp tục chỉnh sửa bản nháp đó không?\n\nChọn OK để tiếp tục.\nChọn Cancel để bắt đầu thiết kế mới.")) {
+        setJournalOrientation(draft.orientation || 'portrait');
+        setJournalDraft(draft);
+        setShowJournalBuilder(true);
+      } else {
+        setJournalDraft(null);
+        setShowJournalSettings(true);
+      }
+    } else {
+      setJournalDraft(null);
+      setShowJournalSettings(true);
+    }
+  };
+
+  const handleSaveJournalDraft = (draftData) => {
+    if (!journalCollection) return;
+    const savedDrafts = JSON.parse(localStorage.getItem('uef_journal_drafts') || '{}');
+    savedDrafts[journalCollection.id] = draftData;
+    localStorage.setItem('uef_journal_drafts', JSON.stringify(savedDrafts));
+  };
+
   useEffect(() => {
     api.collections.list().then(data => {
       let result = Array.isArray(data) ? data : [];
@@ -10629,7 +10664,7 @@ export default function App() {
             setPage={setPage}
             collection={activeCollection}
             onUpdateCollection={updateActiveCollection}
-            onOpenCatalogBuilder={(c) => setCatalogCollection(c)}
+            onOpenCatalogBuilder={(c) => handleOpenJournalFlow(c)}
           />
         ) : <AccessDenied setPage={setPage} />
       )}
@@ -10657,6 +10692,25 @@ export default function App() {
           onClose={() => setCatalogCollection(null)}
         />
       )}
+
+      <JournalSettingsModal
+        isOpen={showJournalSettings}
+        onClose={() => setShowJournalSettings(false)}
+        onContinue={(orientation) => {
+          setJournalOrientation(orientation);
+          setShowJournalSettings(false);
+          setShowJournalBuilder(true);
+        }}
+      />
+      
+      <JournalBuilderModal
+        isOpen={showJournalBuilder}
+        onClose={() => setShowJournalBuilder(false)}
+        collection={journalCollection}
+        orientation={journalOrientation}
+        initialDraft={journalDraft}
+        onSaveDraft={handleSaveJournalDraft}
+      />
 
       {/* ChatBot */}
       <ChatBot userRole={userRole} />
