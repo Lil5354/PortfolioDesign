@@ -184,6 +184,12 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                   ) : (
                     <>
                       <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("admin"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {userRole === "lecturer" ? "Dashboard Giảng viên" : t("adminDashboard")}</div>
+                      {userRole === "lecturer" && (
+                        <>
+                          <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("moodboards"); setIsDropdownOpen(false); }}><Bookmark size={16} className="text-[#666666]" /> Moodboard</div>
+                          <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("messages"); setIsDropdownOpen(false); }}><Mail size={16} className="text-[#666666]" /> {t("inbox")}</div>
+                        </>
+                      )}
                       <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
                     </>
                   )}
@@ -226,7 +232,14 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                 ) : (
                   <>
                     <div className="border-t border-[#E0E0E0] my-1" />
-                    <button onClick={() => { setPage("admin"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />{t("admin")}</button>
+                    <button onClick={() => { setPage("admin"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />{userRole === "lecturer" ? "Dashboard Giảng viên" : t("admin")}</button>
+                    {userRole === "lecturer" && (
+                      <>
+                        <button onClick={() => { setPage("moodboards"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Bookmark size={16} className="inline mr-2" />Moodboard</button>
+                        <button onClick={() => { setPage("messages"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Mail size={16} className="inline mr-2" />{t("inbox")}</button>
+                      </>
+                    )}
+                    <button onClick={() => { setPage("settings"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Settings size={16} className="inline mr-2" />{t("settings")}</button>
                   </>
                 )}
                 <div className="border-t border-[#E0E0E0] my-1" />
@@ -1884,19 +1897,31 @@ function ToggleSwitch({ isOn, onToggle, disabled = false }) {
 }
 
 function DashboardSidebar({ activePage, setPage, userData }) {
-    const items = [
-    { icon: <Image size={18} />, label: t("myArtworks"), page: "dashboard" },
-    { icon: <Bookmark size={18} />, label: "Moodboard", page: "moodboards" },
-    { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
-    { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
-    { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
-  ];
-  if (userData?.role === "lecturer" || userData?.role === "admin") {
-      items.splice(1, 0, { icon: <CheckCircle size={18} />, label: "Chấm điểm", page: "pending_artworks" });
+  let items = [];
+  if (userData?.role === "lecturer") {
+    items = [
+      { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
+      { icon: <Bookmark size={18} />, label: "Moodboard", page: "moodboards" },
+      { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
+    ];
+  } else if (userData?.role === "admin") {
+    items = [
+      { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
+    ];
+  } else {
+    items = [
+      { icon: <Image size={18} />, label: t("myArtworks"), page: "dashboard" },
+      { icon: <Bookmark size={18} />, label: "Moodboard", page: "moodboards" },
+      { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
+      { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
+      { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
+    ];
   }
-  const profileName = userData?.fullName || userData?.name || t("student");
+  
+  const roleLabel = { student: t("student"), lecturer: t("lecturer"), admin: t("admin") };
+  const profileName = userData?.fullName || userData?.name || roleLabel[userData?.role] || t("student");
   const profileAvatar = userData?.avatarUrl || userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
-  const studentYear = t("student");
+  const studentYear = roleLabel[userData?.role] || t("student");
 
   return (
     <div style={{ width: 220, background: "#fff", borderRight: `1px solid ${GRAY_LIGHT}`, padding: "28px 0", flexShrink: 0 }}>
@@ -3250,6 +3275,110 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
   );
 }
 
+function FeedbackModal({ setPage, activeArtworkId, onClose, userProfile }) {
+  const [feedbackData, setFeedbackData] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!feedbackData.trim()) {
+      alert("Vui lòng nhập nội dung nhận xét");
+      return;
+    }
+
+    setSending(true);
+    try {
+      let targetRecipientId = null;
+      let targetRecipientSlug = "uef-design-gallery";
+      let actualTitle = "Tác phẩm";
+      let actualImage = "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80";
+      
+      try {
+        if (activeArtworkId) {
+          const artworkData = await api.artworks.get(activeArtworkId);
+          if (artworkData?.userId) targetRecipientId = artworkData.userId;
+          else if (artworkData?.user?.id) targetRecipientId = artworkData.user.id;
+          else if (artworkData?.user?.portfolioSettings?.portfolioSlug) targetRecipientSlug = artworkData.user.portfolioSettings.portfolioSlug;
+          
+          if (artworkData?.title) actualTitle = artworkData.title;
+          if (artworkData?.coverImageUrl) actualImage = artworkData.coverImageUrl;
+        }
+      } catch {}
+
+      await api.messages.send({
+        recipientId: targetRecipientId,
+        recipientSlug: targetRecipientId ? null : targetRecipientSlug,
+        senderName: userProfile?.fullName || userProfile?.name || "Giảng viên",
+        senderEmail: userProfile?.email || "",
+        senderCompany: "UEF",
+        purpose: "feedback",
+        content: JSON.stringify({
+          artworkId: activeArtworkId,
+          artworkTitle: actualTitle,
+          artworkImage: actualImage,
+          description: feedbackData.trim(),
+        }),
+      });
+
+      alert("Đã gửi feedback thành công!");
+      onClose();
+    } catch (e) {
+      alert("Lỗi khi gửi feedback: " + (e?.message || "Vui lòng thử lại"));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[10000] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-xl shadow-lg w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
+          <h3 className="text-xl font-bold text-[#212121]">Feedback Kín</h3>
+          <button onClick={onClose} className="text-[#666666] hover:text-[#212121] transition-colors cursor-pointer"><X size={20} /></button>
+        </div>
+        <div className="p-6">
+          <p className="text-sm text-[#666666] mb-4">Nhận xét này sẽ được gửi trực tiếp vào hộp thư của sinh viên và không công khai trên hệ thống.</p>
+          <div>
+            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#666666", marginBottom: 6 }}>Nội dung nhận xét</label>
+            <textarea
+              value={feedbackData}
+              onChange={e => setFeedbackData(e.target.value)}
+              placeholder="Nhập góp ý, nhận xét về bố cục, màu sắc, ý tưởng..."
+              rows={6}
+              style={{ width: "100%", padding: "12px", borderRadius: 8, border: `1px solid #E0E0E0`, fontSize: 14, outline: "none", resize: "vertical", minHeight: 120, boxSizing: "border-box", color: "#212121" }}
+            />
+          </div>
+        </div>
+        <div className="p-6 border-t border-[#E0E0E0] flex gap-3">
+          <button onClick={onClose} disabled={sending} style={{ flex: 1, padding: "12px", borderRadius: 8, border: `1px solid #E0E0E0`, background: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer", color: "#212121", opacity: sending ? 0.6 : 1 }}>
+            Hủy
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={sending || !feedbackData.trim()}
+            style={{
+              flex: 1,
+              padding: "12px",
+              borderRadius: 8,
+              border: "none",
+              background: (sending || !feedbackData.trim()) ? "#E0E0E0" : "#1a4ba8",
+              color: (sending || !feedbackData.trim()) ? "#666666" : "#fff",
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: (sending || !feedbackData.trim()) ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            {sending ? "Đang gửi..." : <><Send size={16} /> Gửi Feedback</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
     const { user: authUser } = useAuth();
   const [art, setArt] = useState({
@@ -3313,6 +3442,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [downloading, setDownloading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [isReadingEbook, setIsReadingEbook] = useState(false);
   const [readerOrientation, setReaderOrientation] = useState('portrait');
   const [orderData, setOrderData] = useState({
@@ -3830,6 +3960,14 @@ if (mins < 1) return t("justNow");
                         )}
                       </div>
                     )}
+                    <button 
+                      onClick={handleShare}
+                      style={{ background: "rgba(255,255,255,0.1)", color: "#fff", border: "1px solid rgba(255,255,255,0.2)", padding: "8px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8, transition: "0.2s" }}
+                      onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.2)"}
+                      onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
+                    >
+                      <Link size={14} /> Share
+                    </button>
                     {(!art.tags?.includes("EBOOK") && !art.tags?.includes("EBOOK_LANDSCAPE")) && (currentUserRole === "lecturer" || currentUserRole === "admin" || currentUserId === art.user?.id) && (
                       <button 
                         onClick={() => {
@@ -4419,6 +4557,9 @@ if (mins < 1) return t("justNow");
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <button onClick={() => setIsFollowing(!isFollowing)} style={{ background: isFollowing ? "#EAEAEA" : "#0057ff", color: isFollowing ? "#333" : "#fff", border: "none", padding: "10px", borderRadius: 24, fontSize: 14, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>{isFollowing ? "Following" : <><div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>+</div> Follow</>}</button>
                   <button onClick={() => setShowOrderModal(true)} style={{ background: "#fff", color: "#0057ff", border: "1px solid #EAEAEA", padding: "10px", borderRadius: 24, fontSize: 14, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}><Mail size={16} /> Order</button>
+                  {(authUser?.role === "lecturer" || authUser?.role === "admin") && (
+                    <button onClick={() => setShowFeedbackModal(true)} style={{ background: "#fff", color: "#1a4ba8", border: "1px solid #1a4ba8", padding: "10px", borderRadius: 24, fontSize: 14, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}><MessageSquare size={16} /> Feedback kín</button>
+                  )}
                 </div>
               </div>
 
@@ -4555,6 +4696,15 @@ if (mins < 1) return t("justNow");
               <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>Hire</span>
             </div>
 
+            {(authUser?.role === "lecturer" || authUser?.role === "admin") && (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", pointerEvents: "auto" }} onClick={() => setShowFeedbackModal(true)}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                  <MessageSquare size={14} color="#1a4ba8" />
+                </div>
+                <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>Feedback</span>
+              </div>
+            )}
+
             {/* TOOLS BUTTON */}
             {(() => {
               let toolsList = art.toolsUsed || art.tools || (art.tool ? art.tool.split(',').map(t => t.trim()).filter(Boolean) : []);
@@ -4643,13 +4793,6 @@ if (mins < 1) return t("justNow");
                 <Folder size={14} color="#191919" fill={isBookmarked && isBookmarked(art.id) ? "#191919" : "none"} />
               </div>
               <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>{isBookmarked && isBookmarked(art.id) ? "Saved" : "Save"}</span>
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", pointerEvents: "auto" }} onClick={handleShare}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <Upload size={14} color="#191919" />
-              </div>
-              <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>Share</span>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", marginTop: 4, pointerEvents: "auto" }} onClick={handleLike}>
@@ -4792,6 +4935,10 @@ if (mins < 1) return t("justNow");
 
       {showOrderModal && activeArtworkId && (
         <OrderModal setPage={setPage} activeArtworkId={activeArtworkId} onClose={() => setShowOrderModal(false)} />
+      )}
+
+      {showFeedbackModal && activeArtworkId && (
+        <FeedbackModal setPage={setPage} activeArtworkId={activeArtworkId} onClose={() => setShowFeedbackModal(false)} userProfile={authUser} />
       )}
 
       {showFullscreen && (
@@ -5971,6 +6118,10 @@ function MessagesPage({ setPage, userData }) {
   const [expandedId, setExpandedId] = useState(null);
   const [activeTab, setActiveTab] = useState("inbox");
 
+  const [replyText, setReplyText] = useState({});
+  const [replying, setReplying] = useState({});
+  const { user: authUser } = useAuth();
+
   useEffect(() => {
     api.messages.list().then(data => {
       setMessages(Array.isArray(data) ? data : []);
@@ -5978,29 +6129,78 @@ function MessagesPage({ setPage, userData }) {
     }).catch(() => setLoading(false));
   }, []);
 
-  const toggleMessage = (id) => {
+  const toggleMessage = (id, thread) => {
     if (expandedId === id) {
       setExpandedId(null);
     } else {
       setExpandedId(id);
-      api.messages.markRead(id).catch(() => {});
-      setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m));
+      if (thread && thread.isThread) {
+        thread.messages.forEach(m => {
+          if (!m.isRead) api.messages.markRead(m.id).catch(() => {});
+        });
+        setMessages(prev => prev.map(m => (thread.messages.some(tm => tm.id === m.id) ? { ...m, isRead: true } : m)));
+      } else {
+        api.messages.markRead(id).catch(() => {});
+        setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m));
+      }
     }
   };
 
-  const handleArchive = async (id) => {
+  const handleReply = async (thread) => {
+    const text = (replyText[thread.id] || "").trim();
+    if (!text) return;
+    
+    setReplying(prev => ({ ...prev, [thread.id]: true }));
     try {
-      await api.messages.archive(id);
-      setMessages(prev => prev.map(m => m.id === id ? { ...m, isArchived: true } : m));
+      // Find original sender to reply to
+      const originalMsg = thread.messages.find(m => !m.senderName?.startsWith("To: "));
+      const recipientSlug = originalMsg ? originalMsg.senderEmail : "uef-design-gallery";
+      
+      const newMsgData = await api.messages.send({
+        recipientSlug: recipientSlug,
+        senderName: authUser?.fullName || authUser?.name || "Bạn",
+        senderEmail: authUser?.email || "",
+        senderCompany: "UEF",
+        purpose: thread.purpose,
+        content: JSON.stringify({
+          ...thread.artworkData,
+          description: text,
+        }),
+      });
+      
+      // Update local messages
+      setMessages(prev => [newMsgData, ...prev]);
+      setReplyText(prev => ({ ...prev, [thread.id]: "" }));
+    } catch (e) {
+      alert("Lỗi khi gửi phản hồi: " + (e?.message || "Vui lòng thử lại"));
+    } finally {
+      setReplying(prev => ({ ...prev, [thread.id]: false }));
+    }
+  };
+
+  const handleArchive = async (id, thread) => {
+    try {
+      if (thread && thread.isThread) {
+        await Promise.all(thread.messages.map(m => api.messages.archive(m.id)));
+        setMessages(prev => prev.map(m => thread.messages.some(tm => tm.id === m.id) ? { ...m, isArchived: true } : m));
+      } else {
+        await api.messages.archive(id);
+        setMessages(prev => prev.map(m => m.id === id ? { ...m, isArchived: true } : m));
+      }
     } catch (e) {
       alert(t("archiveError") + (e?.message || t("pleaseTryAgain")));
     }
   };
 
-  const handleUnarchive = async (id) => {
+  const handleUnarchive = async (id, thread) => {
     try {
-      await api.messages.unarchive(id);
-      setMessages(prev => prev.map(m => m.id === id ? { ...m, isArchived: false } : m));
+      if (thread && thread.isThread) {
+        await Promise.all(thread.messages.map(m => api.messages.unarchive(m.id)));
+        setMessages(prev => prev.map(m => thread.messages.some(tm => tm.id === m.id) ? { ...m, isArchived: false } : m));
+      } else {
+        await api.messages.unarchive(id);
+        setMessages(prev => prev.map(m => m.id === id ? { ...m, isArchived: false } : m));
+      }
     } catch (e) {
       alert("Lỗi khôi phục: " + (e?.message || t("pleaseTryAgain")));
     }
@@ -6024,7 +6224,65 @@ function MessagesPage({ setPage, userData }) {
     return d.toLocaleDateString("vi-VN");
   };
 
-  const displayedMessages = messages.filter(m => activeTab === "archived" ? m.isArchived : !m.isArchived);
+  const threadedMessages = React.useMemo(() => {
+    const filtered = messages.filter(m => activeTab === "archived" ? m.isArchived : !m.isArchived);
+    const groups = {};
+    const unassociated = [];
+
+    filtered.forEach(msg => {
+      let artworkId = null;
+      let artworkData = null;
+      if (msg.purpose === 'order' || msg.purpose === 'feedback') {
+        try {
+          artworkData = JSON.parse(msg.content);
+          if (artworkData.artworkId) {
+            artworkId = artworkData.artworkId;
+          }
+        } catch {}
+      }
+
+      if (artworkId) {
+        if (!groups[artworkId]) groups[artworkId] = { artworkData, messages: [] };
+        groups[artworkId].messages.push(msg);
+      } else {
+        unassociated.push(msg);
+      }
+    });
+
+    Object.values(groups).forEach(g => {
+      g.messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    });
+
+    const result = [];
+    Object.values(groups).forEach(g => {
+      const latestMsg = g.messages[g.messages.length - 1];
+      result.push({
+        isThread: true,
+        id: `thread-${latestMsg.id}`,
+        artworkId: g.artworkData.artworkId,
+        artworkData: g.artworkData,
+        messages: g.messages,
+        latestMessage: latestMsg,
+        createdAt: latestMsg.createdAt,
+        isRead: g.messages.every(m => m.isRead),
+        purpose: latestMsg.purpose,
+      });
+    });
+
+    unassociated.forEach(msg => {
+      result.push({
+        isThread: false,
+        id: msg.id,
+        latestMessage: msg,
+        createdAt: msg.createdAt,
+        isRead: msg.isRead,
+        purpose: msg.purpose,
+      });
+    });
+
+    result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return result;
+  }, [messages, activeTab]);
 
   return (
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
@@ -6033,154 +6291,184 @@ function MessagesPage({ setPage, userData }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>{t("inboxTitle")}</h2>
           <div style={{ display: "flex", gap: 8, background: "#fff", padding: 4, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
-            <button onClick={() => setActiveTab("inbox")} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "inbox" ? "#f3f4f6" : "transparent", color: activeTab === "inbox" ? BLACK : MUTED }}>Hộp thư đến</button>
-            <button onClick={() => setActiveTab("archived")} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "archived" ? "#f3f4f6" : "transparent", color: activeTab === "archived" ? BLACK : MUTED }}>Đã lưu trữ</button>
+            <button onClick={() => { setActiveTab("inbox"); setExpandedId(null); }} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "inbox" ? "#f3f4f6" : "transparent", color: activeTab === "inbox" ? BLACK : MUTED }}>Hộp thư đến</button>
+            <button onClick={() => { setActiveTab("archived"); setExpandedId(null); }} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "archived" ? "#f3f4f6" : "transparent", color: activeTab === "archived" ? BLACK : MUTED }}>Đã lưu trữ</button>
           </div>
         </div>
         {loading ? (
           <p style={{ textAlign: "center", color: MUTED, padding: 40 }}>{t("loading")}</p>
-        ) : displayedMessages.length === 0 ? (
+        ) : threadedMessages.length === 0 ? (
           <p style={{ textAlign: "center", color: MUTED, padding: 40, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>{activeTab === "archived" ? "Chưa có tin nhắn lưu trữ" : t("noMessages")}</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {displayedMessages.map(msg => (
-              <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#f8faff", borderRadius: 12, border: `1px solid ${msg.isRead ? "#eaeaea" : "#cce0ff"}`, overflow: "hidden", transition: "all 0.2s" }}>
-                <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", cursor: "pointer" }} onMouseOver={e => { if (expandedId !== msg.id) e.currentTarget.style.background = msg.isRead ? "#fdfdfd" : "#f0f6ff" }} onMouseOut={e => { e.currentTarget.style.background = "transparent" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: msg.isRead ? "#f0f0f0" : "linear-gradient(135deg, #1a4ba8, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? "#888" : "#fff", fontWeight: 700, fontSize: 15, flexShrink: 0 }}>
-                  {(() => {
-                    let avatarUrl = null;
-                    if (msg.purpose === 'order') {
-                      try {
-                        const data = JSON.parse(msg.content);
-                        if (data.artworkImage) avatarUrl = data.artworkImage;
-                      } catch {}
-                    }
-                    if (avatarUrl) {
-                      return <img src={avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />;
-                    }
-                    const nameStr = msg.senderName?.replace("To: ", "") || "?";
-                    return nameStr.charAt(0).toUpperCase();
-                  })()}
+            {threadedMessages.map(thread => {
+              const msg = thread.latestMessage;
+              const isExpanded = expandedId === thread.id;
+              
+              let avatarUrl = null;
+              if (thread.isThread && thread.artworkData?.artworkImage) {
+                 avatarUrl = thread.artworkData.artworkImage;
+              } else if (msg.purpose === 'order') {
+                try {
+                  const data = JSON.parse(msg.content);
+                  if (data.artworkImage) avatarUrl = data.artworkImage;
+                } catch {}
+              }
+
+              // Determine the other party's name
+              let displayName = thread.isThread 
+                ? (thread.artworkData?.artworkTitle || msg.senderName?.replace("To: ", "Gửi đến: "))
+                : msg.senderName?.replace("To: ", "Gửi đến: ");
+
+              // Subtext is latest message
+              let subText = msg.purpose === 'order' ? t("orderArtwork") : (msg.content || "");
+              if (thread.isThread && msg.purpose !== 'order') {
+                try {
+                  const data = JSON.parse(msg.content);
+                  subText = data.description || subText;
+                } catch {}
+              }
+
+              return (
+              <div key={thread.id} style={{ display: "flex", flexDirection: "column", background: thread.isRead ? "#fff" : "#f8faff", borderRadius: 12, border: `1px solid ${thread.isRead ? "#eaeaea" : "#cce0ff"}`, overflow: "hidden", transition: "all 0.2s" }}>
+                <div onClick={() => toggleMessage(thread.id, thread)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", cursor: "pointer" }} onMouseOver={e => { if (!isExpanded) e.currentTarget.style.background = thread.isRead ? "#fdfdfd" : "#f0f6ff" }} onMouseOut={e => { e.currentTarget.style.background = "transparent" }}>
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: thread.isRead ? "#f0f0f0" : "linear-gradient(135deg, #1a4ba8, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", color: thread.isRead ? "#888" : "#fff", fontWeight: 700, fontSize: 16, flexShrink: 0 }}>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
+                  ) : (
+                    (msg.senderName?.replace("To: ", "") || "?").charAt(0).toUpperCase()
+                  )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
-                        <p style={{ fontSize: 14, fontWeight: msg.isRead ? 600 : 700, color: "#1a1a1a", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {msg.senderName?.replace("To: ", "Gửi đến: ")}
+                        <p style={{ fontSize: 15, fontWeight: thread.isRead ? 600 : 700, color: "#1a1a1a", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {displayName}
                         </p>
-                        {msg.senderCompany && msg.purpose !== 'order' && <span style={{ fontSize: 12, color: "#666", whiteSpace: "nowrap" }}>• {msg.senderCompany}</span>}
+                        {thread.isThread && <span style={{ fontSize: 12, color: "#666", whiteSpace: "nowrap" }}>• {thread.messages.length} tin nhắn</span>}
+                        {!thread.isThread && msg.senderCompany && msg.purpose !== 'order' && <span style={{ fontSize: 12, color: "#666", whiteSpace: "nowrap" }}>• {msg.senderCompany}</span>}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                        <span style={{ fontSize: 12, color: "#888", fontWeight: 500 }}>{formatDate(msg.createdAt)}</span>
+                        <span style={{ fontSize: 12, color: "#888", fontWeight: 500 }}>{formatDate(thread.createdAt)}</span>
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      {msg.purpose === 'order' ? (
+                      {thread.purpose === 'order' ? (
                         <span style={{ fontSize: 11, color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>[{t("order")}]</span>
+                      ) : thread.purpose === 'feedback' ? (
+                        <span style={{ fontSize: 11, color: "#1a4ba8", fontWeight: 600, whiteSpace: "nowrap" }}>[Feedback Kín]</span>
                       ) : (
-                        msg.purpose && <span style={{ fontSize: 11, color: "#555", fontWeight: 600, whiteSpace: "nowrap" }}>[{msg.purpose}]</span>
+                        thread.purpose && <span style={{ fontSize: 11, color: "#555", fontWeight: 600, whiteSpace: "nowrap" }}>[{thread.purpose}]</span>
                       )}
-                      <p style={{ fontSize: 13, color: msg.isRead ? "#666" : "#333", margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                        {msg.purpose === 'order' ? t("orderArtwork") : (msg.content?.substring(0, 100) || "")}
+                      <p style={{ fontSize: 13, color: thread.isRead ? "#666" : "#333", margin: 0, fontWeight: thread.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                        {msg.senderName?.startsWith("To: ") ? "Bạn: " : ""}{subText}
                       </p>
                     </div>
                   </div>
                 </div>
-                {expandedId === msg.id && (
-                  <div style={{ padding: "0 16px 16px 64px" }}>
-                    <div style={{ paddingTop: 8, borderTop: "1px dashed #eaeaea" }}>
-                      {msg.senderEmail && (
-                        <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 6, marginTop: 12 }}>
-                          <span style={{ fontSize: 12, color: "#888" }}>Email:</span>
-                          <a href={`mailto:${msg.senderEmail}`} style={{ fontSize: 13, color: "#1a4ba8", textDecoration: "none", fontWeight: 500 }}>{msg.senderEmail}</a>
-                        </div>
-                      )}
-                      {msg.purpose === 'order' ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <h4 style={{ fontSize: 14, fontWeight: 700, color: CRIMSON, margin: 0, textTransform: "uppercase", letterSpacing: 0.5 }}>Yêu cầu đặt hàng tác phẩm</h4>
-                            {msg.status === "processing" && <span style={{ background: "#FEF3C7", color: "#D97706", fontSize: 12, padding: "2px 10px", borderRadius: 12, fontWeight: 700 }}>Đang xử lý</span>}
-                            {msg.status === "completed" && <span style={{ background: "#ECFDF5", color: "#10B981", fontSize: 12, padding: "2px 10px", borderRadius: 12, fontWeight: 700 }}>Hoàn thành</span>}
-                            {(!msg.status || msg.status === "pending") && <span style={{ background: GRAY_BG, color: MUTED, fontSize: 12, padding: "2px 10px", borderRadius: 12, fontWeight: 700 }}>Chờ xử lý</span>}
+                
+                {isExpanded && (
+                  <div style={{ padding: "0 16px 16px 70px" }}>
+                    <div style={{ paddingTop: 16, borderTop: "1px dashed #eaeaea", display: "flex", flexDirection: "column", gap: 16 }}>
+                      {thread.isThread ? (
+                        // Thread View
+                        <>
+                          <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fdfdfd", border: "1px solid #eaeaea", borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                            <img src={thread.artworkData?.artworkImage} alt={thread.artworkData?.artworkTitle} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 4 }} />
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: 14, fontWeight: 700, color: BLACK, margin: "0 0 4px" }}>{thread.artworkData?.artworkTitle}</p>
+                              <div style={{ display: "flex", gap: 8 }}>
+                                <button onClick={() => setPage("detail", { artworkId: thread.artworkId })} style={{ padding: "4px 8px", borderRadius: 4, border: "none", background: "#f0f0f0", color: "#333", fontSize: 11, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                                  <ExternalLink size={12} /> Xem tác phẩm
+                                </button>
+                                {msg.status !== "completed" && (
+                                  <button onClick={() => handleUpdateStatus(msg.id, "completed")} style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #10B981", background: "transparent", color: "#10B981", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Đánh dấu hoàn thành</button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          {(() => {
-                            try {
-                              const data = JSON.parse(msg.content);
+                          
+                          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                            {thread.messages.map((m, i) => {
+                              const isMe = m.senderName?.startsWith("To: ");
+                              let mText = m.content;
+                              try {
+                                const d = JSON.parse(m.content);
+                                mText = d.description || m.content;
+                              } catch {}
+
                               return (
-                                <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fdfdfd", border: "1px solid #eaeaea", borderRadius: 8, padding: 12 }}>
-                                  <img src={data.artworkImage} alt={data.artworkTitle} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 4 }} />
-                                  <div style={{ flex: 1 }}>
-                                    <p style={{ fontSize: 14, fontWeight: 700, color: BLACK, margin: "0 0 4px" }}>{data.artworkTitle}</p>
-                                    <p style={{ fontSize: 12, color: "#444", margin: 0 }}>{data.description || t("noDescription")}</p>
+                                <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
+                                  {!isMe && i === 0 && m.senderEmail && <span style={{ fontSize: 11, color: "#888", marginBottom: 2 }}>{m.senderName} ({m.senderEmail})</span>}
+                                  <div style={{ background: isMe ? "#1a4ba8" : "#f1f1f1", color: isMe ? "#fff" : "#333", padding: "10px 14px", borderRadius: 16, borderBottomRightRadius: isMe ? 4 : 16, borderBottomLeftRadius: isMe ? 16 : 4, maxWidth: "85%", fontSize: 13, lineHeight: 1.5, wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
+                                    {mText}
                                   </div>
+                                  <span style={{ fontSize: 10, color: "#999", marginTop: 4 }}>{formatDate(m.createdAt)}</span>
                                 </div>
                               );
-                            } catch {
-                              return <p style={{ fontSize: 13, color: "#333", margin: 0 }}>{msg.content}</p>;
-                            }
-                          })()}
-                        </div>
-                      ) : (
-                        <p style={{ fontSize: 13, color: "#333", margin: 0 }}>{msg.content}</p>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                      {msg.purpose === 'order' ? (
-                        <>
-                        <button onClick={() => {
-                          try {
-                            const data = JSON.parse(msg.content);
-                            if (data.artworkId) {
-                              setPage("detail", { artworkId: data.artworkId });
-                            } else {
-                              setPage("messages");
-                            }
-                          } catch {}
-                        }} style={{ padding: "6px 12px", borderRadius: 6, border: "none", background: "#1a4ba8", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background="#153a85"} onMouseOut={e => e.currentTarget.style.background="#1a4ba8"}>
-                          <ExternalLink size={14} /> Xem tác phẩm
-                        </button>
-                        {msg.status !== "completed" && (
-                          <button onClick={() => handleUpdateStatus(msg.id, "processing")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${CERULEAN}`, background: msg.status === "processing" ? CERULEAN : "transparent", color: msg.status === "processing" ? "#fff" : CERULEAN, fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                            Đang xử lý
-                          </button>
-                        )}
-                        {msg.status !== "completed" && (
-                          <button onClick={() => handleUpdateStatus(msg.id, "completed")} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid #10B981`, background: "transparent", color: "#10B981", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 4 }}>
-                            Hoàn thành
-                          </button>
-                        )}
-                        {msg.status === "completed" && (
-                           <span style={{ padding: "6px 12px", borderRadius: 6, background: "#ECFDF5", color: "#10B981", fontSize: 12, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                             <Check size={14} /> Đã hoàn thành
-                           </span>
-                        )}
+                            })}
+                          </div>
+
+                          {/* Reply Box */}
+                          <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                            <textarea 
+                              value={replyText[thread.id] || ""}
+                              onChange={e => setReplyText({ ...replyText, [thread.id]: e.target.value })}
+                              placeholder="Nhập tin nhắn phản hồi..."
+                              style={{ flex: 1, padding: "10px 12px", borderRadius: 8, border: "1px solid #E0E0E0", fontSize: 13, outline: "none", resize: "none", minHeight: 40 }}
+                            />
+                            <button 
+                              disabled={replying[thread.id] || !(replyText[thread.id] || "").trim()}
+                              onClick={() => handleReply(thread)}
+                              style={{ padding: "0 16px", borderRadius: 8, border: "none", background: "#1a4ba8", color: "#fff", fontWeight: 600, cursor: (replyText[thread.id] || "").trim() ? "pointer" : "not-allowed", opacity: (replyText[thread.id] || "").trim() ? 1 : 0.6 }}
+                            >
+                              <Send size={16} />
+                            </button>
+                          </div>
                         </>
                       ) : (
-                        <a
-                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(
-                            `--- Original message from ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Purpose: ${msg.purpose}\n` : ""}${msg.content}\n\n--- My reply ---\n`
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
-                        >
-                          <Mail size={14} /> {t("replyViaEmail")}
-                        </a>
+                        // Normal Message View
+                        <>
+                          {msg.senderEmail && (
+                            <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontSize: 12, color: "#888" }}>Email:</span>
+                              <a href={`mailto:${msg.senderEmail}`} style={{ fontSize: 13, color: "#1a4ba8", textDecoration: "none", fontWeight: 500 }}>{msg.senderEmail}</a>
+                            </div>
+                          )}
+                          <p style={{ fontSize: 13, color: "#333", margin: 0, lineHeight: 1.5 }}>{msg.content}</p>
+                          
+                          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                            <a
+                              href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                            >
+                              <Mail size={14} /> {t("replyViaEmail")}
+                            </a>
+                          </div>
+                        </>
                       )}
-                      {activeTab === "inbox" ? (
-                        <button onClick={() => handleArchive(msg.id)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
-                          <Archive size={14} /> {t("archive")}
-                        </button>
-                      ) : (
-                        <button onClick={() => handleUnarchive(msg.id)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
-                          <ArchiveRestore size={14} /> Khôi phục
-                        </button>
-                      )}
+
+                      {/* Archive Actions */}
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                        {activeTab === "inbox" ? (
+                          <button onClick={() => handleArchive(msg.id, thread)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
+                            <Archive size={14} /> {t("archive")}
+                          </button>
+                        ) : (
+                          <button onClick={() => handleUnarchive(msg.id, thread)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
+                            <ArchiveRestore size={14} /> Khôi phục
+                          </button>
+                        )}
+                      </div>
+
                     </div>
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -6840,7 +7128,7 @@ function AdminArtworksPage({ setPage }) {
   const selected = filtered.find((a) => a.id === selectedId) ?? null;
 
   const handleOpenGallery = (idx) => {
-    const imgs = [selected?.coverImageUrl, ...(selected?.fileUrls || [])].filter(Boolean);
+    const imgs = Array.from(new Set([selected?.coverImageUrl, ...(selected?.fileUrls || [])].filter(Boolean)));
     setGalleryImages(imgs);
     setGalleryIdx(idx);
   };
@@ -7141,7 +7429,7 @@ function AdminArtworksPage({ setPage }) {
                   </div>
                   {(selected.fileUrls || []).length > 0 && (
                     <div className="flex gap-2 mt-2 flex-wrap">
-                      {[selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean).map((url, idx) => (
+                      {Array.from(new Set([selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean))).map((url, idx) => (
                         <div key={idx} className="w-10 h-8 rounded-md overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#1a4ba8] transition-colors" onClick={() => handleOpenGallery(idx)}>
                           <img src={url} alt="" className="w-full h-full object-cover" />
                         </div>
@@ -7915,6 +8203,8 @@ function RegisterPage({ setPage }) {
 }
 
 function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
+  const { user } = useAuth();
+  const userRole = user?.role;
   const [featuredArtworks, setFeaturedArtworks] = useState([]);
   const [activeCategory, setActiveCategory] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -7977,9 +8267,16 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             <div className="h-0.5 bg-gray-200 w-3/5"></div>
           </div>
           <div className="flex flex-wrap gap-3 mb-3">
-            <button onClick={() => setPage(isLoggedIn ? "dashboard" : (hero?.primaryCtaLink || "gallery"))} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
-              {hero?.primaryCta || t("exploreGallery")} <ArrowRight size={18} />
-            </button>
+            {(!isLoggedIn || userRole === "student") && (
+              <button onClick={() => setPage(isLoggedIn ? "dashboard" : (hero?.primaryCtaLink || "gallery"))} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
+                {hero?.primaryCta || t("exploreGallery")} <ArrowRight size={18} />
+              </button>
+            )}
+            {isLoggedIn && userRole !== "student" && (
+              <button onClick={() => setPage("admin")} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
+                {userRole === "lecturer" ? "Trang quản lý Giảng viên" : "Trang quản lý Admin"} <ArrowRight size={18} />
+              </button>
+            )}
             {!isLoggedIn && (
               <button onClick={() => setPage(hero?.secondaryCtaLink || "auth")} className="bg-white text-[#212121] border border-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
                 {hero?.secondaryCta || t("studentLogin")}
@@ -9774,15 +10071,17 @@ function SettingsPage({ setPage, userData }) {
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <h3 className="font-bold text-[#212121] mb-4">{t("personalInfo")}</h3>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className={userData?.role !== "lecturer" && userData?.role !== "admin" ? "grid grid-cols-2 gap-4" : "grid grid-cols-1 gap-4"}>
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">{t("fullNameLabel")}</label>
                   <input type="text" value={profile.fullName} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} className="w-full px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] focus:ring-1 focus:ring-[#1a4ba8]" />
                 </div>
+                {userData?.role !== "lecturer" && userData?.role !== "admin" && (
                 <div>
                   <label className="block text-sm font-medium text-[#212121] mb-2">{t("studentId")}</label>
                   <input type="text" value={profile.studentId} disabled className="w-full px-4 py-2 border border-[#E0E0E0] bg-[#F8F8F8] text-[#666666] rounded-lg text-sm outline-none cursor-not-allowed" />
                 </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#212121] mb-2">{t("emailAddress")}</label>
@@ -10380,6 +10679,7 @@ export default function App() {
     image: authUser.avatarUrl || authUser.image || "",
     avatarUrl: authUser.avatarUrl || authUser.image || "",
     id: authUser.id || "",
+    role: authUser.role || "student",
     portfolioSettings: authUser.portfolioSettings || null,
   } : null;
 
@@ -10598,12 +10898,12 @@ export default function App() {
         ) : <AccessDenied setPage={setPage} />
       )}
       {page === "moodboards" && (
-        userRole === "student" ? (
+        (userRole === "student" || userRole === "lecturer") ? (
           <StudentMoodboardsPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />
         ) : <AccessDenied setPage={setPage} />
       )}
       {page === "badges" && (
-        (userRole === "lecturer" || userRole === "admin") ? (
+        userRole === "admin" ? (
           <BadgesPage setPage={setPage} userData={userData} />
         ) : <AccessDenied setPage={setPage} />
       )}
@@ -10646,10 +10946,10 @@ export default function App() {
         isLoggedIn ? <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "admin_orders" && (
-        (userRole === "admin" || userRole === "lecturer") ? <AdminOrdersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+        userRole === "admin" ? <AdminOrdersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "admin_users" && (
-        (userRole === "admin" || userRole === "lecturer") ? <AdminUsersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+        userRole === "admin" ? <AdminUsersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "admin_artworks" && (
         (userRole === "admin" || userRole === "lecturer") ? <AdminArtworksPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
@@ -10668,10 +10968,10 @@ export default function App() {
         ) : <AccessDenied setPage={setPage} />
       )}
       {page === "admin_watermark" && (
-        (userRole === "admin" || userRole === "lecturer") ? <AdminWatermarkPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+        userRole === "admin" ? <AdminWatermarkPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "admin_layout" && (
-        (userRole === "admin" || userRole === "lecturer") ? (
+        userRole === "admin" ? (
           <div className="flex h-screen bg-[#F8F8F8] overflow-hidden">
             <AdminSidebar active="admin_layout" setPage={setPage} />
             <div className="flex-1 overflow-y-auto">

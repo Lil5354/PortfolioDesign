@@ -123,7 +123,11 @@ public class MessagesController : ControllerBase
                 Id = Guid.NewGuid().ToString(),
                 UserId = senderId,
                 Type = dto.Purpose == "order" ? NotificationType.new_order : NotificationType.new_message,
-                Content = $"Đơn đặt hàng của bạn đã được gửi thành công đến {(user?.FullName ?? dto.RecipientSlug ?? "tác giả")}.",
+                Content = dto.Purpose == "order" 
+                    ? $"Đơn đặt hàng của bạn đã được gửi thành công đến {(user?.FullName ?? dto.RecipientSlug ?? "tác giả")}."
+                    : dto.Purpose == "feedback" 
+                        ? $"Feedback kín của bạn đã được gửi thành công đến {(user?.FullName ?? dto.RecipientSlug ?? "sinh viên")}."
+                        : $"Tin nhắn của bạn đã được gửi thành công đến {(user?.FullName ?? dto.RecipientSlug ?? "người nhận")}.",
                 CreatedAt = DateTime.UtcNow
             };
             _context.Notifications.Add(senderNotification);

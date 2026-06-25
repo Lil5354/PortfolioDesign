@@ -1790,7 +1790,7 @@ function AdminArtworksPage({ setPage }) {
   const [galleryImages, setGalleryImages] = useState([]);
 
   const handleOpenGallery = (idx) => {
-    const imgs = [selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean);
+    const imgs = Array.from(new Set([selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean)));
     setGalleryImages(imgs);
     setGalleryIdx(idx);
   };
@@ -2132,7 +2132,7 @@ function AdminArtworksPage({ setPage }) {
                   </div>
                   {(selected.fileUrls || []).length > 0 && (
                     <div className="flex gap-2 mt-3 flex-wrap">
-                      {[selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean).map((url, idx) => (
+                      {Array.from(new Set([selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean))).map((url, idx) => (
                         <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#1a4ba8] transition-colors" onClick={() => handleOpenGallery(idx)}>
                           <img src={url} alt="" className="w-full h-full object-cover" />
                         </div>
