@@ -7300,50 +7300,33 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
             </div>
           )}
           {collections.map((c) => {
-            const thumbs = c.items.slice(0, 3).map((it) => it.artwork?.coverImageUrl).filter(Boolean);
+            const coverImage = c.items?.[0]?.artwork?.coverImageUrl || c.items?.[0]?.coverImageUrl || c.items?.[0]?.artwork?.img || c.items?.[0]?.img || null;
             return (
               <div
                 key={c.id}
                 onClick={() => onOpenExportConfig && onOpenExportConfig(c.id)}
-                className="bg-white border border-[#E0E0E0] rounded-2xl p-5 hover:shadow-lg hover:border-[#1a4ba8] transition-all cursor-pointer"
+                className="group relative bg-white rounded-[16px] overflow-hidden border border-[#E0E0E0] cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_24px_rgba(0,0,0,0.08)]"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-1">{t("collection")}</p>
-                    <h3 className="text-lg font-bold text-[#212121] truncate">{c.name}</h3>
-                    <p className="text-sm text-[#666666] mt-1">{c.items.length} {t("artworks")} · {t("theme")}: <span className="font-semibold text-[#212121]">{c.theme}</span></p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-[#e0eaff] border border-[#a8bce0] flex items-center justify-center text-[#1a4ba8] flex-shrink-0">
-                    <FileDown size={18} />
-                  </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-3 gap-2">
-                  {thumbs.length > 0 ? (
-                    thumbs.map((src, idx) => (
-                      <div key={idx} className="aspect-[4/3] rounded-xl overflow-hidden bg-[#F8F8F8] border border-[#E0E0E0]">
-                        <img src={src} className="w-full h-full object-cover" />
-                      </div>
-                    ))
-                  ) : (
-                    <div className="col-span-3 border border-dashed border-[#E0E0E0] rounded-xl p-4 text-sm text-[#666666]">
-                      {t("noArtworksInCollectionGuide")}
+                <div className="relative h-[200px] w-full bg-[#8f8f8f]">
+                  {coverImage && <img src={coverImage} className="w-full h-full object-cover block transition-transform duration-500 group-hover:scale-105" />}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+                  
+                  <div className="absolute top-3 right-3 flex gap-2">
+                    <div className="bg-white/20 backdrop-blur-md rounded-full w-8 h-8 flex items-center justify-center text-white cursor-pointer hover:bg-white/40 transition-colors" title={t("openConfig")}>
+                      <FileDown size={14} />
                     </div>
-                  )}
+                  </div>
+                  
+                  <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end pointer-events-none">
+                    <div>
+                      <h3 className="text-lg font-bold text-white drop-shadow-md m-0 truncate pr-4">{c.name}</h3>
+                      <p className="text-[13px] text-white/80 mt-1 mb-0">Cập nhật: {new Date(c.updatedAt || Date.now()).toLocaleDateString()}</p>
+                    </div>
+                    <span className="bg-white/30 backdrop-blur-md px-3 py-1 rounded-full text-white text-[12px] font-bold whitespace-nowrap">
+                      {c.items?.length || 0} mục
+                    </span>
+                  </div>
                 </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                    <span className="text-[11px] text-[#666666]">
-                    {t("curatorNotePriority")}
-                  </span>
-                  <span className="text-sm font-bold text-[#1a4ba8]">{t("openConfig")} →</span>
-                </div>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onOpenCatalogBuilder && onOpenCatalogBuilder(c); }}
-                  className="mt-3 w-full py-2 rounded-lg bg-[#212121] text-white text-xs font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <FileDown size={14} /> {t("createPdfJournal")}
-                </button>
               </div>
             );
           })}

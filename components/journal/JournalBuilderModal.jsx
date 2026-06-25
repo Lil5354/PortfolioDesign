@@ -811,32 +811,56 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
 
         {/* Collection Drawer Popup */}
         {showCollectionDrawer && (
-          <div className="absolute top-0 bg-white border-l border-gray-200 shadow-2xl z-[100] flex flex-col transition-transform print:hidden" style={{ right: '300px', width: '320px', height: '100%' }}>
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-[#f8f8f8]">
-              <h3 className="font-bold text-gray-800">Ảnh từ Bộ sưu tập</h3>
-              <button onClick={() => setShowCollectionDrawer(false)} className="text-gray-500 hover:text-gray-800"><X size={18} /></button>
+          <div className="absolute top-0 bg-white/95 backdrop-blur-xl border-l border-gray-200 shadow-[0_0_40px_rgba(0,0,0,0.08)] z-[100] flex flex-col transition-transform duration-300 print:hidden" style={{ right: '300px', width: '340px', height: '100%' }}>
+            <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-white/60 backdrop-blur-md sticky top-0 z-10">
+              <h3 className="text-[15px] font-semibold text-gray-800 flex items-center gap-2">
+                <Folder size={18} className="text-[#1a4ba8]" />
+                Bộ sưu tập
+              </h3>
+              <button onClick={() => setShowCollectionDrawer(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-800 transition-colors">
+                <X size={18} />
+              </button>
             </div>
-            <div className="p-4 flex-1 overflow-y-auto grid grid-cols-2 gap-3">
-              {collection?.items?.map(item => (
-                <div 
-                  key={item.id} 
-                  draggable
-                  onDragStart={(e) => {
-                    const src = item.artwork?.coverImageUrl || item.artwork?.img;
-                    setDraggedImg(src);
-                    e.dataTransfer.setData("text/plain", src);
-                  }}
-                  className="aspect-square bg-gray-100 rounded overflow-hidden cursor-grab active:cursor-grabbing hover:ring-2 ring-[#1a4ba8]"
-                >
-                  <img src={item.artwork?.coverImageUrl || item.artwork?.img} className="w-full h-full object-cover pointer-events-none" />
-                </div>
-              ))}
+            
+            <div className="p-5 flex-1 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                {collection?.items?.map((item, i) => (
+                  <div 
+                    key={item.id} 
+                    draggable
+                    onDragStart={(e) => {
+                      const src = item.artwork?.coverImageUrl || item.artwork?.img;
+                      setDraggedImg(src);
+                      e.dataTransfer.setData("text/plain", src);
+                    }}
+                    className="group relative aspect-square bg-gray-50 rounded-xl overflow-hidden cursor-grab active:cursor-grabbing shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
+                  >
+                    <img src={item.artwork?.coverImageUrl || item.artwork?.img} className="w-full h-full object-cover pointer-events-none group-hover:scale-110 transition-transform duration-500 ease-out" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                  </div>
+                ))}
+              </div>
+              
               {(!collection?.items || collection.items.length === 0) && (
-                <div className="col-span-2 text-sm text-gray-500 text-center py-10">Bộ sưu tập trống</div>
+                <div className="flex flex-col items-center justify-center py-16 text-center opacity-70">
+                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                    <Folder size={24} className="text-gray-300" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-600">Bộ sưu tập trống</p>
+                  <p className="text-[13px] text-gray-400 mt-1 max-w-[200px]">Hãy thêm ảnh vào bộ sưu tập để sử dụng.</p>
+                </div>
               )}
             </div>
-            <div className="p-4 bg-blue-50 text-xs text-blue-800 border-t border-blue-100">
-              Kéo ảnh từ đây thả vào vùng trống ở giữa trang để tạo block ảnh.
+            
+            <div className="p-5 bg-white border-t border-gray-100">
+              <div className="bg-blue-50/80 rounded-xl p-4 flex items-start gap-3 border border-blue-100/50 shadow-sm">
+                <div className="mt-0.5 text-blue-500 shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </div>
+                <p className="text-[12.5px] leading-relaxed text-blue-800/90 font-medium">
+                  Kéo và thả ảnh từ đây vào vùng thiết kế để chèn nhanh.
+                </p>
+              </div>
             </div>
           </div>
         )}
