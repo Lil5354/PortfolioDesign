@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using UEFGallery.API.Data;
 using UEFGallery.API.Models;
+using Microsoft.AspNetCore.SignalR;
+using UEFGallery.API.Hubs;
 
 namespace UEFGallery.API.Controllers;
 
@@ -12,10 +14,12 @@ namespace UEFGallery.API.Controllers;
 public class MessagesController : ControllerBase
 {
     private readonly GalleryDbContext _context;
+    private readonly IHubContext<ChatHub> _hubContext;
 
-    public MessagesController(GalleryDbContext context)
+    public MessagesController(GalleryDbContext context, IHubContext<ChatHub> hubContext)
     {
         _context = context;
+        _hubContext = hubContext;
     }
 
     [HttpGet]
@@ -134,6 +138,9 @@ public class MessagesController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+
+        await _hubContext.Clients.Group(recipientId).SendAsync("ReceiveMessage", message);
+
         return Ok(message);
     }
 

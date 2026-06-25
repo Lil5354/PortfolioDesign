@@ -7,6 +7,8 @@ import LayoutSettings from "./LayoutSettings.jsx";
 import CatalogBuilderWizard from "./components/catalog/CatalogBuilderWizard";
 import EbookViewerModal from "./components/catalog/EbookViewerModal";
 import NotificationBell from "./components/NotificationBell";
+import MessageDropdown from "./components/MessageDropdown";
+import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import DraftBuilderModal from "./components/DraftBuilderModal";
 import JournalSettingsModal from "./components/journal/JournalSettingsModal";
 import JournalBuilderModal from "./components/journal/JournalBuilderModal";
@@ -140,7 +142,12 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
         {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
       </button>
       <div className="flex items-center gap-3 text-sm font-medium">
-        {isLoggedIn && <NotificationBell setPage={setPage} />}
+        {isLoggedIn && (
+          <div className="flex items-center gap-2">
+            <NotificationBell setPage={setPage} />
+            <MessageDropdown setPage={setPage} userData={userData} />
+          </div>
+        )}
         <div className="relative skiptranslate" ref={langRef}>
           <button onClick={() => setIsLangOpen(!isLangOpen)}
             className="flex items-center gap-1 px-2 py-1.5 rounded-lg border border-[#E0E0E0] bg-white text-[#666666] hover:text-[#212121] hover:bg-[#F8F8F8] transition-colors cursor-pointer"
@@ -179,7 +186,6 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                       <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {t("studentDashboard")}</div>
                       <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
                       <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> {t("portfolioSettings")}</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("messages"); setIsDropdownOpen(false); }}><Mail size={16} className="text-[#666666]" /> {t("inbox")}</div>
                     </>
                   ) : (
                     <>
@@ -187,7 +193,6 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                       {userRole === "lecturer" && (
                         <>
                           <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("moodboards"); setIsDropdownOpen(false); }}><Bookmark size={16} className="text-[#666666]" /> Moodboard</div>
-                          <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("messages"); setIsDropdownOpen(false); }}><Mail size={16} className="text-[#666666]" /> {t("inbox")}</div>
                         </>
                       )}
                       <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
@@ -6116,6 +6121,7 @@ function MessagesPage({ setPage, userData }) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
+  const [frozenOrder, setFrozenOrder] = useState(null);
   const [activeTab, setActiveTab] = useState("inbox");
 
   const [replyText, setReplyText] = useState({});
@@ -6123,17 +6129,40 @@ function MessagesPage({ setPage, userData }) {
   const { user: authUser } = useAuth();
 
   useEffect(() => {
-    api.messages.list().then(data => {
-      setMessages(Array.isArray(data) ? data : []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+    const fetchMsgs = () => {
+      api.messages.list().then(data => {
+        setMessages(Array.isArray(data) ? data : []);
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    };
+    fetchMsgs();
+
+    const connection = new HubConnectionBuilder()
+      .withUrl("https://localhost:7164/chatHub", {
+        accessTokenFactory: () => localStorage.getItem("token") || ""
+      })
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start().catch(err => console.log("SignalR error", err));
+
+    connection.on("ReceiveMessage", (message) => {
+      fetchMsgs();
+    });
+
+    return () => {
+      connection.stop();
+    };
+  }, [activeTab]);
 
   const toggleMessage = (id, thread) => {
     if (expandedId === id) {
       setExpandedId(null);
+      setFrozenOrder(null);
     } else {
       setExpandedId(id);
+      // Capture current order to prevent jumping when sending a reply
+      setFrozenOrder(threadedMessages.map(t => t.id));
       if (thread && thread.isThread) {
         thread.messages.forEach(m => {
           if (!m.isRead) api.messages.markRead(m.id).catch(() => {});
@@ -6154,7 +6183,20 @@ function MessagesPage({ setPage, userData }) {
     try {
       // Find original sender to reply to
       const originalMsg = thread.messages.find(m => !m.senderName?.startsWith("To: "));
-      const recipientSlug = originalMsg ? originalMsg.senderEmail : "uef-design-gallery";
+      let recipientSlug = "uef-design-gallery";
+      
+      if (originalMsg && originalMsg.senderEmail) {
+        recipientSlug = originalMsg.senderEmail;
+      } else if (thread.artworkData?.artworkId) {
+        try {
+          const art = await api.artworks.get(thread.artworkData.artworkId);
+          if (art && art.user && art.user.email) {
+            recipientSlug = art.user.email;
+          }
+        } catch (err) {
+          console.error("Failed to fetch artwork to find recipient email:", err);
+        }
+      }
       
       const newMsgData = await api.messages.send({
         recipientSlug: recipientSlug,
@@ -6169,7 +6211,12 @@ function MessagesPage({ setPage, userData }) {
       });
       
       // Update local messages
-      setMessages(prev => [newMsgData, ...prev]);
+      const outboxMsg = {
+        ...newMsgData,
+        senderName: `To: ${recipientSlug}`,
+        isRead: true
+      };
+      setMessages(prev => [outboxMsg, ...prev]);
       setReplyText(prev => ({ ...prev, [thread.id]: "" }));
     } catch (e) {
       alert("Lỗi khi gửi phản hồi: " + (e?.message || "Vui lòng thử lại"));
@@ -6281,18 +6328,30 @@ function MessagesPage({ setPage, userData }) {
     });
 
     result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    if (frozenOrder) {
+      result.sort((a, b) => {
+        const idxA = frozenOrder.indexOf(a.id);
+        const idxB = frozenOrder.indexOf(b.id);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA === -1 && idxB !== -1) return -1;
+        if (idxB === -1 && idxA !== -1) return 1;
+        return 0;
+      });
+    }
+    
     return result;
   }, [messages, activeTab]);
 
   return (
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
       <DashboardSidebar activePage="messages" setPage={setPage} userData={userData} />
-      <div style={{ flex: 1, padding: "32px 40px" }}>
+      <div style={{ flex: 1, padding: "32px 40px", minWidth: 0 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>{t("inboxTitle")}</h2>
           <div style={{ display: "flex", gap: 8, background: "#fff", padding: 4, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
-            <button onClick={() => { setActiveTab("inbox"); setExpandedId(null); }} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "inbox" ? "#f3f4f6" : "transparent", color: activeTab === "inbox" ? BLACK : MUTED }}>Hộp thư đến</button>
-            <button onClick={() => { setActiveTab("archived"); setExpandedId(null); }} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "archived" ? "#f3f4f6" : "transparent", color: activeTab === "archived" ? BLACK : MUTED }}>Đã lưu trữ</button>
+            <button onClick={() => { setActiveTab("inbox"); setExpandedId(null); setFrozenOrder(null); }} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "inbox" ? "#f3f4f6" : "transparent", color: activeTab === "inbox" ? BLACK : MUTED }}>Hộp thư đến</button>
+            <button onClick={() => { setActiveTab("archived"); setExpandedId(null); setFrozenOrder(null); }} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "archived" ? "#f3f4f6" : "transparent", color: activeTab === "archived" ? BLACK : MUTED }}>Đã lưu trữ</button>
           </div>
         </div>
         {loading ? (
@@ -6388,7 +6447,7 @@ function MessagesPage({ setPage, userData }) {
                             </div>
                           </div>
                           
-                          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: 400, overflowY: "auto", paddingRight: 8, paddingBottom: 8 }}>
                             {thread.messages.map((m, i) => {
                               const isMe = m.senderName?.startsWith("To: ");
                               let mText = m.content;
@@ -6410,20 +6469,33 @@ function MessagesPage({ setPage, userData }) {
                           </div>
 
                           {/* Reply Box */}
-                          <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                          <div style={{ marginTop: 12, display: "flex", gap: 8, borderTop: "1px solid #eee", paddingTop: 12 }}>
                             <textarea 
                               value={replyText[thread.id] || ""}
                               onChange={e => setReplyText({ ...replyText, [thread.id]: e.target.value })}
                               placeholder="Nhập tin nhắn phản hồi..."
-                              style={{ flex: 1, padding: "10px 12px", borderRadius: 8, border: "1px solid #E0E0E0", fontSize: 13, outline: "none", resize: "none", minHeight: 40 }}
+                              style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #E0E0E0", fontSize: 13, outline: "none", resize: "none", height: 42, overflow: "hidden" }}
                             />
                             <button 
                               disabled={replying[thread.id] || !(replyText[thread.id] || "").trim()}
                               onClick={() => handleReply(thread)}
-                              style={{ padding: "0 16px", borderRadius: 8, border: "none", background: "#1a4ba8", color: "#fff", fontWeight: 600, cursor: (replyText[thread.id] || "").trim() ? "pointer" : "not-allowed", opacity: (replyText[thread.id] || "").trim() ? 1 : 0.6 }}
+                              style={{ padding: "0 16px", borderRadius: 8, border: "none", background: "#1a4ba8", color: "#fff", fontWeight: 600, cursor: (replyText[thread.id] || "").trim() ? "pointer" : "not-allowed", opacity: (replyText[thread.id] || "").trim() ? 1 : 0.6, display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
                             >
-                              <Send size={16} />
+                              <Send size={16} /> {t("sendMessage") || "Gửi tin nhắn"}
                             </button>
+                          </div>
+                          
+                          <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}>
+                            <a
+                              href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(thread.messages.find(m => !m.senderName?.startsWith("To: "))?.senderEmail || "uef-design-gallery")}&su=${encodeURIComponent(`Reply: ${thread.purpose || t("portfolioContact")}`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                              title="Trao đổi chi tiết hoặc gửi ảnh/file đính kèm qua Email"
+                            >
+                              <Mail size={14} /> {t("replyViaEmail")}
+                            </a>
+                            <span style={{ fontSize: 12, color: "#666" }}>← Đính kèm file hoặc trao đổi sâu hơn</span>
                           </div>
                         </>
                       ) : (

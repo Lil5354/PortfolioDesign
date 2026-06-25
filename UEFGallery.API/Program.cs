@@ -8,6 +8,7 @@ using UEFGallery.API.Services.Background;
 using UEFGallery.API.Services;
 
 using System.IO;
+using UEFGallery.API.Hubs;
 
 // Load .env from parent directory
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
@@ -37,6 +38,7 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
 // Register GeminiService
 builder.Services.AddHttpClient<UEFGallery.API.Services.GeminiService>();
@@ -117,5 +119,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/chatHub");
 
 app.Run();
