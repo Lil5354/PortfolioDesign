@@ -374,6 +374,42 @@ export default function LayoutSettings({ setPage }) {
                       </button>
                     </div>
                   </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Danh mục Trang chủ <span className="font-mono text-gray-400 font-normal">(homeCategories)</span></label>
+                    <div className="flex gap-2">
+                      <input 
+                        value={settings['homeCategories'] || ''}
+                        onChange={(e) => setSettings({ ...settings, homeCategories: e.target.value })}
+                        placeholder="3D Art, Branding, Poster, Packaging"
+                        className="flex-1 min-w-0 px-2.5 py-1.5 bg-gray-50 hover:bg-white focus:bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all" 
+                      />
+                      <button 
+                        onClick={() => saveSetting('homeCategories', settings['homeCategories'])}
+                        disabled={savingKey === 'homeCategories'}
+                        className="flex items-center justify-center w-10 shrink-0 rounded-lg border transition-all bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                      >
+                        {savingKey === 'homeCategories' ? <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div> : savedKey === 'homeCategories' ? <Check size={16} className="text-green-600" /> : <Check size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider">Tên Tác Giả (Mặc định) <span className="font-mono text-gray-400 font-normal">(fallbackAuthorName)</span></label>
+                    <div className="flex gap-2">
+                      <input 
+                        value={settings['fallbackAuthorName'] || ''}
+                        onChange={(e) => setSettings({ ...settings, fallbackAuthorName: e.target.value })}
+                        placeholder="Sinh viên UEF"
+                        className="flex-1 min-w-0 px-2.5 py-1.5 bg-gray-50 hover:bg-white focus:bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-sm transition-all" 
+                      />
+                      <button 
+                        onClick={() => saveSetting('fallbackAuthorName', settings['fallbackAuthorName'])}
+                        disabled={savingKey === 'fallbackAuthorName'}
+                        className="flex items-center justify-center w-10 shrink-0 rounded-lg border transition-all bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300"
+                      >
+                        {savingKey === 'fallbackAuthorName' ? <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div> : savedKey === 'fallbackAuthorName' ? <Check size={16} className="text-green-600" /> : <Check size={16} />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

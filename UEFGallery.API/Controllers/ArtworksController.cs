@@ -93,11 +93,18 @@ public class ArtworksController : ControllerBase
     {
         var query = _context.Artworks.AsQueryable();
 
+        bool isPendingFilter = false;
+        if (Request.Query.ContainsKey("isPending") && bool.TryParse(Request.Query["isPending"], out bool isPendingVal))
+        {
+            isPendingFilter = true;
+            query = query.Where(a => a.IsPending == isPendingVal);
+        }
+
         if (!string.IsNullOrEmpty(collaboratorId))
         {
-            query = query.Where(a => a.CollaboratorIds.Contains(collaboratorId));
+            query = query.Where(a => a.CollaboratorIds.Contains(collaboratorId) || a.UserId == collaboratorId);
         }
-        else
+        else if (!isPendingFilter)
         {
             query = query.Where(a => a.IsPublic);
         }
@@ -118,14 +125,7 @@ public class ArtworksController : ControllerBase
             query = query.Where(a => badgeQuery.Contains(a.Id));
         }
         
-        if (Request.Query.ContainsKey("isPending"))
-        {
-            if (bool.TryParse(Request.Query["isPending"], out bool isPendingVal))
-            {
-                query = query.Where(a => a.IsPending == isPendingVal);
-            }
-        }
-
+        // isPending logic moved up to prevent IsPublic override
         if (sort == "most_likes")
         {
             query = query.OrderByDescending(a => a.IsHighlighted).ThenByDescending(a => a.LikeCount);

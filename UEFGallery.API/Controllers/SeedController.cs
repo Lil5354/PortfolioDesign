@@ -211,9 +211,83 @@ public class SeedController : ControllerBase
             });
         }
 
+        // === GENERATE MOCK DATA FOR LECTURER DASHBOARD ===
+        // 1. Pending Artworks (Chấm điểm)
+        for (int i = 0; i < 15; i++)
+        {
+            artworks[i].IsPending = true;
+            artworks[i].IsPublic = false;
+        }
+
         await _context.Artworks.AddRangeAsync(artworks);
         await _context.SaveChangesAsync();
+
+        // Fetch real IDs from DB to prevent foreign key errors
+        var dbLecturer = await _context.Users.FirstAsync(u => u.Email == "lecturer@uef.edu.vn");
+
+        // Add grades for next 5 artworks (Already graded)
+        var grades = new List<Grade>();
+        for (int i = 15; i < 20; i++)
+        {
+            grades.Add(new Grade
+            {
+                Id = Guid.NewGuid().ToString(),
+                ArtworkId = artworks[i].Id,
+                LecturerId = dbLecturer.Id,
+                Score = rng.Next(70, 100) / 10.0m, // 7.0 to 10.0
+                Comment = "Bài làm rất tốt, màu sắc hài hòa và bố cục rõ ràng. Cần chú ý thêm về typography.",
+                IsVisibleToStudent = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            });
+        }
+        await _context.Grades.AddRangeAsync(grades);
+
+        // 2. Artworks with Reports (Cảnh cáo ấn phẩm)
+        var reports = new List<Report>();
+        var reportStatuses = new[] { ReportStatus.pending, ReportStatus.resolved, ReportStatus.dismissed };
+        var violationTypes = new[] { "Bản quyền", "Nội dung không phù hợp", "Spam", "Đạo nhái ý tưởng" };
         
+        for (int i = 20; i < 30; i++)
+        {
+            int reportCount = rng.Next(1, 3);
+            for (int j = 0; j < reportCount; j++)
+            {
+                reports.Add(new Report
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    ArtworkId = artworks[i].Id,
+                    UserId = targetStudent.Id, // Using the student ID for simplicity
+                    ViolationType = violationTypes[rng.Next(violationTypes.Length)],
+                    Detail = "Sử dụng hình ảnh có bản quyền mà không xin phép tác giả gốc.",
+                    Status = reportStatuses[rng.Next(reportStatuses.Length)],
+                    CreatedAt = DateTime.UtcNow.AddDays(-rng.Next(1, 10)),
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+        }
+        await _context.Reports.AddRangeAsync(reports);
+
+        // 3. Collection Items (Quản lý bộ sưu tập)
+        var collectionItems = new List<CollectionItem>();
+        var collectionNames = new[] { "Đồ án xuất sắc HK2", "Tập san Graphic Design 2024", "Top Sinh Viên" };
+        
+        for (int i = 30; i < 45; i++)
+        {
+            collectionItems.Add(new CollectionItem
+            {
+                Id = Guid.NewGuid().ToString(),
+                LecturerId = dbLecturer.Id,
+                ArtworkId = artworks[i].Id,
+                CollectionName = collectionNames[i % collectionNames.Length],
+                CuratorEssay = "Tuyển tập những tác phẩm mang tính sáng tạo cao, thể hiện rõ tư duy thiết kế hiện đại.",
+                Theme = "Classic",
+                AddedAt = DateTime.UtcNow.AddDays(-rng.Next(1, 5))
+            });
+        }
+        await _context.CollectionItems.AddRangeAsync(collectionItems);
+        await _context.SaveChangesAsync();
+        // ==================================================
         // Seed some timeline entries for student if not exists
         if (!await _context.TimelineEntrys.AnyAsync(t => t.UserId == targetStudent.Id))
         {

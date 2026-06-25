@@ -2289,16 +2289,16 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
           {collections.length === 0 && (
             <div className="col-span-full py-20 text-center border-2 border-dashed border-[#E0E0E0] rounded-2xl bg-[#F8F8F8]">
               <Folder className="mx-auto text-[#1a4ba8] mb-4 opacity-50" size={48} />
-              <h3 className="text-lg font-bold text-[#212121] mb-2">{t("noCollectionsYet", "Chưa có bộ sưu tập nào")}</h3>
+              <h3 className="text-lg font-bold text-[#212121] mb-2">{t("noCollectionsYet", "Chưa có Moodboard nào")}</h3>
               <p className="text-[#666666] mb-6 max-w-md mx-auto">
-                {t("createCollectionPrompt", "Hãy tạo bộ sưu tập mới để lưu trữ và xuất file báo cáo tổng hợp các ấn phẩm.")}
+                {t("createCollectionPrompt", "Hãy tạo Moodboard mới để lưu trữ và xuất file báo cáo tổng hợp các ấn phẩm.")}
               </p>
               <button
                 onClick={() => onQuickCreateCollection && onQuickCreateCollection()}
                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1a4ba8] text-white rounded-xl font-bold hover:bg-[#0d2e6e] transition-colors shadow-sm cursor-pointer"
               >
                 <Plus size={18} />
-                {t("createNewCollection", "Tạo Bộ Sưu Tập Mới")}
+                {t("createNewCollection", "Tạo Moodboard Mới")}
               </button>
             </div>
           )}
@@ -2486,7 +2486,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
       <div className="flex-1 overflow-y-auto p-8 flex flex-col">
         <div className="flex items-start justify-between gap-6 mb-8 pb-6 border-b border-[#E0E0E0] flex-shrink-0">
           <div className="min-w-0 flex-1 max-w-xl">
-            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Quản lý Bộ sưu tập</p>
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Quản lý Moodboard</p>
             <input
               value={collection.name}
               onChange={(e) => onUpdateCollection && onUpdateCollection({ name: e.target.value })}
@@ -2609,7 +2609,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                 </div>
                 
                 <div className="mt-2 text-[11px] text-[#888]">
-                  Mọi thay đổi trên panel này sẽ được lưu tự động vào bộ sưu tập.
+                  Mọi thay đổi trên panel này sẽ được lưu tự động vào Moodboard.
                 </div>
               </div>
             </div>
@@ -3375,7 +3375,7 @@ const studentFeatures = [
   { icon: MessageSquare, title: "Kết nối & Phản hồi", desc: "Nhận nhận xét từ giảng viên, kết nối với nhà tuyển dụng qua hệ thống tin nhắn." },
   { icon: BarChart2, title: "Theo dõi tiến độ", desc: "Dashboard cá nhân quản lý bài đăng, lượt tương tác và điểm đánh giá." },
   { icon: BookOpen, title: "Học tập & Phát triển", desc: "Tham khảo tác phẩm của bạn học, học hỏi kỹ thuật thiết kế đa dạng." },
-  { icon: Star, title: "Cơ hội nghề nghiệp", desc: "Tiếp cận nhà tuyển dụng tiềm năng thông qua bộ sưu tập ấn phẩm tốt nghiệp." },
+  { icon: Star, title: "Cơ hội nghề nghiệp", desc: "Tiếp cận nhà tuyển dụng tiềm năng thông qua Moodboard ấn phẩm tốt nghiệp." },
 ];
 
 const employerFeatures = [
@@ -3383,14 +3383,14 @@ const employerFeatures = [
   { icon: Eye, title: "Đánh giá năng lực", desc: "Xem điểm đánh giá từ giảng viên, nhận xét chuyên môn trên từng tác phẩm." },
   { icon: Send, title: "Liên hệ trực tiếp", desc: "Gửi tin nhắn tuyển dụng qua hệ thống — kết nối nhanh chóng với ứng viên tiềm năng." },
   { icon: Heart, title: "Lưu & Theo dõi", desc: "Đánh dấu ứng viên triển vọng, theo dõi cập nhật tác phẩm mới nhất." },
-  { icon: FileDown, title: "Xuất báo cáo", desc: "Tổng hợp bộ sưu tập ứng viên nổi bật, xuất PDF phục vụ tuyển dụng." },
+  { icon: FileDown, title: "Xuất báo cáo", desc: "Tổng hợp Moodboard ứng viên nổi bật, xuất PDF phục vụ tuyển dụng." },
   { icon: Globe, title: "Tiếp cận rộng", desc: "Hơn 500 ấn phẩm đồ án từ sinh viên ngành Thiết kế Đồ họa UEF." },
 ];
 
 const schoolFeatures = [
   { icon: LayoutDashboard, title: "Quản lý đào tạo", desc: "Theo dõi toàn bộ đồ án sinh viên theo môn học, semester và năm học." },
   { icon: Check, title: "Đánh giá chất lượng", desc: "Giảng viên chấm điểm, nhận xét trực tiếp; thống kê điểm số theo lớp và môn." },
-  { icon: Folder, title: "Bộ sưu tập triển lãm", desc: "Tạo tuyển tập ấn phẩm xuất sắc, sắp xếp kéo thả và xuất tập san PDF." },
+  { icon: Folder, title: "Moodboard triển lãm", desc: "Tạo tuyển tập ấn phẩm xuất sắc, sắp xếp kéo thả và xuất tập san PDF." },
   { icon: Bookmark, title: "Lưu trữ học thuật", desc: "Lưu giữ toàn bộ đồ án qua các năm phục vụ kiểm định và đối sánh." },
   { icon: Users, title: "Quản lý người dùng", desc: "Quản lý tài khoản sinh viên, giảng viên; phân quyền và khóa/mở tài khoản." },
   { icon: ShieldAlert, title: "Kiểm duyệt nội dung", desc: "Giám sát nội dung đăng tải, xử lý báo cáo vi phạm và cảnh cáo." },
@@ -4012,9 +4012,9 @@ function AboutPage({ setPage }) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Modal: Lưu vào Bộ sưu tập (Pinterest/Spotify-like)
-// - Checkbox chọn nhiều bộ sưu tập
-// - Tạo bộ sưu tập mới nhanh
+// Modal: Lưu vào Moodboard (Pinterest/Spotify-like)
+// - Checkbox chọn nhiều Moodboard
+// - Tạo Moodboard mới nhanh
 // - Textarea "Ghi chú của giám tuyển" -> COLLECTION_ITEMS.note (mô phỏng bằng state)
 // ──────────────────────────────────────────────────────────────────────────────
 function SaveToCollectionModal({
@@ -4902,7 +4902,7 @@ function PortalPage({ setPage }) {
             <div onClick={() => setPage("admin_export")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
                 <FileDown size={20} className="text-[#1a4ba8]" />
-                <h3 className="text-[#212121] font-medium text-base">Quản lý Bộ sưu tập & Xuất PDF</h3>
+                <h3 className="text-[#212121] font-medium text-base">Quản lý Moodboard & Xuất PDF</h3>
               </div>
               <p className="text-[#666666] text-xs">Giao diện kéo thả sắp xếp ấn phẩm để xuất tập san</p>
             </div>
@@ -5371,7 +5371,7 @@ export default function App() {
     setSaveModal({ open: true, artwork: art });
     setToast({
       title: "Đã lưu tạm",
-      message: "Chọn bộ sưu tập và thêm ghi chú giám tuyển để lưu chính thức.",
+      message: "Chọn Moodboard và thêm ghi chú giám tuyển để lưu chính thức.",
     });
   };
 
@@ -5534,7 +5534,7 @@ export default function App() {
             collections={collections}
             onOpenExportConfig={openExportConfig}
             onQuickCreateCollection={() => {
-              const id = createCollection(`Bộ sưu tập mới`);
+              const id = createCollection(`Moodboard mới`);
               if (id !== null) setCurrentExportCollection(id);
             }}
           />

@@ -1956,7 +1956,7 @@ function MoodboardSortableCard({ item, onClick, onMove, onRemove }) {
             <button onPointerDown={(e) => { e.stopPropagation(); }} onClick={onMove} style={{ background: GRAY_BG, border: "none", borderRadius: 4, padding: "4px", cursor: "pointer", color: CERULEAN }} title="Di chuyển">
               <FolderInput size={14} />
             </button>
-            <button onPointerDown={(e) => { e.stopPropagation(); }} onClick={onRemove} style={{ background: "#FEF2F2", border: "none", borderRadius: 4, padding: "4px", cursor: "pointer", color: CRIMSON }} title="Xóa khỏi bộ sưu tập">
+            <button onPointerDown={(e) => { e.stopPropagation(); }} onClick={onRemove} style={{ background: "#FEF2F2", border: "none", borderRadius: 4, padding: "4px", cursor: "pointer", color: CRIMSON }} title="Xóa khỏi Moodboard">
               <Trash2 size={14} />
             </button>
           </div>
@@ -2019,17 +2019,17 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
       setNewColName("");
       setIsCreating(false);
       await refreshCollections();
-    } catch { alert("Lỗi khi tạo bộ sưu tập"); }
+    } catch { alert("Lỗi khi tạo Moodboard"); }
   };
 
   const handleDeleteCollection = async (id, e) => {
     e?.stopPropagation();
-    if (!confirm("Bạn có chắc muốn xóa bộ sưu tập này?")) return;
+    if (!confirm("Bạn có chắc muốn xóa Moodboard này?")) return;
     try {
       await api.collections.delete(id);
       if (activeCollection?.id === id) setActiveCollection(null);
       await refreshCollections();
-    } catch { alert("Lỗi khi xóa bộ sưu tập"); }
+    } catch { alert("Lỗi khi xóa Moodboard"); }
   };
 
   const handleRenameCollection = async (id, e) => {
@@ -2040,12 +2040,12 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
       setEditingColId(null);
       await refreshCollections();
       if (activeCollection?.id === id) setActiveCollection(prev => ({ ...prev, name: editColName }));
-    } catch { alert("Lỗi khi đổi tên bộ sưu tập"); }
+    } catch { alert("Lỗi khi đổi tên Moodboard"); }
   };
 
   const handleRemoveItem = async (colId, artworkId, e) => {
     e.stopPropagation();
-    if (!confirm("Xóa tác phẩm khỏi bộ sưu tập?")) return;
+    if (!confirm("Xóa tác phẩm khỏi Moodboard?")) return;
     try {
       await api.collections.removeItem(colId, artworkId);
       await refreshCollections();
@@ -2113,7 +2113,7 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
 
             {activeCollection.items?.length === 0 ? (
                <div style={{ textAlign: "center", padding: "60px", color: MUTED, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>
-                 <p>Chưa có tác phẩm nào trong bộ sưu tập này.</p>
+                 <p>Chưa có tác phẩm nào trong Moodboard này.</p>
                </div>
             ) : (() => {
                let filteredItems = (activeCollection.items || []).filter(item => 
@@ -2172,7 +2172,7 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
               <div style={{ display: "flex", gap: 16 }}>
                 <div style={{ position: "relative" }}>
                   <Search size={16} style={{ position: "absolute", left: 12, top: 10, color: MUTED }} />
-                  <input placeholder="Tìm kiếm bộ sưu tập..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ padding: "8px 12px 8px 36px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, width: 250 }} />
+                  <input placeholder="Tìm kiếm Moodboard..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ padding: "8px 12px 8px 36px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, width: 250 }} />
                 </div>
                 <button onClick={() => setIsCreating(true)} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 8, padding: "0 20px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, fontWeight: "bold" }}>
                   <Plus size={18} /> Tạo mới
@@ -2183,7 +2183,7 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
             {isCreating && (
               <div style={{ background: "#fff", padding: "16px 20px", borderRadius: 12, border: `1px solid ${CERULEAN}`, marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
                 <FolderPlus size={20} color={CERULEAN} />
-                <input autoFocus placeholder="Tên bộ sưu tập mới" value={newColName} onChange={e => setNewColName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreate()} style={{ flex: 1, border: "none", outline: "none", fontSize: 16 }} />
+                <input autoFocus placeholder="Tên Moodboard mới" value={newColName} onChange={e => setNewColName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreate()} style={{ flex: 1, border: "none", outline: "none", fontSize: 16 }} />
                 <button onClick={handleCreate} style={{ background: CERULEAN, color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", cursor: "pointer", fontWeight: "bold" }}>Tạo</button>
                 <button onClick={() => setIsCreating(false)} style={{ background: GRAY_LIGHT, color: BLACK, border: "none", borderRadius: 6, padding: "8px 16px", cursor: "pointer", fontWeight: "bold" }}>Hủy</button>
               </div>
@@ -2237,7 +2237,7 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10000 }}>
           <div style={{ background: "#fff", borderRadius: 16, width: 400, padding: 24, boxShadow: "0 24px 48px rgba(0,0,0,0.2)" }}>
             <h3 style={{ margin: "0 0 16px 0", fontSize: 18, fontWeight: 700, color: BLACK }}>Di chuyển tác phẩm</h3>
-            <p style={{ margin: "0 0 16px 0", fontSize: 14, color: MUTED }}>Chọn bộ sưu tập đích:</p>
+            <p style={{ margin: "0 0 16px 0", fontSize: 14, color: MUTED }}>Chọn Moodboard đích:</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 300, overflowY: "auto", marginBottom: 24 }}>
               {collections.filter(c => c.id !== moveState.fromColId).map(c => (
                 <button key={c.id} onClick={() => handleMoveItem(c.id)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "transparent", cursor: "pointer", textAlign: "left", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.background = GRAY_BG} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
@@ -2247,7 +2247,7 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
                 </button>
               ))}
               {collections.length <= 1 && (
-                <p style={{ fontSize: 13, color: MUTED, textAlign: "center", padding: "16px 0" }}>Bạn không có bộ sưu tập nào khác.</p>
+                <p style={{ fontSize: 13, color: MUTED, textAlign: "center", padding: "16px 0" }}>Bạn không có Moodboard nào khác.</p>
               )}
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
@@ -3776,11 +3776,80 @@ if (mins < 1) return t("justNow");
 
             {/* HEADER RIGHT SIDE (Badges & Actions) */}
             <div style={{ display: "flex", alignItems: "center", gap: 16, paddingRight: (art.badges && art.badges.length > 0) ? 48 : 0 }}>
-              <button style={{ background: "rgba(255,255,255,0.1)", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 20, fontSize: 13, fontWeight: "bold", cursor: "pointer", transition: "0.2s" }} onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.2)"} onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"} onClick={() => {
-                 if (navigator.clipboard) navigator.clipboard.writeText(window.location.href);
-                 setShareToast(true);
-                 setTimeout(() => setShareToast(false), 2000);
-              }}>Share Work</button>
+              {(() => {
+                const lecturerComments = comments?.filter(c => c.positionX != null && (c.user?.id || c.user?.Id) !== art.user?.id) || [];
+                const uniqueLecturers = [];
+                lecturerComments.forEach(c => {
+                  const u = c.user || c.User;
+                  if (u && !uniqueLecturers.find(l => (l.id || l.Id) === (u.id || u.Id))) {
+                    uniqueLecturers.push(u);
+                  }
+                });
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    {currentUserId === art.user?.id && uniqueLecturers.length > 0 && (
+                      <div style={{ position: "relative" }}>
+                        <button 
+                          onClick={() => setShowLecturerFilter(!showLecturerFilter)}
+                          style={{ padding: "8px 16px", borderRadius: 20, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(255,255,255,0.1)", color: "#fff", fontSize: 13, fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "0.2s" }}
+                          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
+                          onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                        >
+                          <User size={14} color="#aaa" />
+                          {filterLecturerId ? uniqueLecturers.find(l => (l.id || l.Id) === filterLecturerId)?.fullName || uniqueLecturers.find(l => (l.id || l.Id) === filterLecturerId)?.FullName || "Giảng viên" : "Tất cả nhận xét"}
+                          <ChevronDown size={14} color="#aaa" />
+                        </button>
+                        {showLecturerFilter && (
+                          <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 8, background: "#fff", borderRadius: 12, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", width: 220, zIndex: 1000, overflow: "hidden", border: "1px solid #eee", display: "flex", flexDirection: "column" }}>
+                            <div 
+                              onClick={() => { setFilterLecturerId(""); setShowLecturerFilter(false); }}
+                              style={{ padding: "12px 16px", cursor: "pointer", fontSize: 14, background: filterLecturerId === "" ? "#f0f4ff" : "#fff", color: filterLecturerId === "" ? CERULEAN : "#333", fontWeight: filterLecturerId === "" ? 600 : 400, borderBottom: "1px solid #eee", transition: "0.2s", display: "flex", alignItems: "center", gap: 8 }}
+                              onMouseEnter={e => e.currentTarget.style.background = filterLecturerId === "" ? "#f0f4ff" : "#f9f9f9"}
+                              onMouseLeave={e => e.currentTarget.style.background = filterLecturerId === "" ? "#f0f4ff" : "#fff"}
+                            >
+                              {filterLecturerId === "" && <Check size={14} color={CERULEAN} />}
+                              <span style={{ marginLeft: filterLecturerId === "" ? 0 : 22 }}>Tất cả nhận xét</span>
+                            </div>
+                            {uniqueLecturers.map(l => {
+                              const id = l.id || l.Id;
+                              const isSelected = filterLecturerId === id;
+                              return (
+                                <div 
+                                  key={id}
+                                  onClick={() => { setFilterLecturerId(id); setShowLecturerFilter(false); }}
+                                  style={{ padding: "12px 16px", cursor: "pointer", fontSize: 14, background: isSelected ? "#f0f4ff" : "#fff", color: isSelected ? CERULEAN : "#333", fontWeight: isSelected ? 600 : 400, borderBottom: "1px solid #eee", transition: "0.2s", display: "flex", alignItems: "center", gap: 8 }}
+                                  onMouseEnter={e => e.currentTarget.style.background = isSelected ? "#f0f4ff" : "#f9f9f9"}
+                                  onMouseLeave={e => e.currentTarget.style.background = isSelected ? "#f0f4ff" : "#fff"}
+                                >
+                                  {isSelected && <Check size={14} color={CERULEAN} />}
+                                  <span style={{ marginLeft: isSelected ? 0 : 22 }}>{l.fullName || l.FullName}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {(!art.tags?.includes("EBOOK") && !art.tags?.includes("EBOOK_LANDSCAPE")) && (currentUserRole === "lecturer" || currentUserRole === "admin" || currentUserId === art.user?.id) && (
+                      <button 
+                        onClick={() => {
+                          setPinpointMode(!pinpointMode);
+                          if (pinpointMode) setPendingComment(null);
+                        }} 
+                        style={{ background: pinpointMode ? CERULEAN : "rgba(255,255,255,0.1)", color: "#fff", border: pinpointMode ? "none" : "1px solid rgba(255,255,255,0.2)", padding: "8px 16px", borderRadius: 20, fontSize: 13, cursor: "pointer", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8, transition: "0.2s" }}
+                        onMouseEnter={e => { if (!pinpointMode) e.currentTarget.style.background="rgba(255,255,255,0.2)" }}
+                        onMouseLeave={e => { if (!pinpointMode) e.currentTarget.style.background="rgba(255,255,255,0.1)" }}
+                      >
+                        {currentUserRole === "lecturer" || currentUserRole === "admin" ? (
+                           <><MapPin size={14} /> {pinpointMode ? "Tắt Pinpoint Comment" : "Bật Pinpoint Comment"}</>
+                        ) : (
+                           <><Eye size={14} /> {pinpointMode ? "Ẩn nhận xét" : "Hiện nhận xét"}</>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                );
+              })()}
               
               {(art.badges && art.badges.length > 0) && (
                 <div className="group" style={{ position: "absolute", top: 0, right: 24, zIndex: 60, cursor: "pointer" }}>
@@ -3856,78 +3925,7 @@ if (mins < 1) return t("justNow");
               )
             ) : (
               <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
-                {(() => {
-                  const lecturerComments = comments?.filter(c => c.positionX != null && (c.user?.id || c.user?.Id) !== art.user?.id) || [];
-                  const uniqueLecturers = [];
-                  lecturerComments.forEach(c => {
-                    const u = c.user || c.User;
-                    if (u && !uniqueLecturers.find(l => (l.id || l.Id) === (u.id || u.Id))) {
-                      uniqueLecturers.push(u);
-                    }
-                  });
-
-                  return (
-                    <div style={{ padding: "16px 24px", display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 16, background: "#151515", borderBottom: "1px solid #333" }}>
-                      {currentUserId === art.user?.id && uniqueLecturers.length > 0 && (
-                        <div style={{ position: "relative" }}>
-                          <button 
-                            onClick={() => setShowLecturerFilter(!showLecturerFilter)}
-                            style={{ padding: "8px 16px", borderRadius: 20, border: "1px solid #444", background: "#222", color: "#fff", fontSize: 14, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "0.2s" }}
-                            onMouseEnter={e => e.currentTarget.style.background = "#333"}
-                            onMouseLeave={e => e.currentTarget.style.background = "#222"}
-                          >
-                            <User size={16} color="#aaa" />
-                            {filterLecturerId ? uniqueLecturers.find(l => (l.id || l.Id) === filterLecturerId)?.fullName || uniqueLecturers.find(l => (l.id || l.Id) === filterLecturerId)?.FullName || "Giảng viên" : "Tất cả nhận xét"}
-                            <ChevronDown size={14} color="#aaa" />
-                          </button>
-                          {showLecturerFilter && (
-                            <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 8, background: "#fff", borderRadius: 12, boxShadow: "0 10px 30px rgba(0,0,0,0.1)", width: 220, zIndex: 1000, overflow: "hidden", border: "1px solid #eee", display: "flex", flexDirection: "column" }}>
-                              <div 
-                                onClick={() => { setFilterLecturerId(""); setShowLecturerFilter(false); }}
-                                style={{ padding: "12px 16px", cursor: "pointer", fontSize: 14, background: filterLecturerId === "" ? "#f0f4ff" : "#fff", color: filterLecturerId === "" ? CERULEAN : "#333", fontWeight: filterLecturerId === "" ? 600 : 400, borderBottom: "1px solid #eee", transition: "0.2s", display: "flex", alignItems: "center", gap: 8 }}
-                                onMouseEnter={e => e.currentTarget.style.background = filterLecturerId === "" ? "#f0f4ff" : "#f9f9f9"}
-                                onMouseLeave={e => e.currentTarget.style.background = filterLecturerId === "" ? "#f0f4ff" : "#fff"}
-                              >
-                                {filterLecturerId === "" && <Check size={14} color={CERULEAN} />}
-                                <span style={{ marginLeft: filterLecturerId === "" ? 0 : 22 }}>Tất cả nhận xét</span>
-                              </div>
-                              {uniqueLecturers.map(l => {
-                                const id = l.id || l.Id;
-                                const isSelected = filterLecturerId === id;
-                                return (
-                                  <div 
-                                    key={id}
-                                    onClick={() => { setFilterLecturerId(id); setShowLecturerFilter(false); }}
-                                    style={{ padding: "12px 16px", cursor: "pointer", fontSize: 14, background: isSelected ? "#f0f4ff" : "#fff", color: isSelected ? CERULEAN : "#333", fontWeight: isSelected ? 600 : 400, borderBottom: "1px solid #eee", transition: "0.2s", display: "flex", alignItems: "center", gap: 8 }}
-                                    onMouseEnter={e => e.currentTarget.style.background = isSelected ? "#f0f4ff" : "#f9f9f9"}
-                                    onMouseLeave={e => e.currentTarget.style.background = isSelected ? "#f0f4ff" : "#fff"}
-                                  >
-                                    {isSelected && <Check size={14} color={CERULEAN} />}
-                                    <span style={{ marginLeft: isSelected ? 0 : 22 }}>{l.fullName || l.FullName}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {(currentUserRole === "lecturer" || currentUserRole === "admin" || currentUserId === art.user?.id) && (
-                        <button 
-                          onClick={() => {
-                            setPinpointMode(!pinpointMode);
-                            if (pinpointMode) setPendingComment(null);
-                          }} 
-                          style={{ background: pinpointMode ? CERULEAN : "#222", color: pinpointMode ? "#fff" : "#fff", border: pinpointMode ? "none" : "1px solid #444", padding: "8px 16px", borderRadius: 20, cursor: "pointer", fontWeight: "bold", display: "flex", alignItems: "center", gap: 8 }}>
-                          {currentUserRole === "lecturer" || currentUserRole === "admin" ? (
-                             <><MapPin size={16} /> {pinpointMode ? "Tắt Pinpoint Comment" : "Bật Pinpoint Comment"}</>
-                          ) : (
-                             <><Eye size={16} /> {pinpointMode ? "Ẩn nhận xét" : "Hiện nhận xét"}</>
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })()}
+                {/* Toolbar moved to header */}
                 {allImagesDeduped.map((img, i) => {
                   if (!img) return null;
                   const imageComments = comments?.filter(c => c.targetImageIndex === i && c.positionX != null) || [];
@@ -4052,7 +4050,20 @@ if (mins < 1) return t("justNow");
 
                       {/* Ảnh Hover Actions */}
                       <div className="img-hover-actions" style={{ position: "absolute", top: 20, right: 20, display: "flex", gap: 12, opacity: 0, transition: "opacity 0.2s" }}>
-                        <button onClick={() => { if (onBookmarkClick) onBookmarkClick(art); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: isBookmarked ? "#ffeb3b" : "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Bookmark size={16} fill={isBookmarked ? "#ffeb3b" : "none"} /> {isBookmarked ? "Đã lưu" : "Lưu Moodboard"}</button>
+                        <button 
+                          onClick={() => { 
+                            if (onBookmarkClick) {
+                              const singleImgArt = { ...art, id: `${art.id}_img_${i}`, title: `${art.title} - Hình ${i+1}`, coverImageUrl: img, images: [img] };
+                              onBookmarkClick(singleImgArt);
+                            }
+                          }} 
+                          style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: isBookmarked && isBookmarked(`${art.id}_img_${i}`) ? "#ffeb3b" : "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} 
+                          onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} 
+                          onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}
+                        >
+                          <Bookmark size={16} fill={isBookmarked && isBookmarked(`${art.id}_img_${i}`) ? "#ffeb3b" : "none"} /> 
+                          {isBookmarked && isBookmarked(`${art.id}_img_${i}`) ? "Đã lưu" : "Lưu Moodboard"}
+                        </button>
                         <button onClick={() => { setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Briefcase size={16} /> More Like This</button>
                         <button onClick={() => setShowDownloadModal(true)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Download size={16} /> Download</button>
                         <button onClick={() => handleShare()} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 24, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 14 }} onMouseEnter={e=>e.currentTarget.style.background="rgba(0,0,0,0.8)"} onMouseLeave={e=>e.currentTarget.style.background="rgba(0,0,0,0.6)"}><Link size={16} /> Permalink</button>
@@ -4461,17 +4472,19 @@ if (mins < 1) return t("justNow");
                   {art.toolsUsed?.map((tool, i) => {
                     const tLower = tool.toLowerCase();
                     let iconBg = "#333", iconColor = "#fff", short = tool.substring(0, 2);
-                    if (tLower.includes('photoshop')) { iconBg = '#001e36'; iconColor = '#31a8ff'; short = 'Ps'; }
-                    else if (tLower.includes('illustrator')) { iconBg = '#330000'; iconColor = '#ff9a00'; short = 'Ai'; }
-                    else if (tLower.includes('indesign')) { iconBg = '#49021f'; iconColor = '#ff3366'; short = 'Id'; }
-                    else if (tLower.includes('after effects')) { iconBg = '#00005b'; iconColor = '#9999ff'; short = 'Ae'; }
-                    else if (tLower.includes('lightroom')) { iconBg = '#000000'; iconColor = '#31a8ff'; short = 'Lr'; }
-                    else if (tLower.includes('figma')) { iconBg = '#f24e1e'; iconColor = '#fff'; short = 'Fi'; }
+                    let fallbackBg = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400";
+                    
+                    if (tLower.includes('photoshop')) { iconBg = '#001e36'; iconColor = '#31a8ff'; short = 'Ps'; fallbackBg = "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400"; }
+                    else if (tLower.includes('illustrator')) { iconBg = '#330000'; iconColor = '#ff9a00'; short = 'Ai'; fallbackBg = "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400"; }
+                    else if (tLower.includes('indesign')) { iconBg = '#49021f'; iconColor = '#ff3366'; short = 'Id'; fallbackBg = "https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=400"; }
+                    else if (tLower.includes('after effects')) { iconBg = '#00005b'; iconColor = '#9999ff'; short = 'Ae'; fallbackBg = "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400"; }
+                    else if (tLower.includes('lightroom')) { iconBg = '#000000'; iconColor = '#31a8ff'; short = 'Lr'; fallbackBg = "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400"; }
+                    else if (tLower.includes('figma')) { iconBg = '#f24e1e'; iconColor = '#fff'; short = 'Fi'; fallbackBg = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400"; }
 
                     return (
                       <div key={i} style={{ position: "relative", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", gap: 12, overflow: "hidden", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-                        <img src={toolCovers[tool] || art.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400"} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.5, filter: "blur(2px) grayscale(0.5)", transform: "scale(1.1)" }} />
-                        <div style={{ position: "absolute", inset: 0, background: "rgba(20,20,20,0.7)" }} />
+                        <img src={toolCovers[tool] || fallbackBg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.6, transform: "scale(1.1)", filter: "brightness(0.8) contrast(1.1)" }} />
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)" }} />
                         <div style={{ position: "relative", zIndex: 1, width: 28, height: 28, background: iconBg, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: iconColor, fontWeight: "bold", fontSize: 13, border: `1px solid ${iconColor}40` }}>{short}</div>
                         <span style={{ position: "relative", zIndex: 1, color: "#fff", fontWeight: 800, fontSize: 15, textShadow: "0 1px 4px rgba(0,0,0,0.8)", letterSpacing: "0.2px" }}>{tool}</span>
                       </div>
@@ -4481,13 +4494,27 @@ if (mins < 1) return t("justNow");
 
                 <span style={{ fontSize: 11, fontWeight: "bold", color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, display: "block" }}>Creative Fields</span>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {Array.from(new Set([art.category, ...(art.tags || [])])).filter(Boolean).slice(0, 4).map((field, i) => (
-                    <div key={i} style={{ position: "relative", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
-                      <img src={categoryCovers[field] || art.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400"} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.6, transform: "scale(1.1)", filter: "brightness(0.7) contrast(1.2)" }} />
-                      <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
-                      <span style={{ position: "relative", zIndex: 1, color: "#fff", fontWeight: 900, fontSize: 15, textShadow: "0 2px 8px rgba(0,0,0,0.9)", letterSpacing: "0.5px", textAlign: "center" }}>{field}</span>
-                    </div>
-                  ))}
+                  {Array.from(new Set([art.category, ...(art.tags || [])])).filter(Boolean).slice(0, 4).map((field, i) => {
+                    const fallbackCategories = {
+                      'graphic design': 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400',
+                      'creative': 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400',
+                      'modern': 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=400',
+                      'ui/ux': 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400',
+                      'branding': 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=400',
+                      '3d art': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400',
+                      'typography': 'https://images.unsplash.com/photo-1515595967223-f9fa59af5a3b?w=400',
+                      'illustration': 'https://images.unsplash.com/photo-1578301978693-85fa9c026109?w=400',
+                    };
+                    const fallbackImg = fallbackCategories[field.toLowerCase()] || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400";
+
+                    return (
+                      <div key={i} style={{ position: "relative", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+                        <img src={categoryCovers[field] || fallbackImg} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.6, transform: "scale(1.1)", filter: "brightness(0.8) contrast(1.1)" }} />
+                        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)" }} />
+                        <span style={{ position: "relative", zIndex: 1, color: "#fff", fontWeight: 900, fontSize: 15, textShadow: "0 2px 8px rgba(0,0,0,0.9)", letterSpacing: "0.5px", textAlign: "center" }}>{field}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -4498,9 +4525,9 @@ if (mins < 1) return t("justNow");
         </div>
 
         {/* FIXED RIGHT SIDEBAR */}
-        <div style={{ position: "fixed", right: 0, top: "45%", transform: "translateY(-50%)", width: "calc(50vw - min(50vw - 100px, 700px))", display: "flex", flexDirection: "column", alignItems: "center", gap: 12, zIndex: 1010, pointerEvents: "none" }}>
+        <div style={{ position: "fixed", right: 0, top: 80, bottom: 90, width: "calc(50vw - min(50vw - 100px, 700px))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "min(10px, 1.2vh)", zIndex: 1010, pointerEvents: "none" }}>
             
-            <div style={{ position: "relative", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "auto" }} className="sidebar-item" onClick={() => {
+            <div style={{ position: "relative", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, pointerEvents: "auto" }} className="sidebar-item" onClick={() => {
               if (!isFollowing) {
                 setIsFollowing(true);
                 setIsFollowingAnimPlaying(true);
@@ -4510,22 +4537,22 @@ if (mins < 1) return t("justNow");
                 setIsFollowingAnimPlaying(false);
               }
             }}>
-              <img onClick={(e) => { e.stopPropagation(); setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 40, height: 40, borderRadius: "50%", border: "2px solid #191919", objectFit: "cover", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"} />
+              <img onClick={(e) => { e.stopPropagation(); setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 36, height: 36, borderRadius: "50%", border: "2px solid #191919", objectFit: "cover", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"} />
               
               {(!isFollowing || isFollowingAnimPlaying) && (
-                <div style={{ position: "absolute", bottom: 20, right: -4, width: 20, height: 20, borderRadius: "50%", background: "#0057ff", color: "#fff", border: "2px solid #191919", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: "bold", padding: 0, transition: "background 0.3s" }}>
-                  {isFollowing ? <Check size={12} style={{ animation: "followCheck 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)" }} /> : <span style={{ lineHeight: 0.8 }}>+</span>}
+                <div style={{ position: "absolute", bottom: 18, right: -4, width: 18, height: 18, borderRadius: "50%", background: "#0057ff", color: "#fff", border: "2px solid #191919", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: "bold", padding: 0, transition: "background 0.3s" }}>
+                  {isFollowing ? <Check size={10} style={{ animation: "followCheck 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)" }} /> : <span style={{ lineHeight: 0.8 }}>+</span>}
                 </div>
               )}
               
-              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", whiteSpace: "nowrap" }}>{isFollowing ? "Following" : "Follow"}</span>
+              <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff", whiteSpace: "nowrap" }}>{isFollowing ? "Following" : "Follow"}</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", pointerEvents: "auto" }} onClick={() => setShowOrderModal(true)}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <Mail size={16} color="#191919" />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", pointerEvents: "auto" }} onClick={() => setShowOrderModal(true)}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                <Mail size={14} color="#191919" />
               </div>
-              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Hire</span>
+              <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>Hire</span>
             </div>
 
             {/* TOOLS BUTTON */}
@@ -4552,13 +4579,13 @@ if (mins < 1) return t("justNow");
               const firstTool = getToolInfo(toolsList[0]);
               
               return (
-                <div className="group" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", position: "relative", pointerEvents: "auto" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                    <div style={{ width: 22, height: 22, borderRadius: 4, background: firstTool.bg, color: firstTool.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: 13, fontFamily: "sans-serif" }}>
+                <div className="group" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", position: "relative", pointerEvents: "auto" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                    <div style={{ width: 20, height: 20, borderRadius: 4, background: firstTool.bg, color: firstTool.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: 12, fontFamily: "sans-serif" }}>
                       {firstTool.id}
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Tools</span>
+                  <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>Tools</span>
                   
                   {/* Tool Popup */}
                   <div className="absolute top-1/2 right-full -translate-y-1/2 mr-4 bg-white text-black p-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" style={{ borderRadius: 8, width: 220, zIndex: 100, boxShadow: "0 8px 30px rgba(0,0,0,0.2)" }}>
@@ -4583,11 +4610,11 @@ if (mins < 1) return t("justNow");
             })()}
 
             {canGrade && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", position: "relative", pointerEvents: "auto" }} onMouseEnter={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'block'; }} onMouseLeave={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'none'; }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                  <Star size={16} color="#fff" fill="#fff" />
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", position: "relative", pointerEvents: "auto" }} onMouseEnter={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'block'; }} onMouseLeave={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'none'; }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                  <Star size={14} color="#fff" fill="#fff" />
                 </div>
-                <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", whiteSpace: "nowrap" }}>Badge</span>
+                <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff", whiteSpace: "nowrap" }}>Badge</span>
                 
                 {/* Dropdown Menu Huy Hiệu */}
                 <div className="badge-menu" style={{ display: "none", position: "absolute", top: 0, right: "100%", marginRight: 16, background: "#fff", borderRadius: 8, padding: 12, minWidth: 200, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", zIndex: 200 }}>
@@ -4611,32 +4638,32 @@ if (mins < 1) return t("justNow");
               </div>
             )}
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", pointerEvents: "auto" }} onClick={() => onBookmarkClick(art.id)}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <Folder size={16} color="#191919" fill={isBookmarked ? "#191919" : "none"} />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", pointerEvents: "auto" }} onClick={() => onBookmarkClick(art)}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                <Folder size={14} color="#191919" fill={isBookmarked && isBookmarked(art.id) ? "#191919" : "none"} />
               </div>
-              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Save</span>
+              <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>{isBookmarked && isBookmarked(art.id) ? "Saved" : "Save"}</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", pointerEvents: "auto" }} onClick={handleShare}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <Upload size={16} color="#191919" />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", pointerEvents: "auto" }} onClick={handleShare}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                <Upload size={14} color="#191919" />
               </div>
-              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Share</span>
+              <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>Share</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", marginTop: 8, pointerEvents: "auto" }} onClick={handleLike}>
-              <div style={{ width: 50, height: 50, borderRadius: "50%", background: "#0057ff", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)", transform: animatingLike ? "scale(1.2) rotate(-10deg)" : "scale(1)", boxShadow: isLiked ? "0 0 20px rgba(0,87,255,0.4)" : "none" }} onMouseEnter={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1.1)"}} onMouseLeave={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1)"}}>
-                <ThumbsUp size={20} color="#fff" fill={isLiked ? "#fff" : "none"} />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", marginTop: 4, pointerEvents: "auto" }} onClick={handleLike}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "#0057ff", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)", transform: animatingLike ? "scale(1.2) rotate(-10deg)" : "scale(1)", boxShadow: isLiked ? "0 0 20px rgba(0,87,255,0.4)" : "none" }} onMouseEnter={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1.1)"}} onMouseLeave={e => {if(!animatingLike) e.currentTarget.style.transform="scale(1)"}}>
+                <ThumbsUp size={18} color="#fff" fill={isLiked ? "#fff" : "none"} />
               </div>
-              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>{likeCount || 0}</span>
+              <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>{likeCount || 0}</span>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer", pointerEvents: "auto" }} onClick={() => setShowReport(true)}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
-                <AlertTriangle size={16} color="#191919" />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", pointerEvents: "auto" }} onClick={() => setShowReport(true)}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
+                <AlertTriangle size={14} color="#191919" />
               </div>
-              <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff" }}>Report</span>
+              <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>Report</span>
             </div>
 
         </div>
@@ -6171,7 +6198,7 @@ function AdminSidebar({ active, setPage }) {
     { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users", roles: ["admin"] },
     { icon: <ShoppingCart size={18} />, label: "Đơn hàng", page: "admin_orders", roles: ["admin"] },
     { icon: <ShieldAlert size={18} />, label: "Cảnh cáo ấn phẩm", page: "admin_artworks", roles: ["admin", "lecturer"] },
-    { icon: <Folder size={18} />, label: "Quản lý bộ sưu tập", page: "admin_export", roles: ["admin", "lecturer"] },
+    { icon: <Folder size={18} />, label: "Quản lý Moodboard", page: "admin_export", roles: ["admin", "lecturer"] },
     { icon: <Settings size={18} />, label: "Cài đặt Watermark", page: "admin_watermark", roles: ["admin"] },
     { icon: <Settings size={18} />, label: "Cài đặt Layout", page: "admin_layout", roles: ["admin"] },
   ].filter(item => item.roles.includes(userRole));
@@ -7095,88 +7122,88 @@ function AdminArtworksPage({ setPage }) {
             )}
 
             {selected && (
-              <div className="bg-white border border-[#E0E0E0] rounded-xl overflow-hidden">
-                <div className="p-5 border-b border-[#E0E0E0] flex items-start justify-between gap-4">
+              <div className="bg-white border border-[#E0E0E0] rounded-md overflow-hidden">
+                <div className="p-4 border-b border-[#E0E0E0] flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("artworkDetails")}</p>
-                    <h3 className="text-lg font-bold text-[#212121] truncate">{selected.title}</h3>
-                    <p className="text-sm text-[#666666] mt-1">{selected.student}</p>
+                    <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("artworkDetails")}</p>
+                    <h3 className="text-base font-semibold text-[#212121] truncate">{selected.title}</h3>
+                    <p className="text-[13px] text-[#666666] mt-0.5">{selected.student}</p>
                   </div>
-                  <button onClick={() => setSelectedId(null)} className="text-sm font-semibold text-[#666666] hover:text-[#212121] transition-colors">{t("close")}</button>
+                  <button onClick={() => setSelectedId(null)} className="text-[13px] font-medium text-[#666666] hover:text-[#212121] transition-colors">{t("close")}</button>
                 </div>
 
-                <div className="p-5">
-                  <div className="rounded-xl overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer" onClick={() => handleOpenGallery(0)}>
-                    <img src={selected.coverImageUrl} className="w-full h-64 object-cover" />
+                <div className="p-4">
+                  <div className="rounded-md overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer" onClick={() => handleOpenGallery(0)}>
+                    <img src={selected.coverImageUrl} className="w-full h-44 object-cover" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <span className="text-white opacity-0 group-hover:opacity-100 text-sm font-semibold transition-opacity">{t("clickToZoom")}</span>
+                      <span className="text-white opacity-0 group-hover:opacity-100 text-[13px] font-medium transition-opacity">{t("clickToZoom")}</span>
                     </div>
                   </div>
                   {(selected.fileUrls || []).length > 0 && (
-                    <div className="flex gap-2 mt-3 flex-wrap">
+                    <div className="flex gap-2 mt-2 flex-wrap">
                       {[selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean).map((url, idx) => (
-                        <div key={idx} className="w-14 h-12 rounded-lg overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#1a4ba8] transition-colors" onClick={() => handleOpenGallery(idx)}>
+                        <div key={idx} className="w-10 h-8 rounded-md overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#1a4ba8] transition-colors" onClick={() => handleOpenGallery(idx)}>
                           <img src={url} alt="" className="w-full h-full object-cover" />
                         </div>
                       ))}
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-4 mt-5">
+                  <div className="grid grid-cols-2 gap-3 mt-4">
                     <div>
-                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("subject")}</p>
-                      <p className="text-sm font-semibold text-[#212121]">{selected.subject}</p>
+                      <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("subject")}</p>
+                      <p className="text-[13px] text-[#333]">{selected.subject}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("tools")}</p>
-                      <p className="text-sm font-semibold text-[#212121]">{(selected.toolsUsed || []).join(", ") || "—"}</p>
+                      <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("tools")}</p>
+                      <p className="text-[13px] text-[#333]">{(selected.toolsUsed || []).join(", ") || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("status")}</p>
-                      <span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium ${selected.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
-                        {selected.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} />}
+                      <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("status")}</p>
+                      <span className={`inline-flex items-center gap-1 whitespace-nowrap text-[11px] px-2 py-0.5 rounded-full ${selected.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
+                        {selected.isPublic ? <Check size={10} className="text-green-600" /> : <EyeOff size={10} />}
                         {selected.isPublic ? t("public") : t("private")}
                       </span>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("score")}</p>
-                      <p className="text-sm font-semibold text-[#212121]">{selected.score ?? t("notGraded") }</p>
+                      <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("score")}</p>
+                      <p className="text-[13px] text-[#333]">{selected.score ?? t("notGraded") }</p>
                     </div>
                   </div>
 
-                  <div className="mt-4">
-                    <a href={`${window.location.origin}/#/detail/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[#1a4ba8] hover:text-[#0d2e6e] font-semibold flex items-center gap-1.5 transition-colors">
-                      <ExternalLink size={14} /> {t("viewDetails")}: {selected.title}
+                  <div className="mt-3">
+                    <a href={`${window.location.origin}/#/detail/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#1a4ba8] hover:text-[#0d2e6e] font-medium flex items-center gap-1.5 transition-colors">
+                      <ExternalLink size={12} /> {t("viewDetails")}: {selected.title}
                     </a>
                   </div>
 
                   <div className="mt-4">
-                    <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <ShieldAlert size={14} /> {t("reportViolation")} {reports.length > 0 && <span className="bg-[#8B1A1A] text-white text-[10px] px-2 py-0.5 rounded-full">{reports.length}</span>}
+                    <p className="text-[11px] text-[#888] uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                      <ShieldAlert size={12} /> {t("reportViolation")} {reports.length > 0 && <span className="bg-[#8B1A1A] text-white text-[9px] px-1.5 py-0.5 rounded-full">{reports.length}</span>}
                     </p>
                     {reportsLoading ? (
-                      <p className="text-sm text-[#666666]">{t("loading")}</p>
+                      <p className="text-[13px] text-[#666666]">{t("loading")}</p>
                     ) : reports.length === 0 ? (
-                      <p className="text-sm text-[#666666] bg-[#F8F8F8] rounded-lg p-3 border border-[#E0E0E0]">{t("noReportsForArtwork")}</p>
+                      <p className="text-[12px] text-[#666666] bg-[#F8F8F8] rounded-md p-2 border border-[#E0E0E0]">{t("noReportsForArtwork")}</p>
                     ) : (
-                      <div className="flex flex-col gap-3 max-h-[320px] overflow-y-auto">
+                      <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1">
                         {reports.map(r => (
-                          <div key={r.id} className="bg-[#F8F8F8] rounded-lg p-3 border border-[#E0E0E0]">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-xs font-semibold text-[#8B1A1A] bg-red-50 px-2 py-0.5 rounded border border-[#F5C5C5]">{r.violationType}</span>
-                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${r.status === "pending" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" : r.status === "resolved" ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}>
+                          <div key={r.id} className="bg-[#F8F8F8] rounded-md p-2.5 border border-[#E0E0E0]">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[11px] font-medium text-[#8B1A1A] bg-red-50 px-1.5 py-0.5 rounded border border-[#F5C5C5]">{r.violationType}</span>
+                              <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${r.status === "pending" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" : r.status === "resolved" ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}>
                                 {r.status === "pending" ? t("pending") : r.status === "resolved" ? t("processed") : t("dismissed")}
                               </span>
                             </div>
-                            {r.detail && <p className="text-sm text-[#212121] mb-2">{r.detail}</p>}
+                            {r.detail && <p className="text-[12px] text-[#212121] mb-1.5">{r.detail}</p>}
                             <div className="flex items-center justify-between">
-                              <p className="text-[10px] text-[#666666]">
+                              <p className="text-[9px] text-[#666666]">
                                 {t("by")} {r.user?.fullName || r.user?.email || t("user") } · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
                               </p>
                               {r.status === "pending" && (
                                 <div className="flex gap-1">
-                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "resolved").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "resolved" } : x)))} className="text-[10px] font-semibold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200 hover:bg-green-100 transition-colors cursor-pointer">{t("resolve")}</button>
-                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "dismissed").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "dismissed" } : x)))} className="text-[10px] font-semibold text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">{t("dismiss")}</button>
+                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "resolved").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "resolved" } : x)))} className="text-[9px] font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded border border-green-200 hover:bg-green-100 transition-colors cursor-pointer">{t("resolve")}</button>
+                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "dismissed").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "dismissed" } : x)))} className="text-[9px] font-medium text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">{t("dismiss")}</button>
                                 </div>
                               )}
                             </div>
@@ -7186,22 +7213,22 @@ function AdminArtworksPage({ setPage }) {
                     )}
                   </div>
 
-                  <div className="mt-5 grid grid-cols-3 gap-3">
+                  <div className="mt-4 grid grid-cols-3 gap-2">
                     {!selected.isPublic ? (
-                      <button onClick={() => approveArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#1a4ba8] bg-white text-[#1a4ba8] text-sm font-semibold hover:bg-[#eef4ff] transition-colors">
-                        <Check size={14} className="inline mr-1" /> {t("approveArtwork")}
+                      <button onClick={() => approveArtwork(selected.id)} className="py-2 rounded-md border border-[#1a4ba8] bg-white text-[#1a4ba8] text-[13px] font-medium hover:bg-[#eef4ff] transition-colors">
+                        <Check size={12} className="inline mr-1" /> {t("approveArtwork")}
                       </button>
                     ) : (
-                      <button onClick={() => hideArtwork(selected.id)} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
+                      <button onClick={() => hideArtwork(selected.id)} className="py-2 rounded-md border border-[#E0E0E0] bg-white text-[13px] font-medium text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
                         {t("hideArtwork")}
                       </button>
                     )}
-                    <button onClick={() => openConfirm("delete", selected.id)} className="py-2.5 rounded-lg border border-[#F5C5C5] bg-red-50 text-sm font-bold text-[#8B1A1A] hover:bg-red-100 transition-colors">
+                    <button onClick={() => openConfirm("delete", selected.id)} className="py-2 rounded-md border border-[#F5C5C5] bg-red-50 text-[13px] font-medium text-[#8B1A1A] hover:bg-red-100 transition-colors">
                       {t("deletePermanently")}
                     </button>
                   </div>
 
-                  <button onClick={() => toggleHighlight(selected.id, !selected.isHighlighted)} className={`mt-3 w-full py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+                  <button onClick={() => toggleHighlight(selected.id, !selected.isHighlighted)} className={`mt-2 w-full py-2 rounded-md text-[13px] font-medium border transition-colors ${
                     selected.isHighlighted ? "bg-[#212121] text-white border-[#212121]" : "bg-[#e0eaff] text-[#1a4ba8] border-[#a8bce0] hover:bg-[#d0daf0]"
                   }`}>
                     {selected.isHighlighted ? t("removeHighlight") : t("highlightArtwork")}
@@ -7283,10 +7310,10 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
                 </div>
                 
                 <h3 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#1a4ba8] to-[#0d2e6e] tracking-tight mb-3">
-                  Chưa có bộ sưu tập nào
+                  Chưa có Moodboard nào
                 </h3>
                 <p className="text-[#666666] text-base mb-8 max-w-md mx-auto leading-relaxed">
-                  Hãy tạo bộ sưu tập mới để lưu trữ, phân loại và xuất bản các ấn phẩm đồ án xuất sắc nhất.
+                  Hãy tạo Moodboard mới để lưu trữ, phân loại và xuất bản các ấn phẩm đồ án xuất sắc nhất.
                 </p>
                 
                 <button
@@ -7294,7 +7321,7 @@ function AdminExportPage({ setPage, collections, onOpenExportConfig, onQuickCrea
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#1a4ba8] text-white rounded-full font-bold hover:bg-[#0d2e6e] shadow-[0_8px_20px_-6px_rgba(26,75,168,0.4)] hover:shadow-[0_14px_25px_-6px_rgba(26,75,168,0.5)] hover:-translate-y-0.5 transition-all duration-300 cursor-pointer"
                 >
                   <Plus size={20} strokeWidth={2.5} />
-                  {t("createNewCollection", "Tạo Bộ Sưu Tập Mới")}
+                  {t("createNewCollection", "Tạo Moodboard Mới")}
                 </button>
               </div>
             </div>
@@ -7483,7 +7510,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
       <div className="flex-1 overflow-y-auto p-8 flex flex-col">
         <div className="flex items-start justify-between gap-6 mb-8 pb-6 border-b border-[#E0E0E0] flex-shrink-0">
           <div className="min-w-0 flex-1 max-w-xl">
-            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Quản lý Bộ sưu tập</p>
+            <p className="text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">Quản lý Moodboard</p>
             <input
               value={collection.name}
               onChange={(e) => onUpdateCollection && onUpdateCollection({ name: e.target.value })}
@@ -7606,7 +7633,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                 </div>
                 
                 <div className="mt-2 text-[11px] text-[#888]">
-                  Mọi thay đổi trên panel này sẽ được lưu tự động vào bộ sưu tập.
+                  Mọi thay đổi trên panel này sẽ được lưu tự động vào Moodboard.
                 </div>
               </div>
             </div>
@@ -7902,12 +7929,15 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
   const footerInfo = getContentBySection('footer', 'footerInfo');
   const footerLinks = getContentItems('footer', 'footerLinks');
 
-  const categories = [
-    { key: "3D Art", label: "3d art" },
-    { key: "Branding", label: "branding" },
-    { key: "Poster", label: "poster" },
-    { key: "Packaging", label: "packaging" },
-  ];
+  const dynamicCats = getSetting('homeCategories');
+  const categories = dynamicCats 
+    ? dynamicCats.split(',').map(c => ({ key: c.trim(), label: c.trim().toLowerCase() }))
+    : [
+        { key: "3D Art", label: "3d art" },
+        { key: "Branding", label: "branding" },
+        { key: "Poster", label: "poster" },
+        { key: "Packaging", label: "packaging" },
+      ];
 
   useEffect(() => {
     api.artworks.list({ limit: "16", sort: "newest" }).then(res => {
@@ -8040,10 +8070,19 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
               <span className="w-6 h-px bg-[#DA291C]"></span>
             </p>
             <h2 className="text-3xl md:text-4xl font-black text-[#212121] leading-tight">
-              <span className="text-[#1a4ba8]">Mọi thứ</span> bạn cần trong{' '}
-              <span className="text-[#DA291C]">một nền tảng</span>
+              {hero?.featuresTitle1 ? (
+                <>
+                  <span className="text-[#1a4ba8]">{hero.featuresTitle1}</span> {hero.featuresTitle2}{' '}
+                  <span className="text-[#DA291C]">{hero.featuresTitle3}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-[#1a4ba8]">Mọi thứ</span> bạn cần trong{' '}
+                  <span className="text-[#DA291C]">một nền tảng</span>
+                </>
+              )}
             </h2>
-            <p className="text-gray-500 mt-4 max-w-xl mx-auto text-[15px]">Hệ thống E-Portfolio toàn diện cho sinh viên Thiết kế Đồ họa UEF</p>
+            <p className="text-gray-500 mt-4 max-w-xl mx-auto text-[15px]">{hero?.featuresDesc || "Hệ thống E-Portfolio toàn diện cho sinh viên Thiết kế Đồ họa UEF"}</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -8172,7 +8211,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
                 </div>
                 <h4 className="font-bold text-[15px] mb-1">{work.title}</h4>
                 <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{work.user?.fullName || "Sinh viên UEF"}</span>
+                  <span>{work.user?.fullName || getSetting("fallbackAuthorName") || "Sinh viên UEF"}</span>
                   <span className="flex items-center gap-1"><Heart size={12} /> {work.likeCount || 0}</span>
                 </div>
               </div>
@@ -8317,7 +8356,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             </ul>
           </div>
           <div>
-            <h4 className="font-bold text-sm text-[#1a4ba8] uppercase tracking-wider mb-5">Liên kết</h4>
+            <h4 className="font-bold text-sm text-[#1a4ba8] uppercase tracking-wider mb-5">{footerInfo?.linksTitle || "Liên kết"}</h4>
             <ul className="space-y-3 text-sm">
               {footerLinks.length > 0 ? footerLinks.map((item, idx) => {
                 const c = item.content;
@@ -8385,7 +8424,7 @@ const studentFeatures = [
   { icon: MessageSquare, title: "Kết nối & Phản hồi", desc: "Nhận nhận xét từ giảng viên, kết nối với nhà tuyển dụng qua hệ thống tin nhắn." },
   { icon: BarChart2, title: "Theo dõi tiến độ", desc: "Dashboard cá nhân quản lý bài đăng, lượt tương tác và điểm đánh giá." },
   { icon: BookOpen, title: "Học tập & Phát triển", desc: "Tham khảo tác phẩm của bạn học, học hỏi kỹ thuật thiết kế đa dạng." },
-  { icon: Star, title: "Cơ hội nghề nghiệp", desc: "Tiếp cận nhà tuyển dụng tiềm năng thông qua bộ sưu tập ấn phẩm tốt nghiệp." },
+  { icon: Star, title: "Cơ hội nghề nghiệp", desc: "Tiếp cận nhà tuyển dụng tiềm năng thông qua Moodboard ấn phẩm tốt nghiệp." },
 ];
 
 const employerFeatures = [
@@ -8393,14 +8432,14 @@ const employerFeatures = [
   { icon: Eye, title: "Đánh giá năng lực", desc: "Xem điểm đánh giá từ giảng viên, nhận xét chuyên môn trên từng tác phẩm." },
   { icon: Send, title: "Liên hệ trực tiếp", desc: "Gửi tin nhắn tuyển dụng qua hệ thống — kết nối nhanh chóng với ứng viên tiềm năng." },
   { icon: Heart, title: "Lưu & Theo dõi", desc: "Đánh dấu ứng viên triển vọng, theo dõi cập nhật tác phẩm mới nhất." },
-  { icon: FileDown, title: "Xuất báo cáo", desc: "Tổng hợp bộ sưu tập ứng viên nổi bật, xuất PDF phục vụ tuyển dụng." },
+  { icon: FileDown, title: "Xuất báo cáo", desc: "Tổng hợp Moodboard ứng viên nổi bật, xuất PDF phục vụ tuyển dụng." },
   { icon: Globe, title: "Tiếp cận rộng", desc: "Hơn 500 ấn phẩm đồ án từ sinh viên ngành Thiết kế Đồ họa UEF." },
 ];
 
 const schoolFeatures = [
   { icon: LayoutDashboard, title: "Quản lý đào tạo", desc: "Theo dõi toàn bộ đồ án sinh viên theo môn học, semester và năm học." },
   { icon: Check, title: "Đánh giá chất lượng", desc: "Giảng viên chấm điểm, nhận xét trực tiếp; thống kê điểm số theo lớp và môn." },
-  { icon: Folder, title: "Bộ sưu tập triển lãm", desc: "Tạo tuyển tập ấn phẩm xuất sắc, sắp xếp kéo thả và xuất tập san PDF." },
+  { icon: Folder, title: "Moodboard triển lãm", desc: "Tạo tuyển tập ấn phẩm xuất sắc, sắp xếp kéo thả và xuất tập san PDF." },
   { icon: Bookmark, title: "Lưu trữ học thuật", desc: "Lưu giữ toàn bộ đồ án qua các năm phục vụ kiểm định và đối sánh." },
   { icon: Users, title: "Quản lý người dùng", desc: "Quản lý tài khoản sinh viên, giảng viên; phân quyền và khóa/mở tài khoản." },
   { icon: ShieldAlert, title: "Kiểm duyệt nội dung", desc: "Giám sát nội dung đăng tải, xử lý báo cáo vi phạm và cảnh cáo." },
@@ -9038,9 +9077,9 @@ function AboutPage({ setPage, isLoggedIn }) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Modal: Lưu vào Bộ sưu tập (Pinterest/Spotify-like)
-// - Checkbox chọn nhiều bộ sưu tập
-// - Tạo bộ sưu tập mới nhanh
+// Modal: Lưu vào Moodboard (Pinterest/Spotify-like)
+// - Checkbox chọn nhiều Moodboard
+// - Tạo Moodboard mới nhanh
 // - Textarea "Ghi chú của giám tuyển" -> COLLECTION_ITEMS.note (mô phỏng bằng state)
 // ──────────────────────────────────────────────────────────────────────────────
 function SaveToCollectionModal({
@@ -9927,7 +9966,7 @@ function PortalPage({ setPage }) {
             <div onClick={() => setPage("admin_export")} className="bg-[#FFFFFF] border border-[#E0E0E0] rounded-lg p-5 hover:-translate-y-1 hover:shadow-md hover:border-[#1a4ba8] transition-all cursor-pointer">
               <div className="flex items-center gap-3 mb-2">
                 <FileDown size={20} className="text-[#1a4ba8]" />
-                <h3 className="text-[#212121] font-medium text-base">Quản lý Bộ sưu tập & Xuất PDF</h3>
+                <h3 className="text-[#212121] font-medium text-base">Quản lý Moodboard & Xuất PDF</h3>
               </div>
               <p className="text-[#666666] text-xs">Giao diện kéo thả sắp xếp ấn phẩm để xuất tập san</p>
             </div>
@@ -10391,7 +10430,7 @@ export default function App() {
     const savedDrafts = JSON.parse(localStorage.getItem('uef_journal_drafts') || '{}');
     const draft = savedDrafts[c.id];
     if (draft) {
-      if (window.confirm("Bạn có một bản nháp thiết kế tập san chưa hoàn thành cho bộ sưu tập này. Bạn có muốn tiếp tục chỉnh sửa bản nháp đó không?\n\nChọn OK để tiếp tục.\nChọn Cancel để bắt đầu thiết kế mới.")) {
+      if (window.confirm("Bạn có một bản nháp thiết kế tập san chưa hoàn thành cho Moodboard này. Bạn có muốn tiếp tục chỉnh sửa bản nháp đó không?\n\nChọn OK để tiếp tục.\nChọn Cancel để bắt đầu thiết kế mới.")) {
         setJournalOrientation(draft.orientation || 'portrait');
         setJournalDraft(draft);
         setShowJournalBuilder(true);
@@ -10446,7 +10485,7 @@ export default function App() {
     setSaveModal({ open: true, artwork: art });
     setToast({
       title: "Đã lưu tạm",
-      message: "Chọn bộ sưu tập và thêm ghi chú giám tuyển để lưu chính thức.",
+      message: "Chọn Moodboard và thêm ghi chú giám tuyển để lưu chính thức.",
     });
   };
 
@@ -10622,7 +10661,7 @@ export default function App() {
             collections={collections}
             onOpenExportConfig={openExportConfig}
             onQuickCreateCollection={() => {
-              const id = createCollection(`Bộ sưu tập mới`);
+              const id = createCollection(`Moodboard mới`);
               if (id !== null) setCurrentExportCollection(id);
             }}
           />
