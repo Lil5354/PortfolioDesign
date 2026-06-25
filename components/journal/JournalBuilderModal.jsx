@@ -64,11 +64,12 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
     setBlocks(blocks.map(b => b.id === id ? { ...b, fullWidth: !b.fullWidth } : b));
   };
 
-  const renderBlock = (block) => {
+  const renderBlock = (block, index, arr) => {
+    const isLastBlock = arr && index === arr.length - 1;
     return (
       <div 
         key={block.id} 
-        className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex items-center justify-center shadow-md print:mb-0 print:border-none print:shadow-none print:break-after-page print:overflow-hidden`}
+        className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex items-center justify-center shadow-md print:mb-0 print:border-none print:shadow-none ${!isLastBlock ? 'print:break-after-page' : ''} print:overflow-hidden`}
         onMouseEnter={() => setHoveredBlockId(block.id)}
         onMouseLeave={() => setHoveredBlockId(null)}
         style={{ 
@@ -891,7 +892,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           .print\\:shadow-none { box-shadow: none !important; }
           .print\\:p-0 { padding: 0 !important; }
           .print\\:mb-0 { margin-bottom: 0 !important; }
-          .print\\:break-after-page { break-after: page !important; page-break-after: always !important; }
+          .print\\:break-after-page:not(:last-child) { break-after: page !important; page-break-after: always !important; }
           .print\\:border-transparent { border-color: transparent !important; }
           .print\\:border-none { border: none !important; }
         }
