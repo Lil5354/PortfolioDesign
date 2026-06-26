@@ -32,6 +32,23 @@ public class MessagesController : ControllerBase
         var messages = await _context.Messages
             .Where(m => m.RecipientId == userId)
             .OrderByDescending(m => m.CreatedAt)
+            .Select(m => new {
+                id = m.Id,
+                recipientId = m.RecipientId,
+                recipientSlug = "",
+                senderName = m.SenderName,
+                senderEmail = m.SenderEmail,
+                senderCompany = m.SenderCompany,
+                purpose = m.Purpose,
+                status = m.Status,
+                content = m.Content,
+                isRead = m.IsRead,
+                isEmailed = m.IsEmailed,
+                isArchived = m.IsArchived,
+                createdAt = m.CreatedAt,
+                senderAvatarUrl = _context.Users.Where(u => u.Email == m.SenderEmail).Select(u => u.AvatarUrl).FirstOrDefault(),
+                recipientAvatarUrl = _context.Users.Where(u => u.Id == m.RecipientId).Select(u => u.AvatarUrl).FirstOrDefault()
+            })
             .ToListAsync();
 
         return Ok(messages);
@@ -89,20 +106,7 @@ public class MessagesController : ControllerBase
 
         _context.Messages.Add(message);
         
-        // Also create a notification for the recipient
-        var notification = new Notification
-        {
-            Id = Guid.NewGuid().ToString(),
-            UserId = recipientId,
-            Type = dto.Purpose == "order" ? NotificationType.new_order : NotificationType.new_message,
-            Content = dto.Purpose == "order" 
-                ? $"Đơn đặt hàng mới cho tác phẩm của bạn từ {dto.SenderName}" 
-                : $"Bạn có liên hệ mới từ {dto.SenderName} qua Portfolio",
-            CreatedAt = DateTime.UtcNow
-        };
-        _context.Notifications.Add(notification);
-
-        // If the sender is logged in, create an outbox copy and a notification for them
+        // If the sender is logged in, create an outbox copy
         var senderId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!string.IsNullOrEmpty(senderId) && senderId != recipientId)
         {
@@ -110,31 +114,15 @@ public class MessagesController : ControllerBase
             {
                 Id = Guid.NewGuid().ToString(),
                 RecipientId = senderId,
-                SenderName = $"To: {user?.FullName ?? dto.RecipientSlug ?? "Unknown"}",
-                SenderEmail = dto.SenderEmail,
+                SenderName = $"To: {user?.FullName ?? dto.RecipientSlug ?? "người nhận"}",
+                SenderEmail = user?.Email ?? dto.RecipientSlug ?? "",
                 SenderCompany = dto.SenderCompany,
                 Purpose = dto.Purpose,
-                Status = "pending",
                 Content = dto.Content,
-                IsRead = true, // they sent it
-                IsArchived = false,
+                IsRead = true,
                 CreatedAt = DateTime.UtcNow
             };
             _context.Messages.Add(outboxMessage);
-
-            var senderNotification = new Notification
-            {
-                Id = Guid.NewGuid().ToString(),
-                UserId = senderId,
-                Type = dto.Purpose == "order" ? NotificationType.new_order : NotificationType.new_message,
-                Content = dto.Purpose == "order" 
-                    ? $"Đơn đặt hàng của bạn đã được gửi thành công đến {(user?.FullName ?? dto.RecipientSlug ?? "tác giả")}."
-                    : dto.Purpose == "feedback" 
-                        ? $"Feedback kín của bạn đã được gửi thành công đến {(user?.FullName ?? dto.RecipientSlug ?? "sinh viên")}."
-                        : $"Tin nhắn của bạn đã được gửi thành công đến {(user?.FullName ?? dto.RecipientSlug ?? "người nhận")}.",
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.Notifications.Add(senderNotification);
         }
 
         await _context.SaveChangesAsync();
