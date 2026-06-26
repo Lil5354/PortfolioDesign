@@ -6203,17 +6203,15 @@ function MessagesPage({ setPage, userData }) {
         senderName: authUser?.fullName || authUser?.name || "Bạn",
         senderEmail: authUser?.email || "",
         senderCompany: "UEF",
-        purpose: thread.purpose,
-        content: JSON.stringify({
-          ...thread.artworkData,
-          description: text,
-        }),
+        purpose: "message",
+          content: text,
       });
       
       // Update local messages
       const outboxMsg = {
         ...newMsgData,
         senderName: `To: ${recipientSlug}`,
+        recipientSlug: recipientSlug,
         isRead: true
       };
       setMessages(prev => [outboxMsg, ...prev]);
@@ -6274,26 +6272,37 @@ function MessagesPage({ setPage, userData }) {
   const threadedMessages = React.useMemo(() => {
     const filtered = messages.filter(m => activeTab === "archived" ? m.isArchived : !m.isArchived);
     const groups = {};
-    const unassociated = [];
 
     filtered.forEach(msg => {
-      let artworkId = null;
+      const isMe = msg.senderName?.startsWith("To: ");
+      const otherEmail = msg.recipientSlug || msg.senderEmail || "uef-design-gallery";
+      const otherAvatarUrl = msg.senderAvatarUrl;
+      const otherName = isMe ? (msg.recipientSlug || msg.senderName) : msg.senderName;
+      
+      let groupId = "chat_" + otherEmail;
+      
       let artworkData = null;
       if (msg.purpose === 'order' || msg.purpose === 'feedback') {
         try {
           artworkData = JSON.parse(msg.content);
-          if (artworkData.artworkId) {
-            artworkId = artworkData.artworkId;
-          }
         } catch {}
       }
 
-      if (artworkId) {
-        if (!groups[artworkId]) groups[artworkId] = { artworkData, messages: [] };
-        groups[artworkId].messages.push(msg);
+      if (!groups[groupId]) {
+        groups[groupId] = {
+          id: groupId,
+          otherEmail: otherEmail,
+          otherAvatarUrl: otherAvatarUrl,
+          otherName: otherName,
+          artworkData: artworkData,
+          messages: []
+        };
       } else {
-        unassociated.push(msg);
+        if (!groups[groupId].otherAvatarUrl && otherAvatarUrl) groups[groupId].otherAvatarUrl = otherAvatarUrl;
+        if (!groups[groupId].otherName && otherName && !otherName.startsWith("To: ")) groups[groupId].otherName = otherName;
       }
+      
+      groups[groupId].messages.push(msg);
     });
 
     Object.values(groups).forEach(g => {
@@ -6305,25 +6314,16 @@ function MessagesPage({ setPage, userData }) {
       const latestMsg = g.messages[g.messages.length - 1];
       result.push({
         isThread: true,
-        id: `thread-${latestMsg.id}`,
-        artworkId: g.artworkData.artworkId,
+        id: g.id,
+        otherEmail: g.otherEmail,
+        otherAvatarUrl: g.otherAvatarUrl,
+        otherName: g.otherName,
         artworkData: g.artworkData,
         messages: g.messages,
         latestMessage: latestMsg,
         createdAt: latestMsg.createdAt,
         isRead: g.messages.every(m => m.isRead),
         purpose: latestMsg.purpose,
-      });
-    });
-
-    unassociated.forEach(msg => {
-      result.push({
-        isThread: false,
-        id: msg.id,
-        latestMessage: msg,
-        createdAt: msg.createdAt,
-        isRead: msg.isRead,
-        purpose: msg.purpose,
       });
     });
 
@@ -6374,10 +6374,11 @@ function MessagesPage({ setPage, userData }) {
                 } catch {}
               }
 
-              // Determine the other party's name
-              let displayName = thread.isThread 
-                ? (thread.artworkData?.artworkTitle || msg.senderName?.replace("To: ", "Gửi đến: "))
-                : msg.senderName?.replace("To: ", "Gửi đến: ");
+              if (!avatarUrl && thread.otherAvatarUrl) avatarUrl = thread.otherAvatarUrl;
+
+                // Determine the other party's name
+                let displayName = thread.otherName || thread.otherEmail || "Người dùng ẩn danh";
+                if (displayName.startsWith("To: ")) displayName = displayName.replace("To: ", "Gửi đến: ");
 
               // Subtext is latest message
               let subText = msg.purpose === 'order' ? t("orderArtwork") : (msg.content || "");
@@ -6432,93 +6433,130 @@ function MessagesPage({ setPage, userData }) {
                       {thread.isThread ? (
                         // Thread View
                         <>
-                          <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fdfdfd", border: "1px solid #eaeaea", borderRadius: 8, padding: 12, marginBottom: 8 }}>
-                            <img src={thread.artworkData?.artworkImage} alt={thread.artworkData?.artworkTitle} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 4 }} />
-                            <div style={{ flex: 1 }}>
-                              <p style={{ fontSize: 14, fontWeight: 700, color: BLACK, margin: "0 0 4px" }}>{thread.artworkData?.artworkTitle}</p>
-                              <div style={{ display: "flex", gap: 8 }}>
-                                <button onClick={() => setPage("detail", { artworkId: thread.artworkId })} style={{ padding: "4px 8px", borderRadius: 4, border: "none", background: "#f0f0f0", color: "#333", fontSize: 11, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                                  <ExternalLink size={12} /> Xem tác phẩm
-                                </button>
-                                {msg.status !== "completed" && (
-                                  <button onClick={() => handleUpdateStatus(msg.id, "completed")} style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #10B981", background: "transparent", color: "#10B981", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Đánh dấu hoàn thành</button>
-                                )}
+                          {thread.artworkData && (
+                            <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fdfdfd", border: "1px solid #eaeaea", borderRadius: 8, padding: 12, marginBottom: 16 }}>
+                              {thread.artworkData.artworkImage && (
+                                <img src={thread.artworkData.artworkImage} alt={thread.artworkData.artworkTitle || "Tác phẩm"} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 4 }} />
+                              )}
+                              <div style={{ flex: 1 }}>
+                                <p style={{ fontSize: 14, fontWeight: 700, color: BLACK, margin: "0 0 4px" }}>{thread.artworkData.artworkTitle || "Tác phẩm"}</p>
+                                <div style={{ display: "flex", gap: 8 }}>
+                                  <button onClick={() => setPage("detail", { artworkId: thread.artworkId })} style={{ padding: "4px 8px", borderRadius: 4, border: "none", background: "#f0f0f0", color: "#333", fontSize: 11, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                                    <ExternalLink size={12} /> Xem tác phẩm
+                                  </button>
+                                  {msg.status !== "completed" && (
+                                    <button onClick={() => handleUpdateStatus(msg.id, "completed")} style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #10B981", background: "transparent", color: "#10B981", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Đánh dấu hoàn thành</button>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          )}
                           
-                          <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: 400, overflowY: "auto", paddingRight: 8, paddingBottom: 8 }}>
-                            {thread.messages.map((m, i) => {
-                              const isMe = m.senderName?.startsWith("To: ");
-                              let mText = m.content;
-                              try {
-                                const d = JSON.parse(m.content);
-                                mText = d.description || m.content;
-                              } catch {}
+                          {(() => {
+                            const originalMsg = thread.messages.find(m => !m.senderName?.startsWith("To: ")) || msg;
+                            let feedbackText = originalMsg.content;
+                            try {
+                              const d = JSON.parse(originalMsg.content);
+                              feedbackText = d.description || originalMsg.content;
+                            } catch {}
+                            
+                            const emailBody = `Kính gửi ${originalMsg.senderName?.replace("To: ", "") || "bạn"},
 
-                              return (
-                                <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: isMe ? "flex-end" : "flex-start" }}>
-                                  {!isMe && i === 0 && m.senderEmail && <span style={{ fontSize: 11, color: "#888", marginBottom: 2 }}>{m.senderName} ({m.senderEmail})</span>}
-                                  <div style={{ background: isMe ? "#1a4ba8" : "#f1f1f1", color: isMe ? "#fff" : "#333", padding: "10px 14px", borderRadius: 16, borderBottomRightRadius: isMe ? 4 : 16, borderBottomLeftRadius: isMe ? 16 : 4, maxWidth: "85%", fontSize: 13, lineHeight: 1.5, wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
-                                    {mText}
+[Vui lòng nhập nội dung phản hồi của bạn tại đây...]
+
+Trân trọng,
+[Tên của bạn]
+
+--------------------------------------------------
+🔴 🟡 🔵 THÔNG TIN TRAO ĐỔI TỪ UEF DESIGN GALLERY
+--------------------------------------------------
+📌 Chủ đề: ${thread.artworkData?.artworkTitle ? `Phản hồi về tác phẩm "${thread.artworkData.artworkTitle}"` : (thread.purpose || "Liên hệ từ Portfolio")}
+📅 Thời gian gửi: ${formatDate(originalMsg.createdAt)}
+
+📝 NỘI DUNG GỐC:
+"${feedbackText}"
+--------------------------------------------------
+`;
+                            return (
+                              <div style={{ marginTop: 8 }}>
+                                {originalMsg.senderEmail && (
+                                  <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                                    <span style={{ fontSize: 12, color: "#888" }}>Email gốc:</span>
+                                    <a href={`mailto:${originalMsg.senderEmail}`} style={{ fontSize: 13, color: "#1a4ba8", textDecoration: "none", fontWeight: 500 }}>{originalMsg.senderEmail}</a>
                                   </div>
-                                  <span style={{ fontSize: 10, color: "#999", marginTop: 4 }}>{formatDate(m.createdAt)}</span>
+                                )}
+                                <div style={{ background: "#f8f9fa", padding: 16, borderRadius: 8, border: "1px solid #eee" }}>
+                                  <p style={{ fontSize: 13, color: "#333", margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{feedbackText}</p>
                                 </div>
-                              );
-                            })}
-                          </div>
-
-                          {/* Reply Box */}
-                          <div style={{ marginTop: 12, display: "flex", gap: 8, borderTop: "1px solid #eee", paddingTop: 12 }}>
-                            <textarea 
-                              value={replyText[thread.id] || ""}
-                              onChange={e => setReplyText({ ...replyText, [thread.id]: e.target.value })}
-                              placeholder="Nhập tin nhắn phản hồi..."
-                              style={{ flex: 1, padding: "10px 14px", borderRadius: 8, border: "1px solid #E0E0E0", fontSize: 13, outline: "none", resize: "none", height: 42, overflow: "hidden" }}
-                            />
-                            <button 
-                              disabled={replying[thread.id] || !(replyText[thread.id] || "").trim()}
-                              onClick={() => handleReply(thread)}
-                              style={{ padding: "0 16px", borderRadius: 8, border: "none", background: "#1a4ba8", color: "#fff", fontWeight: 600, cursor: (replyText[thread.id] || "").trim() ? "pointer" : "not-allowed", opacity: (replyText[thread.id] || "").trim() ? 1 : 0.6, display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}
-                            >
-                              <Send size={16} /> {t("sendMessage") || "Gửi tin nhắn"}
-                            </button>
-                          </div>
-                          
-                          <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}>
-                            <a
-                              href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(thread.messages.find(m => !m.senderName?.startsWith("To: "))?.senderEmail || "uef-design-gallery")}&su=${encodeURIComponent(`Reply: ${thread.purpose || t("portfolioContact")}`)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
-                              title="Trao đổi chi tiết hoặc gửi ảnh/file đính kèm qua Email"
-                            >
-                              <Mail size={14} /> {t("replyViaEmail")}
-                            </a>
-                            <span style={{ fontSize: 12, color: "#666" }}>← Đính kèm file hoặc trao đổi sâu hơn</span>
-                          </div>
+                                
+                                <div style={{ display: "flex", gap: 8, marginTop: 16, alignItems: "center", borderTop: "1px solid #eee", paddingTop: 16 }}>
+                                  <a
+                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(originalMsg.senderEmail || "uef-design-gallery")}&su=${encodeURIComponent(`Reply: ${thread.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(emailBody)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                                    title="Phản hồi qua Email"
+                                  >
+                                    <Mail size={14} /> Phản hồi qua Email
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </>
                       ) : (
                         // Normal Message View
                         <>
-                          {msg.senderEmail && (
-                            <div style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ fontSize: 12, color: "#888" }}>Email:</span>
-                              <a href={`mailto:${msg.senderEmail}`} style={{ fontSize: 13, color: "#1a4ba8", textDecoration: "none", fontWeight: 500 }}>{msg.senderEmail}</a>
-                            </div>
-                          )}
-                          <p style={{ fontSize: 13, color: "#333", margin: 0, lineHeight: 1.5 }}>{msg.content}</p>
-                          
-                          <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                            <a
-                              href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
-                            >
-                              <Mail size={14} /> {t("replyViaEmail")}
-                            </a>
-                          </div>
+                          {(() => {
+                            let feedbackText = msg.content;
+                            try {
+                              const d = JSON.parse(msg.content);
+                              feedbackText = d.description || msg.content;
+                            } catch {}
+                            
+                            const emailBody = `Kính gửi ${msg.senderName?.replace("To: ", "") || "bạn"},
+
+[Vui lòng nhập nội dung phản hồi của bạn tại đây...]
+
+Trân trọng,
+[Tên của bạn]
+
+--------------------------------------------------
+🔴 🟡 🔵 THÔNG TIN TRAO ĐỔI TỪ UEF DESIGN GALLERY
+--------------------------------------------------
+📌 Chủ đề: ${msg.purpose || "Liên hệ từ Portfolio"}
+📅 Thời gian gửi: ${formatDate(msg.createdAt)}
+
+📝 NỘI DUNG GỐC:
+"${feedbackText}"
+--------------------------------------------------
+`;
+                            return (
+                              <div style={{ marginTop: 8 }}>
+                                {msg.senderEmail && (
+                                  <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                                    <span style={{ fontSize: 12, color: "#888" }}>Email gốc:</span>
+                                    <a href={`mailto:${msg.senderEmail}`} style={{ fontSize: 13, color: "#1a4ba8", textDecoration: "none", fontWeight: 500 }}>{msg.senderEmail}</a>
+                                  </div>
+                                )}
+                                <div style={{ background: "#f8f9fa", padding: 16, borderRadius: 8, border: "1px solid #eee" }}>
+                                  <p style={{ fontSize: 13, color: "#333", margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{feedbackText}</p>
+                                </div>
+                                
+                                <div style={{ display: "flex", gap: 8, marginTop: 16, alignItems: "center", borderTop: "1px solid #eee", paddingTop: 16 }}>
+                                  <a
+                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail || "uef-design-gallery")}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(emailBody)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                                    title="Phản hồi qua Email"
+                                  >
+                                    <Mail size={14} /> Phản hồi qua Email
+                                  </a>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </>
                       )}
 

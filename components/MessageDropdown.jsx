@@ -86,9 +86,9 @@ export default function MessageDropdown({ setPage, userData }) {
   // Group into threads for display
   const threadedMessages = [];
   messages.forEach(msg => {
-    const isMe = msg.senderEmail === userData?.email || msg.senderName?.startsWith("To: ");
-    const otherEmail = isMe ? (msg.recipientSlug || "uef-design-gallery") : (msg.senderEmail || "uef-design-gallery");
-    const otherAvatarUrl = isMe ? msg.recipientAvatarUrl : msg.senderAvatarUrl;
+    const isMe = msg.senderName?.startsWith("To: ");
+    const otherEmail = msg.recipientSlug || msg.senderEmail || "uef-design-gallery";
+    const otherAvatarUrl = msg.senderAvatarUrl;
     
     let groupId = "chat_" + otherEmail;
     let artworkData = null;
@@ -97,9 +97,6 @@ export default function MessageDropdown({ setPage, userData }) {
       try {
         const d = typeof msg.content === "string" ? JSON.parse(msg.content) : msg.content;
         artworkData = d;
-        if (d && d.artworkId) {
-          groupId = "artwork_" + d.artworkId;
-        }
       } catch(e){}
     }
     
@@ -146,25 +143,26 @@ export default function MessageDropdown({ setPage, userData }) {
         senderName: userData?.fullName || userData?.name || userData?.email || "Bạn",
         senderEmail: userData?.email || "",
         senderCompany: "UEF",
-        content: (activeChat.purpose === "order" || activeChat.purpose === "feedback" || selectedAttachment)
-                 ? JSON.stringify({ 
-                     description: replyText, 
-                     artworkId: activeChat.artworkData?.artworkId || (selectedAttachment ? selectedAttachment.id : null),
-                     artworkTitle: activeChat.artworkData?.artworkTitle || (selectedAttachment ? selectedAttachment.title : null),
-                     artworkImage: activeChat.artworkData?.artworkImage || (selectedAttachment ? selectedAttachment.coverImageUrl : null),
-                     attachedArtwork: selectedAttachment ? {
-                         artworkId: selectedAttachment.id,
-                         artworkTitle: selectedAttachment.title,
-                         artworkImage: selectedAttachment.coverImageUrl
-                     } : null
-                   })
-                 : replyText,
-        purpose: (activeChat.purpose === "order" || activeChat.purpose === "feedback") ? activeChat.purpose : (selectedAttachment ? "feedback" : "message")
+        content: selectedAttachment
+                   ? JSON.stringify({ 
+                       description: replyText, 
+                       artworkId: selectedAttachment.id,
+                       artworkTitle: selectedAttachment.title,
+                       artworkImage: selectedAttachment.coverImageUrl || selectedAttachment.coverUrl,
+                       attachedArtwork: {
+                           artworkId: selectedAttachment.id,
+                           title: selectedAttachment.title,
+                           coverUrl: selectedAttachment.coverImageUrl || selectedAttachment.coverUrl
+                       }
+                     })
+                   : replyText,
+          purpose: selectedAttachment ? "feedback" : "message"
       });
       
       const outboxMsg = {
         ...newMsgData,
         senderName: `To: ${recipientSlug}`,
+        recipientSlug: recipientSlug,
         isRead: true
       };
       

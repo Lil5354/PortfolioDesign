@@ -36,7 +36,9 @@ public class MessagesController : ControllerBase
                 id = m.Id,
                 recipientId = m.RecipientId,
                 recipientSlug = "",
-                senderName = m.SenderName,
+                  senderName = m.SenderName.StartsWith("To: ") 
+                               ? "To: " + (_context.Users.Where(u => u.Email == m.SenderEmail).Select(u => u.FullName).FirstOrDefault() ?? m.SenderName.Replace("To: ", "").Trim())
+                               : (_context.Users.Where(u => u.Email == m.SenderEmail).Select(u => u.FullName).FirstOrDefault() ?? m.SenderName),
                 senderEmail = m.SenderEmail,
                 senderCompany = m.SenderCompany,
                 purpose = m.Purpose,
