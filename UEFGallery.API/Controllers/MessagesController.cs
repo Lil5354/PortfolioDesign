@@ -125,6 +125,47 @@ public class MessagesController : ControllerBase
                 CreatedAt = DateTime.UtcNow
             };
             _context.Messages.Add(outboxMessage);
+
+            if (dto.Purpose == "feedback")
+            {
+                string? artworkId = null;
+                try
+                {
+                    var contentObj = System.Text.Json.JsonDocument.Parse(dto.Content);
+                    if (contentObj.RootElement.TryGetProperty("artworkId", out var awIdProp))
+                    {
+                        artworkId = awIdProp.GetString();
+                    }
+                }
+                catch { }
+
+                if (!string.IsNullOrEmpty(artworkId))
+                {
+                    string recipientName = user?.FullName ?? dto.RecipientSlug ?? "người nhận";
+                    string notificationContent = $"Feedback kín của bạn đã được gửi thành công đến {recipientName}.";
+                    
+                    bool alreadyNotified = await _context.Notifications.AnyAsync(n => 
+                        n.UserId == senderId && 
+                        n.ReferenceId == artworkId && 
+                        n.Type == NotificationType.new_message);
+
+                    if (!alreadyNotified)
+                    {
+                        var notif = new Notification
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            UserId = senderId,
+                            Type = NotificationType.new_message,
+                            ReferenceId = artworkId,
+                            ReferenceType = "artwork",
+                            Content = notificationContent,
+                            CreatedAt = DateTime.UtcNow,
+                            IsRead = false
+                        };
+                        _context.Notifications.Add(notif);
+                    }
+                }
+            }
         }
 
         await _context.SaveChangesAsync();

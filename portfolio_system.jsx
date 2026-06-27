@@ -6138,7 +6138,7 @@ function MessagesPage({ setPage, userData }) {
     fetchMsgs();
 
     const connection = new HubConnectionBuilder()
-      .withUrl("https://localhost:7164/chatHub", {
+      .withUrl("/chatHub", {
         accessTokenFactory: () => localStorage.getItem("token") || ""
       })
       .withAutomaticReconnect()

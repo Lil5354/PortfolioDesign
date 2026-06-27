@@ -39,7 +39,7 @@ export default function MessageDropdown({ setPage, userData }) {
     
     // Setup SignalR connection
     const connection = new HubConnectionBuilder()
-      .withUrl("https://localhost:7164/chatHub", {
+      .withUrl("/chatHub", {
         accessTokenFactory: () => localStorage.getItem("token") || ""
       })
       .configureLogging(LogLevel.Information)
