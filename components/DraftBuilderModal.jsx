@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle } from "lucide-react";
-import { toJpeg } from "html-to-image";
 
 export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, currentUser, initialBlocks = [], initialSettingsData = null }) {
   const [blocks, setBlocks] = useState(initialBlocks);
@@ -12,29 +11,7 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
   const [isCapturing, setIsCapturing] = useState(false);
   
   const handlePublish = async () => {
-    setIsCapturing(true);
-    try {
-      const scrollContainer = document.getElementById("draft-scroll-container");
-      if (scrollContainer) scrollContainer.scrollTo(0,0);
-      await new Promise(r => setTimeout(r, 100));
-      
-      const el = document.getElementById("draft-canvas-area");
-      let capturedImageUrl = null;
-      if (el) {
-         capturedImageUrl = await toJpeg(el, { 
-             quality: 0.9,
-             backgroundColor: projectStyles.backgroundColor,
-             pixelRatio: 1
-         });
-      }
-      onPublish(blocks, settingsData, capturedImageUrl);
-    } catch(err) {
-      console.error(err);
-      alert("Lỗi khi tạo ảnh preview: " + err.message);
-      onPublish(blocks, settingsData, null);
-    } finally {
-      setIsCapturing(false);
-    }
+    onPublish(blocks, settingsData);
   };
   
   const [isStylesModalOpen, setIsStylesModalOpen] = useState(false);
@@ -357,7 +334,7 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
               <div className="flex items-center gap-3">
                  <button className="bg-white hover:bg-gray-100 text-black font-semibold text-[13px] px-4 py-2 rounded-full flex items-center gap-2 transition-colors">
                     <div className="w-4 h-4 bg-black text-white rounded-full flex items-center justify-center font-bold text-[12px] pb-[1px]">+</div>
-                    Follow {currentUser?.fullName?.split(' ')[currentUser?.fullName?.split(' ').length - 1] || currentUser?.name || "Author"}
+                    Follow {currentUser?.fullName ? currentUser.fullName.split(' ').pop() : (currentUser?.name || "Author")}
                  </button>
                  <button className="bg-[#0057ff] hover:bg-blue-700 text-white font-semibold text-[13px] px-4 py-2 rounded-full flex items-center gap-2 transition-colors">
                     <ThumbsUp size={16} className="fill-white" />
@@ -725,13 +702,6 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
               <button className="bg-green-700 hover:bg-green-800 text-white font-bold py-2.5 px-8 rounded-full transition" onClick={() => { setIsSettingsModalOpen(false); handlePublish(); }}>Publish</button>
             </div>
           </div>
-        </div>
-      )}
-      
-      {isCapturing && (
-        <div className="fixed inset-0 bg-black/70 z-[99999] flex flex-col items-center justify-center text-white font-bold text-[15px]">
-          <div className="w-10 h-10 border-4 border-[#1a4ba8] border-t-transparent rounded-full animate-spin mb-4"></div>
-          Preparing Final Image...
         </div>
       )}
     </div>,

@@ -2573,6 +2573,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
 }
 
 function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
+  const { user: currentUser } = useAuth();
   const [showPopup, setShowPopup] = useState(false);
   const [isEbookViewerOpen, setIsEbookViewerOpen] = useState(false);
   const [isEbook, setIsEbook] = useState(false);
@@ -2601,7 +2602,6 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
   const [error, setError] = useState("");
   const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
   const [blocks, setBlocks] = useState(() => {
-    if (pageParams?.draftCapturedImage) return [];
     const initialBlocks = pageParams?.draftBlocks || [];
     return initialBlocks.map(b => {
       if (b.type === "image" && !b.data?.url && b.content) {
@@ -2610,21 +2610,18 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
       return b;
     });
   });
-  const [hiddenDraftBlocks, setHiddenDraftBlocks] = useState(pageParams?.draftBlocks || []);
+
+  const isFromDraft = !!pageParams?.draftBlocks;
+  const [showUploadPreview, setShowUploadPreview] = useState(false);
 
   useEffect(() => {
     if (pageParams?.draftBlocks) {
-       setHiddenDraftBlocks(pageParams.draftBlocks);
-       if (!pageParams.draftCapturedImage) {
-           setBlocks(pageParams.draftBlocks.map(b => {
-              if (b.type === "image" && !b.data?.url && b.content) {
-                return { ...b, data: { ...b.data, url: b.content } };
-              }
-              return b;
-           }));
-       } else {
-           setBlocks([]);
-       }
+       setBlocks(pageParams.draftBlocks.map(b => {
+          if (b.type === "image" && !b.data?.url && b.content) {
+            return { ...b, data: { ...b.data, url: b.content } };
+          }
+          return b;
+       }));
     }
     if (pageParams?.draftSettings) {
        try {
@@ -2648,9 +2645,6 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
        } catch (err) {
            console.error("Error parsing draftSettings:", err);
        }
-    }
-    if (pageParams?.draftCapturedImage) {
-        setAdditionalImages([pageParams.draftCapturedImage]);
     }
   }, [pageParams]);
 
@@ -2799,6 +2793,17 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
       }
 
       setUploadState("loading");
+      
+      let finalCover = coverImage;
+      let finalWatermarkedCover = watermarkedCover;
+      if (!finalCover && isFromDraft && blocks.length > 0) {
+         const firstImageBlock = blocks.find(b => b.type === 'image' && b.content);
+         if (firstImageBlock) {
+             finalCover = firstImageBlock.content;
+             finalWatermarkedCover = firstImageBlock.content;
+         }
+      }
+
       const newArtwork = await api.artworks.create({
         title: title.trim(),
         description: description.trim() || null,
@@ -2810,8 +2815,8 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
         collaborators: friends.map(f => f.fullName || f),
         collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: allFileUrls,
-        coverImageUrl: watermarkedCover,
-        originalCoverUrl: coverImage,
+        coverImageUrl: finalWatermarkedCover,
+        originalCoverUrl: finalCover,
         watermarkText: finalWatermarkText,
         watermarkPosition: "bottom-right",
         isPublic: false,
@@ -2820,10 +2825,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
         aiScore: aiResult.originalityScore,
         aiGeneratedPct: aiResult.aiGeneratedPercentage,
         isAiVerified: aiResult.isAiVerified,
-        blocksJson: JSON.stringify([
-             ...hiddenDraftBlocks.map(b => ({ ...b, isHiddenFromViewer: true })),
-             ...blocks
-          ])
+        blocksJson: JSON.stringify(blocks)
       });
       setCreatedId(newArtwork.id);
       setUploadState("success");
@@ -2956,6 +2958,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
                     </div>
                   )}
                 </div>
+                {!isFromDraft && (
                 <div style={{ marginTop: 16 }}>
                   <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("additionalImages")} ({additionalImages.length}/9)</label>
                   <input type="file" id="additionalInput" accept="image/*" multiple style={{ display: "none" }} onChange={handleAdditionalUpload} />
@@ -2973,6 +2976,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
                     )}
                   </div>
                 </div>
+                )}
               </>
             )}
           </div>
@@ -3124,12 +3128,216 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
               <span style={{ fontSize: 12, color: "#666" }}>{t("notifyOnConfirmText")}</span>
             </div>
           </div>
-          <div>
-            <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{t("submitArtwork")}</button>
-            <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("postSubmissionNote")}</p>
+          <div style={{ display: "flex", gap: 12 }}>
+            {isFromDraft && (
+              <button onClick={() => setShowUploadPreview(true)} style={{ flex: 1, padding: "13px", borderRadius: 10, border: `1px solid ${CERULEAN}`, background: "transparent", color: CERULEAN, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Preview</button>
+            )}
+            <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ flex: isFromDraft ? 1 : "auto", width: isFromDraft ? "auto" : "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{t("submitArtwork")}</button>
           </div>
+          <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("postSubmissionNote")}</p>
         </div>
       </div>
+      {showUploadPreview && isFromDraft && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden", fontFamily: "'Inter', sans-serif" }}>
+           <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(5px)", zIndex: -1, pointerEvents: "none" }} />
+           {/* SINGLE FIXED TOP HEADER (100vw) */}
+           <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 64, background: "#191919", zIndex: 1010, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "1px solid #333" }}>
+             
+             {/* LEFT SIDE: Back, Logo, Avatar, Info */}
+             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+               <button onClick={() => setShowUploadPreview(false)} style={{ background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
+                 <ChevronLeft size={20} />
+               </button>
+               
+               <span style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.5px", marginRight: 8 }}>Bēhance</span>
+               
+               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                 <img src={currentUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", cursor: "pointer", border: "1px solid #333" }} />
+                 <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                   <span style={{ fontSize: 15, fontWeight: 600, color: "#fff", lineHeight: "1.2" }}>{title || "Untitled Project"}</span>
+                   <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#bbb" }}>
+                     <span style={{ cursor: "pointer", color: "#fff", fontWeight: 400 }}>{currentUser?.fullName || currentUser?.name || "Author"}</span>
+                     <span>•</span>
+                     <span style={{ color: "#0057ff", fontWeight: 600, cursor: "pointer", transition: "color 0.2s" }}>Follow</span>
+                   </div>
+                 </div>
+               </div>
+             </div>
+
+             {/* RIGHT SIDE: Save as Draft, Publish, X */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+               <button onClick={() => { setShowUploadPreview(false); setShowPopup(true); }} style={{ padding: "8px 24px", borderRadius: 20, background: "#10a359", color: "#fff", border: "none", fontWeight: "bold", fontSize: 13, cursor: "pointer" }}>Submit Artwork</button>
+               <button onClick={() => setShowUploadPreview(false)} style={{ background: "transparent", border: "none", color: "#888", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", marginLeft: 4 }} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#888"; }}>
+                 <X size={20} />
+               </button>
+             </div>
+           </div>
+
+           {/* FIXED RIGHT SIDEBAR (Preview Mode) */}
+           <div className="hidden xl:flex flex-col items-center gap-4 fixed right-6 top-[88px] z-[10020]">
+              <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
+                 <div className="relative">
+                    <img src={currentUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} className="w-9 h-9 rounded-full border-2 border-[#151515] object-cover group-hover:scale-105 transition-transform" />
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#0057ff] rounded-full flex items-center justify-center text-white border-[1.5px] border-[#151515] font-bold text-[12px] leading-none pb-[1px]">+</div>
+                 </div>
+                 <span className="text-[11px] font-medium text-white">Follow</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
+                 <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center group-hover:scale-105 transition-transform shadow-md">
+                    <Mail size={16} className="text-black" />
+                 </div>
+                 <span className="text-[11px] font-medium text-white">Message</span>
+              </div>
+              <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
+                 <div className="w-10 h-10 rounded-full bg-[#0057ff] flex items-center justify-center group-hover:scale-105 transition-transform shadow-md shadow-blue-500/20">
+                    <ThumbsUp size={18} className="text-white fill-white" />
+                 </div>
+                 <span className="text-[11px] font-medium text-white">Appreciate</span>
+              </div>
+           </div>
+
+           {/* FLOATING BOTTOM BANNER */}
+           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-[#525760] rounded-xl flex items-center gap-6 z-[10020] shadow-2xl overflow-hidden pr-12 pl-4 py-3">
+              <button className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors">
+                 <X size={16} />
+              </button>
+              
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-white rounded flex items-center justify-center shrink-0">
+                    <Image size={24} className="text-gray-300" />
+                 </div>
+                 <div className="flex flex-col justify-center">
+                    <span className="text-white font-semibold text-[15px] leading-tight">{title || "Untitled Project"}</span>
+                    <span className="text-white/80 text-[13px] font-medium">{currentUser?.fullName || currentUser?.name || "Author"}</span>
+                 </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                 <button className="bg-white hover:bg-gray-100 text-black font-semibold text-[13px] px-4 py-2 rounded-full flex items-center gap-2 transition-colors">
+                    <div className="w-4 h-4 bg-black text-white rounded-full flex items-center justify-center font-bold text-[12px] pb-[1px]">+</div>
+                    Follow {currentUser?.fullName ? currentUser.fullName.split(' ').pop() : (currentUser?.name || "Author")}
+                 </button>
+                 <button className="bg-[#0057ff] hover:bg-blue-700 text-white font-semibold text-[13px] px-4 py-2 rounded-full flex items-center gap-2 transition-colors">
+                    <ThumbsUp size={16} className="fill-white" />
+                    Appreciate
+                 </button>
+              </div>
+           </div>
+
+           <div style={{ display: "flex", width: "100%", justifyContent: "center", position: "relative", minHeight: "100vh", paddingTop: 64 }}>
+              
+              {/* CỘT CHÍNH (Nội dung) */}
+              <div style={{ width: "calc(100% - 200px)", maxWidth: 1400, display: "flex", flexDirection: "column", background: "#151515", margin: "0 auto", minHeight: "calc(100vh - 64px)" }}>
+                 
+                 {/* CÁC ẢNH HOẶC E-BOOK */}
+                 <div style={{ display: "flex", flexDirection: "column", width: "100%", background: "transparent" }}>
+                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+
+                       <div style={{ width: "100%", position: "relative" }}>
+                          <div style={{ width: "100%", background: "#ffffff", paddingBottom: (blocks.length > 0 || coverImage) ? 0 : 400 }}>
+                             {coverImage && (
+                                <div style={{ width: "100%", margin: "0 auto", marginBottom: 16 }}>
+                                   <img src={coverImage} style={{ width: "100%", height: "auto", display: "block" }} />
+                                </div>
+                             )}
+                             {blocks.length === 0 && !coverImage ? (
+                                <div style={{ height: 400, display: "flex", alignItems: "center", justifyContent: "center", color: "#888", background: "#ffffff" }}>
+                                   Empty Project
+                                </div>
+                             ) : (
+                                blocks.map(block => (
+                                   <div key={block.id} style={{ width: block.fullWidth ? "100%" : "min(100%, 1024px)", margin: "0 auto", padding: block.fullWidth ? "0" : `0px`, marginBottom: 16 }}>
+                                      {block.type === 'image' && block.content && <img src={block.content} style={{ width: "100%", height: "auto", display: "block" }} />}
+                                      {block.type === 'text' && <div style={{ color: "#212121", padding: 16, fontSize: 17, fontFamily: "sans-serif", whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: block.content ? block.content.replace(/\n/g, '<br/>') : '' }}></div>}
+                                      {block.type === 'grid' && <div style={{ width: "100%", height: 300, background: "rgba(0,0,0,0.05)", border: "1px dashed rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.4)" }}>Grid Preview</div>}
+                                      {block.type === 'video' && <div style={{ width: "100%", height: 300, background: "rgba(0,0,0,0.05)", border: "1px dashed rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.4)" }}>Video/Audio Preview</div>}
+                                   </div>
+                                ))
+                             )}
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 {/* PREVIEW FOOTER (THÔNG SỐ & TÁC GIẢ) */}
+                 <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
+                    
+                    {/* Phần Đen (Thông số & Tác giả) */}
+                    <div style={{ background: "#111111", padding: "60px 40px", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                       <button style={{ width: 80, height: 80, borderRadius: "50%", background: "#0057ff", display: "flex", alignItems: "center", justifyContent: "center", border: "none", marginBottom: 32, cursor: "not-allowed" }}>
+                         <ThumbsUp size={36} color="#fff" />
+                       </button>
+
+                       <h1 style={{ fontSize: 32, fontWeight: "bold", margin: "0 0 16px 0", textAlign: "center" }}>{title || "Untitled Project"}</h1>
+                       {description && <p style={{ fontSize: 18, color: "#aaa", textAlign: "center", maxWidth: 800 }}>{description}</p>}
+                       
+                       <div style={{ display: "flex", alignItems: "center", gap: 24, color: "#888", fontSize: 14, marginBottom: 24 }}>
+                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}><ThumbsUp size={16} /> 0</div>
+                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Eye size={16} /> 0</div>
+                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}><MessageCircle size={16} /> 0</div>
+                       </div>
+
+                       <p style={{ color: "#888", fontSize: 13, margin: "0 0 40px 0" }}>Published: {new Date().toLocaleDateString()}</p>
+                    </div>
+
+                    {/* Phần Trắng (Bình luận & Owner Card) */}
+                    <div style={{ display: "flex", background: "#f9f9f9", padding: "60px 40px" }}>
+                       
+                       {/* Cột trái (Bình luận) */}
+                       <div style={{ flex: "0 0 65%", paddingRight: 60 }}>
+                          <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, marginBottom: 40, display: "flex", gap: 16, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
+                             <img src={currentUser?.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUser?.fullName || currentUser?.name || "User")} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
+                             <div style={{ flex: 1 }}>
+                               <textarea placeholder="What are your thoughts on this project?" style={{ width: "100%", padding: "12px", borderRadius: 6, border: "1px solid #CCC", outline: "none", resize: "vertical", minHeight: 80, boxSizing: "border-box", fontSize: 14, fontFamily: "inherit" }} disabled />
+                               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+                                 <button disabled style={{ background: "#E8E8E8", color: "#666", border: "none", padding: "10px 24px", borderRadius: 20, fontSize: 14, fontWeight: "bold", cursor: "not-allowed" }}>Post a Comment</button>
+                               </div>
+                             </div>
+                          </div>
+                          <p style={{ fontSize: 13, color: "#999", textAlign: "center", padding: "20px 0" }}>No comments yet.</p>
+                       </div>
+
+                       {/* Cột phải (Owner Card) */}
+                       <div style={{ flex: "0 0 35%", display: "flex", flexDirection: "column", gap: 24 }}>
+                          <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
+                             <span style={{ fontSize: 11, fontWeight: "bold", color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, display: "block" }}>Owner</span>
+                             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+                               <img src={currentUser?.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUser?.fullName || currentUser?.name || "User")} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
+                               <div>
+                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                   <h3 style={{ margin: 0, fontSize: 15, fontWeight: "bold", color: "#191919" }}>{currentUser?.fullName || currentUser?.name || "Author"}</h3>
+                                 </div>
+                                 <span style={{ fontSize: 13, color: "#888", display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
+                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg> 
+                                   Vietnam
+                                 </span>
+                               </div>
+                             </div>
+                             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                               <button style={{ background: "#0057ff", color: "#fff", border: "none", padding: "10px", borderRadius: 24, fontSize: 14, fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                                 <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>+</div> Follow
+                               </button>
+                               <button style={{ background: "#fff", color: "#0057ff", border: "1px solid #EAEAEA", padding: "10px", borderRadius: 24, fontSize: 14, fontWeight: "bold", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                                 <Mail size={16} /> Message
+                               </button>
+                             </div>
+                          </div>
+                          
+                          <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
+                             <h3 style={{ margin: "0 0 16px 0", fontSize: 15, fontWeight: "bold", color: "#191919" }}>{title || "Untitled Project"}</h3>
+                             <div style={{ display: "flex", alignItems: "center", gap: 16, color: "#888", fontSize: 13 }}>
+                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}><ThumbsUp size={14} /> 0</div>
+                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}><Eye size={14} /> 0</div>
+                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}><MessageCircle size={14} /> 0</div>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
       <EbookViewerModal isOpen={isEbookViewerOpen} onClose={() => setIsEbookViewerOpen(false)} onUseEbook={handleUseEbook} />
     </div>
   );
@@ -4246,9 +4454,9 @@ if (mins < 1) return t("justNow");
             )}
 
             {/* Render Blocks */}
-            {parsedBlocks && parsedBlocks.filter(b => !b.isHiddenFromViewer).length > 0 && (
+            {parsedBlocks && parsedBlocks.length > 0 && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "40px 60px", background: "#fff" }}>
-                    {parsedBlocks.filter(b => !b.isHiddenFromViewer).map((block, i) => (
+                    {parsedBlocks.map((block, i) => (
                       <div key={block.id || i} style={{ width: "100%" }}>
                         {block.type === "text" && (
                           <div style={{ fontSize: 16, lineHeight: 1.8, color: "#333", whiteSpace: "pre-wrap" }}>{block.content}</div>
