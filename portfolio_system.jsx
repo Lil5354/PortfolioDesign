@@ -1661,16 +1661,16 @@ function PortfolioPage({ setPage, pageParams }) {
                             <img src={draft.coverImageUrl} className="w-full h-full object-cover group-hover:opacity-40 transition-opacity duration-300" />
                             
                             {/* OVERLAY */}
-                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-6 z-10">
-                                <button className="w-full max-w-[220px] py-2.5 bg-[#1448db] text-white rounded-full font-bold text-[15px] mb-3 hover:bg-blue-700 transition" onClick={() => { setCurrentDraftId(draft.id); setIsDraftBuilderOpen(true); }}>Edit Project</button>
-                                <button className="w-full max-w-[220px] py-2.5 bg-white text-gray-900 rounded-full font-bold text-[15px] mb-6 hover:bg-gray-100 transition" onClick={(e) => { e.stopPropagation(); handleDeleteDraft(e, draft.id); }}>Delete Project</button>
-                                <p className="text-white font-bold text-[13px]">Last modified {timeStr}</p>
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 z-10 backdrop-blur-[2px]">
+                                <button className="w-full max-w-[160px] py-2 bg-[#1a4ba8] text-white rounded-full font-semibold text-[13px] mb-2 hover:bg-blue-700 transition shadow-lg" onClick={() => { setCurrentDraftId(draft.id); setIsDraftBuilderOpen(true); }}>Edit Project</button>
+                                <button className="w-full max-w-[160px] py-2 bg-white/90 text-gray-800 rounded-full font-semibold text-[13px] mb-4 hover:bg-white transition shadow-lg" onClick={(e) => { e.stopPropagation(); handleDeleteDraft(e, draft.id); }}>Delete Project</button>
+                                <p className="text-white/80 font-medium text-[12px]">Last modified {timeStr}</p>
 
-                                <div className="absolute bottom-4 left-5 right-5 flex items-center justify-between text-white text-[13px] font-bold">
-                                   <span>{authUser?.fullName || authUser?.name || "Author"}</span>
-                                   <div className="flex items-center gap-4">
-                                      <span className="flex items-center gap-1.5"><ThumbsUp size={14} className="fill-white" /> 0</span>
-                                      <span className="flex items-center gap-1.5"><Eye size={14} className="fill-white" /> 0</span>
+                                <div className="absolute bottom-4 left-5 right-5 flex items-center justify-between text-white/90 text-[12px] font-medium">
+                                   <span className="truncate max-w-[100px]">{authUser?.fullName || authUser?.name || "Author"}</span>
+                                   <div className="flex items-center gap-3">
+                                      <span className="flex items-center gap-1"><ThumbsUp size={12} className="fill-white/80" /> 0</span>
+                                      <span className="flex items-center gap-1"><Eye size={12} className="fill-white/80" /> 0</span>
                                    </div>
                                 </div>
                             </div>
@@ -1679,16 +1679,25 @@ function PortfolioPage({ setPage, pageParams }) {
                        })}
                        
                        {/* CREATE NEW PROJECT CARD */}
-                       <div className="aspect-[4/3] border border-dashed border-[#ccc] rounded-sm p-6 flex flex-col items-center justify-center text-center bg-white relative">
-                          <div className="w-[80px] h-[80px] bg-[#E8EFFF] rounded-full flex items-center justify-center mb-6 cursor-pointer hover:bg-[#d0ddff] transition-colors" onClick={() => { setCurrentDraftId(null); setIsDraftBuilderOpen(true); }}>
-                             <div className="w-6 h-6 bg-[#1448db] rounded-full flex items-center justify-center text-white">
-                                <Plus size={16} strokeWidth={3} />
+                       <div 
+                         className="group relative aspect-[4/3] border-2 border-dashed border-[#d1d5db] rounded-xl flex flex-col items-center justify-center text-center bg-gradient-to-b from-[#f9fafb] to-white hover:border-[#1a4ba8] hover:shadow-xl hover:shadow-[#1a4ba8]/10 transition-all duration-300 cursor-pointer overflow-hidden p-6"
+                         onClick={() => { setCurrentDraftId(null); setIsDraftBuilderOpen(true); }}
+                       >
+                          <div className="absolute inset-0 bg-[#1a4ba8]/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          
+                          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-5 shadow-lg shadow-gray-200/50 group-hover:scale-110 group-hover:shadow-blue-200/50 transition-all duration-500 relative z-10 border border-gray-100">
+                             <div className="w-10 h-10 bg-gradient-to-br from-[#1a4ba8] to-[#0d2e6e] rounded-full flex items-center justify-center text-white shadow-inner transform group-hover:rotate-90 transition-transform duration-500">
+                                <Plus size={22} strokeWidth={3} />
                              </div>
                           </div>
-                          <button className="px-6 py-2.5 border border-[#E0E0E0] rounded-full text-[15px] font-bold text-[#212121] hover:bg-[#f8f8f8] transition-colors" onClick={() => { setCurrentDraftId(null); setIsDraftBuilderOpen(true); }}>
+                          
+                          <h3 className="text-[18px] font-extrabold text-gray-800 mb-2 group-hover:text-[#1a4ba8] transition-colors relative z-10">
                             Create a Project
-                          </button>
-                          <p className="text-[#666] text-[15px] absolute bottom-6">Unpublished projects will appear here.</p>
+                          </h3>
+                          
+                          <p className="text-gray-500 text-[14px] font-medium max-w-[80%] relative z-10 group-hover:text-gray-600 transition-colors">
+                            Build and share your next masterpiece. Unpublished drafts are saved here.
+                          </p>
                        </div>
                     </div>
                  </div>
@@ -1753,27 +1762,9 @@ function PortfolioPage({ setPage, pageParams }) {
                      alert("Đã lưu bản nháp thành công!");
                   }}
                   currentUser={authUser}
-                  onPublish={async (blocks, settingsData) => {
+                  onPublish={(blocks, settingsData, capturedImageUrl) => {
                      setIsDraftBuilderOpen(false);
-                     try {
-                        await api.artworks.create({
-                           title: settingsData?.title || "Untitled Project",
-                           description: settingsData?.description,
-                           subject: settingsData?.category,
-                           toolsUsed: settingsData?.tools ? settingsData.tools.split(',') : [],
-                           coverImageUrl: settingsData?.coverImage || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop",
-                           fileUrls: blocks.filter(b => b.type === 'image').map(b => b.content).filter(Boolean),
-                           academicYear: "2024-2025",
-                           semester: "HK1"
-                        });
-                        alert("Đã publish dự án thành công!");
-                        // Quick reload to show the new artwork if it's stored in mock
-                        window.location.reload();
-                     } catch(err) {
-                        console.error("Lỗi khi publish:", err);
-                        alert("Publish thành công (Draft Mode)!");
-                        window.location.reload();
-                     }
+                     setPage("upload", { draftBlocks: blocks, draftSettings: settingsData || {}, draftCapturedImage: capturedImageUrl });
                   }} 
                />
 
@@ -2609,25 +2600,57 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
   const [additionalImages, setAdditionalImages] = useState([]);
   const [error, setError] = useState("");
   const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
-  const [blocks, setBlocks] = useState(pageParams?.draftBlocks || []);
+  const [blocks, setBlocks] = useState(() => {
+    if (pageParams?.draftCapturedImage) return [];
+    const initialBlocks = pageParams?.draftBlocks || [];
+    return initialBlocks.map(b => {
+      if (b.type === "image" && !b.data?.url && b.content) {
+        return { ...b, data: { ...b.data, url: b.content } };
+      }
+      return b;
+    });
+  });
+  const [hiddenDraftBlocks, setHiddenDraftBlocks] = useState(pageParams?.draftBlocks || []);
 
   useEffect(() => {
     if (pageParams?.draftBlocks) {
-       setBlocks(pageParams.draftBlocks);
+       setHiddenDraftBlocks(pageParams.draftBlocks);
+       if (!pageParams.draftCapturedImage) {
+           setBlocks(pageParams.draftBlocks.map(b => {
+              if (b.type === "image" && !b.data?.url && b.content) {
+                return { ...b, data: { ...b.data, url: b.content } };
+              }
+              return b;
+           }));
+       } else {
+           setBlocks([]);
+       }
     }
     if (pageParams?.draftSettings) {
-       const s = pageParams.draftSettings;
-       if (s.title) setTitle(s.title);
-       if (s.description) setDescription(s.description);
-       if (s.category) setSubject(s.category);
-       if (s.tags) setTags(s.tags.split(',').map(t => t.trim()).filter(Boolean));
-       if (s.tools) setTools(s.tools.split(',').map(t => t.trim()).filter(Boolean));
-       if (s.projectYear) setProjectYear(s.projectYear);
-       if (s.coverImage) setCoverImage(s.coverImage);
-       if (s.coOwners) {
-         setIsGroupProject(true);
-         setFriends(s.coOwners.split(',').map(f => ({ id: Date.now()+Math.random(), name: f.trim(), role: 'Member' })));
+       try {
+           const s = pageParams.draftSettings;
+           if (s.title) setTitle(s.title);
+           if (s.description) setDescription(s.description);
+           if (s.category) setSubject(s.category);
+           if (s.tags) {
+             setTags(typeof s.tags === 'string' ? s.tags.split(',').map(t => t.trim()).filter(Boolean) : (Array.isArray(s.tags) ? s.tags : []));
+           }
+           if (s.tools) {
+             setTools(typeof s.tools === 'string' ? s.tools.split(',').map(t => t.trim()).filter(Boolean) : (Array.isArray(s.tools) ? s.tools : []));
+           }
+           if (s.projectYear) setProjectYear(s.projectYear);
+           if (s.coverImage) setCoverImage(s.coverImage);
+           if (s.coOwners) {
+             setIsGroupProject(true);
+             const owners = typeof s.coOwners === 'string' ? s.coOwners.split(',') : (Array.isArray(s.coOwners) ? s.coOwners : []);
+             setFriends(owners.map(f => ({ id: Date.now()+Math.random(), name: typeof f === 'string' ? f.trim() : f.name, role: 'Member' })));
+           }
+       } catch (err) {
+           console.error("Error parsing draftSettings:", err);
        }
+    }
+    if (pageParams?.draftCapturedImage) {
+        setAdditionalImages([pageParams.draftCapturedImage]);
     }
   }, [pageParams]);
 
@@ -2797,7 +2820,10 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
         aiScore: aiResult.originalityScore,
         aiGeneratedPct: aiResult.aiGeneratedPercentage,
         isAiVerified: aiResult.isAiVerified,
-        blocksJson: JSON.stringify(blocks)
+        blocksJson: JSON.stringify([
+             ...hiddenDraftBlocks.map(b => ({ ...b, isHiddenFromViewer: true })),
+             ...blocks
+          ])
       });
       setCreatedId(newArtwork.id);
       setUploadState("success");
@@ -4220,9 +4246,9 @@ if (mins < 1) return t("justNow");
             )}
 
             {/* Render Blocks */}
-            {parsedBlocks && parsedBlocks.length > 0 && (
+            {parsedBlocks && parsedBlocks.filter(b => !b.isHiddenFromViewer).length > 0 && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 32, padding: "40px 60px", background: "#fff" }}>
-                    {parsedBlocks.map((block, i) => (
+                    {parsedBlocks.filter(b => !b.isHiddenFromViewer).map((block, i) => (
                       <div key={block.id || i} style={{ width: "100%" }}>
                         {block.type === "text" && (
                           <div style={{ fontSize: 16, lineHeight: 1.8, color: "#333", whiteSpace: "pre-wrap" }}>{block.content}</div>

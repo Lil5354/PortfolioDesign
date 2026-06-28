@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle } from "lucide-react";
+import { toJpeg } from "html-to-image";
 
 export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, currentUser, initialBlocks = [], initialSettingsData = null }) {
   const [blocks, setBlocks] = useState(initialBlocks);
@@ -8,6 +9,33 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
   const [focusedBlockId, setFocusedBlockId] = useState(null);
   const [editingBlockId, setEditingBlockId] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  
+  const handlePublish = async () => {
+    setIsCapturing(true);
+    try {
+      const scrollContainer = document.getElementById("draft-scroll-container");
+      if (scrollContainer) scrollContainer.scrollTo(0,0);
+      await new Promise(r => setTimeout(r, 100));
+      
+      const el = document.getElementById("draft-canvas-area");
+      let capturedImageUrl = null;
+      if (el) {
+         capturedImageUrl = await toJpeg(el, { 
+             quality: 0.9,
+             backgroundColor: projectStyles.backgroundColor,
+             pixelRatio: 1
+         });
+      }
+      onPublish(blocks, settingsData, capturedImageUrl);
+    } catch(err) {
+      console.error(err);
+      alert("Lỗi khi tạo ảnh preview: " + err.message);
+      onPublish(blocks, settingsData, null);
+    } finally {
+      setIsCapturing(false);
+    }
+  };
   
   const [isStylesModalOpen, setIsStylesModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -278,9 +306,9 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
              </div>
 
              {/* RIGHT SIDE: Save as Draft, Publish, X */}
-             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                <button className="px-5 py-2 rounded-full text-white/50 bg-white/5 font-semibold text-[13px] cursor-not-allowed border border-white/10 transition-colors" style={{ cursor: "not-allowed" }}>Save as Draft</button>
-               <button className="px-6 py-2 rounded-full text-white bg-[#10a359] hover:bg-[#0e8f4e] font-semibold text-[13px] transition-colors" onClick={() => { setIsPreviewMode(false); setIsSettingsModalOpen(true); }}>Publish</button>
+               <button className="px-6 py-2 rounded-full text-white bg-[#10a359] hover:bg-[#0e8f4e] font-semibold text-[13px] transition-colors" onClick={() => { setIsPreviewMode(false); handlePublish(); }}>Publish</button>
                <button onClick={() => setIsPreviewMode(false)} style={{ background: "transparent", border: "none", color: "#888", width: 36, height: 36, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", marginLeft: 4 }} onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#888"; }}>
                  <X size={20} />
                </button>
@@ -462,14 +490,14 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
         <div className="flex items-center gap-3">
           <button className="text-sm font-semibold text-gray-500 hover:text-gray-800 transition" onClick={() => setIsPreviewMode(true)}>Preview</button>
           <button onClick={() => onSave(blocks, settingsData)} className="text-sm font-semibold text-gray-800 border border-gray-300 rounded-full px-4 py-1.5 hover:bg-gray-50 transition">Save as Draft</button>
-          <button onClick={() => setIsSettingsModalOpen(true)} className="text-sm font-semibold text-white bg-[#1a4ba8] rounded-full px-5 py-1.5 hover:bg-[#1a4ba8]/90 transition">Publish</button>
+          <button onClick={handlePublish} className="text-sm font-semibold text-white bg-[#1a4ba8] rounded-full px-5 py-1.5 hover:bg-[#1a4ba8]/90 transition">Publish</button>
         </div>
       </header>
 
       {/* BODY */}
       <div className="flex flex-1 overflow-hidden relative" onClick={() => { setFocusedBlockId(null); setEditingBlockId(null); }}>
         {/* WORKSPACE */}
-        <div className="flex-1 overflow-y-auto relative transition-colors" style={{ backgroundColor: projectStyles.backgroundColor }}>
+        <div id="draft-scroll-container" className="flex-1 overflow-y-auto relative transition-colors" style={{ backgroundColor: projectStyles.backgroundColor }}>
           {blocks.length === 0 ? (
             <div className="min-h-full flex flex-col items-center justify-center pt-20 pb-40">
               <h2 className="text-[26px] font-medium text-gray-600 mb-12">Add Photos to create your grid:</h2>
@@ -489,7 +517,7 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
               </div>
             </div>
           ) : (
-            <div className={`w-full min-h-full pb-32 ${blocks.length > 0 && blocks[0].fullWidth ? '' : 'pt-12'}`}>
+            <div id="draft-canvas-area" className={`w-full min-h-full pb-32 ${blocks.length > 0 && blocks[0].fullWidth ? '' : 'pt-12'}`} style={{ backgroundColor: projectStyles.backgroundColor }}>
               {blocks.map(renderBlock)}
             </div>
           )}
@@ -694,9 +722,16 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
             <div className="border-t border-gray-200 p-4 px-8 flex justify-end items-center gap-4 bg-white rounded-b shrink-0">
               <button className="text-gray-600 font-bold hover:text-gray-900 transition" onClick={() => setIsSettingsModalOpen(false)}>Cancel</button>
               <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-full transition" onClick={() => { setIsSettingsModalOpen(false); onSave(blocks, settingsData); }}>Save as Draft</button>
-              <button className="bg-green-700 hover:bg-green-800 text-white font-bold py-2.5 px-8 rounded-full transition" onClick={() => { setIsSettingsModalOpen(false); onPublish(blocks, settingsData); }}>Publish</button>
+              <button className="bg-green-700 hover:bg-green-800 text-white font-bold py-2.5 px-8 rounded-full transition" onClick={() => { setIsSettingsModalOpen(false); handlePublish(); }}>Publish</button>
             </div>
           </div>
+        </div>
+      )}
+      
+      {isCapturing && (
+        <div className="fixed inset-0 bg-black/70 z-[99999] flex flex-col items-center justify-center text-white font-bold text-[15px]">
+          <div className="w-10 h-10 border-4 border-[#1a4ba8] border-t-transparent rounded-full animate-spin mb-4"></div>
+          Preparing Final Image...
         </div>
       )}
     </div>,
