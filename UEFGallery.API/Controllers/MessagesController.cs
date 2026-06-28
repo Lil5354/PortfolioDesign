@@ -125,6 +125,7 @@ public class MessagesController : ControllerBase
                 CreatedAt = DateTime.UtcNow
             };
             _context.Messages.Add(outboxMessage);
+            await _hubContext.Clients.Group(senderId).SendAsync("ReceiveMessage", outboxMessage);
 
             if (dto.Purpose == "feedback")
             {
