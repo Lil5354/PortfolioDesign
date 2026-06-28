@@ -3191,45 +3191,47 @@ function OrderModal({ setPage, activeArtworkId, onClose }) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("fullName")}</label>
-              <input
-                type="text"
-                value={orderData.name}
-                onChange={e => setOrderData({ ...orderData, name: e.target.value })}
-                placeholder={t("placeholderFullName")}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("emailStar")}</label>
-              <input
-                type="email"
-                value={orderData.email}
-                onChange={e => setOrderData({ ...orderData, email: e.target.value })}
-                placeholder="nguyenvana@example.com"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("phoneNumber")}</label>
-              <input
-                type="tel"
-                value={orderData.phone}
-                onChange={e => setOrderData({ ...orderData, phone: e.target.value })}
-                placeholder="090xxx xxx xx"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("company")}</label>
-              <input
-                type="text"
-                value={orderData.company}
-                onChange={e => setOrderData({ ...orderData, company: e.target.value })}
-                placeholder={t("placeholderCompany")}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
-              />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("fullName")}</label>
+                <input
+                  type="text"
+                  value={orderData.name}
+                  onChange={e => setOrderData({ ...orderData, name: e.target.value })}
+                  placeholder={t("placeholderFullName")}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("emailStar")}</label>
+                <input
+                  type="email"
+                  value={orderData.email}
+                  onChange={e => setOrderData({ ...orderData, email: e.target.value })}
+                  placeholder="nguyenvana@example.com"
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("phoneNumber")}</label>
+                <input
+                  type="tel"
+                  value={orderData.phone}
+                  onChange={e => setOrderData({ ...orderData, phone: e.target.value })}
+                  placeholder="090xxx xxx xx"
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("company")}</label>
+                <input
+                  type="text"
+                  value={orderData.company}
+                  onChange={e => setOrderData({ ...orderData, company: e.target.value })}
+                  placeholder={t("placeholderCompany")}
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, outline: "none", boxSizing: "border-box", color: BLACK }}
+                />
+              </div>
             </div>
             <div>
               <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: MUTED, marginBottom: 6 }}>{t("requirementsDescription")}</label>
@@ -3866,18 +3868,18 @@ if (mins < 1) return t("justNow");
       <div style={{ display: "flex", width: "100%", justifyContent: "center", position: "relative", minHeight: "100vh" }}>
         
         {/* Nút Prev / Next dạng cố định 2 bên */}
-        <div style={{ position: "fixed", bottom: 40, left: 0, width: "calc(50vw - min(50vw - 100px, 700px))", zIndex: 1010, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none" }}>
-          <button onClick={() => setPage("gallery")} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: "none", outline: "none" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
+        <div style={{ position: "fixed", bottom: 40, left: 0, width: "calc(50vw - min(50vw - 100px, 700px))", zIndex: 1010, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none", boxShadow: "none", filter: "none", background: "transparent" }}>
+          <button onClick={() => setPage("gallery")} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: "none", outline: "none", filter: "none" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
             <ChevronLeft size={20} />
           </button>
-          <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", textShadow: "none" }}>Previous</span>
+          <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", textShadow: "none", background: "transparent", userSelect: "none", WebkitTextStroke: "0px", filter: "none", outline: "none" }}>Previous</span>
         </div>
 
-        <div style={{ position: "fixed", bottom: 40, right: 0, width: "calc(50vw - min(50vw - 100px, 700px))", zIndex: 1010, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none" }}>
-          <button onClick={() => setPage("gallery")} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: "none", outline: "none" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
+        <div style={{ position: "fixed", bottom: 40, right: 0, width: "calc(50vw - min(50vw - 100px, 700px))", zIndex: 1010, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, pointerEvents: "none", boxShadow: "none", filter: "none", background: "transparent" }}>
+          <button onClick={() => setPage("gallery")} style={{ pointerEvents: "auto", background: "rgba(255,255,255,0.1)", border: "none", color: "#fff", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s", boxShadow: "none", outline: "none", filter: "none" }} onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"} onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}>
             <ChevronRight size={20} />
           </button>
-          <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", textShadow: "none" }}>Next</span>
+          <span style={{ fontSize: 11, fontWeight: "bold", color: "#fff", textShadow: "none", background: "transparent", userSelect: "none", WebkitTextStroke: "0px", filter: "none", outline: "none" }}>Next</span>
         </div>
 
         {/* CỘT CHÍNH (Nội dung) */}
@@ -4720,15 +4722,20 @@ if (mins < 1) return t("justNow");
               
               const getToolInfo = (toolName) => {
                 const name = toolName.toLowerCase();
-                if (name.includes('illustrator') || name === 'ai') return { id: 'Ai', bg: '#330000', color: '#ff9a00', name: 'Illustrator' };
-                if (name.includes('photoshop') || name === 'ps') return { id: 'Ps', bg: '#001e36', color: '#31a8ff', name: 'Photoshop' };
-                if (name.includes('premiere') || name === 'pr') return { id: 'Pr', bg: '#1a1a4b', color: '#9999ff', name: 'Premiere Pro' };
-                if (name.includes('figma')) return { id: 'Fg', bg: '#1e1e1e', color: '#0acf83', name: 'Figma' };
-                if (name.includes('blender') || name === 'bl') return { id: 'Bl', bg: '#2f2f2f', color: '#ea7600', name: 'Blender' };
-                if (name.includes('procreate')) return { id: 'Pr', bg: '#1a1a1a', color: '#5b5b5b', name: 'Procreate' };
-                if (name.includes('stock') || name === 'st') return { id: 'St', bg: '#0f2026', color: '#00a3f5', name: 'Stock' };
-                if (name.includes('after effects') || name === 'ae') return { id: 'Ae', bg: '#00005b', color: '#9999ff', name: 'After Effects' };
-                return { id: toolName.substring(0, 2).toUpperCase(), bg: '#333', color: '#fff', name: toolName };
+                let fallbackBg = "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400";
+                
+                if (name.includes('illustrator') || name === 'ai') return { id: 'Ai', bg: '#330000', color: '#ff9a00', name: 'Illustrator', image: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=400" };
+                if (name.includes('photoshop') || name === 'ps') return { id: 'Ps', bg: '#001e36', color: '#31a8ff', name: 'Photoshop', image: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400" };
+                if (name.includes('premiere') || name === 'pr') return { id: 'Pr', bg: '#1a1a4b', color: '#9999ff', name: 'Premiere Pro', image: fallbackBg };
+                if (name.includes('figma')) return { id: 'Fg', bg: '#1e1e1e', color: '#0acf83', name: 'Figma', image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400" };
+                if (name.includes('blender') || name === 'bl') return { id: 'Bl', bg: '#2f2f2f', color: '#ea7600', name: 'Blender', image: fallbackBg };
+                if (name.includes('procreate')) return { id: 'Pr', bg: '#1a1a1a', color: '#5b5b5b', name: 'Procreate', image: fallbackBg };
+                if (name.includes('stock') || name === 'st') return { id: 'St', bg: '#0f2026', color: '#00a3f5', name: 'Stock', image: fallbackBg };
+                if (name.includes('after effects') || name === 'ae') return { id: 'Ae', bg: '#00005b', color: '#9999ff', name: 'After Effects', image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400" };
+                if (name.includes('indesign') || name === 'id') return { id: 'Id', bg: '#49021f', color: '#ff3366', name: 'InDesign', image: "https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=400" };
+                if (name.includes('lightroom') || name === 'lr') return { id: 'Lr', bg: '#000000', color: '#31a8ff', name: 'Lightroom', image: "https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400" };
+                
+                return { id: toolName.substring(0, 2).toUpperCase(), bg: '#333', color: '#fff', name: toolName, image: fallbackBg };
               };
               
               const firstTool = getToolInfo(toolsList[0]);
@@ -4750,11 +4757,13 @@ if (mins < 1) return t("justNow");
                       {toolsList.map(t => {
                         const info = getToolInfo(t);
                         return (
-                          <div key={t} style={{ display: "flex", alignItems: "center", gap: 12, background: "#151515", borderRadius: 6, padding: "8px 12px" }}>
-                            <div style={{ width: 24, height: 24, borderRadius: 4, background: info.bg, color: info.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: 14, fontFamily: "sans-serif" }}>
+                          <div key={t} style={{ position: "relative", display: "flex", alignItems: "center", gap: 12, background: "#151515", borderRadius: 6, padding: "8px 12px", overflow: "hidden" }}>
+                            <img src={toolCovers?.[t] || info.image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.6, filter: "brightness(0.8) contrast(1.1)" }} />
+                            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }} />
+                            <div style={{ position: "relative", zIndex: 1, width: 24, height: 24, borderRadius: 4, background: info.bg, color: info.color, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: 14, fontFamily: "sans-serif" }}>
                               {info.id}
                             </div>
-                            <span style={{ fontSize: 14, fontWeight: "bold", color: "#fff" }}>{info.name}</span>
+                            <span style={{ position: "relative", zIndex: 1, fontSize: 14, fontWeight: "bold", color: "#fff" }}>{info.name}</span>
                           </div>
                         );
                       })}
