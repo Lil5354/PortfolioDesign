@@ -147,6 +147,10 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                    backgroundPosition: block.bgPosition || '50% 50%',
                    cursor: editingBlockId === block.id ? 'grab' : 'default'
                  }}
+                 onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setEditingBlockId(block.id);
+                  }}
                  onMouseDown={(e) => {
                    if (editingBlockId !== block.id) return;
                    e.preventDefault();
