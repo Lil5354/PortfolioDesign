@@ -1069,6 +1069,7 @@ function PortfolioPage({ setPage, pageParams }) {
   const [isUploadingBanner, setIsUploadingBanner] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [portfolioMoodboards, setPortfolioMoodboards] = useState([]);
+  const [publicMoodboards, setPublicMoodboards] = useState([]);
   const [drafts, setDrafts] = useState([]);
   const [currentDraftId, setCurrentDraftId] = useState(null);
 
@@ -1117,6 +1118,8 @@ function PortfolioPage({ setPage, pageParams }) {
         pData.stats = { ...(pData.stats || {}), ...pStats };
         if (pData.artworks) setPortfolioArtworks(pData.artworks);
         setPortfolioData(pData);
+        const pSet = pData.portfolioSettings || pData.settings || {};
+        setPublicMoodboards(pSet.publicMoodboards || []);
         
         const uId = pData.user?.id || pData.id;
         if (uId) {
@@ -1618,7 +1621,7 @@ function PortfolioPage({ setPage, pageParams }) {
 
                {activeTab === 'moodboard' && (
                  (() => {
-                   const visibleMoodboards = portfolioMoodboards.filter(col => isOwner || (pSettings?.publicMoodboards && pSettings.publicMoodboards.includes(col.name)));
+                   const visibleMoodboards = portfolioMoodboards.filter(col => isOwner || publicMoodboards.includes(col.name));
                    return visibleMoodboards.length > 0 ? (
                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
                      {visibleMoodboards.map(col => (
@@ -1633,9 +1636,33 @@ function PortfolioPage({ setPage, pageParams }) {
                             )}
                          </div>
                          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 to-transparent opacity-90 group-hover:opacity-100 transition-opacity"></div>
-                         <div className="absolute top-0 left-0 p-5 w-full">
-                            <h4 className="font-bold text-white text-xl mb-1 leading-tight truncate">{col.name}</h4>
-                            <p className="text-[14px] text-white/90 truncate">{portfolioData?.user?.fullName || portfolioData?.fullName || "Sinh viên"}</p>
+                         <div className="absolute top-0 left-0 p-5 w-full flex justify-between items-start">
+                            <div className="overflow-hidden mr-2">
+                              <h4 className="font-bold text-white text-xl mb-1 leading-tight truncate">{col.name}</h4>
+                              <p className="text-[14px] text-white/90 truncate">{portfolioData?.user?.fullName || portfolioData?.fullName || "Sinh viên"}</p>
+                            </div>
+                            {isOwner && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  e.preventDefault();
+                                  const isPub = publicMoodboards.includes(col.name);
+                                  const newArr = isPub ? publicMoodboards.filter(n => n !== col.name) : [...publicMoodboards, col.name];
+                                  setPublicMoodboards(newArr);
+                                  
+                                  try {
+                                    await api.portfolios.updateMine({ publicMoodboards: newArr });
+                                  } catch {
+                                    alert("Lỗi khi cập nhật quyền truy cập!");
+                                    setPublicMoodboards(publicMoodboards); // revert
+                                  }
+                                }}
+                                className="shrink-0 w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white hover:bg-white/40 transition-colors border-none cursor-pointer"
+                                title={publicMoodboards.includes(col.name) ? "Công khai" : "Riêng tư"}
+                              >
+                                {publicMoodboards.includes(col.name) ? <Globe size={14} /> : <Lock size={14} />}
+                              </button>
+                            )}
                          </div>
                        </div>
                      ))}
