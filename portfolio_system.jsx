@@ -8723,7 +8723,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
           {detailArtwork && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <div className="absolute inset-0 bg-black/50" onClick={() => setDetailArtwork(null)}></div>
-              <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden">
                 <div className="px-6 py-4 border-b border-[#E0E0E0] flex items-center justify-between bg-[#F8F8F8]">
                   <h3 className="font-bold text-[#212121] text-lg truncate pr-4">{detailArtwork.artwork?.title}</h3>
                   <button onClick={() => setDetailArtwork(null)} className="p-2 hover:bg-[#E0E0E0] rounded-full text-[#666] hover:text-[#212121] transition-colors"><X size={20} /></button>
@@ -8731,12 +8731,12 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                 
                 <div className="flex flex-1 overflow-hidden min-h-0">
                   {/* Left Column: Cover and Sub-Images */}
-                  <div className="w-3/5 flex flex-col border-r border-[#E0E0E0] p-6 overflow-y-auto bg-white">
+                  <div className="w-3/5 flex flex-col border-r border-[#E0E0E0] p-6 overflow-hidden bg-white">
                     <div 
-                      className="w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden border border-[#E0E0E0] relative group cursor-pointer shrink-0"
+                      className="w-full flex-1 min-h-0 bg-gray-100 rounded-xl overflow-hidden border border-[#E0E0E0] relative group cursor-pointer"
                       onClick={() => window.open(`#/detail/${detailArtwork.artworkId}`, '_blank')}
                     >
-                      <img src={detailArtwork.artwork?.coverImageUrl || detailArtwork.artwork?.img} alt="" className="w-full h-full object-cover" />
+                      <img src={detailArtwork.artwork?.coverImageUrl || detailArtwork.artwork?.img} alt="" className="w-full h-full object-contain" />
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <span className="text-white font-semibold flex items-center gap-2"><Eye size={18} /> Xem toàn bộ ấn phẩm</span>
                       </div>
