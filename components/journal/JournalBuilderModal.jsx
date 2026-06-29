@@ -1019,6 +1019,8 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           onClose={() => setEditGridBlockId(null)}
           block={blocks.find(b => b.id === editGridBlockId)}
           onSave={updateBlock}
+          orientation={orientation}
+          projectStyles={projectStyles}
         />
       )}
     </div>,

@@ -66,7 +66,8 @@ const JustifiedGrid = ({
       currentRow.push({ ...image, aspectRatio });
       currentRowRatio += aspectRatio;
 
-      const expectedHeight = (measuredWidth - (currentRow.length - 1) * spacing) / currentRowRatio;
+      const safeWidth = Math.max(0, measuredWidth - 1); // Subtract 1px to prevent floating point layout wrapping issues
+      const expectedHeight = (safeWidth - (currentRow.length - 1) * spacing) / currentRowRatio;
       
       if (expectedHeight <= targetRowHeight || currentRow.length >= maxImagesPerRow || index === loadedImages.length - 1) {
         let finalHeight = expectedHeight;

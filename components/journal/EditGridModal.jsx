@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Move, Image as ImageIcon } from 'lucide-react';
 import JustifiedGrid from './JustifiedGrid';
 
-const EditGridModal = ({ isOpen, onClose, block, onSave }) => {
+const EditGridModal = ({ isOpen, onClose, block, onSave, orientation = 'landscape', projectStyles = {} }) => {
   const [images, setImages] = useState([]);
 
   useEffect(() => {
@@ -73,10 +73,14 @@ const EditGridModal = ({ isOpen, onClose, block, onSave }) => {
               <p>No photos in this grid yet.</p>
             </div>
           ) : (
-            <div className="max-w-5xl mx-auto w-full">
+            <div 
+              className="mx-auto w-full transition-all duration-300" 
+              style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}
+            >
               <JustifiedGrid 
                 images={images}
                 animate={true}
+                containerWidth={block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2)}
                 renderImage={(img) => (
                   <div className="relative group w-full h-full bg-white rounded shadow-sm overflow-hidden">
                     <img src={img.content || img.url} alt="" className="w-full h-full object-cover" />
