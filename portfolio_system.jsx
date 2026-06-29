@@ -1047,7 +1047,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   );
 }
 
-function PortfolioPage({ setPage, pageParams }) {
+function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
   const { user: authUser } = useAuth();
   const [isDraftBuilderOpen, setIsDraftBuilderOpen] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
@@ -1070,6 +1070,7 @@ function PortfolioPage({ setPage, pageParams }) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [portfolioMoodboards, setPortfolioMoodboards] = useState([]);
   const [publicMoodboards, setPublicMoodboards] = useState([]);
+  const [selectedMoodboard, setSelectedMoodboard] = useState(null);
   const [drafts, setDrafts] = useState([]);
   const [currentDraftId, setCurrentDraftId] = useState(null);
 
@@ -1625,7 +1626,7 @@ function PortfolioPage({ setPage, pageParams }) {
                    return visibleMoodboards.length > 0 ? (
                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
                      {visibleMoodboards.map(col => (
-                       <div key={col.id} className="relative rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow aspect-[4/3] group cursor-pointer">
+                       <div key={col.id} onClick={() => setSelectedMoodboard(col)} className="relative rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow aspect-[4/3] group cursor-pointer">
                          <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0 bg-[#222]">
                             {col.items.length > 0 ? col.items.slice(0,4).map((it, idx) => (
                                <div key={it.id} className={`overflow-hidden bg-[#EAEAEA] ${idx === 0 && col.items.length === 1 ? 'col-span-2 row-span-2' : ''} ${idx === 0 && col.items.length === 3 ? 'col-span-2' : ''}`}>
@@ -1906,6 +1907,72 @@ function PortfolioPage({ setPage, pageParams }) {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MOODBOARD DETAIL MODAL */}
+      {selectedMoodboard && (
+        <div className="fixed inset-0 bg-black/80 z-[9999] flex flex-col pt-10 px-4 md:px-12 pb-12 overflow-y-auto" onClick={() => setSelectedMoodboard(null)}>
+          <div className="max-w-7xl w-full mx-auto relative bg-white rounded-xl shadow-2xl flex flex-col" style={{ minHeight: "80vh" }} onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center p-6 border-b border-[#EAEAEA]">
+               <div>
+                  <h2 className="text-2xl font-bold text-[#212121]">{selectedMoodboard.name}</h2>
+                  <p className="text-[#666] mt-1">{selectedMoodboard.items.length} tác phẩm</p>
+               </div>
+               <div className="flex items-center gap-3">
+                  {authUser && !isOwner && selectedMoodboard.items.length > 0 && (
+                    <button 
+                      onClick={async () => {
+                         try {
+                           const itemIds = selectedMoodboard.items.map(it => it.artworkId);
+                           await api.collections.saveMultiple(itemIds, [selectedMoodboard.name + " (Copy)"]);
+                           alert("Đã sao chép toàn bộ Moodboard vào tài khoản của bạn!");
+                         } catch (e) {
+                           alert("Lỗi khi sao chép: " + e.message);
+                         }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-[#1a4ba8] text-white rounded-full hover:bg-blue-700 transition-colors font-medium">
+                      <Save size={16} /> Lưu toàn bộ Moodboard
+                    </button>
+                  )}
+                  <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[#F5F5F5] transition" onClick={() => setSelectedMoodboard(null)}>
+                    <X size={24} color="#333" />
+                  </button>
+               </div>
+            </div>
+            <div className="p-6 flex-1 overflow-y-auto bg-[#F8F8F8]">
+               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 24 }}>
+                  {selectedMoodboard.items.map(it => {
+                     const art = it.artwork;
+                     if (!art) return null;
+                     return (
+                       <div key={art.id} className="relative group rounded-md overflow-hidden bg-[#EAEAEA] aspect-[4/3] shadow-sm hover:shadow-md transition-shadow">
+                          <img src={art.coverImageUrl} className="w-full h-full object-cover cursor-pointer" onClick={() => { setSelectedMoodboard(null); setPage && setPage("detail", { artworkId: art.id }); }} />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none flex flex-col justify-between p-3">
+                             <div className="flex justify-end">
+                                <button className="pointer-events-auto bg-black/60 hover:bg-black/80 text-white rounded-full w-9 h-9 flex items-center justify-center backdrop-blur-md transition-colors" 
+                                   onClick={(e) => { e.stopPropagation(); onBookmarkClick && onBookmarkClick(art); }} 
+                                   title="Lưu vào Moodboard của bạn">
+                                   <Bookmark size={18} fill={isBookmarked && isBookmarked(art.id) ? "white" : "none"} />
+                                </button>
+                             </div>
+                             <div className="pointer-events-auto bg-black/60 text-white p-2 rounded backdrop-blur-sm cursor-pointer" onClick={() => { setSelectedMoodboard(null); setPage && setPage("detail", { artworkId: art.id }); }}>
+                                <p className="font-semibold text-sm truncate">{art.title}</p>
+                                <p className="text-xs opacity-80 truncate">{art.authorFullName}</p>
+                             </div>
+                          </div>
+                       </div>
+                     );
+                  })}
+               </div>
+               {selectedMoodboard.items.length === 0 && (
+                 <div className="h-full flex flex-col items-center justify-center py-20 text-[#999]">
+                    <FolderInput size={48} className="mb-4 opacity-50" />
+                    <p>Moodboard này chưa có tác phẩm nào.</p>
+                 </div>
+               )}
             </div>
           </div>
         </div>
@@ -11418,7 +11485,7 @@ export default function App() {
           isBookmarked={isBookmarked}
         />
       )}
-      {page === "portfolio" && <PortfolioPage setPage={setPage} pageParams={pageParams} />}
+      {page === "portfolio" && <PortfolioPage setPage={setPage} pageParams={pageParams} onBookmarkClick={openSaveFlow} isBookmarked={isBookmarked} />}
       {page === "dashboard" && (
         userRole === "student" ? (
           <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />
