@@ -71,10 +71,6 @@ const JustifiedGrid = ({
       
       if (expectedHeight <= targetRowHeight || currentRow.length >= maxImagesPerRow || index === loadedImages.length - 1) {
         let finalHeight = expectedHeight;
-        
-        if (index === loadedImages.length - 1 && expectedHeight > targetRowHeight * 1.5) {
-          finalHeight = targetRowHeight;
-        }
 
         currentRow.forEach(img => {
           computedImages.push({

@@ -18,7 +18,7 @@ const EditGridModal = ({ isOpen, onClose, block, onSave }) => {
     if (files.length > 0) {
       const newImages = files.map(file => {
         const url = URL.createObjectURL(file);
-        return { id: Date.now().toString() + Math.random().toString().slice(2, 6), url, width: 800, height: 600 };
+        return { id: Date.now().toString() + Math.random().toString().slice(2, 6), url };
       });
       setImages([...images, ...newImages]);
     }
