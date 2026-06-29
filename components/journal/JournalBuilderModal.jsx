@@ -9,6 +9,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
   const [hoveredBlockId, setHoveredBlockId] = useState(null);
   const [focusedBlockId, setFocusedBlockId] = useState(null);
   const [editingBlockId, setEditingBlockId] = useState(null);
+  const [dropdownBlockId, setDropdownBlockId] = useState(null);
   const [activeOverlayId, setActiveOverlayId] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   
@@ -93,6 +94,39 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           padding: block.fullWidth ? '0' : `${projectStyles.contentSpacing || 0}px` 
         }}
       >
+        {block.type !== 'text' && !isPreviewMode && (
+          <>
+            {/* Edit Button */}
+            <div className="absolute top-3 left-3 z-50 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="relative">
+                <button 
+                  className="w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-colors cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); setDropdownBlockId(dropdownBlockId === block.id ? null : block.id); }}
+                >
+                  <Edit2 size={14} />
+                </button>
+                {dropdownBlockId === block.id && (
+                  <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-gray-200 py-1 overflow-hidden z-[60]">
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={(e) => { e.stopPropagation(); setDropdownBlockId(null); }}>Reorder Project</button>
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={(e) => { e.stopPropagation(); setDropdownBlockId(null); }}>Edit Grid</button>
+                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors" onClick={(e) => { e.stopPropagation(); removeBlock(block.id); setDropdownBlockId(null); }}>Delete Grid</button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Resize Button */}
+            <div className="absolute top-3 right-3 z-50 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button 
+                className="h-8 px-3 bg-gray-900/80 hover:bg-black text-white rounded-full flex items-center justify-center gap-1 shadow-lg transition-colors cursor-pointer backdrop-blur-sm border border-white/20"
+                onClick={(e) => { e.stopPropagation(); updateBlock(block.id, { fullWidth: !block.fullWidth }); }}
+                title="Give the grid some breathing room and add padding to the sides"
+              >
+                <ArrowLeftRight size={14} />
+              </button>
+            </div>
+          </>
+        )}
         {block.type === 'image' && (
            <div 
              className="w-full h-full bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden"
@@ -820,30 +854,30 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-3">Add Content</h3>
             <div className="grid grid-cols-2 gap-[1px] bg-gray-200 border border-gray-200 rounded overflow-hidden">
-              <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" onClick={() => addBlock('image')}>
-                <Image size={24} className="text-gray-800" />
-                <span className="text-[13px] font-medium text-gray-700">Image</span>
+              <button className="bg-white hover:bg-gray-50 py-3 flex flex-col items-center justify-center gap-1.5 transition" onClick={() => addBlock('image')}>
+                <Image size={18} className="text-gray-800" />
+                <span className="text-[11px] font-medium text-gray-700">Image</span>
               </button>
               <button 
                 draggable
                 onDragStart={(e) => { e.dataTransfer.setData("application/json", JSON.stringify({ type: 'text-overlay' })); }}
-                className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" 
+                className="bg-white hover:bg-gray-50 py-3 flex flex-col items-center justify-center gap-1.5 transition" 
                 onClick={() => addBlock('text')}
               >
-                <Type size={24} className="text-gray-800" />
-                <span className="text-[13px] font-medium text-gray-700">Text</span>
+                <Type size={18} className="text-gray-800" />
+                <span className="text-[11px] font-medium text-gray-700">Text</span>
               </button>
-              <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" onClick={() => addBlock('grid')}>
-                <LayoutGrid size={24} className="text-gray-800" />
-                <span className="text-[13px] font-medium text-gray-700">Photo Grid</span>
+              <button className="bg-white hover:bg-gray-50 py-3 flex flex-col items-center justify-center gap-1.5 transition" onClick={() => addBlock('grid')}>
+                <LayoutGrid size={18} className="text-gray-800" />
+                <span className="text-[11px] font-medium text-gray-700">Photo Grid</span>
               </button>
-              <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" onClick={() => addBlock('video')}>
-                <Play size={24} className="text-gray-800" />
-                <span className="text-[13px] font-medium text-gray-700">Video/Audio</span>
+              <button className="bg-white hover:bg-gray-50 py-3 flex flex-col items-center justify-center gap-1.5 transition" onClick={() => addBlock('video')}>
+                <Play size={18} className="text-gray-800" />
+                <span className="text-[11px] font-medium text-gray-700">Video/Audio</span>
               </button>
-              <button type="button" className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" onClick={(e) => { e.stopPropagation(); setShowCollectionDrawer(!showCollectionDrawer); }}>
-                <Folder size={24} className="text-[#1a4ba8]" />
-                <span className="text-[13px] font-medium text-[#1a4ba8]">Bộ sưu tập</span>
+              <button type="button" className="bg-white hover:bg-gray-50 py-3 flex flex-col items-center justify-center gap-1.5 transition" onClick={(e) => { e.stopPropagation(); setShowCollectionDrawer(!showCollectionDrawer); }}>
+                <Folder size={18} className="text-[#1a4ba8]" />
+                <span className="text-[11px] font-medium text-[#1a4ba8]">Bộ sưu tập</span>
               </button>
             </div>
           </div>
@@ -851,9 +885,9 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-3">Edit Project</h3>
             <div className="grid grid-cols-1 gap-[1px] bg-gray-200 border border-gray-200 rounded overflow-hidden">
-              <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition text-blue-600" onClick={() => setIsStylesModalOpen(true)}>
-                <PenTool size={20} />
-                <span className="text-[13px] font-medium">Styles</span>
+              <button className="bg-white hover:bg-gray-50 py-3 flex flex-col items-center justify-center gap-1.5 transition text-blue-600" onClick={() => setIsStylesModalOpen(true)}>
+                <PenTool size={18} />
+                <span className="text-[11px] font-medium">Styles</span>
               </button>
             </div>
             
