@@ -825,23 +825,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         {/* WORKSPACE */}
         <div className="flex-1 overflow-y-auto relative transition-colors print:overflow-visible print:static print:h-auto print:block" style={{ backgroundColor: projectStyles.backgroundColor }}>
           {blocks.length === 0 ? (
-            <div className="min-h-full flex flex-col items-center justify-center pt-20 pb-40">
-              <h2 className="text-[26px] font-medium text-gray-600 mb-12">Add Photos to create your grid:</h2>
-              <div className="flex items-center gap-8">
-                <div className="flex flex-col items-center gap-3 cursor-pointer group" onClick={() => addBlock('image')}>
-                  <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition">
-                    <Image size={28} />
-                  </div>
-                  <span className="font-bold text-gray-900">Image</span>
-                </div>
-                <div className="flex flex-col items-center gap-3 cursor-pointer group" onClick={() => addBlock('text')}>
-                  <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition">
-                    <Type size={28} />
-                  </div>
-                  <span className="font-bold text-gray-900">Text</span>
-                </div>
-              </div>
-            </div>
+            <div className="w-full min-h-full pb-32 pt-12 print:p-0 print:m-0"></div>
           ) : (
             <div className={`w-full min-h-full pb-32 ${blocks.length > 0 && blocks[0].fullWidth ? '' : 'pt-12'} print:p-0 print:m-0`}>
               {blocks.map(renderBlock)}
