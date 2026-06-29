@@ -9467,17 +9467,41 @@ function AboutPage({ setPage, isLoggedIn }) {
         </div>
 
         <div className="hidden lg:flex relative z-10 h-full items-center justify-center pointer-events-none">
-          <div className="grid grid-cols-3 grid-rows-4 gap-2.5 w-full max-w-[500px] aspect-[3/4] p-8 pb-4 origin-center animate-[mosaicFloat_9s_ease-in-out_infinite] pointer-events-auto">
-            <div className="row-span-2 rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[0]} className="w-full h-full object-cover" /><span className="absolute bottom-2 left-2 bg-black/65 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur uppercase">Branding</span></div>
-            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[1]} className="w-full h-full object-cover" /></div>
-            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[2]} className="w-full h-full object-cover" /><span className="absolute bottom-2 left-2 bg-black/65 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur uppercase">UI/UX</span></div>
-            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[3]} className="w-full h-full object-cover" /></div>
-            <div className="row-span-2 rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[4]} className="w-full h-full object-cover" /><span className="absolute bottom-2 left-2 bg-black/65 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur uppercase">Illustration</span></div>
-            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[5]} className="w-full h-full object-cover" /></div>
-            <div className="col-span-2 rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[6]} className="w-full h-full object-cover" /><span className="absolute bottom-2 left-2 bg-black/65 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur uppercase">Poster</span></div>
-            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[7]} className="w-full h-full object-cover" /></div>
-            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[8]} className="w-full h-full object-cover" /></div>
-            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md"><img src={images[9]} className="w-full h-full object-cover" /></div>
+          <div className="grid grid-cols-3 grid-rows-5 grid-flow-dense gap-2.5 w-full max-w-[500px] aspect-[4/5] p-8 pb-4 origin-center animate-[mosaicFloat_9s_ease-in-out_infinite] pointer-events-auto">
+            <div className="row-span-2 rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[0]} className="w-full h-full object-cover" />
+              <span className="absolute bottom-2 left-2 bg-black/65 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur uppercase">Branding</span>
+            </div>
+            <div className="col-span-2 rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[1]} className="w-full h-full object-cover" />
+            </div>
+            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[2]} className="w-full h-full object-cover" />
+              <span className="absolute bottom-2 left-2 bg-black/65 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur uppercase">UI/UX</span>
+            </div>
+            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[3]} className="w-full h-full object-cover" />
+            </div>
+            <div className="row-span-2 rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[4]} className="w-full h-full object-cover" />
+              <span className="absolute bottom-2 left-2 bg-black/65 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur uppercase">Illustration</span>
+            </div>
+            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[5]} className="w-full h-full object-cover" />
+            </div>
+            <div className="row-span-2 rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[6]} className="w-full h-full object-cover" />
+            </div>
+            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[7]} className="w-full h-full object-cover" />
+            </div>
+            <div className="col-span-2 rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[8]} className="w-full h-full object-cover" />
+              <span className="absolute bottom-2 left-2 bg-black/65 text-white text-[10px] font-bold px-2 py-1 rounded backdrop-blur uppercase">Poster</span>
+            </div>
+            <div className="rounded-xl overflow-hidden relative group transition-transform hover:scale-105 hover:z-20 shadow-md">
+              <img src={images[9]} className="w-full h-full object-cover" />
+            </div>
           </div>
         </div>
       </section>
