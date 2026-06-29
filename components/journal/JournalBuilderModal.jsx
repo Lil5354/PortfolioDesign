@@ -740,6 +740,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         @media print {
           @page { size: ${orientation === 'landscape' ? 'A4 landscape' : 'A4 portrait'}; margin: 0; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          #root { display: none !important; }
           .print\\:hidden { display: none !important; }
           .print\\:block { display: block !important; }
           .print\\:bg-white { background: white !important; }
