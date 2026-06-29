@@ -98,8 +98,12 @@ const JustifiedGrid = ({
   return (
     <div 
       ref={containerRef} 
-      className="w-full flex flex-row flex-wrap" 
-      style={{ gap: `${spacing}px` }}
+      className={`flex flex-row flex-wrap mx-auto ${containerWidth === 'auto' ? 'w-full' : ''}`} 
+      style={{ 
+        gap: `${spacing}px`, 
+        width: containerWidth !== 'auto' ? `${containerWidth}px` : undefined,
+        maxWidth: '100%' 
+      }}
     >
       {layoutImages.map((img, index) => {
         const key = img.id || index;

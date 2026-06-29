@@ -661,6 +661,14 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                          {block.type === 'image' && block.content && (
                            <img src={block.content} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                          )}
+                         {block.type === 'grid' && (
+                           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                             <JustifiedGrid 
+                               images={block.images || []} 
+                               containerWidth={block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2)} 
+                             />
+                           </div>
+                         )}
                          {block.type === 'text' && (
                            <div style={{ color: "#212121", padding: 32, fontSize: 17, fontFamily: "sans-serif", whiteSpace: "pre-wrap", width: "100%", height: "100%", overflowY: "auto" }} dangerouslySetInnerHTML={{ __html: block.content ? block.content.replace(/\n/g, '<br/>') : '' }}></div>
                          )}
