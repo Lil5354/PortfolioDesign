@@ -11826,9 +11826,9 @@ export default function App() {
             setPage={setPage}
             collections={collections}
             onOpenExportConfig={openExportConfig}
-            onQuickCreateCollection={() => {
-              const id = createCollection(`Moodboard mới`);
-              if (id !== null) setCurrentExportCollection(id);
+            onQuickCreateCollection={async () => {
+              const id = await createCollection(`Moodboard mới`);
+              if (id !== null) openExportConfig(id);
             }}
           />
         ) : <AccessDenied setPage={setPage} />
