@@ -8566,6 +8566,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
   const [selectedForDelete, setSelectedForDelete] = useState([]);
   const [detailArtwork, setDetailArtwork] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [showAwardDropdown, setShowAwardDropdown] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -8623,12 +8624,16 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
     onUpdateCollection && onUpdateCollection({ items: next });
   };
 
-  const updateDetailArtwork = (updates) => {
+  const updateDetailArtworkLocal = (updates) => {
     if (!detailArtwork) return;
-    const updated = { ...detailArtwork, ...updates };
-    setDetailArtwork(updated);
-    const nextItems = collection.items.map(it => it.artworkId === detailArtwork.artworkId ? updated : it);
+    setDetailArtwork({ ...detailArtwork, ...updates });
+  };
+
+  const handleSaveDetailArtwork = () => {
+    if (!detailArtwork) return;
+    const nextItems = collection.items.map(it => it.artworkId === detailArtwork.artworkId ? detailArtwork : it);
     onUpdateCollection && onUpdateCollection({ items: nextItems });
+    setDetailArtwork(null);
   };
 
   const activeCount = detailedItems.filter(it => !it.isHidden).length;
@@ -8793,7 +8798,7 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                       <input
                         type="text"
                         value={detailArtwork.category || detailArtwork.artwork?.category || ""}
-                        onChange={(e) => updateDetailArtwork({ category: e.target.value })}
+                        onChange={(e) => updateDetailArtworkLocal({ category: e.target.value })}
                         className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]"
                         placeholder="VD: Brand Identity, Typography..."
                       />
@@ -8801,31 +8806,48 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
 
                     <div>
                       <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wider">Giải thưởng (Award)</label>
-                      <select
-                        value={detailArtwork.award || "Không có"}
-                        onChange={(e) => updateDetailArtwork({ award: e.target.value })}
-                        className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]"
-                      >
-                        <option value="Không có">Không có</option>
-                        <option value="Vàng">Vàng</option>
-                        <option value="Bạc">Bạc</option>
-                        <option value="Đồng">Đồng</option>
-                      </select>
+                      <div className="relative">
+                        <div 
+                          className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm flex justify-between items-center cursor-pointer hover:border-[#1a4ba8] transition-colors"
+                          onClick={() => setShowAwardDropdown(!showAwardDropdown)}
+                        >
+                          {detailArtwork.award || "Không có"}
+                          <ChevronDown size={16} className={`text-[#666] transition-transform ${showAwardDropdown ? "rotate-180" : ""}`} />
+                        </div>
+                        {showAwardDropdown && (
+                          <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-[#E0E0E0] rounded-lg shadow-lg overflow-hidden py-1">
+                            {["Không có", "Vàng", "Bạc", "Đồng"].map(opt => (
+                              <div 
+                                key={opt} 
+                                className={`px-4 py-2 text-sm cursor-pointer hover:bg-[#F8F8F8] transition-colors ${detailArtwork.award === opt || (!detailArtwork.award && opt === "Không có") ? "bg-[#eef4ff] text-[#1a4ba8] font-semibold" : "text-[#212121]"}`}
+                                onClick={() => { updateDetailArtworkLocal({ award: opt }); setShowAwardDropdown(false); }}
+                              >
+                                {opt}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div>
                       <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wider">Ghi chú của Giảng viên</label>
                       <textarea
                         value={detailArtwork.note || ""}
-                        onChange={(e) => updateDetailArtwork({ note: e.target.value })}
+                        onChange={(e) => updateDetailArtworkLocal({ note: e.target.value })}
                         rows={6}
                         className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] resize-none"
                         placeholder="Nhận xét ngắn gọn về tác phẩm..."
                       />
                     </div>
                     
-                    <div className="mt-auto pt-4 text-[11px] text-[#888] text-center italic">
-                      Mọi thay đổi trên panel này sẽ được lưu tự động vào Moodboard.
+                    <div className="mt-auto pt-4 flex justify-end gap-3 border-t border-[#E0E0E0]">
+                      <button onClick={() => setDetailArtwork(null)} className="px-4 py-2 rounded-lg text-sm font-semibold text-[#666] hover:bg-[#E0E0E0] transition-colors">
+                        Hủy
+                      </button>
+                      <button onClick={handleSaveDetailArtwork} className="px-4 py-2 rounded-lg text-sm font-bold text-white bg-[#1a4ba8] hover:bg-[#0d2e6e] transition-colors flex items-center gap-2">
+                        <Save size={16} /> Lưu thay đổi
+                      </button>
                     </div>
                   </div>
                 </div>
