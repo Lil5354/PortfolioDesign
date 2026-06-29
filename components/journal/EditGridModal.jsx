@@ -1,0 +1,93 @@
+import React, { useState, useEffect } from 'react';
+import { X, Plus, Move, Image as ImageIcon } from 'lucide-react';
+
+const EditGridModal = ({ isOpen, onClose, block, onSave }) => {
+  const [images, setImages] = useState([]);
+
+  useEffect(() => {
+    if (isOpen && block) {
+      setImages(block.images || []);
+    }
+  }, [isOpen, block]);
+
+  if (!isOpen || !block) return null;
+
+  const handleAddPhotos = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setImages([...images, { id: Date.now().toString(), url, width: 800, height: 600 }]);
+    }
+  };
+
+  const handleRemove = (id) => {
+    setImages(images.filter(img => img.id !== id));
+  };
+
+  const handleSave = () => {
+    onSave(block.id, { ...block, images });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-[10000] flex flex-col pt-10 px-10 pb-10">
+      <div className="bg-white rounded-lg shadow-2xl flex flex-col flex-1 overflow-hidden w-full max-w-6xl mx-auto">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
+          <h2 className="text-xl font-medium text-gray-800">Edit Grid</h2>
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded text-sm font-medium hover:bg-gray-50 transition">
+              <Move size={14} /> Custom
+            </button>
+            <div className="relative group">
+              <button className="flex items-center gap-2 px-3 py-1.5 border border-[#2b64ff] text-[#2b64ff] rounded text-sm font-medium hover:bg-blue-50 transition">
+                <Plus size={16} /> Add Photos
+              </button>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={handleAddPhotos}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+            </div>
+            <button onClick={onClose} className="px-4 py-1.5 rounded text-sm font-medium text-gray-600 hover:bg-gray-100 transition">
+              Cancel
+            </button>
+            <button onClick={handleSave} className="px-5 py-1.5 rounded-full bg-[#2b64ff] text-white text-sm font-semibold hover:bg-blue-700 transition shadow-md">
+              Done
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-8 bg-[#f4f4f4]">
+          {images.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-4">
+              <ImageIcon size={48} />
+              <p>No photos in this grid yet.</p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-4 items-start justify-center max-w-5xl mx-auto">
+              {images.map((img) => (
+                <div key={img.id} className="relative group w-[240px] h-[160px] bg-white rounded shadow-sm overflow-hidden flex-shrink-0">
+                  <img src={img.content || img.url} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity border-2 border-blue-500 pointer-events-none" />
+                  <button 
+                    onClick={() => handleRemove(img.id)}
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-md"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default EditGridModal;

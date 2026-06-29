@@ -3,6 +3,9 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle, Move } from "lucide-react";
 import HTMLFlipBook from "react-pageflip";
 import { api } from "../../lib/api-client";
+import JustifiedGrid from "./JustifiedGrid";
+import EditGridModal from "./EditGridModal";
+import ReorderProjectModal from "./ReorderProjectModal";
 
 export default function JournalBuilderModal({ isOpen, onClose, collection, orientation, initialDraft, onSaveDraft, currentUser }) {
   const [blocks, setBlocks] = useState(initialDraft?.blocks || []);
@@ -16,6 +19,9 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
   const [showCollectionDrawer, setShowCollectionDrawer] = useState(false);
   const [draggedImg, setDraggedImg] = useState(null);
   const [fullArtworks, setFullArtworks] = useState({});
+
+  const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
+  const [editGridBlockId, setEditGridBlockId] = useState(null);
 
   const [isStylesModalOpen, setIsStylesModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -107,8 +113,8 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                 </button>
                 {dropdownBlockId === block.id && (
                   <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-gray-200 py-1 overflow-hidden z-[60]">
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={(e) => { e.stopPropagation(); setDropdownBlockId(null); }}>Reorder Project</button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={(e) => { e.stopPropagation(); setDropdownBlockId(null); }}>Edit Grid</button>
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={(e) => { e.stopPropagation(); setIsReorderModalOpen(true); setDropdownBlockId(null); }}>Reorder Project</button>
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={(e) => { e.stopPropagation(); setEditGridBlockId(block.id); setDropdownBlockId(null); }}>Edit Grid</button>
                     <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors" onClick={(e) => { e.stopPropagation(); removeBlock(block.id); setDropdownBlockId(null); }}>Delete Grid</button>
                   </div>
                 )}
@@ -521,46 +527,25 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         )}
         {block.type === 'grid' && (
            <div 
-             className={`w-full h-full flex flex-col relative transition-all duration-200 border 
-               ${focusedBlockId === block.id ? 'border-[#2b64ff]' : 
-                 hoveredBlockId === block.id ? 'border-dashed border-[#2b64ff]' : 'border-transparent'} bg-white`}
+             className={`w-full relative transition-all duration-200 bg-white min-h-[300px] flex items-center justify-center`}
              onClick={(e) => { e.stopPropagation(); setFocusedBlockId(block.id); if (editingBlockId !== block.id) setEditingBlockId(null); }}
            >
-              {focusedBlockId === block.id && (
-                <>
-                  <div className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-[#2b64ff] flex items-center justify-center cursor-pointer text-white shadow-md z-20 hover:bg-blue-700 transition">
-                    <Edit2 size={14} />
-                  </div>
-                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center cursor-pointer text-white shadow-md z-20 hover:bg-black/80 transition">
-                    <ArrowLeftRight size={14} />
-                  </div>
-                </>
+              {(!block.images || block.images.length === 0) ? (
+                <div className="flex-1 flex flex-col items-center justify-center min-h-[300px] bg-gray-50 w-full h-full border border-dashed border-gray-300">
+                   <h2 className="text-[20px] font-medium text-gray-500 mb-6">Empty Grid</h2>
+                   <button 
+                     onClick={(e) => { e.stopPropagation(); setEditGridBlockId(block.id); }}
+                     className="px-6 py-2 bg-[#2b64ff] text-white font-medium rounded-full hover:bg-blue-700 transition"
+                   >
+                     Add Photos
+                   </button>
+                </div>
+              ) : (
+                <JustifiedGrid 
+                  images={block.images} 
+                  containerWidth={block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2)} 
+                />
               )}
-              
-              <div className="flex-1 flex flex-col items-center justify-center">
-                 <h2 className="text-[20px] font-medium text-gray-500 mb-8">Add Photos to create your grid:</h2>
-                 <div className="flex items-center gap-6">
-                    <div className="flex flex-col items-center gap-3 cursor-pointer group relative">
-                       <div className="w-[72px] h-[72px] rounded-full bg-[#f4f7ff] flex items-center justify-center text-[#2b64ff] group-hover:bg-[#e8efff] transition overflow-hidden shadow-sm">
-                          <Image size={24} />
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            multiple
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                          />
-                       </div>
-                       <span className="font-bold text-[13px] text-gray-900">Image</span>
-                    </div>
-                    
-                    <div className="flex flex-col items-center gap-3 cursor-pointer group">
-                       <div className="w-[72px] h-[72px] rounded-full bg-[#f4f7ff] flex items-center justify-center text-[#2b64ff] group-hover:bg-[#e8efff] transition shadow-sm">
-                          <div className="border-[2px] border-[#2b64ff] rounded-sm px-1.5 py-0.5 text-[12px] font-bold">Lr</div>
-                       </div>
-                       <span className="font-bold text-[13px] text-gray-900">Lightroom</span>
-                    </div>
-                 </div>
-              </div>
            </div>
         )}
         {block.type === 'video' && (
@@ -633,38 +618,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
             </div>
          )}
         
-        {/* Floating Actions on Hover */}
-        {hoveredBlockId === block.id && (
-          <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-             <button 
-               className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-lg hover:bg-gray-800 transition group/btn relative"
-               onClick={() => toggleFullWidth(block.id)}
-             >
-               {block.fullWidth ? <MoveHorizontal size={18} /> : <ArrowLeftRight size={18} />}
-               <div className="absolute right-full mr-2 px-3 py-1.5 bg-white text-gray-900 text-xs font-semibold rounded shadow opacity-0 group-hover/btn:opacity-100 pointer-events-none whitespace-nowrap">
-                 {block.fullWidth ? "Give the grid some breathing room and add padding to the sides" : "Make the grid full-width"}
-               </div>
-             </button>
-             <button 
-               className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition"
-               onClick={() => removeBlock(block.id)}
-               title="Delete Grid"
-             >
-               <X size={18} />
-             </button>
-          </div>
-        )}
-
-        {/* Toolbar Top Left */}
-        {hoveredBlockId === block.id && (
-          <div className={`absolute left-4 bg-gray-900 text-white rounded-lg flex items-center px-2 py-1.5 shadow-lg z-10 ${block.type === 'text' ? 'top-16' : 'top-4'}`}>
-            <span className="text-xs font-semibold text-gray-300 mr-3 ml-2">Insert Media:</span>
-            <button className="p-1.5 hover:bg-gray-800 rounded mx-0.5 transition" onClick={() => addBlock('image')}><Image size={16} /></button>
-            <button className="p-1.5 hover:bg-gray-800 rounded mx-0.5 transition" onClick={() => addBlock('text')}><Type size={16} /></button>
-            <button className="p-1.5 hover:bg-gray-800 rounded mx-0.5 transition" onClick={() => addBlock('grid')}><LayoutGrid size={16} /></button>
-            <button className="p-1.5 hover:bg-gray-800 rounded mx-0.5 transition" onClick={() => addBlock('video')}><Play size={16} /></button>
-          </div>
-        )}
+        {/* END of block */}
       {/* PREVIEW OVERLAY */}
       {isPreviewMode && (
         <div style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden", fontFamily: "'Inter', sans-serif" }}>
@@ -785,6 +739,24 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           .print\\:border-transparent { border-color: transparent !important; }
         }
       `}</style>
+
+      {/* Modals */}
+      <ReorderProjectModal
+        isOpen={isReorderModalOpen}
+        onClose={() => setIsReorderModalOpen(false)}
+        blocks={blocks}
+        onSave={setBlocks}
+      />
+      
+      {editGridBlockId && (
+        <EditGridModal
+          isOpen={!!editGridBlockId}
+          onClose={() => setEditGridBlockId(null)}
+          block={blocks.find(b => b.id === editGridBlockId)}
+          onSave={updateBlock}
+        />
+      )}
+      
       </div>
     );
   };
@@ -1025,6 +997,22 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           .print\\:border-none { border: none !important; }
         }
       `}</style>
+      {/* Modals */}
+      <ReorderProjectModal
+        isOpen={isReorderModalOpen}
+        onClose={() => setIsReorderModalOpen(false)}
+        blocks={blocks}
+        onSave={setBlocks}
+      />
+      
+      {editGridBlockId && (
+        <EditGridModal
+          isOpen={!!editGridBlockId}
+          onClose={() => setEditGridBlockId(null)}
+          block={blocks.find(b => b.id === editGridBlockId)}
+          onSave={updateBlock}
+        />
+      )}
     </div>,
     document.body
   );
