@@ -8721,91 +8721,113 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
           </div>
 
           {detailArtwork && (
-            <div className="w-80 flex-shrink-0 flex flex-col bg-[#F8F8F8] border border-[#E0E0E0] rounded-2xl overflow-hidden self-start">
-              <div className="px-5 py-4 border-b border-[#E0E0E0] flex items-center justify-between bg-white">
-                <h3 className="font-bold text-[#212121] text-sm truncate pr-4">{detailArtwork.artwork?.title}</h3>
-                <button onClick={() => setDetailArtwork(null)} className="text-[#666] hover:text-[#212121]"><X size={18} /></button>
-              </div>
-              <div className="p-5 flex flex-col gap-5 flex-1 overflow-y-auto">
-                <div 
-                  className="aspect-[4/3] bg-white rounded-lg overflow-hidden border border-[#E0E0E0] relative group cursor-pointer"
-                  onClick={() => window.open(`#/detail/${detailArtwork.artworkId}`, '_blank')}
-                >
-                  <img src={detailArtwork.artwork?.coverImageUrl || detailArtwork.artwork?.img} alt="" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white text-sm font-semibold">Xem toàn bộ ấn phẩm</span>
-                  </div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-black/50" onClick={() => setDetailArtwork(null)}></div>
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col relative z-10 overflow-hidden">
+                <div className="px-6 py-4 border-b border-[#E0E0E0] flex items-center justify-between bg-[#F8F8F8]">
+                  <h3 className="font-bold text-[#212121] text-lg truncate pr-4">{detailArtwork.artwork?.title}</h3>
+                  <button onClick={() => setDetailArtwork(null)} className="p-2 hover:bg-[#E0E0E0] rounded-full text-[#666] hover:text-[#212121] transition-colors"><X size={20} /></button>
                 </div>
+                
+                <div className="flex flex-1 overflow-hidden min-h-0">
+                  {/* Left Column: Cover and Sub-Images */}
+                  <div className="w-3/5 flex flex-col border-r border-[#E0E0E0] p-6 overflow-y-auto bg-white">
+                    <div 
+                      className="w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden border border-[#E0E0E0] relative group cursor-pointer shrink-0"
+                      onClick={() => window.open(`#/detail/${detailArtwork.artworkId}`, '_blank')}
+                    >
+                      <img src={detailArtwork.artwork?.coverImageUrl || detailArtwork.artwork?.img} alt="" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span className="text-white font-semibold flex items-center gap-2"><Eye size={18} /> Xem toàn bộ ấn phẩm</span>
+                      </div>
+                    </div>
 
-                {(() => {
-                  const subImages = [];
-                  if (detailArtwork.artwork?.fileUrls && Array.isArray(detailArtwork.artwork.fileUrls)) {
-                    detailArtwork.artwork.fileUrls.forEach(url => {
-                      if (!subImages.includes(url)) subImages.push(url);
-                    });
-                  }
-                  if (detailArtwork.artwork?.blocksJson) {
-                    try {
-                      const blocks = typeof detailArtwork.artwork.blocksJson === 'string' ? JSON.parse(detailArtwork.artwork.blocksJson) : detailArtwork.artwork.blocksJson;
-                      if (Array.isArray(blocks)) {
-                        blocks.forEach(b => {
-                          if (b.type === 'image' && b.data?.url && !subImages.includes(b.data.url)) {
-                            subImages.push(b.data.url);
-                          }
+                    {(() => {
+                      const subImages = [];
+                      if (detailArtwork.artwork?.fileUrls && Array.isArray(detailArtwork.artwork.fileUrls)) {
+                        detailArtwork.artwork.fileUrls.forEach(url => {
+                          if (!subImages.includes(url)) subImages.push(url);
                         });
                       }
-                    } catch(e) {}
-                  }
-                  if (subImages.length === 0) return null;
-                  return (
-                    <div className="grid grid-cols-3 gap-2">
-                      {subImages.map((url, i) => (
-                        <div key={i} className="aspect-square bg-gray-100 rounded overflow-hidden border border-[#E0E0E0]">
-                          <img src={url} alt="" className="w-full h-full object-cover" />
+                      if (detailArtwork.artwork?.blocksJson) {
+                        try {
+                          const blocks = typeof detailArtwork.artwork.blocksJson === 'string' ? JSON.parse(detailArtwork.artwork.blocksJson) : detailArtwork.artwork.blocksJson;
+                          if (Array.isArray(blocks)) {
+                            blocks.forEach(b => {
+                              if (b.type === 'image' && b.data?.url && !subImages.includes(b.data.url)) {
+                                subImages.push(b.data.url);
+                              }
+                            });
+                          }
+                        } catch(e) {}
+                      }
+                      if (subImages.length === 0) return null;
+                      return (
+                        <div className="mt-6 relative flex items-center">
+                          <button 
+                            className="absolute left-2 z-10 p-2 bg-white/90 shadow-md rounded-full border border-[#E0E0E0] text-[#666] hover:text-black hover:bg-white"
+                            onClick={(e) => { e.stopPropagation(); document.getElementById('subimages-scroll').scrollBy({left: -300, behavior: 'smooth'}); }}
+                          ><ChevronLeft size={20} /></button>
+                          
+                          <div id="subimages-scroll" className="flex gap-3 overflow-x-auto px-12 py-2 no-scrollbar w-full snap-x">
+                            {subImages.map((url, i) => (
+                              <div key={i} className="aspect-[4/3] h-32 shrink-0 bg-gray-100 rounded-lg overflow-hidden border border-[#E0E0E0] snap-center">
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            ))}
+                          </div>
+
+                          <button 
+                            className="absolute right-2 z-10 p-2 bg-white/90 shadow-md rounded-full border border-[#E0E0E0] text-[#666] hover:text-black hover:bg-white"
+                            onClick={(e) => { e.stopPropagation(); document.getElementById('subimages-scroll').scrollBy({left: 300, behavior: 'smooth'}); }}
+                          ><ChevronRight size={20} /></button>
                         </div>
-                      ))}
+                      );
+                    })()}
+                  </div>
+
+                  {/* Right Column: Info & Edit */}
+                  <div className="w-2/5 p-6 flex flex-col gap-5 overflow-y-auto bg-[#F8FAFC]">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wider">Chuyên đề (Category)</label>
+                      <input
+                        type="text"
+                        value={detailArtwork.category || detailArtwork.artwork?.category || ""}
+                        onChange={(e) => updateDetailArtwork({ category: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]"
+                        placeholder="VD: Brand Identity, Typography..."
+                      />
                     </div>
-                  );
-                })()}
-                
-                <div>
-                  <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wider">Chuyên đề (Category)</label>
-                  <input
-                    type="text"
-                    value={detailArtwork.category || detailArtwork.artwork?.category || ""}
-                    onChange={(e) => updateDetailArtwork({ category: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]"
-                    placeholder="VD: Brand Identity, Typography..."
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wider">Giải thưởng (Award)</label>
-                  <select
-                    value={detailArtwork.award || "Không có"}
-                    onChange={(e) => updateDetailArtwork({ award: e.target.value })}
-                    className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]"
-                  >
-                    <option value="Không có">Không có</option>
-                    <option value="Vàng">Vàng</option>
-                    <option value="Bạc">Bạc</option>
-                    <option value="Đồng">Đồng</option>
-                  </select>
-                </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wider">Giải thưởng (Award)</label>
+                      <select
+                        value={detailArtwork.award || "Không có"}
+                        onChange={(e) => updateDetailArtwork({ award: e.target.value })}
+                        className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]"
+                      >
+                        <option value="Không có">Không có</option>
+                        <option value="Vàng">Vàng</option>
+                        <option value="Bạc">Bạc</option>
+                        <option value="Đồng">Đồng</option>
+                      </select>
+                    </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wider">Ghi chú của Giảng viên</label>
-                  <textarea
-                    value={detailArtwork.note || ""}
-                    onChange={(e) => updateDetailArtwork({ note: e.target.value })}
-                    rows={4}
-                    className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] resize-none"
-                    placeholder="Nhận xét ngắn gọn về tác phẩm..."
-                  />
-                </div>
-                
-                <div className="mt-2 text-[11px] text-[#888]">
-                  Mọi thay đổi trên panel này sẽ được lưu tự động vào Moodboard.
+                    <div>
+                      <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wider">Ghi chú của Giảng viên</label>
+                      <textarea
+                        value={detailArtwork.note || ""}
+                        onChange={(e) => updateDetailArtwork({ note: e.target.value })}
+                        rows={6}
+                        className="w-full px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8] resize-none"
+                        placeholder="Nhận xét ngắn gọn về tác phẩm..."
+                      />
+                    </div>
+                    
+                    <div className="mt-auto pt-4 text-[11px] text-[#888] text-center italic">
+                      Mọi thay đổi trên panel này sẽ được lưu tự động vào Moodboard.
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
