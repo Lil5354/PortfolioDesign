@@ -14,4 +14,5 @@ public enum NotificationType
     collaborator_tag,
     new_order,
     new_post_from_following,
+    artwork_saved
 }

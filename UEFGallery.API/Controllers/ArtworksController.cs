@@ -850,6 +850,12 @@ public class ArtworksController : ControllerBase
         var artwork = await _context.Artworks.FindAsync(id);
         if (artwork == null) return NotFound(new { message = "Artwork not found" });
 
+        var existingReport = await _context.Reports.FirstOrDefaultAsync(r => r.ArtworkId == id && r.UserId == userId);
+        if (existingReport != null)
+        {
+            return BadRequest(new { message = "Bạn đã báo cáo ấn phẩm này rồi." });
+        }
+
         var report = new Report
         {
             Id = Guid.NewGuid().ToString(),
@@ -864,6 +870,50 @@ public class ArtworksController : ControllerBase
 
         _context.Reports.Add(report);
         await _context.SaveChangesAsync();
+
+        // Check if report count >= 10 to auto-hide
+        var reportCount = await _context.Reports.CountAsync(r => r.ArtworkId == id);
+        if (reportCount >= 10 && artwork.IsPublic)
+        {
+            artwork.IsPending = true;
+            artwork.IsPublic = false;
+            
+            // Send noti to all admins
+            var admins = await _context.Users.Where(u => u.Role == Role.admin).ToListAsync();
+            foreach (var admin in admins)
+            {
+                var adminNoti = new Notification
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = admin.Id,
+                    ActorId = userId,
+                    Type = NotificationType.new_report,
+                    ReferenceId = artwork.Id,
+                    ReferenceType = "artwork",
+                    Content = $"Ấn phẩm '{artwork.Title}' đã bị tạm ẩn do có quá nhiều báo cáo. Vui lòng kiểm duyệt.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false
+                };
+                _context.Notifications.Add(adminNoti);
+            }
+
+            // Send noti to author
+            var authorNoti = new Notification
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = artwork.UserId,
+                ActorId = userId,
+                Type = NotificationType.artwork_hidden,
+                ReferenceId = artwork.Id,
+                ReferenceType = "artwork",
+                Content = $"Ấn phẩm '{artwork.Title}' của bạn đã bị tạm ẩn do nhận được nhiều báo cáo vi phạm. Quản trị viên sẽ xem xét trong thời gian tới.",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            _context.Notifications.Add(authorNoti);
+
+            await _context.SaveChangesAsync();
+        }
 
         return Ok(new { message = "Report submitted successfully", report });
     }

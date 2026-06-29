@@ -193,6 +193,25 @@ public class CollectionsController : ControllerBase
         }
 
         _context.CollectionItems.Add(item);
+
+        var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.Id == dto.ArtworkId);
+        if (artwork != null && artwork.UserId != userId)
+        {
+            var noti = new Notification
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = artwork.UserId,
+                ActorId = userId,
+                Type = NotificationType.artwork_saved,
+                ReferenceId = artwork.Id,
+                ReferenceType = "artwork",
+                Content = "đã lưu ấn phẩm của bạn vào Moodboard.",
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            };
+            _context.Notifications.Add(noti);
+        }
+
         await _context.SaveChangesAsync();
 
         return Ok(item);

@@ -139,8 +139,9 @@ public class PortfoliosController : ControllerBase
                 PortfolioSlug = dto.PortfolioSlug,
                 Major = dto.Major,
                 YearLevel = dto.YearLevel,
-                IsPortfolioPublic = dto.IsPortfolioPublic ?? true,
+                IsPortfolioPublic = dto.IsPortfolioPublic ?? false,
                 FeaturedArtworkIds = dto.FeaturedArtworkIds,
+                PublicMoodboards = dto.PublicMoodboards,
                 BannerUrl = dto.BannerUrl,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -148,13 +149,14 @@ public class PortfoliosController : ControllerBase
         }
         else
         {
-            settings.ProfileHeadline = dto.ProfileHeadline ?? settings.ProfileHeadline;
-            settings.SocialLinks = dto.SocialLinks ?? settings.SocialLinks;
-            settings.PortfolioSlug = dto.PortfolioSlug ?? settings.PortfolioSlug;
-            settings.Major = dto.Major ?? settings.Major;
-            settings.YearLevel = dto.YearLevel ?? settings.YearLevel;
+            if (dto.ProfileHeadline != null) settings.ProfileHeadline = dto.ProfileHeadline;
+            if (dto.SocialLinks != null) settings.SocialLinks = dto.SocialLinks;
+            if (dto.PortfolioSlug != null) settings.PortfolioSlug = dto.PortfolioSlug;
+            if (dto.Major != null) settings.Major = dto.Major;
+            if (dto.YearLevel != null) settings.YearLevel = dto.YearLevel;
             if (dto.IsPortfolioPublic.HasValue) settings.IsPortfolioPublic = dto.IsPortfolioPublic.Value;
             if (dto.FeaturedArtworkIds != null) settings.FeaturedArtworkIds = dto.FeaturedArtworkIds;
+            if (dto.PublicMoodboards != null) settings.PublicMoodboards = dto.PublicMoodboards;
             if (dto.BannerUrl != null) settings.BannerUrl = dto.BannerUrl;
             settings.UpdatedAt = DateTime.UtcNow;
         }
@@ -295,6 +297,7 @@ public class PortfolioSettingDto
     public string? YearLevel { get; set; }
     public bool? IsPortfolioPublic { get; set; }
     public List<string>? FeaturedArtworkIds { get; set; }
+    public List<string>? PublicMoodboards { get; set; }
     public string? BannerUrl { get; set; }
 }
 

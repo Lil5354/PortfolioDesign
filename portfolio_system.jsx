@@ -1617,9 +1617,11 @@ function PortfolioPage({ setPage, pageParams }) {
                )}
 
                {activeTab === 'moodboard' && (
-                 portfolioMoodboards.length > 0 ? (
+                 (() => {
+                   const visibleMoodboards = portfolioMoodboards.filter(col => isOwner || (pSettings?.publicMoodboards && pSettings.publicMoodboards.includes(col.name)));
+                   return visibleMoodboards.length > 0 ? (
                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
-                     {portfolioMoodboards.map(col => (
+                     {visibleMoodboards.map(col => (
                        <div key={col.id} className="relative rounded-sm overflow-hidden shadow-sm hover:shadow-md transition-shadow aspect-[4/3] group cursor-pointer">
                          <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0 bg-[#222]">
                             {col.items.length > 0 ? col.items.slice(0,4).map((it, idx) => (
@@ -1645,6 +1647,7 @@ function PortfolioPage({ setPage, pageParams }) {
                       <p className="text-sm text-[#666666]">Sinh viên này chưa tạo bất kỳ Moodboard nào để chia sẻ nguồn cảm hứng.</p>
                    </div>
                  )
+                 })()
                )}
 
                {activeTab === 'drafts' && isOwner && (
@@ -1990,6 +1993,7 @@ function MoodboardSortableCard({ item, onClick, onMove, onRemove }) {
 function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
   const [collections, setCollections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [publicMoodboards, setPublicMoodboards] = useState([]);
   const [activeCollection, setActiveCollection] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingColId, setEditingColId] = useState(null);
@@ -2030,8 +2034,26 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
   };
 
   useEffect(() => {
-    refreshCollections().finally(() => setLoading(false));
+    Promise.all([
+      refreshCollections(),
+      api.portfolios.mine().then(res => {
+        setPublicMoodboards(res?.publicMoodboards || []);
+      }).catch(() => {})
+    ]).finally(() => setLoading(false));
   }, []);
+
+  const handleTogglePublic = async (colName, e) => {
+    e?.stopPropagation();
+    const isPublic = publicMoodboards.includes(colName);
+    const newArr = isPublic ? publicMoodboards.filter(n => n !== colName) : [...publicMoodboards, colName];
+    setPublicMoodboards(newArr);
+    try {
+      await api.portfolios.updateMine({ publicMoodboards: newArr });
+    } catch {
+      alert("Lỗi khi cập nhật quyền truy cập!");
+      setPublicMoodboards(publicMoodboards); // revert on error
+    }
+  };
 
   const handleCreate = async () => {
     if (!newColName.trim()) return;
@@ -2232,6 +2254,9 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
                         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)" }} />
                         
                         <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: 8 }}>
+                          <button onClick={(e) => handleTogglePublic(col.name, e)} style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(4px)", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", cursor: "pointer" }} title={publicMoodboards.includes(col.name) ? "Công khai" : "Riêng tư"}>
+                            {publicMoodboards.includes(col.name) ? <Globe size={14} /> : <Lock size={14} />}
+                          </button>
                           <button onClick={(e) => handleDeleteCollection(col.id, e)} style={{ background: "rgba(255,255,255,0.2)", backdropFilter: "blur(4px)", border: "none", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", color: "#ffcccc", cursor: "pointer" }} title="Xóa">
                             <Trash2 size={14} />
                           </button>

@@ -34,6 +34,8 @@ public class PortfolioSetting
 
     public List<string>? FeaturedArtworkIds { get; set; }
 
+    public List<string>? PublicMoodboards { get; set; }
+
     public DateTime UpdatedAt { get; set; }
 
     public User User { get; set; }
