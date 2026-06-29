@@ -13,6 +13,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
   
   const [showCollectionDrawer, setShowCollectionDrawer] = useState(false);
   const [draggedImg, setDraggedImg] = useState(null);
+  const [fullArtworks, setFullArtworks] = useState({});
 
   const [isStylesModalOpen, setIsStylesModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -29,9 +30,22 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
       });
       setProjectStyles(initialDraft?.settingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
       setIsPreviewMode(false);
+      setEditingBlockId(null);
+      setFocusedBlockId(null);
+      setHoveredBlockId(null);
+      setActiveOverlayId(null);
       setIsSettingsModalOpen(false);
       setIsStylesModalOpen(false);
       setShowCollectionDrawer(false);
+      
+      // Fetch full details for collection items to get all images
+      if (collection?.items) {
+        collection.items.forEach(it => {
+          api.artworks.get(it.artworkId).then(art => {
+            setFullArtworks(prev => ({ ...prev, [it.artworkId]: art }));
+          }).catch(() => {});
+        });
+      }
     }
   }, [isOpen]); // Depend only on isOpen so it initializes exactly once when opened
 
@@ -74,7 +88,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         onMouseLeave={() => setHoveredBlockId(null)}
         style={{ 
           width: orientation === 'landscape' ? 800 : 600,
-          height: orientation === 'landscape' ? 600 : 800,
+          height: block.type === 'text' ? (block.height || (orientation === 'landscape' ? 600 : 800)) : (orientation === 'landscape' ? 600 : 800),
           padding: block.fullWidth ? '0' : `${projectStyles.contentSpacing || 0}px` 
         }}
       >
@@ -124,7 +138,51 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
              }}
            >
              {block.content ? (
-               <img src={block.content} alt="Block" className="w-full h-full object-cover" />
+               <div 
+                 className="w-full h-full"
+                 style={{
+                   backgroundImage: `url(${block.content})`,
+                   backgroundSize: 'cover',
+                   backgroundPosition: block.bgPosition || '50% 50%',
+                   cursor: editingBlockId === block.id ? 'grab' : 'default'
+                 }}
+                 onMouseDown={(e) => {
+                   if (editingBlockId !== block.id) return;
+                   e.preventDefault();
+                   const startX = e.clientX;
+                   const startY = e.clientY;
+                   
+                   let posX = 50, posY = 50;
+                   if (block.bgPosition) {
+                     const parts = block.bgPosition.split(' ');
+                     posX = parseFloat(parts[0]) || 50;
+                     posY = parseFloat(parts[1]) || 50;
+                   }
+
+                   const handleMouseMove = (moveEvent) => {
+                     const dx = moveEvent.clientX - startX;
+                     const dy = moveEvent.clientY - startY;
+                     
+                     // Adjust sensitivity
+                     const newX = Math.max(0, Math.min(100, posX - (dx / 3)));
+                     const newY = Math.max(0, Math.min(100, posY - (dy / 3)));
+                     
+                     e.target.style.backgroundPosition = `${newX}% ${newY}%`;
+                     e.target.dataset.newPos = `${newX}% ${newY}%`;
+                   };
+
+                   const handleMouseUp = () => {
+                     window.removeEventListener('mousemove', handleMouseMove);
+                     window.removeEventListener('mouseup', handleMouseUp);
+                     if (e.target.dataset.newPos) {
+                       updateBlock(block.id, { bgPosition: e.target.dataset.newPos });
+                     }
+                   };
+
+                   window.addEventListener('mousemove', handleMouseMove);
+                   window.addEventListener('mouseup', handleMouseUp);
+                 }}
+               />
              ) : (
                <>
                   <Image size={48} className="text-gray-400 mb-2" />
@@ -336,7 +394,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
 
              {/* When EDITING: Black Toolbar attached to top */}
              {editingBlockId === block.id && (
-               <div className="bg-[#1a1a1a] text-[#b3b3b3] flex items-center px-4 py-2.5 text-[13px] font-medium border-b border-[#1a1a1a] flex-wrap gap-y-2 relative w-full z-10">
+               <div className="absolute bottom-full left-0 mb-2 bg-[#1a1a1a] text-[#b3b3b3] flex items-center px-4 py-2.5 text-[13px] font-medium border border-[#333] rounded-lg flex-wrap gap-y-2 w-max shadow-2xl z-50">
                  <div className="flex items-center pr-2 relative">
                     <select 
                       value={block.styles?.textType || 'Paragraph'} 
@@ -400,9 +458,9 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                </div>
              )}
              
-             {/* TEXTAREA */}
+              {/* TEXTAREA */}
               <textarea 
-                className="w-full h-full resize-none p-4 outline-none font-sans bg-transparent" 
+                className="w-full h-full resize-y p-4 outline-none font-sans bg-transparent" 
                 style={{
                   fontFamily: block.styles?.fontFamily || 'Helvetica',
                   color: block.styles?.color || '#b3b3b3',
@@ -416,6 +474,14 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                value={block.content}
                onChange={(e) => updateBlock(block.id, { content: e.target.value })}
                onFocus={() => { setFocusedBlockId(block.id); setEditingBlockId(block.id); }}
+               onMouseUp={(e) => {
+                 if (e.target.style.height) {
+                   const newH = parseInt(e.target.style.height);
+                   if (newH !== block.height) {
+                     updateBlock(block.id, { height: newH });
+                   }
+                 }
+               }}
              />
            </div>
         )}
@@ -824,21 +890,41 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
             
             <div className="p-5 flex-1 overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
-                {collection?.items?.map((item, i) => (
-                  <div 
-                    key={item.id} 
-                    draggable
-                    onDragStart={(e) => {
-                      const src = item.artwork?.coverImageUrl || item.artwork?.img;
-                      setDraggedImg(src);
-                      e.dataTransfer.setData("text/plain", src);
-                    }}
-                    className="group relative aspect-square bg-gray-50 rounded-xl overflow-hidden cursor-grab active:cursor-grabbing shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
-                  >
-                    <img src={item.artwork?.coverImageUrl || item.artwork?.img} className="w-full h-full object-cover pointer-events-none group-hover:scale-110 transition-transform duration-500 ease-out" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                  </div>
-                ))}
+                {collection?.items?.flatMap((item) => {
+                  const artworkToUse = fullArtworks[item.artworkId] || item.artwork;
+                  const images = [artworkToUse?.coverImageUrl || artworkToUse?.img];
+                  if (artworkToUse?.fileUrls && Array.isArray(artworkToUse.fileUrls)) {
+                    artworkToUse.fileUrls.forEach(url => {
+                      if (!images.includes(url)) images.push(url);
+                    });
+                  }
+                  if (artworkToUse?.blocksJson) {
+                    try {
+                      const blocks = typeof artworkToUse.blocksJson === 'string' ? JSON.parse(artworkToUse.blocksJson) : artworkToUse.blocksJson;
+                      if (Array.isArray(blocks)) {
+                        blocks.forEach(b => {
+                          if (b.type === 'image' && b.data?.url && !images.includes(b.data.url)) {
+                            images.push(b.data.url);
+                          }
+                        });
+                      }
+                    } catch(e) {}
+                  }
+                  return images.filter(Boolean).map((src, i) => (
+                    <div 
+                      key={`${item.id}-${i}`} 
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedImg(src);
+                        e.dataTransfer.setData("text/plain", src);
+                      }}
+                      className="group relative aspect-square bg-gray-50 rounded-xl overflow-hidden cursor-grab active:cursor-grabbing shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
+                    >
+                      <img src={src} className="w-full h-full object-cover pointer-events-none group-hover:scale-110 transition-transform duration-500 ease-out" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                    </div>
+                  ));
+                })}
               </div>
               
               {(!collection?.items || collection.items.length === 0) && (

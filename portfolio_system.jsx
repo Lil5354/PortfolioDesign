@@ -8704,7 +8704,13 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                           isHidden={it.isHidden}
                           onToggleHide={() => toggleHide(it.artworkId)}
                           onToggleSelect={() => deleteMode ? toggleSelectDelete(it.artworkId) : setDetailArtwork(it)}
-                          onClick={() => !deleteMode && setDetailArtwork(it)}
+                          onClick={() => {
+                            if (deleteMode) return;
+                            setDetailArtwork(it);
+                            api.artworks.get(it.artworkId).then(fullArt => {
+                              setDetailArtwork(prev => prev?.artworkId === it.artworkId ? { ...prev, artwork: { ...prev.artwork, ...fullArt } } : prev);
+                            }).catch(() => {});
+                          }}
                         />
                       ))}
                     </div>
@@ -8721,9 +8727,46 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                 <button onClick={() => setDetailArtwork(null)} className="text-[#666] hover:text-[#212121]"><X size={18} /></button>
               </div>
               <div className="p-5 flex flex-col gap-5 flex-1 overflow-y-auto">
-                <div className="aspect-[4/3] bg-white rounded-lg overflow-hidden border border-[#E0E0E0]">
+                <div 
+                  className="aspect-[4/3] bg-white rounded-lg overflow-hidden border border-[#E0E0E0] relative group cursor-pointer"
+                  onClick={() => window.open(`#/detail/${detailArtwork.artworkId}`, '_blank')}
+                >
                   <img src={detailArtwork.artwork?.coverImageUrl || detailArtwork.artwork?.img} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-white text-sm font-semibold">Xem toàn bộ ấn phẩm</span>
+                  </div>
                 </div>
+
+                {(() => {
+                  const subImages = [];
+                  if (detailArtwork.artwork?.fileUrls && Array.isArray(detailArtwork.artwork.fileUrls)) {
+                    detailArtwork.artwork.fileUrls.forEach(url => {
+                      if (!subImages.includes(url)) subImages.push(url);
+                    });
+                  }
+                  if (detailArtwork.artwork?.blocksJson) {
+                    try {
+                      const blocks = typeof detailArtwork.artwork.blocksJson === 'string' ? JSON.parse(detailArtwork.artwork.blocksJson) : detailArtwork.artwork.blocksJson;
+                      if (Array.isArray(blocks)) {
+                        blocks.forEach(b => {
+                          if (b.type === 'image' && b.data?.url && !subImages.includes(b.data.url)) {
+                            subImages.push(b.data.url);
+                          }
+                        });
+                      }
+                    } catch(e) {}
+                  }
+                  if (subImages.length === 0) return null;
+                  return (
+                    <div className="grid grid-cols-3 gap-2">
+                      {subImages.map((url, i) => (
+                        <div key={i} className="aspect-square bg-gray-100 rounded overflow-hidden border border-[#E0E0E0]">
+                          <img src={url} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
                 
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5 uppercase tracking-wider">Chuyên đề (Category)</label>
@@ -11648,6 +11691,18 @@ export default function App() {
     if (!art) return;
     setOptimisticSavedIds((prev) => (prev.includes(art.id) ? prev : [...prev, art.id]));
     setSaveModal({ open: true, artwork: art });
+    
+    // Fetch full artwork to get fileUrls and blocksJson
+    api.artworks.get(art.id).then(fullArt => {
+      setSaveModal(prev => prev.artwork?.id === art.id ? { ...prev, artwork: fullArt } : prev);
+    }).catch(() => {
+      // Fallback to mock data if API fails
+      const mockArt = artworks.find(a => String(a.id) === String(art.id));
+      if (mockArt) {
+        setSaveModal(prev => prev.artwork?.id === art.id ? { ...prev, artwork: { ...prev.artwork, ...mockArt } } : prev);
+      }
+    });
+
     setToast({
       title: "Đã lưu tạm",
       message: "Chọn Moodboard và thêm ghi chú giám tuyển để lưu chính thức.",
