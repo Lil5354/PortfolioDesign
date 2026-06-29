@@ -3852,7 +3852,7 @@ function FeedbackModal({ setPage, activeArtworkId, onClose, userProfile }) {
   );
 }
 
-function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkClick, isBookmarked }) {
+function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, onBookmarkClick, isBookmarked }) {
     const { user: authUser } = useAuth();
   const [art, setArt] = useState({
     title: t("loading"), subject: t("loading"), coverImageUrl: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
@@ -3870,6 +3870,8 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const [actionSuccessToast, setActionSuccessToast] = useState("");
   const [commentText, setCommentText] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [expandedComments, setExpandedComments] = useState({});
   const [gradeScore, setGradeScore] = useState("");
   const [gradeComment, setGradeComment] = useState("");
   const [gradeIsVisible, setGradeIsVisible] = useState(false);
@@ -3992,6 +3994,27 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   }, [authUser, currentUserId, currentUserRole]);
 
   useEffect(() => {
+    if (pageParams?.commentId && !loading && comments.length > 0) {
+      setTimeout(() => {
+        const el = document.getElementById("comment-" + pageParams.commentId);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.style.transition = "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)";
+          el.style.backgroundColor = "rgba(26, 75, 168, 0.12)";
+          el.style.transform = "scale(1.02) translateX(8px)";
+          el.style.padding = "12px";
+          el.style.borderRadius = "12px";
+          setTimeout(() => {
+             el.style.backgroundColor = "transparent";
+             el.style.transform = "scale(1) translateX(0)";
+             el.style.padding = "0px";
+          }, 3000);
+        }
+      }, 500);
+    }
+  }, [pageParams?.commentId, loading, comments]);
+
+  useEffect(() => {
     if (!activeArtworkId) return;
     setLoading(true);
     setActiveImageIdx(0);
@@ -4095,6 +4118,64 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     setAssigningBadge(false);
   };
 
+  const [mentionState, setMentionState] = useState({ query: null, index: -1, results: [], inputId: null });
+  const [mentionMap, setMentionMap] = useState({});
+
+  const handleCommentChange = async (e, inputId) => {
+    const val = e.target.value;
+    setCommentText(val);
+
+    const cursor = e.target.selectionStart;
+    const textBefore = val.substring(0, cursor);
+    const match = textBefore.match(/@([a-zA-Z0-9_ À-ỹ]*)$/); // Match @ followed by letters/spaces
+    if (match) {
+      const query = match[1];
+      setMentionState({ query, index: cursor - match[0].length, results: mentionState.results, inputId });
+      try {
+        const res = await api.users.searchMentions(query);
+        setMentionState(prev => prev.query === query ? { ...prev, results: res || [] } : prev);
+      } catch {}
+    } else {
+      setMentionState({ query: null, index: -1, results: [], inputId: null });
+    }
+  };
+
+  const handleSelectMention = (user) => {
+    const inputElement = mentionState.inputId ? document.getElementById(mentionState.inputId) : null;
+    const textBefore = commentText.substring(0, mentionState.index);
+    const textAfter = inputElement ? commentText.substring(inputElement.selectionStart) : "";
+    const newText = textBefore + `@${user.fullName} ` + textAfter;
+    setCommentText(newText);
+    setMentionMap(prev => ({ ...prev, [user.fullName]: user.id }));
+    setMentionState({ query: null, index: -1, results: [], inputId: null });
+    if (inputElement) setTimeout(() => inputElement.focus(), 50);
+  };
+
+  const renderCommentText = (comment) => {
+    let content = comment.content || comment.Content || "";
+    // Hide parent tags if not specifically typed, but keep old reply formatting if it wasn't parsed
+    const parts = content.split(/(@\[.*?\]\(.*?\))/g);
+    
+    if (parts.length === 1 && comment.parentId && !comment.ParentId) {
+       // fallback for old replies
+       const parent = comments.find(c => c.id === comment.parentId);
+       return (
+         <>
+           <span className="text-gray-500 italic text-sm block">@{parent?.user?.fullName || "User"}</span>
+           {content}
+         </>
+       );
+    }
+    
+    return parts.map((part, i) => {
+      const match = part.match(/@\[(.*?)\]\((.*?)\)/);
+      if (match) {
+        return <span key={i} style={{ color: "#0057ff", fontWeight: 600 }}>@{match[1]}</span>;
+      }
+      return part;
+    });
+  };
+
   const handleSendComment = async () => {
     if (!commentText.trim()) return;
     if (!currentUserId) {
@@ -4103,14 +4184,25 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     }
     setSendingComment(true);
     try {
+      let finalContent = commentText.trim();
+      const ids = [];
+      Object.keys(mentionMap).forEach(name => {
+         if (finalContent.includes(`@${name}`)) {
+             finalContent = finalContent.replaceAll(`@${name}`, `@[${name}](${mentionMap[name]})`);
+             ids.push(mentionMap[name]);
+         }
+      });
+      
       const payload = {
-        content: commentText.trim(),
+        content: finalContent,
         positionX: pendingComment ? pendingComment.x : null,
         positionY: pendingComment ? pendingComment.y : null,
-        targetImageIndex: pendingComment ? pendingComment.index : null
+        targetImageIndex: pendingComment ? pendingComment.index : null,
+        parentId: replyingTo?.id || null,
+        mentionedUserIds: ids
       };
       const resData = await api.artworks.comments.create(activeArtworkId, payload);
-      const rawComment = resData.comment || resData;
+      const rawComment = resData.comment || resData.Comment || resData;
       const newComment = {
         id: rawComment.id || rawComment.Id,
         content: rawComment.content || rawComment.Content,
@@ -4118,11 +4210,14 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
         positionY: rawComment.positionY ?? rawComment.PositionY,
         targetImageIndex: rawComment.targetImageIndex ?? rawComment.TargetImageIndex,
         createdAt: rawComment.createdAt || rawComment.CreatedAt || new Date().toISOString(),
-        user: rawComment.user || rawComment.User || { fullName: authUser?.fullName || "User", avatarUrl: authUser?.image || authUser?.avatarUrl || "" }
+        user: rawComment.user || rawComment.User || { fullName: authUser?.fullName || "User", avatarUrl: authUser?.image || authUser?.avatarUrl || "" },
+        parentId: rawComment.parentId ?? rawComment.ParentId ?? replyingTo?.id
       };
       setComments(prev => [newComment, ...prev]);
       setCommentText("");
       setPendingComment(null);
+      setReplyingTo(null);
+      setMentionMap({});
       setActionSuccessToast("Bình luận thành công!");
       setTimeout(() => setActionSuccessToast(""), 3000);
     } catch (e) {
@@ -4663,7 +4758,8 @@ if (mins < 1) return t("justNow");
                                autoFocus 
                                placeholder="Thêm nhận xét..." 
                                value={commentText} 
-                               onChange={e => setCommentText(e.target.value)} 
+                               id="comment-textarea-1"
+                               onChange={e => handleCommentChange(e, "comment-textarea-1")} 
                                style={{ width: "100%", padding: 8, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, resize: "vertical", minHeight: 60, boxSizing: "border-box" }}
                             />
                             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -4819,7 +4915,8 @@ if (mins < 1) return t("justNow");
                                        autoFocus 
                                        placeholder="Thêm nhận xét..." 
                                        value={commentText} 
-                                       onChange={e => setCommentText(e.target.value)} 
+                                       id="comment-textarea-2"
+                                       onChange={e => handleCommentChange(e, "comment-textarea-2")} 
                                        style={{ width: "100%", padding: 8, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, resize: "vertical", minHeight: 60, boxSizing: "border-box" }}
                                     />
                                     <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
@@ -4977,9 +5074,17 @@ if (mins < 1) return t("justNow");
               )}
 
               {/* Bình luận Input */}
-              <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, marginBottom: 40, display: "flex", gap: 16, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
+              {replyingTo ? (
+                <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: "16px 24px", marginBottom: 40, display: "flex", gap: 16, alignItems: "center", cursor: "pointer", transition: "background 0.2s" }} onClick={() => { setReplyingTo(null); setCommentText(""); }} onMouseEnter={e => e.currentTarget.style.background = "#fafafa"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
+                  <img src={authUser?.image || authUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+                  <div style={{ flex: 1, padding: "10px 16px", background: "#f0f2f5", borderRadius: 20, color: "#65676b", fontSize: 14 }}>
+                    Viết bình luận mới...
+                  </div>
+                </div>
+              ) : (
+                <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, marginBottom: 40, display: "flex", gap: 16, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
                 <img src={authUser?.image || authUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
-                <div style={{ flex: 1 }}>
+                <div style={{ flex: 1, position: "relative" }}>
                   {pendingComment && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, background: "#eef4ff", padding: "8px 12px", borderRadius: 6, color: CERULEAN, fontSize: 13, fontWeight: "bold" }}>
                       <MapPin size={16} />
@@ -4987,53 +5092,139 @@ if (mins < 1) return t("justNow");
                       <button onClick={() => setPendingComment(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: MUTED }}>Huỷ bỏ</button>
                     </div>
                   )}
-                  <textarea value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="What are your thoughts on this project?" style={{ width: "100%", padding: "12px", borderRadius: 6, border: "1px solid #CCC", outline: "none", resize: "vertical", minHeight: 80, boxSizing: "border-box", fontSize: 14, fontFamily: "inherit" }} />
+                  <textarea id="comment-textarea-3" value={commentText} onChange={e => handleCommentChange(e, "comment-textarea-3")} placeholder="What are your thoughts on this project?" style={{ width: "100%", padding: "12px", borderRadius: 6, border: "1px solid #CCC", outline: "none", resize: "vertical", minHeight: 80, boxSizing: "border-box", fontSize: 14, fontFamily: "inherit", position: "relative" }} />
+                  
+                  {mentionState.query !== null && (
+                    <div style={{ position: "absolute", top: "calc(100% - 40px)", left: 0, right: 0, background: "#fff", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 8, boxShadow: "0 10px 25px rgba(0,0,0,0.1)", zIndex: 100, maxHeight: 220, overflowY: "auto", marginTop: 4, padding: "8px 0" }}>
+                      {mentionState.results.length === 0 ? (
+                        <div style={{ padding: "12px 16px", color: "#888", fontSize: 14, textAlign: "center" }}>Không tìm thấy người dùng</div>
+                      ) : (
+                        mentionState.results.map((mu, index) => (
+                          <div key={mu.id} onClick={() => handleSelectMention(mu)} onMouseEnter={e => e.currentTarget.style.background = "#f0f2f5"} onMouseLeave={e => e.currentTarget.style.background = "transparent"} style={{ padding: "10px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", transition: "background 0.2s" }}>
+                            <img src={mu.avatarUrl || "https://i.pravatar.cc/150"} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: "#1c1e21" }}>{mu.fullName}</span>
+                                <span style={{ fontSize: 12, color: "#65676b" }}>{mu.role === 'lecturer' ? 'Giảng viên' : (mu.role === 'admin' ? 'Admin' : 'Sinh viên')}</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
                   <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
                     <button onClick={handleSendComment} onMouseDown={e => e.currentTarget.style.transform = "scale(0.95)"} onMouseUp={e => e.currentTarget.style.transform = "scale(1)"} onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} disabled={sendingComment || !commentText.trim()} style={{ background: "#E8E8E8", color: "#666", border: "none", padding: "10px 24px", borderRadius: 20, fontSize: 14, fontWeight: "bold", cursor: commentText.trim() ? "pointer" : "not-allowed", transition: "all 0.2s, transform 0.1s", ...(commentText.trim() && { background: "#0057ff", color: "#fff" }) }}>{sendingComment ? "Posting..." : "Post a Comment"}</button>
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Danh sách bình luận */}
               <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
                 {comments?.length === 0 && <p style={{ fontSize: 13, color: "#999", textAlign: "center", padding: "20px 0" }}>{t("noComments")}</p>}
-                {comments?.map((c, idx) => {
-                  let badgeNum = "";
-                  if (c.positionX != null && c.targetImageIndex != null) {
-                    // find index amongst same image comments to display number
-                    const imageComments = comments.filter(x => x.targetImageIndex === c.targetImageIndex && x.positionX != null);
-                    badgeNum = imageComments.findIndex(x => x.id === c.id) + 1;
-                  }
-                  
-                  return (
-                    <div key={c.id || Math.random()} style={{ display: "flex", gap: 16 }}>
-                      <img onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} src={c.user?.image || c.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                          <span onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} style={{ fontWeight: "bold", color: "#191919", fontSize: 14, cursor: "pointer", textDecoration: "none" }} onMouseEnter={e=>e.currentTarget.style.textDecoration="underline"} onMouseLeave={e=>e.currentTarget.style.textDecoration="none"}>{c.user?.fullName}</span>
-                          <span style={{ fontSize: 12, color: "#888" }}>• {new Date(c.createdAt).toLocaleDateString()}</span>
-                          {badgeNum && (
-                            <span style={{ background: CRIMSON, color: "#fff", fontSize: 10, padding: "2px 6px", borderRadius: 10, fontWeight: "bold" }}>
-                              Marker #{badgeNum} on Image {c.targetImageIndex + 1}
-                            </span>
-                          )}
-                          {(authUser?.id === c.userId || authUser?.id === c.user?.id || authUser?.id === art.userId || authUser?.role === "admin") && (
-                            <button onClick={() => {
-                              if (window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) {
-                                api.artworks.comments.delete(art.id, c.id)
-                                  .then(() => setComments(prev => prev.filter(x => x.id !== c.id)))
-                                  .catch(err => alert("Lỗi xóa bình luận: " + (err?.message || "")));
-                              }
-                            }} style={{ background: "transparent", border: "none", color: "#999", cursor: "pointer", padding: "2px 4px", display: "flex", alignItems: "center", transition: "color 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color=CRIMSON} onMouseLeave={e=>e.currentTarget.style.color="#999"} title="Xóa bình luận">
-                              <Trash2 size={12} strokeWidth={2} />
-                            </button>
-                          )}
+                {(() => {
+                  const renderCommentItem = (c, isReply = false) => {
+                    let badgeNum = "";
+                    if (c.positionX != null && c.targetImageIndex != null) {
+                      const imageComments = comments.filter(x => x.targetImageIndex === c.targetImageIndex && x.positionX != null);
+                      badgeNum = imageComments.findIndex(x => (x.id || x.Id) === (c.id || c.Id)) + 1;
+                    }
+                    const currentId = c.id || c.Id;
+                    const replies = currentId ? comments.filter(r => (r.parentId || r.ParentId) === currentId) : [];
+                    
+                    return (
+                      <div id={"comment-" + currentId} key={currentId || Math.random()} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: isReply ? 16 : 0, marginLeft: isReply ? 48 : 0, borderRadius: 8 }}>
+                        <div style={{ display: "flex", gap: 16 }}>
+                          <img onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} src={c.user?.image || c.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: isReply ? 32 : 40, height: isReply ? 32 : 40, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                              <span onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} style={{ fontWeight: "bold", color: "#191919", fontSize: 14, cursor: "pointer", textDecoration: "none" }} onMouseEnter={e=>e.currentTarget.style.textDecoration="underline"} onMouseLeave={e=>e.currentTarget.style.textDecoration="none"}>{c.user?.fullName}</span>
+                              <span style={{ fontSize: 12, color: "#888" }}>• {new Date(c.createdAt).toLocaleDateString()}</span>
+                              {badgeNum && (
+                                <span style={{ background: CRIMSON, color: "#fff", fontSize: 10, padding: "2px 6px", borderRadius: 10, fontWeight: "bold" }}>
+                                  Marker #{badgeNum} on Image {c.targetImageIndex + 1}
+                                </span>
+                              )}
+                              
+                              <button onClick={() => { 
+                                setReplyingTo({ id: c.id || c.Id, userName: c.user?.fullName }); 
+                                setMentionMap(prev => ({ ...prev, [c.user?.fullName]: c.user?.id || c.userId || c.UserId }));
+                                setCommentText(`@${c.user?.fullName} `); 
+                                setTimeout(() => {
+                                  const textarea = document.getElementById("comment-textarea-inline-" + (c.id || c.Id));
+                                  if (textarea) textarea.focus();
+                                }, 50);
+                              }} style={{ background: "transparent", border: "none", color: "#0057ff", cursor: "pointer", padding: "2px 8px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center" }}>Trả lời</button>
+
+                              {(authUser?.id === c.userId || authUser?.id === c.user?.id || authUser?.id === art.userId || authUser?.role === "admin") && (
+                                <button onClick={() => {
+                                  if (window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) {
+                                    api.artworks.comments.delete(art.id, c.id || c.Id)
+                                      .then(() => setComments(prev => prev.filter(x => (x.id || x.Id) !== (c.id || c.Id))))
+                                      .catch(err => alert("Lỗi xóa bình luận: " + (err?.message || "")));
+                                  }
+                                }} style={{ background: "transparent", border: "none", color: "#999", cursor: "pointer", padding: "2px 4px", display: "flex", alignItems: "center", transition: "color 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color=CRIMSON} onMouseLeave={e=>e.currentTarget.style.color="#999"} title="Xóa bình luận">
+                                  <Trash2 size={12} strokeWidth={2} />
+                                </button>
+                              )}
+                            </div>
+                            <p style={{ margin: 0, color: "#444", fontSize: 14, lineHeight: 1.6 }}>{renderCommentText({ content: c.content || c.Content, parentId: c.parentId || c.ParentId })}</p>
+                          </div>
                         </div>
-                        <p style={{ margin: 0, color: "#444", fontSize: 14, lineHeight: 1.6 }}>{c.content}</p>
+                        {replies.length > 0 && (
+                          <div style={{ display: "flex", flexDirection: "column" }}>
+                            {(expandedComments[currentId] ? replies : replies.slice(0, 2)).map(r => renderCommentItem(r, true))}
+                            {replies.length > 2 && !expandedComments[currentId] && (
+                              <button onClick={() => setExpandedComments(prev => ({ ...prev, [currentId]: true }))} style={{ background: "transparent", border: "none", color: "#65676b", fontSize: 13, fontWeight: 600, cursor: "pointer", textAlign: "left", marginTop: 4, padding: "4px 8px", marginLeft: isReply ? 48 : 0, borderRadius: 4, display: "inline-block", width: "fit-content", transition: "background 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="#f0f2f5"} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                  Xem thêm {replies.length - 2} phản hồi
+                                </div>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {replyingTo?.id === currentId && (
+                          <div style={{ display: "flex", gap: 12, marginTop: 12, marginLeft: isReply ? 48 : 0, transition: "all 0.3s" }}>
+                            <img src={authUser?.image || authUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                            <div style={{ flex: 1, position: "relative" }}>
+                              <textarea 
+                                id={"comment-textarea-inline-" + currentId} 
+                                value={commentText} 
+                                onChange={e => handleCommentChange(e, "comment-textarea-inline-" + currentId)} 
+                                placeholder="Viết phản hồi..." 
+                                style={{ width: "100%", padding: "10px 14px", borderRadius: 16, border: "1px solid #CCC", outline: "none", resize: "none", minHeight: 40, boxSizing: "border-box", fontSize: 13, fontFamily: "inherit" }} 
+                              />
+                              
+                              {mentionState.query !== null && mentionState.inputId === ("comment-textarea-inline-" + currentId) && (
+                                <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, background: "#fff", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 8, boxShadow: "0 -4px 12px rgba(0,0,0,0.1)", zIndex: 100, maxHeight: 220, overflowY: "auto", marginBottom: 4, padding: "8px 0" }}>
+                                  {mentionState.results.length === 0 ? (
+                                    <div style={{ padding: "12px 16px", color: "#888", fontSize: 14, textAlign: "center" }}>Không tìm thấy người dùng</div>
+                                  ) : (
+                                    mentionState.results.map((mu, index) => (
+                                      <div key={mu.id} onClick={() => handleSelectMention(mu)} onMouseEnter={e => e.currentTarget.style.background = "#f0f2f5"} onMouseLeave={e => e.currentTarget.style.background = "transparent"} style={{ padding: "10px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", transition: "background 0.2s" }}>
+                                        <img src={mu.avatarUrl || "https://i.pravatar.cc/150"} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+                                        <div style={{ display: "flex", flexDirection: "column" }}>
+                                            <span style={{ fontSize: 14, fontWeight: 600, color: "#1c1e21" }}>{mu.fullName}</span>
+                                            <span style={{ fontSize: 12, color: "#65676b" }}>{mu.role === 'lecturer' ? 'Giảng viên' : (mu.role === 'admin' ? 'Admin' : 'Sinh viên')}</span>
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              )}
+
+                              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8, gap: 8 }}>
+                                <button onClick={() => { setReplyingTo(null); setCommentText(""); }} style={{ background: "transparent", color: "#666", border: "none", padding: "6px 12px", borderRadius: 16, fontSize: 13, fontWeight: "bold", cursor: "pointer" }}>Hủy</button>
+                                <button onClick={handleSendComment} disabled={sendingComment || !commentText.trim()} style={{ background: commentText.trim() ? "#0057ff" : "#E8E8E8", color: commentText.trim() ? "#fff" : "#666", border: "none", padding: "6px 16px", borderRadius: 16, fontSize: 13, fontWeight: "bold", cursor: commentText.trim() ? "pointer" : "not-allowed", transition: "all 0.2s" }}>{sendingComment ? "Đang gửi..." : "Gửi phản hồi"}</button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  };
+                  return comments?.filter(c => !c.parentId && !c.ParentId).map(c => renderCommentItem(c));
+                })()}
               </div>
             </div>
 
@@ -7096,7 +7287,7 @@ function AdminSidebar({ active, setPage }) {
     { icon: <FileBadge size={18} />, label: "Quản lý huy hiệu", page: "badges", roles: ["admin"] },
     { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users", roles: ["admin"] },
     { icon: <ShoppingCart size={18} />, label: "Đơn hàng", page: "admin_orders", roles: ["admin"] },
-    { icon: <ShieldAlert size={18} />, label: "Cảnh cáo ấn phẩm", page: "admin_artworks", roles: ["admin", "lecturer"] },
+    { icon: <ShieldAlert size={18} />, label: "Quản lý ấn phẩm", page: "admin_artworks", roles: ["admin", "lecturer"] },
     { icon: <Folder size={18} />, label: "Quản lý Moodboard", page: "admin_export", roles: ["admin", "lecturer"] },
     { icon: <Settings size={18} />, label: "Cài đặt Watermark", page: "admin_watermark", roles: ["admin"] },
     { icon: <Settings size={18} />, label: "Cài đặt Layout", page: "admin_layout", roles: ["admin"] },
@@ -7956,7 +8147,7 @@ function AdminArtworksPage({ setPage }) {
         </div>
 
         <div className="flex-1 overflow-hidden flex">
-          <div className="w-[65%] border-r border-[#E0E0E0] overflow-hidden flex flex-col">
+          <div className="w-full overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-[#E0E0E0]">
               <div className="flex items-center gap-3">
                 <input
@@ -7965,7 +8156,7 @@ function AdminArtworksPage({ setPage }) {
                   onChange={(e) => toggleSelectAll(e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-sm font-semibold text-[#212121]">{filtered.length} {t("artworks")}</span>
+                <span className="text-sm font-semibold text-[#212121]">{filtered.length} / {tabCount(activeTab)} {t("artworks")}</span>
               </div>
               {selectedIds.length > 0 && (
                 <span className="text-sm text-[#666666]">{t("selected")} {selectedIds.length}</span>
@@ -7984,7 +8175,7 @@ function AdminArtworksPage({ setPage }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {loading ? (
+                  {loading && page === 1 ? (
                     <tr>
                       <td colSpan="5" className="px-4 py-16 text-center">
                         <div className="flex flex-col items-center justify-center text-[#666]">
@@ -8051,134 +8242,132 @@ function AdminArtworksPage({ setPage }) {
                   )}
                 </tbody>
               </table>
+              <div ref={observerTarget} style={{ height: 40, display: "flex", justifyContent: "center", alignItems: "center" }}>
+                {loading && page > 1 && (
+                  <div className="w-6 h-6 border-2 border-[#1a4ba8]/20 border-t-[#1a4ba8] rounded-full animate-spin"></div>
+                )}
+              </div>
             </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-6 bg-[#F8F8F8]">
-            {!selected && (
-              <div className="bg-white border border-[#E0E0E0] rounded-xl p-8 text-center text-[#666666]">
-                {t("selectArtworkToViewDetails")}
-              </div>
-            )}
-
-            {selected && (
-              <div className="bg-white border border-[#E0E0E0] rounded-md overflow-hidden">
-                <div className="p-4 border-b border-[#E0E0E0] flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("artworkDetails")}</p>
-                    <h3 className="text-base font-semibold text-[#212121] truncate">{selected.title}</h3>
-                    <p className="text-[13px] text-[#666666] mt-0.5">{selected.student}</p>
-                  </div>
-                  <button onClick={() => setSelectedId(null)} className="text-[13px] font-medium text-[#666666] hover:text-[#212121] transition-colors">{t("close")}</button>
-                </div>
-
-                <div className="p-4">
-                  <div className="rounded-md overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer" onClick={() => handleOpenGallery(0)}>
-                    <img src={selected.coverImageUrl} className="w-full h-44 object-cover" />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                      <span className="text-white opacity-0 group-hover:opacity-100 text-[13px] font-medium transition-opacity">{t("clickToZoom")}</span>
-                    </div>
-                  </div>
-                  {(selected.fileUrls || []).length > 0 && (
-                    <div className="flex gap-2 mt-2 flex-wrap">
-                      {Array.from(new Set([selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean))).map((url, idx) => (
-                        <div key={idx} className="w-10 h-8 rounded-md overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#1a4ba8] transition-colors" onClick={() => handleOpenGallery(idx)}>
-                          <img src={url} alt="" className="w-full h-full object-cover" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div>
-                      <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("subject")}</p>
-                      <p className="text-[13px] text-[#333]">{selected.subject}</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("tools")}</p>
-                      <p className="text-[13px] text-[#333]">{(selected.toolsUsed || []).join(", ") || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("status")}</p>
-                      <span className={`inline-flex items-center gap-1 whitespace-nowrap text-[11px] px-2 py-0.5 rounded-full ${selected.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
-                        {selected.isPublic ? <Check size={10} className="text-green-600" /> : <EyeOff size={10} />}
-                        {selected.isPublic ? t("public") : t("private")}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("score")}</p>
-                      <p className="text-[13px] text-[#333]">{selected.score ?? t("notGraded") }</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-3">
-                    <a href={`${window.location.origin}/#/detail/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#1a4ba8] hover:text-[#0d2e6e] font-medium flex items-center gap-1.5 transition-colors">
-                      <ExternalLink size={12} /> {t("viewDetails")}: {selected.title}
-                    </a>
-                  </div>
-
-                  <div className="mt-4">
-                    <p className="text-[11px] text-[#888] uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                      <ShieldAlert size={12} /> {t("reportViolation")} {reports.length > 0 && <span className="bg-[#8B1A1A] text-white text-[9px] px-1.5 py-0.5 rounded-full">{reports.length}</span>}
-                    </p>
-                    {reportsLoading ? (
-                      <p className="text-[13px] text-[#666666]">{t("loading")}</p>
-                    ) : reports.length === 0 ? (
-                      <p className="text-[12px] text-[#666666] bg-[#F8F8F8] rounded-md p-2 border border-[#E0E0E0]">{t("noReportsForArtwork")}</p>
-                    ) : (
-                      <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1">
-                        {reports.map(r => (
-                          <div key={r.id} className="bg-[#F8F8F8] rounded-md p-2.5 border border-[#E0E0E0]">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-[11px] font-medium text-[#8B1A1A] bg-red-50 px-1.5 py-0.5 rounded border border-[#F5C5C5]">{r.violationType}</span>
-                              <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${r.status === "pending" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" : r.status === "resolved" ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}>
-                                {r.status === "pending" ? t("pending") : r.status === "resolved" ? t("processed") : t("dismissed")}
-                              </span>
-                            </div>
-                            {r.detail && <p className="text-[12px] text-[#212121] mb-1.5">{r.detail}</p>}
-                            <div className="flex items-center justify-between">
-                              <p className="text-[9px] text-[#666666]">
-                                {t("by")} {r.user?.fullName || r.user?.email || t("user") } · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
-                              </p>
-                              {r.status === "pending" && (
-                                <div className="flex gap-1">
-                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "resolved").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "resolved" } : x)))} className="text-[9px] font-medium text-green-700 bg-green-50 px-1.5 py-0.5 rounded border border-green-200 hover:bg-green-100 transition-colors cursor-pointer">{t("resolve")}</button>
-                                  <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "dismissed").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "dismissed" } : x)))} className="text-[9px] font-medium text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">{t("dismiss")}</button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    {!selected.isPublic ? (
-                      <button onClick={() => approveArtwork(selected.id)} className="py-2 rounded-md border border-[#1a4ba8] bg-white text-[#1a4ba8] text-[13px] font-medium hover:bg-[#eef4ff] transition-colors">
-                        <Check size={12} className="inline mr-1" /> {t("approveArtwork")}
-                      </button>
-                    ) : (
-                      <button onClick={() => hideArtwork(selected.id)} className="py-2 rounded-md border border-[#E0E0E0] bg-white text-[13px] font-medium text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
-                        {t("hideArtwork")}
-                      </button>
-                    )}
-                    <button onClick={() => openConfirm("delete", selected.id)} className="py-2 rounded-md border border-[#F5C5C5] bg-red-50 text-[13px] font-medium text-[#8B1A1A] hover:bg-red-100 transition-colors">
-                      {t("deletePermanently")}
-                    </button>
-                  </div>
-
-                  <button onClick={() => toggleHighlight(selected.id, !selected.isHighlighted)} className={`mt-2 w-full py-2 rounded-md text-[13px] font-medium border transition-colors ${
-                    selected.isHighlighted ? "bg-[#212121] text-white border-[#212121]" : "bg-[#e0eaff] text-[#1a4ba8] border-[#a8bce0] hover:bg-[#d0daf0]"
-                  }`}>
-                    {selected.isHighlighted ? t("removeHighlight") : t("highlightArtwork")}
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
+
+      {selected && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60" onClick={() => setSelectedId(null)}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col relative" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-[#E0E0E0] flex items-start justify-between gap-3 bg-[#f8f9fa]">
+              <div className="min-w-0">
+                <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1">{t("artworkDetails")}</p>
+                <h3 className="text-lg font-bold text-[#212121] truncate">{selected.title}</h3>
+                <p className="text-[13px] text-[#666666] mt-0.5">{selected.user?.fullName || selected.student}</p>
+              </div>
+              <button onClick={() => setSelectedId(null)} className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-[#E0E0E0] text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors"><X size={16} /></button>
+            </div>
+
+            <div className="p-6 overflow-y-auto">
+              <div className="rounded-md overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] relative group cursor-pointer" onClick={() => handleOpenGallery(0)}>
+                <img src={selected.coverImageUrl} className="w-full h-56 object-cover" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <span className="text-white opacity-0 group-hover:opacity-100 text-[13px] font-medium transition-opacity">{t("clickToZoom")}</span>
+                </div>
+              </div>
+              {(selected.fileUrls || []).length > 0 && (
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {Array.from(new Set([selected.coverImageUrl, ...(selected.fileUrls || [])].filter(Boolean))).map((url, idx) => (
+                    <div key={idx} className="w-12 h-10 rounded-md overflow-hidden border border-[#E0E0E0] bg-[#F8F8F8] cursor-pointer hover:border-[#1a4ba8] transition-colors" onClick={() => handleOpenGallery(idx)}>
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div>
+                  <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1.5">{t("subject")}</p>
+                  <p className="text-[13px] font-medium text-[#333]">{selected.subject}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1.5">{t("tools")}</p>
+                  <p className="text-[13px] font-medium text-[#333]">{(selected.toolsUsed || []).join(", ") || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1.5">{t("status")}</p>
+                  <span className={`inline-flex items-center gap-1 whitespace-nowrap text-[11px] px-2.5 py-1 rounded-full ${selected.isPublic ? "bg-white text-[#212121] border border-[#E0E0E0]" : "bg-[#F8F8F8] text-[#666666] border border-[#E0E0E0]"}`}>
+                    {selected.isPublic ? <Check size={10} className="text-green-600" /> : <EyeOff size={10} />}
+                    {selected.isPublic ? t("public") : t("private")}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1.5">{t("score")}</p>
+                  <p className="text-[13px] font-medium text-[#333]">{selected.score ?? t("notGraded") }</p>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <a href={`${window.location.origin}/#/detail/${selected.id}`} target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#1a4ba8] hover:text-[#0d2e6e] font-semibold flex items-center gap-1.5 transition-colors">
+                  <ExternalLink size={14} /> {t("viewDetails")}: {selected.title}
+                </a>
+              </div>
+
+              <div className="mt-6">
+                <p className="text-[11px] text-[#888] uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                  <ShieldAlert size={14} /> {t("reportViolation")} {reports.length > 0 && <span className="bg-[#8B1A1A] text-white text-[9px] px-2 py-0.5 rounded-full">{reports.length}</span>}
+                </p>
+                {reportsLoading ? (
+                  <p className="text-[13px] text-[#666666]">{t("loading")}</p>
+                ) : reports.length === 0 ? (
+                  <p className="text-[12px] text-[#666666] bg-[#F8F8F8] rounded-md p-3 border border-[#E0E0E0]">{t("noReportsForArtwork")}</p>
+                ) : (
+                  <div className="flex flex-col gap-2.5 max-h-[200px] overflow-y-auto pr-2">
+                    {reports.map(r => (
+                      <div key={r.id} className="bg-[#F8F8F8] rounded-md p-3 border border-[#E0E0E0]">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[11px] font-medium text-[#8B1A1A] bg-red-50 px-2 py-1 rounded border border-[#F5C5C5]">{r.violationType}</span>
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${r.status === "pending" ? "bg-yellow-50 text-yellow-700 border border-yellow-200" : r.status === "resolved" ? "bg-green-50 text-green-700 border border-green-200" : "bg-gray-50 text-gray-500 border border-gray-200"}`}>
+                            {r.status === "pending" ? t("pending") : r.status === "resolved" ? t("processed") : t("dismissed")}
+                          </span>
+                        </div>
+                        {r.detail && <p className="text-[13px] text-[#212121] mb-2 leading-relaxed">{r.detail}</p>}
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] text-[#666666]">
+                            {t("by")} {r.user?.fullName || r.user?.email || t("user") } · {new Date(r.createdAt).toLocaleDateString("vi-VN")}
+                          </p>
+                          {r.status === "pending" && (
+                            <div className="flex gap-1.5">
+                              <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "resolved").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "resolved" } : x)))} className="text-[10px] font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded border border-green-200 hover:bg-green-100 transition-colors cursor-pointer">{t("resolve")}</button>
+                              <button onClick={() => api.artworks.updateReportStatus(selected.id, r.id, "dismissed").then(() => setReports(prev => prev.map(x => x.id === r.id ? { ...x, status: "dismissed" } : x)))} className="text-[10px] font-semibold text-gray-500 bg-gray-50 px-2.5 py-1 rounded border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">{t("dismiss")}</button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-[#E0E0E0] grid grid-cols-3 gap-3">
+                {!selected.isPublic ? (
+                  <button onClick={() => { approveArtwork(selected.id); setSelectedId(null); }} className="py-2.5 rounded-lg border border-[#1a4ba8] bg-white text-[#1a4ba8] text-[13px] font-semibold hover:bg-[#eef4ff] transition-colors">
+                    <Check size={14} className="inline mr-1.5" /> {t("approveArtwork")}
+                  </button>
+                ) : (
+                  <button onClick={() => { hideArtwork(selected.id); setSelectedId(null); }} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-[13px] font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
+                    {t("hideArtwork")}
+                  </button>
+                )}
+                <button onClick={() => openConfirm("delete", selected.id)} className="py-2.5 rounded-lg border border-[#F5C5C5] bg-red-50 text-[13px] font-semibold text-[#8B1A1A] hover:bg-red-100 transition-colors">
+                  {t("deletePermanently")}
+                </button>
+                <button onClick={() => toggleHighlight(selected.id, !selected.isHighlighted)} className={`py-2.5 rounded-lg text-[13px] font-semibold border transition-colors ${
+                  selected.isHighlighted ? "bg-[#212121] text-white border-[#212121]" : "bg-[#e0eaff] text-[#1a4ba8] border-[#a8bce0] hover:bg-[#d0daf0]"
+                }`}>
+                  {selected.isHighlighted ? t("removeHighlight") : t("highlightArtwork")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmModal.isOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -11593,6 +11782,7 @@ export default function App() {
           setPage={setPage}
           setActiveArtworkId={setActiveArtworkId}
           activeArtworkId={activeArtworkId}
+          pageParams={pageParams}
           onBookmarkClick={openSaveFlow}
           isBookmarked={isBookmarked}
         />

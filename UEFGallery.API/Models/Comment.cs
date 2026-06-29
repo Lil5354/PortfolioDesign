@@ -26,8 +26,15 @@ public class Comment
 
     public int? TargetImageIndex { get; set; }
 
+    // Parent ID for nested replies
+    public string? ParentId { get; set; }
+
     public Artwork Artwork { get; set; }
 
     public User User { get; set; }
 
+    [ForeignKey("ParentId")]
+    public Comment? ParentComment { get; set; }
+
+    public ICollection<Comment> Replies { get; set; } = new List<Comment>();
 }

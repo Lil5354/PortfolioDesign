@@ -239,6 +239,7 @@ public class ArtworksController : ControllerBase
             c.PositionY,
             c.TargetImageIndex,
             c.CreatedAt,
+            c.ParentId,
             User = new { c.User.Id, FullName = c.User.FullName ?? "User", c.User.AvatarUrl, PortfolioSettings = c.User.PortfolioSettings }
         }).ToList();
 
@@ -451,6 +452,7 @@ public class ArtworksController : ControllerBase
             c.PositionX,
             c.PositionY,
             c.TargetImageIndex,
+            c.ParentId,
             c.CreatedAt,
             User = new { c.User.Id, FullName = c.User.FullName ?? "User", AvatarUrl = c.User.AvatarUrl, PortfolioSettings = c.User.PortfolioSettings }
         }).ToList();
@@ -476,12 +478,60 @@ public class ArtworksController : ControllerBase
             PositionX = dto.PositionX,
             PositionY = dto.PositionY,
             TargetImageIndex = dto.TargetImageIndex,
+            ParentId = dto.ParentId,
             CreatedAt = DateTime.UtcNow,
         };
         _context.Comments.Add(comment);
-        await _context.SaveChangesAsync();
 
         var user = await _context.Users.FindAsync(userId);
+        var artwork = await _context.Artworks.FindAsync(id);
+        
+        if (artwork != null) 
+        {
+            // Send noti to author if not self
+            if (artwork.UserId != userId)
+            {
+                var authorNoti = new Notification
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = artwork.UserId,
+                    ActorId = userId,
+                    Type = NotificationType.new_comment,
+                    ReferenceId = $"{artwork.Id}?commentId={comment.Id}",
+                    ReferenceType = "artwork",
+                    Content = $"{user?.FullName ?? "Ai đó"} đã bình luận về ấn phẩm '{artwork.Title}' của bạn.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false
+                };
+                _context.Notifications.Add(authorNoti);
+            }
+
+            // Send noti to mentioned users
+            if (dto.MentionedUserIds != null && dto.MentionedUserIds.Any())
+            {
+                foreach (var mentionedUserId in dto.MentionedUserIds.Distinct())
+                {
+                    if (mentionedUserId != userId) // don't notify self
+                    {
+                        var mentionNoti = new Notification
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            UserId = mentionedUserId,
+                            ActorId = userId,
+                            Type = NotificationType.new_comment,
+                            ReferenceId = $"{artwork.Id}?commentId={comment.Id}",
+                            ReferenceType = "artwork",
+                            Content = $"{user?.FullName ?? "Ai đó"} đã nhắc đến bạn trong một bình luận tại ấn phẩm '{artwork.Title}'.",
+                            CreatedAt = DateTime.UtcNow,
+                            IsRead = false
+                        };
+                        _context.Notifications.Add(mentionNoti);
+                    }
+                }
+            }
+        }
+
+        await _context.SaveChangesAsync();
         return Ok(new
         {
             Comment = new { 
@@ -490,6 +540,7 @@ public class ArtworksController : ControllerBase
                 comment.PositionX, 
                 comment.PositionY, 
                 comment.TargetImageIndex, 
+                comment.ParentId,
                 comment.CreatedAt, 
                 User = new { user.Id, FullName = user.FullName ?? "User", user.AvatarUrl, PortfolioSettings = user.PortfolioSettings }
             }
@@ -1188,6 +1239,8 @@ public class CreateCommentDto
     public double? PositionX { get; set; }
     public double? PositionY { get; set; }
     public int? TargetImageIndex { get; set; }
+    public string? ParentId { get; set; }
+    public List<string>? MentionedUserIds { get; set; }
 }
 
 public class UpdateCommentDto

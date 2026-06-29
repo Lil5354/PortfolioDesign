@@ -114,7 +114,7 @@ public class AdminController : ControllerBase
     [Authorize(Roles = "admin")]
     public async Task<IActionResult> GetUsers([FromQuery] int page = 1)
     {
-        var limit = 20;
+        var limit = 1000;
         var skip = (page - 1) * limit;
 
         var query = _context.Users;
@@ -128,9 +128,9 @@ public class AdminController : ControllerBase
 
         foreach (var user in users)
         {
-            if (user.AvatarUrl != null && user.AvatarUrl.Length > 1000)
+            if (string.IsNullOrEmpty(user.AvatarUrl) || user.AvatarUrl.Length > 1000 || user.AvatarUrl.Contains("ui-avatars"))
             {
-                user.AvatarUrl = null;
+                user.AvatarUrl = "https://i.pravatar.cc/150?u=" + Math.Abs(user.Id.GetHashCode());
             }
         }
 

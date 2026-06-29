@@ -282,6 +282,10 @@ namespace UEFGallery.API.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("ParentId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("parent_id");
+
                     b.Property<double?>("PositionX")
                         .HasColumnType("REAL")
                         .HasColumnName("position_x");
@@ -308,6 +312,9 @@ namespace UEFGallery.API.Migrations
 
                     b.HasIndex("ArtworkId")
                         .HasDatabaseName("ix_comments_artwork_id");
+
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("ix_comments_parent_id");
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_comments_user_id");
@@ -1035,6 +1042,11 @@ namespace UEFGallery.API.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_comments_artworks_artwork_id");
 
+                    b.HasOne("UEFGallery.API.Models.Comment", "ParentComment")
+                        .WithMany("Replies")
+                        .HasForeignKey("ParentId")
+                        .HasConstraintName("fk_comments_comments_parent_id");
+
                     b.HasOne("UEFGallery.API.Models.User", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
@@ -1043,6 +1055,8 @@ namespace UEFGallery.API.Migrations
                         .HasConstraintName("fk_comments_users_user_id");
 
                     b.Navigation("Artwork");
+
+                    b.Navigation("ParentComment");
 
                     b.Navigation("User");
                 });
@@ -1205,6 +1219,11 @@ namespace UEFGallery.API.Migrations
             modelBuilder.Entity("UEFGallery.API.Models.Badge", b =>
                 {
                     b.Navigation("ArtworkBadges");
+                });
+
+            modelBuilder.Entity("UEFGallery.API.Models.Comment", b =>
+                {
+                    b.Navigation("Replies");
                 });
 
             modelBuilder.Entity("UEFGallery.API.Models.SiteSection", b =>

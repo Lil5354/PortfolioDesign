@@ -46,6 +46,33 @@ public class UsersController : ControllerBase
         });
     }
 
+    [HttpGet("search-mentions")]
+    [Authorize]
+    public async Task<IActionResult> SearchMentions([FromQuery] string q)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        var query = _context.Users.Where(u => u.Id != userId && u.IsActive);
+        
+        if (!string.IsNullOrEmpty(q))
+        {
+            var searchLower = q.ToLower();
+            query = query.Where(u => u.FullName.ToLower().Contains(searchLower) || u.Email.ToLower().Contains(searchLower));
+        }
+        
+        var matches = await query
+            .Select(u => new {
+                u.Id,
+                u.FullName,
+                u.AvatarUrl,
+                u.Email
+            })
+            .Take(20)
+            .ToListAsync();
+            
+        return Ok(matches);
+    }
+
     [HttpGet("search")]
     public async Task<IActionResult> SearchUsers([FromQuery] string q)
     {

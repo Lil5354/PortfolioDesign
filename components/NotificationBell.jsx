@@ -109,7 +109,13 @@ export default function NotificationBell({ setPage }) {
         break;
       case 'artwork':
         if (n.referenceId) {
-          setPage("detail", { artworkId: n.referenceId });
+          const [artId, query] = n.referenceId.split('?');
+          if (query && query.includes('commentId=')) {
+              const commentId = query.split('=')[1];
+              setPage("detail", { artworkId: artId, commentId });
+          } else {
+              setPage("detail", { artworkId: n.referenceId });
+          }
         }
         break;
 
@@ -120,7 +126,13 @@ export default function NotificationBell({ setPage }) {
         if (n.type === 'artwork_pending' || n.type === 'new_report') {
           setPage("admin_artworks");
         } else if (n.referenceId) {
-          setPage("detail", { artworkId: n.referenceId });
+          const [artId, query] = n.referenceId.split('?');
+          if (query && query.includes('commentId=')) {
+              const commentId = query.split('=')[1];
+              setPage("detail", { artworkId: artId, commentId });
+          } else {
+              setPage("detail", { artworkId: n.referenceId });
+          }
         }
     }
   };
