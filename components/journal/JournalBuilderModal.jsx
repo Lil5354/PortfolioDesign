@@ -541,10 +541,12 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                    </button>
                 </div>
               ) : (
-                <JustifiedGrid 
-                  images={block.images} 
-                  containerWidth={block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2)} 
-                />
+                <div className="w-full flex justify-center" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
+                  <JustifiedGrid 
+                    images={block.images} 
+                    containerWidth="auto" 
+                  />
+                </div>
               )}
            </div>
         )}
@@ -663,10 +665,12 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                          )}
                          {block.type === 'grid' && (
                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                             <JustifiedGrid 
-                               images={block.images || []} 
-                               containerWidth={block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2)} 
-                             />
+                             <div className="w-full" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
+                               <JustifiedGrid 
+                                 images={block.images || []} 
+                                 containerWidth="auto" 
+                               />
+                             </div>
                            </div>
                          )}
                          {block.type === 'text' && (
