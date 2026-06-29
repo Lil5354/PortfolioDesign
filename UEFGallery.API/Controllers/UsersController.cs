@@ -53,7 +53,7 @@ public class UsersController : ControllerBase
 
         var searchLower = q.ToLower();
         var users = await _context.Users
-            .Where(u => u.FullName.ToLower().Contains(searchLower) || (u.Email.ToLower().Contains(searchLower)))
+            .Where(u => u.Role == Role.student && (u.FullName.ToLower().Contains(searchLower) || (u.Email.ToLower().Contains(searchLower))))
             .Select(u => new { u.Id, u.FullName, u.AvatarUrl, u.Email, PortfolioSettings = u.PortfolioSettings })
             .Take(10)
             .ToListAsync();
@@ -65,13 +65,14 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> GetPeople()
     {
         var dbUsers = await _context.Users
+            .Where(u => u.Role == Role.student)
             .Select(u => new
             {
                 u.Id,
                 u.FullName,
                 u.AvatarUrl,
                 u.Cohort,
-                Location = "TP. Hồ Chí Minh, Việt Nam",
+                Location = !string.IsNullOrEmpty(u.Address) ? u.Address : "TP. Hồ Chí Minh, Việt Nam",
                 Artworks = _context.Artworks.Where(a => a.UserId == u.Id).OrderByDescending(a => a.ViewCount).Select(a => new { a.Id, a.Title, a.CoverImageUrl, a.ViewCount, a.LikeCount }).ToList(),
                 Appreciations = _context.Artworks.Where(a => a.UserId == u.Id).Sum(a => a.Likes.Count),
                 FollowersCount = _context.Follows.Count(f => f.FollowedId == u.Id),
@@ -85,15 +86,14 @@ public class UsersController : ControllerBase
         {
             u.Id,
             u.FullName,
-            u.AvatarUrl,
+            AvatarUrl = u.AvatarUrl != null && u.AvatarUrl.Contains("ui-avatars") ? "https://i.pravatar.cc/150?u=" + Math.Abs(u.Id.GetHashCode()) : u.AvatarUrl,
             u.Location,
             Badges = new[] { 
-                "Featured", 
                 u.Cohort == "Năm 1" ? "Designer Mầm non" : 
                 u.Cohort == "Năm 2" ? "Designer Thực tập" : 
                 u.Cohort == "Năm 3" ? "Designer Chuyên nghiệp" : 
                 u.Cohort == "Năm 4" ? "Designer Tiền bối" : 
-                u.Cohort == "Tốt nghiệp" ? "Designer Tốt nghiệp" : "Sinh viên UEF" 
+                u.Cohort == "Tốt nghiệp" ? "Designer Tốt nghiệp" : "Designer Mầm non" 
             },
             u.Artworks,
             Appreciations = u.Appreciations > 0 ? u.Appreciations * 1234 : Math.Abs(u.Id.GetHashCode() % 50000) + 10000,

@@ -47,6 +47,15 @@ const getBadgeIcon = (badgeName) => {
   if (badgeName === "Designer Tốt nghiệp") return iconTotNghiep;
   return null;
 };
+
+const getBadgeColor = (badgeName) => {
+  if (badgeName === "Designer Mầm non") return { text: "#84cc16", bg: "#ffffff" }; // Light green
+  if (badgeName === "Designer Thực tập") return { text: "#22c55e", bg: "#ffffff" }; // Middle green
+  if (badgeName === "Designer Chuyên nghiệp") return { text: "#166534", bg: "#ffffff" }; // Dark green
+  if (badgeName === "Designer Tiền bối") return { text: "#f59e0b", bg: "#ffffff" }; // Orange/Yellow
+  if (badgeName === "Designer Tốt nghiệp") return { text: "#000000", bg: "#ffffff" }; // Black
+  return { text: "#444444", bg: "#ffffff" };
+};
 import ChatBot from './components/ChatBot';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -116,7 +125,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
     { id: "gallery", label: t("gallery") },
     { id: "about", label: t("about") },
   ];
-  if (isLoggedIn && userRole === "student") navItems.push({ id: "portfolio", label: t("portfolio") });
+  if (isLoggedIn && (userRole === "student" || userRole === "guest")) navItems.push({ id: "portfolio", label: t("portfolio") });
 
   const userName = userData?.fullName || userData?.name || t("defaultUser");
   const userEmail = userData?.email || "";
@@ -181,11 +190,11 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                   <p className="text-xs text-[#666666]">{userEmail}</p>
                 </div>
                 <div className="py-1">
-                  {userRole === "student" ? (
+                  {userRole === "student" || userRole === "guest" ? (
                     <>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {t("studentDashboard")}</div>
+                      {(userRole === "student" || userRole === "guest") && <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {t("studentDashboard")}</div>}
                       <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
-                      <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> {t("portfolioSettings")}</div>
+                      {userRole === "student" && <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> {t("portfolioSettings")}</div>}
                     </>
                   ) : (
                     <>
@@ -227,10 +236,10 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
             ))}
             {isLoggedIn && (
               <>
-                {userRole === "student" ? (
+                {userRole === "student" || userRole === "guest" ? (
                   <>
                     <div className="border-t border-[#E0E0E0] my-1" />
-                    <button onClick={() => { setPage("dashboard"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />{t("studentDashboard")}</button>
+                    {(userRole === "student" || userRole === "guest") && <button onClick={() => { setPage("dashboard"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><LayoutDashboard size={16} className="inline mr-2" />{t("studentDashboard")}</button>}
                     <button onClick={() => { setPage("messages"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Mail size={16} className="inline mr-2" />{t("inbox")}</button>
                     <button onClick={() => { setPage("settings"); setIsMobileMenuOpen(false); }} className="px-6 py-3 text-sm font-medium text-left text-gray-600 hover:bg-[#F8F8F8]"><Settings size={16} className="inline mr-2" />{t("settings")}</button>
                   </>
@@ -424,7 +433,7 @@ function ProfileQuickViewModal({ person, onClose, setPage }) {
         <div style={{ flex: 1, overflowY: "auto", padding: "0 24px 24px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {person.artworks?.map((art, i) => (
-              <div key={i} style={{ borderRadius: 8, overflow: "hidden", aspectRatio: "4/3", cursor: "pointer", position: "relative", background: "#f0f0f0" }} className="group">
+              <div key={i} onClick={() => setPage("detail", { artworkId: art.id || art.Id })} style={{ borderRadius: 8, overflow: "hidden", aspectRatio: "4/3", cursor: "pointer", position: "relative", background: "#f0f0f0" }} className="group">
                 <img src={art.coverImageUrl || art.CoverImageUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
                 
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", opacity: 0, transition: "opacity .2s", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "16px 12px" }} className="hover-overlay" onMouseOver={e => e.currentTarget.style.opacity = 1} onMouseOut={e => e.currentTarget.style.opacity = 0}>
@@ -461,11 +470,29 @@ function PeopleGrid({ setPage }) {
       .catch(() => setLoading(false));
   }, []);
 
+  const mostLikedArtwork = React.useMemo(() => {
+    let max = -1;
+    let img = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop';
+    people.forEach(p => {
+      p.artworks?.forEach(art => {
+        if (art.likeCount > max && art.coverImageUrl) {
+          max = art.likeCount;
+          img = art.coverImageUrl;
+        }
+      });
+    });
+    if (img.includes('behance.net') && img.includes('/404/')) {
+      img = img.replace('/404/', '/original/');
+    }
+    return img;
+  }, [people]);
+
   if (loading) return <div style={{ padding: 40, textAlign: "center", color: "#666" }}>Đang tải danh sách sinh viên...</div>;
+
 
   return (
     <div style={{ padding: "0 32px 64px", background: "#f9f9f9", minHeight: "100vh" }}>
-      <div style={{ background: "linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop')", backgroundSize: "cover", backgroundPosition: "center", borderRadius: 16, padding: "64px 32px", textAlign: "center", color: "#fff", marginBottom: 32, position: "relative", overflow: "hidden" }}>
+      <div style={{ background: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('${mostLikedArtwork}')`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: 16, padding: "64px 32px", textAlign: "center", color: "#fff", marginBottom: 32, position: "relative", overflow: "hidden" }}>
         <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12, position: "relative", zIndex: 2 }}>Looking to Hire a Creator?</h2>
         <p style={{ fontSize: 18, color: "#e0e0e0", position: "relative", zIndex: 2 }}>Over 10,000 students are available for your next big project.</p>
       </div>
@@ -474,11 +501,14 @@ function PeopleGrid({ setPage }) {
         {people.map(p => (
           <div key={p.id} onClick={() => setSelectedPerson(p)} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: "1px solid #e0e0e0", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer" }} onMouseOver={e => {e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"}} onMouseOut={e => {e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"}}>
             <div style={{ display: "flex", gap: 0, background: "#f0f0f0", position: "relative", marginBottom: 32 }}>
-              {p.artworks && p.artworks.length > 0 ? p.artworks.slice(0, 4).map((art, i) => (
-                <div key={i} style={{ flex: 1, aspectRatio: "1/1", overflow: "hidden", borderRight: i < 3 ? "2px solid #fff" : "none" }}>
-                  <img src={art.coverImageUrl || art.CoverImageUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" />
-                </div>
-              )) : <div style={{ flex: 1, aspectRatio: "4/1" }} />}
+              {Array.from({ length: 4 }).map((_, i) => {
+                const art = p.artworks?.[i];
+                return (
+                  <div key={i} style={{ flex: 1, aspectRatio: "1/1", overflow: "hidden", borderRight: i < 3 ? "2px solid #fff" : "none", background: "#f0f0f0" }}>
+                    {art ? <img src={art.coverImageUrl || art.CoverImageUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} alt="" /> : null}
+                  </div>
+                );
+              })}
               <div style={{ position: "absolute", bottom: -40, left: "50%", transform: "translateX(-50%)", width: 84, height: 84, borderRadius: "50%", background: "#fff", padding: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 2 }}>
                 <img src={p.avatarUrl || "https://via.placeholder.com/150"} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} alt="" />
               </div>
@@ -488,28 +518,25 @@ function PeopleGrid({ setPage }) {
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 4 }}>
                 <div style={{ display: "inline-flex", alignItems: "center", position: "relative" }}>
                   <h3 style={{ fontSize: 16, fontWeight: 800, color: "#191919", margin: 0 }}>{p.fullName}</h3>
-                  {(() => {
-                    const iconBadge = p.badges?.find(b => getBadgeIcon(b) !== null);
-                    const iconSrc = iconBadge ? getBadgeIcon(iconBadge) : null;
-                    return iconSrc ? <img src={iconSrc} alt={iconBadge} style={{ height: 22, objectFit: "contain", position: "absolute", left: "100%", marginLeft: 6 }} title={iconBadge} /> : null;
-                  })()}
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, color: "#777", fontSize: 13, marginBottom: 16 }}>
                 <MapPin size={14} />
                 {p.location}
               </div>
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
-                {p.badges?.filter(b => getBadgeIcon(b) === null).map(b => {
-                  if (b === "Featured") {
-                    return (
-                      <span key={b} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, padding: "6px 16px", borderRadius: 8, background: "#f5f8ff", color: "#0057ff", height: 32, boxSizing: "border-box" }}>
-                        <Star size={14} fill="#0057ff" color="#0057ff" /> {b}
-                      </span>
-                    );
-                  }
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, minHeight: 32 }}>
+                {p.badges?.filter(b => b !== "Designer Tốt nghiệp").map(b => {
+                  const iconSrc = getBadgeIcon(b);
+                  const colors = getBadgeColor(b);
+                  if (!iconSrc) return null;
                   return (
-                    <span key={b} style={{ display: "flex", alignItems: "center", fontSize: 13, fontWeight: 700, padding: "6px 16px", borderRadius: 8, background: "#f5f5f5", color: "#444", height: 32, boxSizing: "border-box" }}>{b}</span>
+                    <div key={b} className="group relative flex items-center justify-center cursor-pointer">
+                      <img src={iconSrc} alt={b} style={{ height: 24, objectFit: "contain", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.05))" }} />
+                      <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10" 
+                           style={{ background: "#fff", padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, color: colors.text, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", border: `1px solid ${colors.text}40` }}>
+                        {b}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -518,17 +545,17 @@ function PeopleGrid({ setPage }) {
             <div style={{ display: "flex", padding: "0 0 20px", width: "85%", margin: "0 auto" }}>
               <div style={{ flex: 1, textAlign: "center" }}>
                 <div style={{ fontSize: 16, fontWeight: 800, color: "#191919" }}>{p.appreciations >= 1000 ? (p.appreciations/1000).toFixed(1) + 'K' : p.appreciations}</div>
-                <div style={{ fontSize: 12, color: "#777" }}>Appreciations</div>
+                <div style={{ fontSize: 12, color: "#777" }}>Lượt thích</div>
               </div>
               <div style={{ width: 1, background: "#e0e0e0", margin: "6px 0" }} />
               <div style={{ flex: 1, textAlign: "center" }}>
                 <div style={{ fontSize: 16, fontWeight: 800, color: "#191919" }}>{p.followersCount >= 1000 ? (p.followersCount/1000).toFixed(1) + 'K' : p.followersCount}</div>
-                <div style={{ fontSize: 12, color: "#777" }}>Followers</div>
+                <div style={{ fontSize: 12, color: "#777" }}>Người theo dõi</div>
               </div>
               <div style={{ width: 1, background: "#e0e0e0", margin: "6px 0" }} />
               <div style={{ flex: 1, textAlign: "center" }}>
                 <div style={{ fontSize: 16, fontWeight: 800, color: "#191919" }}>{p.projectViews >= 1000 ? (p.projectViews/1000).toFixed(1) + 'K' : p.projectViews}</div>
-                <div style={{ fontSize: 12, color: "#777" }}>Project Views</div>
+                <div style={{ fontSize: 12, color: "#777" }}>Lượt xem</div>
               </div>
             </div>
 
@@ -956,7 +983,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                 <div
                   key={art.id}
                   onClick={() => setPage("detail", { artworkId: art.id })}
-                  style={{ cursor: "pointer", transition: "transform .15s", transform: hoveredId === art.id ? "translateY(-2px)" : "none" }}
+                  style={{ cursor: "pointer", transition: "transform .15s", transform: hoveredId === art.id ? "translateY(-2px)" : "none", minWidth: 0 }}
                   onMouseEnter={() => setHoveredId(art.id)}
                   onMouseLeave={() => setHoveredId(null)}
                 >
@@ -1206,7 +1233,11 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
     profile.email && pSettings?.showEmail && { label: t("email"), href: `mailto:${profile.email}`, icon: "mail" },
   ].filter(Boolean);
 
-  const explicitFeaturedArtworks = (pSettings?.featuredArtworkIds || [])
+  const rawFeaturedIds = pSettings?.featuredArtworkIds;
+  const safeFeaturedIds = Array.isArray(rawFeaturedIds) ? rawFeaturedIds : 
+    (typeof rawFeaturedIds === 'string' ? (function(){ try{ return JSON.parse(rawFeaturedIds); }catch(e){return [];} })() : []);
+  
+  const explicitFeaturedArtworks = safeFeaturedIds
     .map(id => (portfolioArtworks || []).find(a => a.id === id))
     .filter(Boolean);
 
@@ -1533,7 +1564,7 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                      <div
                        key={art.id}
                        onClick={() => setPage && setPage("detail", { artworkId: art.id })}
-                       style={{ cursor: "pointer", transition: "transform .15s" }}
+                       style={{ cursor: "pointer", transition: "transform .15s", minWidth: 0 }}
                        onMouseEnter={e => e.currentTarget.style.transform = "translateY(-2px)"}
                        onMouseLeave={e => e.currentTarget.style.transform = "none"}
                      >
@@ -1991,7 +2022,15 @@ function ToggleSwitch({ isOn, onToggle, disabled = false }) {
 
 function DashboardSidebar({ activePage, setPage, userData }) {
   let items = [];
-  if (userData?.role === "lecturer") {
+  if (userData?.role === "student") {
+    items = [
+      { icon: <Image size={18} />, label: t("myArtworks"), page: "dashboard" },
+      { icon: <Bookmark size={18} />, label: "Moodboard", page: "moodboards" },
+      { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
+      { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
+      { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
+    ];
+  } else if (userData?.role === "lecturer") {
     items = [
       { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
       { icon: <Bookmark size={18} />, label: "Moodboard", page: "moodboards" },
@@ -2003,11 +2042,9 @@ function DashboardSidebar({ activePage, setPage, userData }) {
     ];
   } else {
     items = [
-      { icon: <Image size={18} />, label: t("myArtworks"), page: "dashboard" },
-      { icon: <Bookmark size={18} />, label: "Moodboard", page: "moodboards" },
       { icon: <MessageSquare size={18} />, label: t("inbox"), page: "messages" },
+      { icon: <Bookmark size={18} />, label: "Moodboard", page: "moodboards" },
       { icon: <User size={18} />, label: t("accountSettings"), page: "settings" },
-      { icon: <Briefcase size={18} />, label: t("portfolioSettings"), page: "portfolio_settings" },
     ];
   }
   
@@ -2278,7 +2315,7 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
                      <SortableContext items={displayedItems.map(i => i.id)} strategy={rectSortingStrategy}>
                        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
                           {displayedItems.map(item => (
-                             <MoodboardSortableCard key={item.id} item={item} onClick={() => setPage("detail", { artworkId: item.artworkId })} onMove={(e) => { e.stopPropagation(); setMoveState({ artworkId: item.artworkId, fromColId: activeCollection.id }); }} onRemove={(e) => handleRemoveItem(activeCollection.id, item.artworkId, e)} />
+                             <MoodboardSortableCard key={item.id} item={item} onClick={() => setPage("detail", { artworkId: item.artworkId })} onMove={(e) => { e.stopPropagation(); setMoveState({ artworkId: item.artworkId, fromColId: activeCollection.id }); }} onRemove={(e) => handleRemoveItem(activeCollection.id, item.artworkId, e)} style={{ minWidth: 0 }} />
                           ))}
                        </div>
                      </SortableContext>
@@ -2608,7 +2645,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
               {artworksList.slice(0, visibleCount).map(art => (
-                <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, minWidth: 0 }}>
                   <div style={{ position: "relative", background: GRAY_BG }}>
                     <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail", { artworkId: art.id })} />
                     <div style={{ position: "absolute", top: 8, left: 8 }}>
@@ -2689,7 +2726,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
               </h3>
     <div className="masonry-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
                 {collabArtworks.map(art => (
-                  <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                  <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, minWidth: 0 }}>
                     <div style={{ position: "relative", background: GRAY_BG }}>
                       <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail", { artworkId: art.id })} />
                       <div style={{ position: "absolute", top: 8, left: 8 }}>
@@ -2718,6 +2755,14 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
 
 function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
   const { user: currentUser } = useAuth();
+  
+  if (currentUser?.role !== "student") {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#f9fafb" }}>
+        <h2 style={{ fontSize: 24, fontWeight: "bold", color: "#ef4444" }}>Bạn không có quyền truy cập trang này.</h2>
+      </div>
+    );
+  }
   const [showPopup, setShowPopup] = useState(false);
   const [isEbookViewerOpen, setIsEbookViewerOpen] = useState(false);
   const [isEbook, setIsEbook] = useState(false);
@@ -4149,7 +4194,13 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
     setSavingGrade(false);
   };
 
-  const allImages = [art.coverImageUrl, ...(art.fileUrls || [])].filter(Boolean);
+  const getHighResImageUrl = (url) => {
+    if (typeof url === 'string' && url.includes('behance.net') && url.includes('/404/')) {
+      return url.replace('/404/', '/original/');
+    }
+    return url;
+  };
+  const allImages = [art.coverImageUrl, ...(art.fileUrls || [])].filter(Boolean).map(getHighResImageUrl);
   const allImagesDeduped = [...new Set(allImages)];
   const activeImage = allImagesDeduped[activeImageIdx] || allImagesDeduped[0] || art.coverImageUrl;
   
@@ -4489,7 +4540,7 @@ if (mins < 1) return t("justNow");
               ) : (
                 <div style={{ width: "100%", padding: "60px 0", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", background: "#F0F2F5", cursor: "pointer" }} onClick={() => { setIsReadingEbook(true); setReaderOrientation(art.tags?.includes("EBOOK_LANDSCAPE") ? 'landscape' : 'portrait'); }}>
                   <div style={{ position: "relative" }}>
-                    <img src={art.coverImageUrl} style={{ maxWidth: "80%", maxHeight: "70vh", objectFit: "contain", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", borderRadius: 4 }} alt="Ebook Cover" />
+                    <img src={getHighResImageUrl(art.coverImageUrl)} style={{ maxWidth: "80%", maxHeight: "70vh", objectFit: "contain", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", borderRadius: 4 }} alt="Ebook Cover" />
                     <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.2)", borderRadius: 4 }}>
                        <button style={{ background: "#1a4ba8", color: "white", padding: "16px 32px", borderRadius: 30, display: "flex", gap: 10, alignItems: "center", border: "none", cursor: "pointer", fontWeight: "bold", fontSize: 16, boxShadow: "0 8px 24px rgba(0,0,0,0.3)", pointerEvents: "none" }}>
                          <BookOpen size={24} /> Đọc E-book
@@ -4843,7 +4894,7 @@ if (mins < 1) return t("justNow");
               {/* Related Artworks Grid */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                 {relatedArtworks.slice(0,4).map(rArt => (
-                  <div key={rArt.id} onClick={() => setPage("detail", { artworkId: rArt.id })} onMouseEnter={e => e.currentTarget.lastChild.style.opacity = 1} onMouseLeave={e => e.currentTarget.lastChild.style.opacity = 0} style={{ cursor: "pointer", borderRadius: 8, overflow: "hidden", background: "#222", position: "relative" }}>
+                  <div key={rArt.id} onClick={() => setPage("detail", { artworkId: rArt.id })} onMouseEnter={e => e.currentTarget.lastChild.style.opacity = 1} onMouseLeave={e => e.currentTarget.lastChild.style.opacity = 0} style={{ cursor: "pointer", borderRadius: 8, overflow: "hidden", background: "#222", position: "relative", minWidth: 0 }}>
                     <img src={rArt.coverImageUrl} style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }} />
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 50%)", opacity: 0, transition: "opacity 0.3s ease-in-out", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: 16 }}>
                       <span style={{ color: "#fff", fontSize: 14, fontWeight: "bold", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{rArt.title}</span>
@@ -6540,7 +6591,7 @@ function PendingArtworksPage({ setPage, userData }) {
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
             {artworks.map(art => (
-              <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+              <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, minWidth: 0 }}>
                 <div style={{ position: "relative", background: GRAY_BG }}>
                   <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail", { artworkId: art.id })} />
                   <div style={{ position: "absolute", top: 8, left: 8 }}>
@@ -7072,7 +7123,15 @@ function AdminSidebar({ active, setPage }) {
 }
 
 function EditArtworkPage({ setPage, activeArtworkId }) {
-    const [loading, setLoading] = useState(true);
+  const { user: currentUser } = useAuth();
+  if (currentUser?.role !== "student") {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#f9fafb" }}>
+        <h2 style={{ fontSize: 24, fontWeight: "bold", color: "#ef4444" }}>Bạn không có quyền truy cập trang này.</h2>
+      </div>
+    );
+  }
+  const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -7286,7 +7345,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("courseName")}</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#1a4ba8] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("projectType")}</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#eef4ff] border-[#1a4ba8] text-[#1a4ba8]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("assignmentType")}</label><div className="flex gap-3">{[{ key: false, label: t("individual"), icon: <User size={16} /> }, { key: true, label: t("group"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#eef4ff] border-[#1a4ba8]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#1a4ba8]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#1a4ba8]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
-            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#e0eaff] text-[#1a4ba8] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
+            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#e0eaff] text-[#1a4ba8] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(u.fullName || "User") + "&background=random"} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#1a4ba8] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("category")}</label>
               <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#1a4ba8] focus:bg-white transition-colors cursor-pointer">
@@ -7328,8 +7387,7 @@ function AdminUsersPage({ setPage }) {
   const [searchQuery, setSearchQuery] = useState("");
   const { userRole } = useAuth();
   const importInputRef = useRef(null);
-
-  const roleLabel = { student: "Sinh viên", lecturer: t("lecturer"), admin: t("admin") };
+  const roleLabel = { student: "Sinh viên", lecturer: t("lecturer"), admin: t("admin"), guest: t("guestLabel") || "Khách" };
 
   const fetchUsers = () => {
     setLoading(true);
@@ -7493,7 +7551,7 @@ function AdminUsersPage({ setPage }) {
                 <tr key={u.id} onClick={(e) => { if (!e.target.closest("button")) setEditModal({ isOpen: true, user: u }) }} className="border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors cursor-pointer">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <img src={u.avatarUrl || ''} className="w-8 h-8 rounded-full object-cover bg-[#E0E0E0]" />
+                      <img src={u.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(u.fullName || "User") + "&background=random"} className="w-8 h-8 rounded-full object-cover bg-[#E0E0E0]" />
                       <span className="text-sm font-semibold text-[#212121]">{u.fullName}</span>
                     </div>
                   </td>
@@ -8861,7 +8919,7 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             <div className="h-0.5 bg-gray-200 w-3/5"></div>
           </div>
           <div className="flex flex-wrap gap-3 mb-3">
-            {(!isLoggedIn || userRole === "student") && (
+            {(!isLoggedIn || userRole === "student" || userRole === "guest") && (
               <button onClick={() => setPage(isLoggedIn ? "dashboard" : (hero?.primaryCtaLink || "gallery"))} className="bg-[#1a4ba8] text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#1642a6] transition-colors">
                 {hero?.primaryCta || t("exploreGallery")} <ArrowRight size={18} />
               </button>
@@ -11511,12 +11569,12 @@ export default function App() {
       )}
       {page === "portfolio" && <PortfolioPage setPage={setPage} pageParams={pageParams} onBookmarkClick={openSaveFlow} isBookmarked={isBookmarked} />}
       {page === "dashboard" && (
-        userRole === "student" ? (
+        (userRole === "student" || userRole === "guest") ? (
           <DashboardPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />
         ) : <AccessDenied setPage={setPage} />
       )}
       {page === "moodboards" && (
-        (userRole === "student" || userRole === "lecturer") ? (
+        (userRole === "student" || userRole === "guest" || userRole === "lecturer") ? (
           <StudentMoodboardsPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} userData={userData} />
         ) : <AccessDenied setPage={setPage} />
       )}
@@ -11526,7 +11584,7 @@ export default function App() {
         ) : <AccessDenied setPage={setPage} />
       )}
       {page === "upload" && (
-        isLoggedIn ? (userRole === "student" ? (
+        isLoggedIn ? ((userRole === "student" || userRole === "guest") ? (
           <UploadPage setPage={setPage} setActiveArtworkId={setActiveArtworkId} pageParams={pageParams} />
         ) : <AccessDenied setPage={setPage} />) : <AccessDenied setPage={setPage} />
       )}

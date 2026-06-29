@@ -48,7 +48,7 @@
     "xlsx": "^0.18.5"
   },
   "optionalDependencies": {
-    "puppeteer": "^25.0.4"
+    "puppeteer": "^25.2.1"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",

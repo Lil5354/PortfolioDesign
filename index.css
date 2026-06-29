@@ -18,6 +18,7 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   background-color: var(--color-graybg);
   color: var(--color-black);
+  overflow-x: hidden;
 }
 
 @keyframes spin {
