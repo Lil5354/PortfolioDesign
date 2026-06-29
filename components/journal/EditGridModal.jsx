@@ -13,10 +13,13 @@ const EditGridModal = ({ isOpen, onClose, block, onSave }) => {
   if (!isOpen || !block) return null;
 
   const handleAddPhotos = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setImages([...images, { id: Date.now().toString(), url, width: 800, height: 600 }]);
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      const newImages = files.map(file => {
+        const url = URL.createObjectURL(file);
+        return { id: Date.now().toString() + Math.random().toString().slice(2, 6), url, width: 800, height: 600 };
+      });
+      setImages([...images, ...newImages]);
     }
   };
 
@@ -47,6 +50,7 @@ const EditGridModal = ({ isOpen, onClose, block, onSave }) => {
               <input 
                 type="file" 
                 accept="image/*" 
+                multiple
                 onChange={handleAddPhotos}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
@@ -70,12 +74,12 @@ const EditGridModal = ({ isOpen, onClose, block, onSave }) => {
           ) : (
             <div className="flex flex-wrap gap-4 items-start justify-center max-w-5xl mx-auto">
               {images.map((img) => (
-                <div key={img.id} className="relative group w-[240px] h-[160px] bg-white rounded shadow-sm overflow-hidden flex-shrink-0">
-                  <img src={img.content || img.url} alt="" className="w-full h-full object-cover" />
+                <div key={img.id} className="relative group h-[200px] bg-white rounded shadow-sm overflow-hidden flex-shrink-0">
+                  <img src={img.content || img.url} alt="" className="h-full w-auto block" />
                   <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity border-2 border-blue-500 pointer-events-none" />
                   <button 
                     onClick={() => handleRemove(img.id)}
-                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-md"
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-md z-10"
                   >
                     <X size={12} />
                   </button>
