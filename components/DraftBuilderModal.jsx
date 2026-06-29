@@ -31,8 +31,26 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
       setIsPreviewMode(false);
       setIsSettingsModalOpen(false);
       setIsStylesModalOpen(false);
+      setProjectStyles(initialSettingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
     }
   }, [isOpen, initialBlocks, initialSettingsData]);
+
+  const autoSaveRef = useRef({ blocks, settingsData });
+  useEffect(() => {
+    autoSaveRef.current = { blocks, settingsData };
+  });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setInterval(() => {
+      const state = autoSaveRef.current;
+      if (state.blocks.length > 0 || (state.settingsData.title && state.settingsData.title !== 'Untitled Project')) {
+        onSave(state.blocks, state.settingsData, true); // true = isAutoSave
+        console.log("Auto-saved draft from builder at", new Date().toLocaleTimeString());
+      }
+    }, 60000);
+    return () => clearInterval(timer);
+  }, [isOpen, onSave]);
   const fileInputRef = useRef(null);
   
   const handleCoverUpload = (e) => {

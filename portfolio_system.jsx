@@ -33,10 +33,10 @@ import {
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 
-import iconNam1 from './Logoicon/Năm 1.png';
-import iconNam2 from './Logoicon/Năm 2.png';
-import iconNam3 from './Logoicon/Năm 3.png';
-import iconNamCuoi from './Logoicon/Năm cuối.png';
+import iconNam1 from './Logoicon/nam-1.png';
+import iconNam2 from './Logoicon/nam-2.png';
+import iconNam3 from './Logoicon/nam-3.png';
+import iconNamCuoi from './Logoicon/nam-cuoi.png';
 import iconTotNghiep from './Logoicon/5.png';
 
 const getBadgeIcon = (badgeName) => {
@@ -1708,8 +1708,8 @@ function PortfolioPage({ setPage, pageParams }) {
                   initialBlocks={currentDraftId ? drafts.find(d => d.id === currentDraftId)?.blocks : []}
                   initialSettingsData={currentDraftId ? (drafts.find(d => d.id === currentDraftId)?.settingsData || { title: drafts.find(d => d.id === currentDraftId)?.title, coverImage: drafts.find(d => d.id === currentDraftId)?.coverImageUrl }) : null}
                   onClose={() => setIsDraftBuilderOpen(false)} 
-                  onSave={async (blocks, settingsData) => {
-                     setIsDraftBuilderOpen(false);
+                  onSave={async (blocks, settingsData, isAutoSave = false) => {
+                     if (!isAutoSave) setIsDraftBuilderOpen(false);
                      
                      let autoCover = settingsData?.coverImage || "";
                      if (!autoCover && blocks && blocks.length > 0) {
@@ -1734,7 +1734,7 @@ function PortfolioPage({ setPage, pageParams }) {
                           await api.artworks.update(currentDraftId, {
                              title: newDraft.title,
                              coverImageUrl: newDraft.coverImageUrl,
-                             blocks: newDraft.blocks,
+                             blocksJson: JSON.stringify(newDraft.blocks),
                              status: 'draft'
                           });
                         } else {
@@ -1742,7 +1742,7 @@ function PortfolioPage({ setPage, pageParams }) {
                              title: newDraft.title,
                              coverImageUrl: newDraft.coverImageUrl,
                              description: "Draft",
-                             blocks: newDraft.blocks,
+                             blocksJson: JSON.stringify(newDraft.blocks),
                              status: 'draft'
                           });
                         }
@@ -1759,12 +1759,12 @@ function PortfolioPage({ setPage, pageParams }) {
                      } catch(e) {
                        console.error("Local storage quota exceeded for draft.");
                      }
-                     alert("Đã lưu bản nháp thành công!");
+                     if (!isAutoSave) alert("Đã lưu bản nháp thành công!");
                   }}
                   currentUser={authUser}
                   onPublish={(blocks, settingsData, capturedImageUrl) => {
                      setIsDraftBuilderOpen(false);
-                     setPage("upload", { draftBlocks: blocks, draftSettings: settingsData || {}, draftCapturedImage: capturedImageUrl });
+                     setPage("upload", { draftId: currentDraftId, draftBlocks: blocks, draftSettings: settingsData || {}, draftCapturedImage: capturedImageUrl });
                   }} 
                />
 
@@ -2421,6 +2421,7 @@ function BadgesPage({ setPage, userData }) {
 
 function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userData }) {
     const [artworksList, setArtworksList] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(12);
   const [loading, setLoading] = useState(true);
   const [collabArtworks, setCollabArtworks] = useState([]);
   const [collabLoading, setCollabLoading] = useState(true);
@@ -2487,7 +2488,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-              {artworksList.map(art => (
+              {artworksList.slice(0, visibleCount).map(art => (
                 <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
                   <div style={{ position: "relative", background: GRAY_BG }}>
                     <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail", { artworkId: art.id })} />
@@ -2508,12 +2509,27 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                         <span style={{ fontSize: 11, color: MUTED }}>{t("public")}</span>
                         <ToggleSwitch isOn={art.isPublic} disabled={art.isPending} onToggle={() => {
                           if (!art.isPublic) {
-                            alert("Sinh viên không được tự động công khai ấn phẩm. Vui lòng liên hệ ban quản trị.");
+                            if (!window.confirm("Ấn phẩm sẽ được chuyển vào trạng thái Chờ duyệt. Bạn có muốn tiếp tục?")) return;
+                            if (api.artworks.update) {
+                              api.artworks.update(art.id, { status: "pending_approval", isPublic: true })
+                                 .then(() => {
+                                    alert("Đã gửi yêu cầu duyệt ấn phẩm.");
+                                    setArtworksList(prev => prev.map(a => a.id === art.id ? { ...a, isPublic: true, isPending: true } : a));
+                                 })
+                                 .catch(err => alert(err?.message || "Lỗi cập nhật trạng thái"));
+                            } else {
+                              api.artworks.toggleVisibility(art.id, true)
+                                 .then(() => {
+                                    alert("Đã gửi yêu cầu duyệt ấn phẩm.");
+                                    setArtworksList(prev => prev.map(a => a.id === art.id ? { ...a, isPublic: true, isPending: true } : a));
+                                 })
+                                 .catch(err => alert(err?.message || "Lỗi cập nhật trạng thái"));
+                            }
                             return;
                           }
                           api.artworks.toggleVisibility(art.id, false)
                              .then(() => {
-                                setArtworksList(prev => prev.map(a => a.id === art.id ? { ...a, isPublic: false } : a));
+                                setArtworksList(prev => prev.map(a => a.id === art.id ? { ...a, isPublic: false, isPending: false } : a));
                              })
                              .catch(err => alert(err?.message || "Lỗi cập nhật trạng thái"));
                         }} />
@@ -2523,7 +2539,7 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                           <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
                         </button>
                         <button onClick={() => {
-                          if (confirm("Bạn có chắc chắn muốn xóa ấn phẩm này không?")) {
+                          if (window.confirm("Cảnh báo: Việc xóa bài sẽ làm mất vĩnh viễn toàn bộ Like và Bình luận của bài viết này. Bạn có chắc chắn muốn tiếp tục?")) {
                             api.artworks.delete(art.id)
                               .then(() => setArtworksList(prev => prev.filter(a => a.id !== art.id)))
                               .catch(err => alert(err?.message || "Lỗi xóa ấn phẩm"));
@@ -2537,6 +2553,15 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                 </div>
               ))}
             </div>
+
+            {visibleCount < artworksList.length && (
+              <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
+                <button onClick={() => setVisibleCount(v => v + 12)} style={{ padding: "10px 24px", borderRadius: 100, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", color: BLACK, fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s" }} onMouseEnter={e => e.currentTarget.style.background = GRAY_BG} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
+                  <ChevronDown size={16} />
+                  Tải thêm tác phẩm
+                </button>
+              </div>
+            )}
 
             {collabArtworks.length > 0 && (
               <>
@@ -2613,6 +2638,48 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
 
   const isFromDraft = !!pageParams?.draftBlocks;
   const [showUploadPreview, setShowUploadPreview] = useState(false);
+  const [draftId, setDraftId] = useState(pageParams?.draftId || null);
+
+  const autoSaveStateRef = React.useRef({ title, description, subject, tools, tags, friends, coverImage, additionalImages, projectYear, defaultWatermarkText, blocks, draftId });
+  useEffect(() => {
+    autoSaveStateRef.current = { title, description, subject, tools, tags, friends, coverImage, additionalImages, projectYear, defaultWatermarkText, blocks, draftId };
+  });
+
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      const state = autoSaveStateRef.current;
+      if (!state.title?.trim() && state.blocks.length === 0) return;
+      try {
+        const body = {
+          title: state.title?.trim() || 'Untitled Draft',
+          description: state.description?.trim() || null,
+          subject: state.subject || null,
+          toolsUsed: state.tools,
+          tags: state.tags,
+          collaborators: state.friends.map(f => f.fullName || f),
+          collaboratorIds: state.friends.map(f => f.id).filter(Boolean),
+          fileUrls: [state.coverImage, ...state.additionalImages].filter(Boolean),
+          coverImageUrl: state.coverImage,
+          watermarkText: state.defaultWatermarkText || "UEF",
+          watermarkPosition: "bottom-right",
+          semester: yearToSemester[state.projectYear] || "HK1",
+          academicYear: yearToAcademic[state.projectYear] || "2024-2025",
+          blocksJson: JSON.stringify(state.blocks),
+          status: 'draft'
+        };
+        if (state.draftId) {
+          await api.artworks.update(state.draftId, body);
+        } else {
+          const created = await api.artworks.create(body);
+          setDraftId(created.id);
+        }
+        console.log("Auto-saved draft from UploadPage at", new Date().toLocaleTimeString());
+      } catch (e) {
+        console.error("Auto-save failed", e);
+      }
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (pageParams?.draftBlocks) {
@@ -2778,13 +2845,13 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
 
       setUploadState("analyzing_ai");
       const aiResult = await api.artworks.analyzeArtworkWithAI(coverImage);
-      
+      let uploadStatus = "pending_approval";
       if (aiResult.originalityScore < 50) {
         const proceed = window.confirm(
           `CẢNH BÁO AI:\n\n` +
           `Hệ thống nhận diện tác phẩm của bạn có tỷ lệ tạo ra bởi AI rất cao (${aiResult.aiGeneratedPercentage}%).\n` +
           `Độ nguyên bản (Originality) chỉ đạt ${aiResult.originalityScore}%.\n\n` +
-          `Việc đăng tải ấn phẩm lạm dụng AI có thể ảnh hưởng đến kết quả đánh giá của giảng viên. Bạn có chắc chắn muốn tiếp tục đăng không?`
+          `Ấn phẩm sẽ được chuyển vào trạng thái CHỜ DUYỆT để Admin và Giảng viên kiểm tra.\nBạn có chắc chắn muốn tiếp tục đăng không?`
         );
         if (!proceed) {
           setUploadState("idle");
@@ -2819,7 +2886,8 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
         originalCoverUrl: finalCover,
         watermarkText: finalWatermarkText,
         watermarkPosition: "bottom-right",
-        isPublic: false,
+        isPublic: true,
+        status: uploadStatus,
         isAiConfirmed: checked1,
         isEbook: isEbook,
         aiScore: aiResult.originalityScore,
@@ -3656,6 +3724,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   };
   const [relatedArtworks, setRelatedArtworks] = useState([]);
   const [liking, setLiking] = useState(false);
+  const lastLikeTimeRef = React.useRef(0);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [pinpointMode, setPinpointMode] = useState(false);
   const [pendingComment, setPendingComment] = useState(null);
@@ -3816,6 +3885,14 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, onBookmarkCl
   const handleLike = async () => {
     if (liking) return;
     if (!authUser) return alert(t("loginWithEmailToUse"));
+
+    const now = Date.now();
+    if (now - lastLikeTimeRef.current < 2000) {
+      alert("Bạn thao tác quá nhanh, vui lòng đợi một chút!");
+      return;
+    }
+    lastLikeTimeRef.current = now;
+
     setLiking(true);
     setAnimatingLike(true);
     setTimeout(() => setAnimatingLike(false), 300);
@@ -4769,6 +4846,17 @@ if (mins < 1) return t("justNow");
                             <span style={{ background: CRIMSON, color: "#fff", fontSize: 10, padding: "2px 6px", borderRadius: 10, fontWeight: "bold" }}>
                               Marker #{badgeNum} on Image {c.targetImageIndex + 1}
                             </span>
+                          )}
+                          {(authUser?.id === c.userId || authUser?.id === c.user?.id || authUser?.id === art.userId || authUser?.role === "admin") && (
+                            <button onClick={() => {
+                              if (window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) {
+                                api.artworks.comments.delete(art.id, c.id)
+                                  .then(() => setComments(prev => prev.filter(x => x.id !== c.id)))
+                                  .catch(err => alert("Lỗi xóa bình luận: " + (err?.message || "")));
+                              }
+                            }} style={{ background: "transparent", border: "none", color: "#999", cursor: "pointer", padding: "2px 4px", display: "flex", alignItems: "center", transition: "color 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color=CRIMSON} onMouseLeave={e=>e.currentTarget.style.color="#999"} title="Xóa bình luận">
+                              <Trash2 size={12} strokeWidth={2} />
+                            </button>
                           )}
                         </div>
                         <p style={{ margin: 0, color: "#444", fontSize: 14, lineHeight: 1.6 }}>{c.content}</p>
@@ -6912,6 +7000,40 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     }).catch(() => setLoading(false));
   }, [activeArtworkId]);
 
+  const autoSaveStateRef = React.useRef({ title, description, subject, tools, tags, friends, coverImage, originalCover, additionalImages, projectYear, defaultWatermarkText });
+  useEffect(() => {
+    autoSaveStateRef.current = { title, description, subject, tools, tags, friends, coverImage, originalCover, additionalImages, projectYear, defaultWatermarkText };
+  });
+
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      const state = autoSaveStateRef.current;
+      if (!state.title?.trim()) return;
+      try {
+        const body = {
+          title: state.title.trim(),
+          description: state.description?.trim() || null,
+          subject: state.subject || null,
+          toolsUsed: state.tools,
+          tags: state.tags,
+          collaborators: state.friends.map(f => f.fullName || f),
+          collaboratorIds: state.friends.map(f => f.id).filter(Boolean),
+          fileUrls: [state.coverImage || state.originalCover, ...state.additionalImages].filter(Boolean),
+          coverImageUrl: state.coverImage || state.originalCover,
+          watermarkText: state.defaultWatermarkText || "UEF",
+          watermarkPosition: "bottom-right",
+          semester: yearToSemester[state.projectYear] || "HK1",
+          academicYear: yearToAcademic[state.projectYear] || "2024-2025",
+        };
+        await api.artworks.update(activeArtworkId, body);
+        console.log("Auto-saved at", new Date().toLocaleTimeString());
+      } catch (e) {
+        console.error("Auto-save failed", e);
+      }
+    }, 60000);
+    return () => clearInterval(timer);
+  }, [activeArtworkId]);
+
   useEffect(() => {
     fetch("/api/site-settings")
       .then(r => r.json())
@@ -6989,7 +7111,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
   };
 
   const handleDelete = async () => {
-    if (!confirm(t("confirmDeleteArtwork"))) return;
+    if (!window.confirm("Cảnh báo: Việc xóa bài sẽ làm mất vĩnh viễn toàn bộ Like và Bình luận của bài viết này. Bạn có chắc chắn muốn tiếp tục?")) return;
     try {
       await api.artworks.delete(activeArtworkId);
       setPage("dashboard");

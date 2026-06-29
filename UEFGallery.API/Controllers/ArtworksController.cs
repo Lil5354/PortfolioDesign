@@ -94,10 +94,15 @@ public class ArtworksController : ControllerBase
         var query = _context.Artworks.AsQueryable();
 
         bool isPendingFilter = false;
-        if (Request.Query.ContainsKey("isPending") && bool.TryParse(Request.Query["isPending"], out bool isPendingVal))
+        if (Request.Query.ContainsKey("isPending"))
         {
-            isPendingFilter = true;
-            query = query.Where(a => a.IsPending == isPendingVal);
+            var val = Request.Query["isPending"].ToString().ToLower();
+            if (val == "true" || val == "false")
+            {
+                isPendingFilter = true;
+                bool isPendingVal = (val == "true");
+                query = query.Where(a => a.IsPending == isPendingVal);
+            }
         }
 
         if (!string.IsNullOrEmpty(collaboratorId))
@@ -299,6 +304,67 @@ public class ArtworksController : ControllerBase
         return Ok(related);
     }
 
+    private async Task UpdateLikeNotificationAsync(string artworkId, string authorId, string title)
+    {
+        var existingNotif = await _context.Notifications.FirstOrDefaultAsync(n => n.ReferenceId == artworkId && n.Type == NotificationType.new_like);
+        
+        var recentLikes = await _context.Likes
+            .Include(l => l.User)
+            .Where(l => l.ArtworkId == artworkId)
+            .OrderByDescending(l => l.CreatedAt)
+            .Take(2)
+            .ToListAsync();
+            
+        var totalLikes = await _context.Likes.CountAsync(l => l.ArtworkId == artworkId);
+
+        if (totalLikes == 0)
+        {
+            if (existingNotif != null)
+            {
+                _context.Notifications.Remove(existingNotif);
+                await _context.SaveChangesAsync();
+            }
+            return;
+        }
+
+        string content = "";
+        if (totalLikes == 1)
+        {
+            content = $"{recentLikes[0].User?.FullName ?? "Ai đó"} đã thích tác phẩm \"{title}\" của bạn.";
+        }
+        else if (totalLikes == 2)
+        {
+            content = $"{recentLikes[0].User?.FullName ?? "Ai đó"} và {recentLikes[1].User?.FullName ?? "Ai đó"} đã thích tác phẩm \"{title}\" của bạn.";
+        }
+        else
+        {
+            content = $"{recentLikes[0].User?.FullName ?? "Ai đó"}, {recentLikes[1].User?.FullName ?? "Ai đó"} và {totalLikes - 2} người khác đã thích tác phẩm \"{title}\" của bạn.";
+        }
+
+        if (existingNotif == null)
+        {
+            _context.Notifications.Add(new Notification
+            {
+                Id = Guid.NewGuid().ToString(),
+                UserId = authorId,
+                Type = NotificationType.new_like,
+                ReferenceId = artworkId,
+                ReferenceType = "artwork",
+                Content = content,
+                CreatedAt = DateTime.UtcNow,
+                IsRead = false
+            });
+        }
+        else
+        {
+            existingNotif.Content = content;
+            existingNotif.CreatedAt = DateTime.UtcNow; // Bump to top
+            existingNotif.IsRead = false;
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
     [HttpPost("{id}/like")]
     [Authorize]
     public async Task<IActionResult> LikeArtwork(string id)
@@ -322,6 +388,11 @@ public class ArtworksController : ControllerBase
             });
             artwork.LikeCount++;
             await _context.SaveChangesAsync();
+
+            if (artwork.UserId != userId)
+            {
+                await UpdateLikeNotificationAsync(artwork.Id, artwork.UserId, artwork.Title ?? "Tác phẩm");
+            }
         }
 
         return Ok(new { success = true, likeCount = artwork.LikeCount });
@@ -343,6 +414,11 @@ public class ArtworksController : ControllerBase
             _context.Likes.Remove(existingLike);
             if (artwork.LikeCount > 0) artwork.LikeCount--;
             await _context.SaveChangesAsync();
+
+            if (artwork.UserId != userId)
+            {
+                await UpdateLikeNotificationAsync(artwork.Id, artwork.UserId, artwork.Title ?? "Tác phẩm");
+            }
         }
 
         return Ok(new { success = true, likeCount = artwork.LikeCount });
@@ -445,7 +521,8 @@ public class ArtworksController : ControllerBase
         var comment = await _context.Comments.FirstOrDefaultAsync(c => c.Id == commentId && c.ArtworkId == id);
         if (comment == null) return NotFound();
 
-        if (comment.UserId != userId && role != "admin") return Forbid();
+        var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.Id == id);
+        if (comment.UserId != userId && role != "admin" && artwork?.UserId != userId) return Forbid();
 
         _context.Comments.Remove(comment);
         await _context.SaveChangesAsync();
@@ -679,32 +756,56 @@ public class ArtworksController : ControllerBase
         if (artwork.UserId != userId && role != "admin") return Forbid();
 
         bool becamePublic = false;
+        bool becamePending = false;
         if (dto.IsPublic.HasValue)
         {
             if (dto.IsPublic.Value == true && !artwork.IsPublic && role != "admin")
             {
-                return BadRequest(new { error = "Sinh viên không được tự động công khai ấn phẩm." });
+                artwork.IsPending = true;
+                artwork.IsPublic = false;
+                becamePending = true;
             }
-            if (dto.IsPublic.Value && !artwork.IsPublic)
+            else
             {
-                becamePublic = true;
+                if (dto.IsPublic.Value && !artwork.IsPublic)
+                {
+                    becamePublic = true;
+                }
+                artwork.IsPublic = dto.IsPublic.Value;
+                if (!dto.IsPublic.Value) artwork.IsPending = false;
             }
-            artwork.IsPublic = dto.IsPublic.Value;
         }
 
-        if (dto.Title != null) artwork.Title = dto.Title;
-        if (dto.Description != null) artwork.Description = dto.Description;
+        if (dto.Title != null && dto.Title != artwork.Title) { artwork.Title = dto.Title; }
+        if (dto.Description != null && dto.Description != artwork.Description) { artwork.Description = dto.Description; }
         if (dto.ToolsUsed != null) artwork.ToolsUsed = dto.ToolsUsed;
-        if (dto.Subject != null) artwork.Subject = dto.Subject;
+        if (dto.Subject != null && dto.Subject != artwork.Subject) { artwork.Subject = dto.Subject; }
         if (dto.Semester != null) artwork.Semester = dto.Semester;
         if (dto.AcademicYear != null) artwork.AcademicYear = dto.AcademicYear;
-        if (!string.IsNullOrEmpty(dto.CoverImageUrl)) artwork.CoverImageUrl = dto.CoverImageUrl;
+        if (!string.IsNullOrEmpty(dto.CoverImageUrl) && dto.CoverImageUrl != artwork.CoverImageUrl) { artwork.CoverImageUrl = dto.CoverImageUrl; }
         if (!string.IsNullOrEmpty(dto.OriginalCoverUrl)) artwork.OriginalCoverUrl = dto.OriginalCoverUrl;
         if (dto.WatermarkImageUrl != null) artwork.WatermarkImageUrl = dto.WatermarkImageUrl;
         if (dto.FileUrls != null) artwork.FileUrls = dto.FileUrls;
-        if (dto.BlocksJson != null) artwork.BlocksJson = dto.BlocksJson;
+        if (dto.BlocksJson != null && dto.BlocksJson != artwork.BlocksJson) { artwork.BlocksJson = dto.BlocksJson; }
         if (dto.WatermarkText != null) artwork.WatermarkText = dto.WatermarkText;
         if (dto.WatermarkPosition != null) artwork.WatermarkPosition = dto.WatermarkPosition;
+
+        if (artwork.IsPublic && role != "admin" && role != "lecturer")
+        {
+            // If the user modified core content, revert to pending review
+            bool hasContentChanges = 
+                (dto.Title != null && dto.Title != _context.Entry(artwork).OriginalValues["Title"]?.ToString()) ||
+                (dto.Description != null && dto.Description != _context.Entry(artwork).OriginalValues["Description"]?.ToString()) ||
+                (dto.BlocksJson != null && dto.BlocksJson != _context.Entry(artwork).OriginalValues["BlocksJson"]?.ToString()) ||
+                (!string.IsNullOrEmpty(dto.CoverImageUrl) && dto.CoverImageUrl != _context.Entry(artwork).OriginalValues["CoverImageUrl"]?.ToString());
+
+            if (hasContentChanges)
+            {
+                artwork.IsPublic = false;
+                artwork.IsPending = true;
+                becamePending = true;
+            }
+        }
 
         artwork.UpdatedAt = DateTime.UtcNow;
 
@@ -714,6 +815,26 @@ public class ArtworksController : ControllerBase
         {
             var actorName = User.FindFirstValue("FullName") ?? "Ai đó";
             await _fanoutChannel.AddEventAsync(new FanoutEvent { ArtworkId = artwork.Id, ActorId = artwork.UserId, ActorName = actorName, ArtworkTitle = artwork.Title ?? "Tác phẩm mới" });
+        }
+        if (becamePending)
+        {
+            var reviewers = await _context.Users.Where(u => u.Role == Role.admin || u.Role == Role.lecturer).ToListAsync();
+            var actorName = User.FindFirstValue("FullName") ?? "Sinh viên";
+            foreach (var r in reviewers)
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = r.Id,
+                    Type = NotificationType.artwork_pending,
+                    ReferenceId = artwork.Id,
+                    ReferenceType = "artwork",
+                    Content = $"{actorName} đã gửi tác phẩm \"{artwork.Title}\" chờ duyệt.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false
+                });
+            }
+            await _context.SaveChangesAsync();
         }
 
         return Ok(artwork);
@@ -829,12 +950,20 @@ public class ArtworksController : ControllerBase
         var role = User.FindFirstValue(ClaimTypes.Role);
         if (artwork.UserId != userId && role != "admin") return Forbid();
 
+        bool becamePublic = false;
+        bool becamePending = false;
         if (dto.IsPublic && !artwork.IsPublic && role != "admin")
         {
-            return BadRequest(new { error = "Sinh viên không được tự động công khai ấn phẩm." });
+            artwork.IsPending = true;
+            artwork.IsPublic = false;
+            becamePending = true;
         }
-        bool becamePublic = dto.IsPublic && !artwork.IsPublic;
-        artwork.IsPublic = dto.IsPublic;
+        else
+        {
+            becamePublic = dto.IsPublic && !artwork.IsPublic;
+            artwork.IsPublic = dto.IsPublic;
+            if (!dto.IsPublic) artwork.IsPending = false;
+        }
         artwork.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
@@ -843,6 +972,26 @@ public class ArtworksController : ControllerBase
         {
             var actorName = User.FindFirstValue("FullName") ?? "Ai đó";
             await _fanoutChannel.AddEventAsync(new FanoutEvent { ArtworkId = artwork.Id, ActorId = artwork.UserId, ActorName = actorName, ArtworkTitle = artwork.Title ?? "Tác phẩm mới" });
+        }
+        if (becamePending)
+        {
+            var reviewers = await _context.Users.Where(u => u.Role == Role.admin || u.Role == Role.lecturer).ToListAsync();
+            var actorName = User.FindFirstValue("FullName") ?? "Sinh viên";
+            foreach (var r in reviewers)
+            {
+                _context.Notifications.Add(new Notification
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    UserId = r.Id,
+                    Type = NotificationType.artwork_pending,
+                    ReferenceId = artwork.Id,
+                    ReferenceType = "artwork",
+                    Content = $"{actorName} đã gửi tác phẩm \"{artwork.Title}\" chờ duyệt.",
+                    CreatedAt = DateTime.UtcNow,
+                    IsRead = false
+                });
+            }
+            await _context.SaveChangesAsync();
         }
 
         return Ok(new { success = true, isPublic = artwork.IsPublic });
