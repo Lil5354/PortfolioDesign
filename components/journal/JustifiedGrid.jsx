@@ -35,7 +35,6 @@ const JustifiedGrid = ({
     let active = true;
     const loadDimensions = async () => {
       const promises = images.map(async (imgObj) => {
-        if (imgObj.width && imgObj.height) return imgObj;
         return new Promise((resolve) => {
           const img = new Image();
           img.onload = () => resolve({ ...imgObj, width: img.naturalWidth, height: img.naturalHeight });
