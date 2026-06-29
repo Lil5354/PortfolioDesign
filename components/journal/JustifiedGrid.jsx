@@ -88,14 +88,6 @@ const JustifiedGrid = ({
     setLayoutImages(computedImages);
   }, [loadedImages, measuredWidth, spacing, targetRowHeight, maxImagesPerRow]);
 
-  if (loadedImages.length === 0) {
-    return (
-      <div className="w-full min-h-[200px] bg-gray-50 flex items-center justify-center border-2 border-dashed border-gray-300">
-        <span className="text-gray-400 font-medium">Empty Grid</span>
-      </div>
-    );
-  }
-
   return (
     <div 
       ref={containerRef} 
@@ -106,8 +98,13 @@ const JustifiedGrid = ({
         maxWidth: '100%' 
       }}
     >
-      {layoutImages.map((img, index) => {
-        const key = img.id || index;
+      {loadedImages.length === 0 ? (
+        <div className="w-full min-h-[200px] bg-gray-50 flex items-center justify-center border-2 border-dashed border-gray-300">
+          <span className="text-gray-400 font-medium">Empty Grid</span>
+        </div>
+      ) : (
+        layoutImages.map((img, index) => {
+          const key = img.id || index;
         if (renderImage) {
           return (
             <div 
@@ -136,7 +133,8 @@ const JustifiedGrid = ({
             </div>
           </div>
         );
-      })}
+      })
+      )}
     </div>
   );
 };
