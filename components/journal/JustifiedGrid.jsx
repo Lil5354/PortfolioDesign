@@ -58,7 +58,7 @@ const JustifiedGrid = ({
 
   return (
     <div 
-      className="flex flex-col w-full h-full relative" 
+      className="flex flex-col w-full flex-1 relative h-full min-h-0 overflow-hidden" 
       style={{ gap: `${spacing}px` }}
     >
       {rows.map((row, rowIndex) => (

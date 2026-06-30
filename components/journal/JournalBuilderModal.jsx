@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle, Move } from "lucide-react";
 import HTMLFlipBook from "react-pageflip";
-import { jsPDF } from "jspdf";
-import { toJpeg } from "html-to-image";
 import { api } from "../../lib/api-client";
 import JustifiedGrid from "./JustifiedGrid";
 import EditGridModal from "./EditGridModal";
@@ -34,43 +32,13 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
 
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExportPDF = async () => {
-    setIsExporting(true);
-    try {
-      const pdf = new jsPDF({
-        orientation: orientation === 'landscape' ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: orientation === 'landscape' ? [800, 600] : [600, 800]
-      });
-
-      let pagesAdded = 0;
-      for (let i = 0; i < blocks.length; i++) {
-        const blockEl = document.getElementById(`pdf-block-${blocks[i].id}`);
-        if (!blockEl) continue;
-        
-        const imgData = await toJpeg(blockEl, {
-          quality: 1.0,
-          pixelRatio: 2,
-          backgroundColor: projectStyles.backgroundColor || '#ffffff'
-        });
-        
-        if (pagesAdded > 0) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, 0, orientation === 'landscape' ? 800 : 600, orientation === 'landscape' ? 600 : 800);
-        pagesAdded++;
-      }
-
-      if (pagesAdded === 0) {
-        alert('Không có nội dung để xuất PDF.');
-        return;
-      }
-
-      pdf.save(`TapSan_${collection.name || 'Export'}.pdf`);
-    } catch (err) {
-      console.error('Lỗi khi xuất PDF:', err);
-      alert('Có lỗi xảy ra khi xuất PDF. Vui lòng thử lại.');
-    } finally {
-      setIsExporting(false);
-    }
+  const handleExportPDF = () => {
+    // We add a class to body so index.css print styles can specifically target this modal
+    document.body.classList.add('printing-journal');
+    setTimeout(() => {
+      window.print();
+      document.body.classList.remove('printing-journal');
+    }, 100);
   };
 
   useEffect(() => {
@@ -135,7 +103,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
       <div 
         key={block.id} 
         id={`pdf-block-${block.id}`}
-        className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex items-center justify-center shadow-md print:mb-0 print:border-none print:shadow-none ${!isLastBlock ? 'print:break-after-page' : ''} print:overflow-hidden`}
+        className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex flex-col justify-center shadow-md print:mb-0 print:border-none print:shadow-none ${!isLastBlock ? 'print:break-after-page' : ''} overflow-hidden`}
         onMouseEnter={() => setHoveredBlockId(block.id)}
         onMouseLeave={() => setHoveredBlockId(null)}
         style={{ 
@@ -571,7 +539,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         )}
         {block.type === 'grid' && (
            <div 
-             className={`w-full relative transition-all duration-200 bg-white min-h-[300px] flex items-center justify-center`}
+             className={`w-full h-full relative transition-all duration-200 bg-white flex flex-col items-center justify-center min-h-0 overflow-hidden`}
              onClick={(e) => { e.stopPropagation(); setFocusedBlockId(block.id); if (editingBlockId !== block.id) setEditingBlockId(null); }}
            >
               {(!block.images || block.images.length === 0) ? (
@@ -585,7 +553,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                    </button>
                 </div>
               ) : (
-                <div className="w-full h-full flex justify-center" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
+                <div className="w-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
                   <JustifiedGrid 
                     images={block.images} 
                     containerWidth="auto" 
@@ -708,8 +676,8 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                            <img src={block.content} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                          )}
                          {block.type === 'grid' && (
-                           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                             <div className="w-full h-full" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
+                           <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                             <div className="w-full flex-1 flex flex-col justify-center items-center min-h-0 overflow-hidden" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2), margin: "0 auto" }}>
                                <JustifiedGrid 
                                  images={block.images || []} 
                                  containerWidth="auto" 
@@ -867,9 +835,9 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         {/* WORKSPACE */}
         <div className="flex-1 overflow-y-auto relative transition-colors print:overflow-visible print:static print:h-auto print:block" style={{ backgroundColor: projectStyles.backgroundColor }}>
           {blocks.length === 0 ? (
-            <div className="w-full min-h-full pb-32 pt-12 print:p-0 print:m-0"></div>
+            <div className="w-full min-h-full pb-32 pt-12 print:p-0 print:m-0 journal-print-container"></div>
           ) : (
-            <div className={`w-full min-h-full pb-32 ${blocks.length > 0 && blocks[0].fullWidth ? '' : 'pt-12'} print:p-0 print:m-0`}>
+            <div className={`w-full min-h-full pb-32 ${blocks.length > 0 && blocks[0].fullWidth ? '' : 'pt-12'} print:p-0 print:m-0 journal-print-container`}>
               {blocks.map(renderBlock)}
             </div>
           )}

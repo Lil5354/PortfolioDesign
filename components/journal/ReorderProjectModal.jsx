@@ -1,5 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { Type, Image as ImageIcon, LayoutGrid, Play } from 'lucide-react';
+import { Type, Image as ImageIcon, LayoutGrid, Play, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+const SortableItem = ({ block, getLabel, getIcon }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : 1,
+    position: 'relative'
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={`flex items-center bg-white border border-gray-200 rounded p-3 shadow-sm group ${isDragging ? 'shadow-lg ring-2 ring-blue-500 opacity-90' : ''}`}>
+      <div {...attributes} {...listeners} className="mr-3 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing p-1">
+        <GripVertical size={18} />
+      </div>
+      
+      <div className="w-10 h-10 bg-gray-50 border border-gray-100 rounded flex items-center justify-center shrink-0 mr-4">
+        {block.type === 'image' && block.content ? (
+          <img src={block.content} alt="" className="w-full h-full object-cover rounded pointer-events-none" />
+        ) : block.type === 'grid' && block.images && block.images.length > 0 ? (
+          <img src={block.images[0].content || block.images[0].url} alt="" className="w-full h-full object-cover rounded pointer-events-none" />
+        ) : (
+          getIcon(block.type)
+        )}
+      </div>
+      
+      <div className="flex-1">
+        <div className="text-sm font-semibold text-gray-700">{getLabel(block)}</div>
+      </div>
+    </div>
+  );
+};
 
 const ReorderProjectModal = ({ isOpen, onClose, blocks, onSave }) => {
   const [localBlocks, setLocalBlocks] = useState([]);
@@ -9,6 +44,22 @@ const ReorderProjectModal = ({ isOpen, onClose, blocks, onSave }) => {
       setLocalBlocks([...blocks]);
     }
   }, [isOpen, blocks]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setLocalBlocks((items) => {
+        const oldIndex = items.findIndex(i => i.id === active.id);
+        const newIndex = items.findIndex(i => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -40,21 +91,6 @@ const ReorderProjectModal = ({ isOpen, onClose, blocks, onSave }) => {
     }
   };
 
-  // Basic Move up/down logic for reordering without a heavy DnD library
-  const moveBlock = (index, direction) => {
-    const newBlocks = [...localBlocks];
-    if (direction === 'up' && index > 0) {
-      const temp = newBlocks[index - 1];
-      newBlocks[index - 1] = newBlocks[index];
-      newBlocks[index] = temp;
-    } else if (direction === 'down' && index < newBlocks.length - 1) {
-      const temp = newBlocks[index + 1];
-      newBlocks[index + 1] = newBlocks[index];
-      newBlocks[index] = temp;
-    }
-    setLocalBlocks(newBlocks);
-  };
-
   return (
     <div className="fixed inset-0 bg-black/40 z-[10000] flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg flex flex-col overflow-hidden">
@@ -62,42 +98,15 @@ const ReorderProjectModal = ({ isOpen, onClose, blocks, onSave }) => {
           <h2 className="text-xl font-bold text-gray-900">Reorder Content</h2>
         </div>
         
-        <div className="p-6 overflow-y-auto max-h-[60vh] bg-gray-50 flex flex-col gap-2">
-          {localBlocks.map((block, index) => (
-            <div key={block.id} className="flex items-center bg-white border border-gray-200 rounded p-3 shadow-sm group">
-              <div className="flex flex-col gap-1 mr-4 opacity-30 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={() => moveBlock(index, 'up')} 
-                  disabled={index === 0}
-                  className="hover:text-blue-600 disabled:opacity-30 disabled:hover:text-inherit"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 15l-6-6-6 6"/></svg>
-                </button>
-                <button 
-                  onClick={() => moveBlock(index, 'down')} 
-                  disabled={index === localBlocks.length - 1}
-                  className="hover:text-blue-600 disabled:opacity-30 disabled:hover:text-inherit"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M6 9l6 6 6-6"/></svg>
-                </button>
-              </div>
-              
-              <div className="w-10 h-10 bg-gray-50 border border-gray-100 rounded flex items-center justify-center shrink-0 mr-4">
-                {block.type === 'image' && block.content ? (
-                  <img src={block.content} alt="" className="w-full h-full object-cover rounded" />
-                ) : block.type === 'grid' && block.images && block.images.length > 0 ? (
-                  <img src={block.images[0].content || block.images[0].url} alt="" className="w-full h-full object-cover rounded" />
-                ) : (
-                  getIcon(block.type)
-                )}
-              </div>
-              
-              <div className="flex-1">
-                <div className="text-sm font-semibold text-gray-700">{getLabel(block)}</div>
-              </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={localBlocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+            <div className="p-6 overflow-y-auto max-h-[60vh] bg-gray-50 flex flex-col gap-2">
+              {localBlocks.map((block) => (
+                <SortableItem key={block.id} block={block} getLabel={getLabel} getIcon={getIcon} />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
         
         <div className="px-6 py-4 border-t border-gray-100 flex items-center gap-3 bg-white">
           <button 

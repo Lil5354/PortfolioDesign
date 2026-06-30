@@ -83,7 +83,7 @@ public class CollectionsController : ControllerBase
                 name = g.Key,
                 theme = g.FirstOrDefault()?.Theme ?? "Classic",
                 curatorEssay = g.FirstOrDefault()?.CuratorEssay ?? "",
-                items = g.Select(x => new
+                items = g.Where(x => x.ArtworkId != "METADATA_DUMMY_ARTWORK").Select(x => new
                 {
                     id = x.Id,
                     artworkId = x.ArtworkId,
@@ -111,8 +111,43 @@ public class CollectionsController : ControllerBase
 
     [HttpPost]
     [Authorize]
-    public IActionResult CreateCollection([FromBody] CreateCollectionDto dto)
+    public async Task<IActionResult> CreateCollection([FromBody] CreateCollectionDto dto)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        
+        var dummyId = "METADATA_DUMMY_ARTWORK";
+        var dummy = await _context.Artworks.FirstOrDefaultAsync(a => a.Id == dummyId);
+        if (dummy == null) {
+            dummy = new Artwork {
+                Id = dummyId,
+                UserId = userId ?? "admin",
+                Title = "System Metadata",
+                Subject = "System",
+                CoverImageUrl = "",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.Artworks.Add(dummy);
+            await _context.SaveChangesAsync();
+        }
+
+        var existingItem = await _context.CollectionItems
+            .FirstOrDefaultAsync(c => c.LecturerId == userId && c.CollectionName == dto.CollectionName && c.ArtworkId == dummyId);
+            
+        if (existingItem == null) {
+            var item = new CollectionItem {
+                Id = Guid.NewGuid().ToString(),
+                LecturerId = userId ?? "",
+                ArtworkId = dummyId,
+                CollectionName = dto.CollectionName,
+                Theme = "Classic",
+                CuratorEssay = "",
+                AddedAt = DateTime.UtcNow
+            };
+            _context.CollectionItems.Add(item);
+            await _context.SaveChangesAsync();
+        }
+
         return Ok(new
         {
             id = dto.CollectionName,

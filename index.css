@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -183,3 +183,29 @@ body {
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+@media print {
+  body.printing-journal * {
+    visibility: hidden;
+  }
+  body.printing-journal .journal-print-container,
+  body.printing-journal .journal-print-container * {
+    visibility: visible;
+  }
+  body.printing-journal .journal-print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  /* Remove shadow and unneeded UI */
+  body.printing-journal .print-hide {
+    display: none !important;
+  }
+  @page {
+    margin: 0;
+    size: auto;
+  }
+}

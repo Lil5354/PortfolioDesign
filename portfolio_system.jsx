@@ -11679,8 +11679,19 @@ export default function App() {
 
   const handleOpenJournalFlow = (c) => {
     setJournalCollection(c);
-    const savedDrafts = JSON.parse(localStorage.getItem('uef_journal_drafts') || '{}');
-    const draft = savedDrafts[c.id];
+    let draft = null;
+    try {
+      if (c.curatorEssay && c.curatorEssay.startsWith('{')) {
+        draft = JSON.parse(c.curatorEssay);
+      }
+    } catch (e) {}
+
+    // Fallback to localStorage if db is empty (for backward compatibility during transition)
+    if (!draft) {
+      const savedDrafts = JSON.parse(localStorage.getItem('uef_journal_drafts') || '{}');
+      draft = savedDrafts[c.id];
+    }
+
     if (draft) {
       if (window.confirm("Bạn có một bản nháp thiết kế tập san chưa hoàn thành cho Moodboard này. Bạn có muốn tiếp tục chỉnh sửa bản nháp đó không?\n\nChọn OK để tiếp tục.\nChọn Cancel để bắt đầu thiết kế mới.")) {
         setJournalOrientation(draft.orientation || 'portrait');
@@ -11698,6 +11709,11 @@ export default function App() {
 
   const handleSaveJournalDraft = (draftData) => {
     if (!journalCollection) return;
+    // Save to DB using curatorEssay field
+    api.collections.update(journalCollection.id, { curatorEssay: JSON.stringify(draftData) }).catch(err => {
+      console.error("Lỗi khi lưu nháp lên DB:", err);
+    });
+    // Keep local storage as backup
     const savedDrafts = JSON.parse(localStorage.getItem('uef_journal_drafts') || '{}');
     savedDrafts[journalCollection.id] = draftData;
     localStorage.setItem('uef_journal_drafts', JSON.stringify(savedDrafts));
