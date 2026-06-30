@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle, Move } from "lucide-react";
 import HTMLFlipBook from "react-pageflip";
 import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
+import { toJpeg } from "html-to-image";
 import { api } from "../../lib/api-client";
 import JustifiedGrid from "./JustifiedGrid";
 import EditGridModal from "./EditGridModal";
@@ -48,13 +48,11 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         const blockEl = document.getElementById(`pdf-block-${blocks[i].id}`);
         if (!blockEl) continue;
         
-        const canvas = await html2canvas(blockEl, {
-          scale: 2,
-          useCORS: true,
+        const imgData = await toJpeg(blockEl, {
+          quality: 1.0,
+          pixelRatio: 2,
           backgroundColor: projectStyles.backgroundColor || '#ffffff'
         });
-
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
         
         if (pagesAdded > 0) pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, 0, orientation === 'landscape' ? 800 : 600, orientation === 'landscape' ? 600 : 800);
