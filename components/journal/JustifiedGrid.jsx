@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const JustifiedGrid = ({ 
   images = [], 
-  containerWidth = 'auto', 
   targetRowHeight = 250, 
   maxImagesPerRow = 4,
   spacing = 2,
@@ -10,25 +9,6 @@ const JustifiedGrid = ({
   animate = false
 }) => {
   const [loadedImages, setLoadedImages] = useState([]);
-  const [layoutImages, setLayoutImages] = useState([]);
-  const [measuredWidth, setMeasuredWidth] = useState(typeof containerWidth === 'number' ? containerWidth : 800);
-  const containerRef = useRef(null);
-
-  // Measure container width if 'auto'
-  useEffect(() => {
-    if (containerWidth !== 'auto') {
-      setMeasuredWidth(containerWidth);
-      return;
-    }
-    const observer = new ResizeObserver((entries) => {
-      if (entries[0]) {
-        // Adjust width slightly to avoid rounding issues causing premature wrapping
-        setMeasuredWidth(entries[0].contentRect.width - 1);
-      }
-    });
-    if (containerRef.current) observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, [containerWidth]);
 
   // Load image dimensions
   useEffect(() => {
@@ -37,8 +17,8 @@ const JustifiedGrid = ({
       const promises = images.map(async (imgObj) => {
         return new Promise((resolve) => {
           const img = new Image();
-          img.onload = () => resolve({ ...imgObj, width: img.naturalWidth, height: img.naturalHeight });
-          img.onerror = () => resolve({ ...imgObj, width: 800, height: 600 });
+          img.onload = () => resolve({ ...imgObj, aspectRatio: img.naturalWidth / Math.max(1, img.naturalHeight) });
+          img.onerror = () => resolve({ ...imgObj, aspectRatio: 1 });
           img.src = imgObj.content || imgObj.url;
         });
       });
@@ -50,91 +30,66 @@ const JustifiedGrid = ({
     return () => { active = false; };
   }, [images]);
 
-  // Compute layout
-  useEffect(() => {
-    if (loadedImages.length === 0 || measuredWidth <= 0) {
-      setLayoutImages([]);
-      return;
+  if (loadedImages.length === 0) {
+    return <div className="w-full h-full"></div>;
+  }
+
+  // Partition images into rows
+  const rows = [];
+  let currentGroup = [];
+  let currentRowRatio = 0;
+
+  loadedImages.forEach((image, index) => {
+    currentGroup.push(image);
+    currentRowRatio += image.aspectRatio;
+
+    // Estimate row height if width was ~800 to determine row breaks
+    const estimatedHeight = 800 / currentRowRatio;
+    
+    if (estimatedHeight <= targetRowHeight || currentGroup.length >= maxImagesPerRow || index === loadedImages.length - 1) {
+      rows.push({
+        images: currentGroup,
+        flexWeight: 1 / currentRowRatio // natural height is proportional to 1 / sum(aspectRatios)
+      });
+      currentGroup = [];
+      currentRowRatio = 0;
     }
-
-    const computedImages = [];
-    let currentRow = [];
-    let currentRowRatio = 0;
-
-    loadedImages.forEach((image, index) => {
-      const aspectRatio = image.width / image.height;
-      currentRow.push({ ...image, aspectRatio });
-      currentRowRatio += aspectRatio;
-
-      const safeWidth = Math.max(0, measuredWidth - 1); // Subtract 1px to prevent floating point layout wrapping issues
-      const expectedHeight = (safeWidth - (currentRow.length - 1) * spacing) / currentRowRatio;
-      
-      if (expectedHeight <= targetRowHeight || currentRow.length >= maxImagesPerRow || index === loadedImages.length - 1) {
-        let finalHeight = expectedHeight;
-
-        currentRow.forEach(img => {
-          computedImages.push({
-            ...img,
-            renderedWidth: img.aspectRatio * finalHeight,
-            renderedHeight: finalHeight
-          });
-        });
-
-        currentRow = [];
-        currentRowRatio = 0;
-      }
-    });
-
-    setLayoutImages(computedImages);
-  }, [loadedImages, measuredWidth, spacing, targetRowHeight, maxImagesPerRow]);
+  });
 
   return (
     <div 
-      ref={containerRef} 
-      className={`flex flex-row flex-wrap mx-auto ${containerWidth === 'auto' ? 'w-full' : ''}`} 
-      style={{ 
-        gap: `${spacing}px`, 
-        width: containerWidth !== 'auto' ? `${containerWidth}px` : undefined,
-        maxWidth: '100%' 
-      }}
+      className="flex flex-col w-full h-full relative" 
+      style={{ gap: `${spacing}px` }}
     >
-      {loadedImages.length === 0 ? (
-        <div className="w-full min-h-[200px] bg-gray-50 flex items-center justify-center border-2 border-dashed border-gray-300">
-          <span className="text-gray-400 font-medium">Empty Grid</span>
-        </div>
-      ) : (
-        layoutImages.map((img, index) => {
-          const key = img.id || index;
-        if (renderImage) {
-          return (
+      {rows.map((row, rowIndex) => (
+        <div 
+          key={rowIndex} 
+          className="flex flex-row w-full" 
+          style={{ flex: row.flexWeight, gap: `${spacing}px`, minHeight: 0 }}
+        >
+          {row.images.map((img, colIndex) => (
             <div 
-              key={key} 
-              className={animate ? "transition-all duration-300 ease-out" : ""}
-              style={{ width: img.renderedWidth, height: img.renderedHeight }}
+              key={img.id || colIndex} 
+              style={{ flex: img.aspectRatio, minWidth: 0, position: 'relative', overflow: 'hidden' }}
+              className={animate ? "transition-all duration-300" : ""}
             >
-              {renderImage(img)}
+              {renderImage ? renderImage(img) : (
+                <>
+                  <img 
+                    src={img.content || img.url} 
+                    className="w-full h-full object-cover" 
+                    alt="" 
+                    draggable={false}
+                  />
+                  <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider pointer-events-none">
+                    UEF
+                  </div>
+                </>
+              )}
             </div>
-          );
-        }
-        return (
-          <div 
-            key={key}
-            className={`relative overflow-hidden bg-gray-100 ${animate ? 'transition-all duration-300 ease-out' : ''}`}
-            style={{ width: img.renderedWidth, height: img.renderedHeight }}
-          >
-            <img 
-              src={img.content || img.url} 
-              className="w-full h-full object-cover" 
-              alt="" 
-              draggable={false}
-            />
-            <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
-              UEF
-            </div>
-          </div>
-        );
-      })
-      )}
+          ))}
+        </div>
+      ))}
     </div>
   );
 };

@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle, Move } from "lucide-react";
 import HTMLFlipBook from "react-pageflip";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 import { api } from "../../lib/api-client";
 import JustifiedGrid from "./JustifiedGrid";
 import EditGridModal from "./EditGridModal";
@@ -29,6 +31,49 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
   const [settingsData, setSettingsData] = useState(initialDraft?.settingsData || {
     coverImage: null, title: '', tags: '', category: '', tools: '', projectYear: 'Năm 3', description: '', license: 'All Rights Reserved', coOwners: ''
   });
+
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportPDF = async () => {
+    setIsExporting(true);
+    try {
+      const pdf = new jsPDF({
+        orientation: orientation === 'landscape' ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: orientation === 'landscape' ? [800, 600] : [600, 800]
+      });
+
+      let pagesAdded = 0;
+      for (let i = 0; i < blocks.length; i++) {
+        const blockEl = document.getElementById(`pdf-block-${blocks[i].id}`);
+        if (!blockEl) continue;
+        
+        const canvas = await html2canvas(blockEl, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: projectStyles.backgroundColor || '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        
+        if (pagesAdded > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, 0, orientation === 'landscape' ? 800 : 600, orientation === 'landscape' ? 600 : 800);
+        pagesAdded++;
+      }
+
+      if (pagesAdded === 0) {
+        alert('Không có nội dung để xuất PDF.');
+        return;
+      }
+
+      pdf.save(`TapSan_${collection.name || 'Export'}.pdf`);
+    } catch (err) {
+      console.error('Lỗi khi xuất PDF:', err);
+      alert('Có lỗi xảy ra khi xuất PDF. Vui lòng thử lại.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -91,6 +136,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
     return (
       <div 
         key={block.id} 
+        id={`pdf-block-${block.id}`}
         className={`relative group mx-auto mb-4 bg-transparent border ${block.type !== 'text' ? 'border-transparent hover:border-blue-500' : 'border-transparent'} transition-colors duration-200 flex items-center justify-center shadow-md print:mb-0 print:border-none print:shadow-none ${!isLastBlock ? 'print:break-after-page' : ''} print:overflow-hidden`}
         onMouseEnter={() => setHoveredBlockId(block.id)}
         onMouseLeave={() => setHoveredBlockId(null)}
@@ -541,7 +587,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                    </button>
                 </div>
               ) : (
-                <div className="w-full flex justify-center" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
+                <div className="w-full h-full flex justify-center" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
                   <JustifiedGrid 
                     images={block.images} 
                     containerWidth="auto" 
@@ -665,7 +711,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                          )}
                          {block.type === 'grid' && (
                            <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                             <div className="w-full" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
+                             <div className="w-full h-full" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
                                <JustifiedGrid 
                                  images={block.images || []} 
                                  containerWidth="auto" 
@@ -787,7 +833,20 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
         </div>
         <div className="flex items-center gap-3">
           <button className="text-sm font-semibold text-gray-500 hover:text-gray-800 transition" onClick={() => setIsPreviewMode(true)}>Preview Ebook</button>
-          <button onClick={() => window.print()} className="text-sm font-semibold text-white bg-[#1a4ba8] rounded-full px-5 py-1.5 hover:bg-[#1a4ba8]/90 transition flex items-center gap-2">Xuất PDF</button>
+          <button 
+            onClick={handleExportPDF} 
+            disabled={isExporting}
+            className={`text-sm font-semibold text-white bg-[#1a4ba8] rounded-full px-5 py-1.5 transition flex items-center gap-2 ${isExporting ? 'opacity-70 cursor-wait' : 'hover:bg-[#1a4ba8]/90'}`}
+          >
+            {isExporting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Đang xuất PDF...
+              </>
+            ) : (
+              'Xuất PDF'
+            )}
+          </button>
           <button onClick={() => onSaveDraft && onSaveDraft({ blocks, settingsData, orientation })} className="text-sm font-semibold text-gray-800 border border-gray-300 rounded-full px-4 py-1.5 hover:bg-gray-50 transition">Lưu Nháp & Đóng</button>
         </div>
       </header>

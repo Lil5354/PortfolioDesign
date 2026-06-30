@@ -75,12 +75,14 @@ const EditGridModal = ({ isOpen, onClose, block, onSave, orientation = 'landscap
           ) : (
             <div 
               className="mx-auto w-full transition-all duration-300" 
-              style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}
+              style={{ 
+                maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2),
+                height: block.fullWidth ? (orientation === 'landscape' ? 600 : 800) : ((orientation === 'landscape' ? 600 : 800) - (projectStyles.contentSpacing || 0)*2)
+              }}
             >
               <JustifiedGrid 
                 images={images}
                 animate={true}
-                containerWidth={block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2)}
                 renderImage={(img) => (
                   <div className="relative group w-full h-full bg-white rounded shadow-sm overflow-hidden">
                     <img src={img.content || img.url} alt="" className="w-full h-full object-cover" />
