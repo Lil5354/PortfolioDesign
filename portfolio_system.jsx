@@ -512,7 +512,7 @@ function ProfileQuickViewModal({ person, onClose, setPage }) {
   );
 }
 
-function PeopleGrid({ setPage }) {
+function PeopleGrid({ setPage, searchQuery }) {
   const [people, setPeople] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPerson, setSelectedPerson] = useState(null);
@@ -541,6 +541,12 @@ function PeopleGrid({ setPage }) {
     return img;
   }, [people]);
 
+  const filteredPeople = React.useMemo(() => {
+    if (!searchQuery || !searchQuery.trim()) return people;
+    const q = searchQuery.toLowerCase().trim();
+    return people.filter(p => p.fullName?.toLowerCase().includes(q));
+  }, [people, searchQuery]);
+
   if (loading) return <div style={{ padding: 40, textAlign: "center", color: "#666" }}>Đang tải danh sách sinh viên...</div>;
 
 
@@ -552,7 +558,7 @@ function PeopleGrid({ setPage }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24 }}>
-        {people.map(p => (
+        {filteredPeople.map(p => (
           <div key={p.id} onClick={() => setSelectedPerson(p)} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: "1px solid #e0e0e0", transition: "transform 0.2s, box-shadow 0.2s", cursor: "pointer" }} onMouseOver={e => {e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"}} onMouseOut={e => {e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"}}>
             <div style={{ display: "flex", gap: 0, background: "#f0f0f0", position: "relative", marginBottom: 32 }}>
               {Array.from({ length: 4 }).map((_, i) => {
@@ -793,7 +799,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
         title: a.title,
         student: a.user?.fullName || t("student"),
         img: a.coverImageUrl,
-        likes: a.likeCount || 0,
+                likes: a.likeCount || 0,
         views: a.viewCount || 0,
         isPublic: true,
         similarityScore: a.similarityScore,
@@ -811,7 +817,8 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       if (match) return match;
     }
     if (filters.year && filters.year !== "Tất cả") {
-      const match = art.badges.find(b => b.name?.toLowerCase() === filters.year.toLowerCase());
+      const yearTag = filters.year.split('-')[1]?.slice(2) || filters.year;
+      const match = art.badges.find(b => b.name?.toLowerCase() === yearTag.toLowerCase());
       if (match) return match;
     }
     if (filters.tool && filters.tool !== "Tất cả") {
@@ -930,38 +937,53 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 
         {showYearTool && (
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
-            <div style={{ position: "relative" }}>
-              <div 
-                onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
-                style={{ padding: "8px 16px", borderRadius: 999, border: `1px solid ${isYearDropdownOpen ? UEF_BLUE : GRAY_LIGHT}`, background: isYearDropdownOpen ? `${UEF_BLUE}08` : "#fff", cursor: "pointer", fontSize: 14, color: isYearDropdownOpen ? UEF_BLUE : BLACK, fontWeight: 500, minWidth: 140, display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all .2s" }}
-                className="hover:border-[#ccc]"
-              >
-                <span>{filters.year === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : filters.year}</span>
-                <ChevronDown size={16} style={{ transition: "transform .2s", transform: isYearDropdownOpen ? "rotate(180deg)" : "none" }} />
-              </div>
-              {isYearDropdownOpen && (
-                <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.1)", zIndex: 100, minWidth: 160, overflow: "hidden" }}>
-                  {years.map(y => (
-                    <div 
-                      key={y}
-                      onClick={() => { setFilter("year", y); setIsYearDropdownOpen(false); }}
-                      style={{ padding: "10px 16px", fontSize: 14, cursor: "pointer", fontWeight: 500, background: filters.year === y ? `${UEF_BLUE}10` : "#fff", color: filters.year === y ? UEF_BLUE : BLACK, transition: "background .15s" }}
-                      className="hover:bg-[#f5f5f5]"
-                    >
-                      {y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}
-                    </div>
-                  ))}
-                </div>
-              )}
+            <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none", msOverflowStyle: "none" }}>
+              {years.map(y => {
+                const isActive = filters.year === y;
+                return (
+                  <button
+                    key={y}
+                    onClick={() => setFilter("year", y)}
+                    style={{
+                      padding: "6px 16px",
+                      borderRadius: 20,
+                      border: `1px solid ${isActive ? UEF_BLUE : GRAY_LIGHT}`,
+                      background: isActive ? UEF_BLUE : "#fff",
+                      color: isActive ? "#fff" : MUTED,
+                      fontSize: 12,
+                      fontWeight: isActive ? 600 : 500,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      transition: "all .2s"
+                    }}
+                  >
+                    {y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}
+                  </button>
+                );
+              })}
             </div>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14, color: BLACK, fontWeight: 500, userSelect: "none", padding: "8px 16px", borderRadius: 999, border: `1px solid ${filters.hasBadge ? UEF_BLUE : GRAY_LIGHT}`, background: filters.hasBadge ? `${UEF_BLUE}08` : "#fff", transition: "all .2s" }} className="hover:border-[#ccc]">
-              <div style={{ width: 16, height: 16, borderRadius: 4, border: `1px solid ${filters.hasBadge ? UEF_BLUE : "#aaa"}`, background: filters.hasBadge ? UEF_BLUE : "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s" }}>
-                {filters.hasBadge && <Check size={12} color="#fff" strokeWidth={3} />}
-              </div>
-              <input type="checkbox" checked={filters.hasBadge} onChange={e => setFilter("hasBadge", e.target.checked)} style={{ display: "none" }} />
-              <span>Chỉ hiện bài có Huy hiệu</span>
-            </label>
+            <button
+              onClick={() => setFilter("hasBadge", !filters.hasBadge)}
+              style={{
+                padding: "6px 16px",
+                borderRadius: 20,
+                border: `1px solid ${filters.hasBadge ? UEF_BLUE : GRAY_LIGHT}`,
+                background: filters.hasBadge ? `${UEF_BLUE}15` : "#fff",
+                color: filters.hasBadge ? UEF_BLUE : MUTED,
+                fontSize: 12,
+                fontWeight: filters.hasBadge ? 600 : 500,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "all .2s",
+                display: "flex",
+                alignItems: "center",
+                gap: 6
+              }}
+            >
+              {filters.hasBadge && <Check size={14} />}
+              Chỉ hiện bài có Huy hiệu
+            </button>
 
             {activeFilterCount > 0 && (
               <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); setFilter("hasBadge", false); }} style={{ padding: "8px 16px", borderRadius: 999, border: `1px solid ${UEF_RED}40`, background: `${UEF_RED}08`, color: UEF_RED, fontSize: 13, cursor: "pointer", fontWeight: 600, transition: "all .2s" }} className="hover:bg-[#ffebee]">{t("reset")}</button>
@@ -1070,7 +1092,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       </div>
 
       {searchTab === "people" ? (
-        <PeopleGrid setPage={setPage} />
+        <PeopleGrid setPage={setPage} searchQuery={filters.q} />
       ) : (
       <div style={{ padding: "8px 32px 64px", width: "100%", boxSizing: "border-box" }}>
         {loading && page === 1 ? (
@@ -1122,7 +1144,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                           {getBadgeShortName(displayBadge.name)}
                         </div>
                         <div className="absolute top-full mt-1 left-0 bg-white text-black p-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none" style={{ borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", border: "1px solid #E0E0E0" }}>
-                          <div style={{ fontSize: 10, fontWeight: "bold", color: "#888", marginBottom: 4, textTransform: "uppercase" }}>FEATURED IN {displayBadge.name.toUpperCase()}</div>
+                          <div style={{ fontSize: 10, fontWeight: "bold", color: "#888", marginBottom: 4, textTransform: "uppercase" }}>FEATURED IN {art.subject?.toUpperCase() || art.category?.toUpperCase() || "ARTWORK"}</div>
                           <div style={{ fontSize: 13, fontWeight: "bold", color: displayBadge.textColor || "#0057ff" }}>
                             {displayBadge.name} <span style={{ color: "#888", fontWeight: "normal", fontSize: 12, marginLeft: 4 }}>— {new Date(displayBadge.assignedAt || art.createdAt).toLocaleDateString('en-GB')}</span>
                           </div>
@@ -5128,8 +5150,9 @@ if (mins < 1) return t("justNow");
                        <div style={{ width: 36, height: 48, background: badge.colorCode || "#B49A65", color: badge.textColor || "#fff", clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)", display: "flex", justifyContent: "center", paddingTop: 10, fontWeight: "bold", fontSize: 14 }}>
                           {getBadgeShortName(badge.name)}
                        </div>
-                       <div className="absolute top-full mt-2 bg-white text-black p-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none" style={{ borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", left: "50%", transform: "translateX(-50%)", border: "1px solid #E0E0E0" }}>
-                          <div style={{ fontSize: 13, fontWeight: "bold", color: badge.textColor || "#0057ff", textAlign: "center" }}>
+                       <div className="absolute top-full mt-2 left-0 bg-white text-black p-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none" style={{ borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", left: "50%", transform: "translateX(-50%)", border: "1px solid #E0E0E0" }}>
+                          <div style={{ fontSize: 10, fontWeight: "bold", color: "#888", marginBottom: 4, textTransform: "uppercase", textAlign: "center" }}>FEATURED IN {art.subject?.toUpperCase() || art.category?.toUpperCase() || "ARTWORK"}</div>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: (badge.textColor === "#ffffff" || badge.textColor === "#fff" || !badge.textColor) ? "#333" : badge.textColor, textAlign: "center" }}>
                             {badge.name} <span style={{ color: "#888", fontWeight: "normal", fontSize: 12, marginLeft: 4 }}>— {new Date(badge.assignedAt || art.createdAt).toLocaleDateString('en-GB')}</span>
                           </div>
                        </div>

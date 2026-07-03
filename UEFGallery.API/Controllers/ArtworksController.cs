@@ -129,7 +129,7 @@ public class ArtworksController : ControllerBase
         if (!string.IsNullOrEmpty(q))
         {
             var searchLower = q.ToLower();
-            query = query.Where(a => a.Title.ToLower().Contains(searchLower) || (a.Description != null && a.Description.ToLower().Contains(searchLower)));
+            query = query.Where(a => a.Title.ToLower().Contains(searchLower) || (a.Description != null && a.Description.ToLower().Contains(searchLower)) || (a.User != null && a.User.FullName != null && a.User.FullName.ToLower().Contains(searchLower)));
         }
 
         if (!string.IsNullOrEmpty(category)) query = query.Where(a => a.Subject != null && a.Subject.ToLower() == category.ToLower());
@@ -1198,7 +1198,18 @@ public class ArtworksController : ControllerBase
         var autoBadgeNames = new List<string>();
 
         if (!string.IsNullOrWhiteSpace(artwork.AcademicYear))
-            autoBadgeNames.Add(artwork.AcademicYear.Trim());
+        {
+            var yearStr = artwork.AcademicYear.Trim();
+            if (yearStr.Contains("-"))
+            {
+                var parts = yearStr.Split('-');
+                if (parts.Length > 1 && parts[1].Length >= 2)
+                {
+                    yearStr = parts[1].Substring(parts[1].Length - 2);
+                }
+            }
+            autoBadgeNames.Add(yearStr);
+        }
 
         if (!string.IsNullOrWhiteSpace(artwork.Subject))
             autoBadgeNames.Add(artwork.Subject.Trim());
