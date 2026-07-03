@@ -120,7 +120,7 @@ public class UsersController : ControllerBase
                 u.Cohort == "Năm 2" ? "Designer Thực tập" : 
                 u.Cohort == "Năm 3" ? "Designer Chuyên nghiệp" : 
                 u.Cohort == "Năm 4" ? "Designer Tiền bối" : 
-                u.Cohort == "Tốt nghiệp" ? "Designer Tốt nghiệp" : "Designer Mầm non" 
+                u.Cohort == "Tốt nghiệp" ? "Designer Tiền bối" : "Designer Mầm non" 
             },
             u.Artworks,
             Appreciations = u.Appreciations > 0 ? u.Appreciations * 1234 : Math.Abs(u.Id.GetHashCode() % 50000) + 10000,

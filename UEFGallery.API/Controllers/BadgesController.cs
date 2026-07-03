@@ -79,6 +79,27 @@ namespace UEFGallery.API.Controllers
             }
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateBadge(Guid id, [FromBody] Badge dto)
+        {
+            if (string.IsNullOrEmpty(dto.Name)) return BadRequest("Name is required");
+            if (string.IsNullOrEmpty(dto.LecturerId)) return BadRequest("LecturerId is required");
+
+            var badge = await _context.Badges.FirstOrDefaultAsync(b => b.Id == id && b.LecturerId == dto.LecturerId);
+            if (badge == null)
+            {
+                return NotFound("Badge not found or you don't have permission to edit it.");
+            }
+
+            badge.Name = dto.Name;
+            badge.ColorCode = dto.ColorCode;
+            badge.TextColor = !string.IsNullOrEmpty(dto.TextColor) ? dto.TextColor : "#FFFFFF";
+
+            await _context.SaveChangesAsync();
+
+            return Ok(badge);
+        }
+
         [HttpDelete("{badgeId}")]
         public async Task<IActionResult> DeleteBadge(Guid badgeId, [FromQuery] string lecturerId)
         {

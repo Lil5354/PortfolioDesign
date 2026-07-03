@@ -161,6 +161,43 @@ public class PortfoliosController : ControllerBase
             settings.UpdatedAt = DateTime.UtcNow;
         }
 
+        if (dto.YearLevel != null)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user != null && user.Cohort != dto.YearLevel)
+            {
+                user.Cohort = dto.YearLevel;
+                string badgeName = dto.YearLevel switch {
+                    "Năm 1" => "Designer Mầm non",
+                    "Năm 2" => "Designer Thực tập",
+                    "Năm 3" => "Designer Chuyên nghiệp",
+                    "Năm 4" => "Designer Tiền bối",
+                    "Năm cuối" => "Designer Tiền bối",
+                    "Tốt nghiệp" => "Designer Tiền bối",
+                    _ => null
+                };
+                
+                if (badgeName != null) {
+                    var badge = await _context.AccountBadges.FirstOrDefaultAsync(b => b.Name == badgeName);
+                    if (badge != null) {
+                        var cohortBadgeNames = new[] { "Designer Mầm non", "Designer Thực tập", "Designer Chuyên nghiệp", "Designer Tiền bối" };
+                        var existingBadges = await _context.UserAccountBadges
+                            .Include(ub => ub.AccountBadge)
+                            .Where(ub => ub.UserId == userId && cohortBadgeNames.Contains(ub.AccountBadge.Name))
+                            .ToListAsync();
+                            
+                        _context.UserAccountBadges.RemoveRange(existingBadges);
+                        
+                        _context.UserAccountBadges.Add(new UserAccountBadge {
+                            UserId = userId,
+                            AccountBadgeId = badge.Id,
+                            AssignedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+        }
+
         await _context.SaveChangesAsync();
         return Ok(settings);
     }
@@ -186,6 +223,7 @@ public class PortfoliosController : ControllerBase
         var user = await _context.Users
             .Include(u => u.PortfolioSettings)
             .Include(u => u.Artworks.Where(a => a.IsPublic))
+            .Include(u => u.TimelineEntries)
             .FirstOrDefaultAsync(u => 
                 (u.PortfolioSettings != null && u.PortfolioSettings.PortfolioSlug == slug) || 
                 u.Id == slug || 
@@ -205,7 +243,8 @@ public class PortfoliosController : ControllerBase
             user.Bio,
             user.Major,
             Settings = user.PortfolioSettings,
-            Artworks = user.Artworks
+            Artworks = user.Artworks,
+            TimelineEntries = user.TimelineEntries
         });
     }
 

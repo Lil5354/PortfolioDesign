@@ -78,8 +78,8 @@ export default function LayoutSettings({ setPage }) {
     setLoading(true);
     try {
       const [secRes, setRes] = await Promise.all([
-        fetch('/api/site-sections'),
-        fetch('/api/site-settings'),
+        fetch('/api/site-sections', { cache: 'no-store' }),
+        fetch('/api/site-settings', { cache: 'no-store' }),
       ]);
       if (!secRes.ok || !setRes.ok) throw new Error('API error');
       const data = await secRes.json();

@@ -6,12 +6,14 @@ import { api } from "../../lib/api-client";
 import JustifiedGrid from "./JustifiedGrid";
 import EditGridModal from "./EditGridModal";
 import ReorderProjectModal from "./ReorderProjectModal";
+import { useSiteContent } from "../../lib/site-content.js";
 
 export default function JournalBuilderModal({ isOpen, onClose, collection, orientation, initialDraft, onSaveDraft, currentUser }) {
   const [blocks, setBlocks] = useState(initialDraft?.blocks || []);
   const [hoveredBlockId, setHoveredBlockId] = useState(null);
   const [focusedBlockId, setFocusedBlockId] = useState(null);
   const [editingBlockId, setEditingBlockId] = useState(null);
+  const { settings } = useSiteContent();
   const [dropdownBlockId, setDropdownBlockId] = useState(null);
   const [activeOverlayId, setActiveOverlayId] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -557,6 +559,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                   <JustifiedGrid 
                     images={block.images} 
                     containerWidth="auto" 
+                    watermarkText={settings?.watermark_text || "UEF"}
                   />
                 </div>
               )}
@@ -681,6 +684,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                                <JustifiedGrid 
                                  images={block.images || []} 
                                  containerWidth="auto" 
+                                 watermarkText={settings?.watermark_text || "UEF"}
                                />
                              </div>
                            </div>
@@ -779,6 +783,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
           onClose={() => setEditGridBlockId(null)}
           block={blocks.find(b => b.id === editGridBlockId)}
           onSave={updateBlock}
+          watermarkText={settings?.watermark_text || "UEF"}
         />
       )}
       

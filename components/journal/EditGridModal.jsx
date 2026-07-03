@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Plus, Move, Image as ImageIcon } from 'lucide-react';
 import JustifiedGrid from './JustifiedGrid';
 
-const EditGridModal = ({ isOpen, onClose, block, onSave, orientation = 'landscape', projectStyles = {} }) => {
+const EditGridModal = ({ isOpen, onClose, block, onSave, orientation = 'landscape', projectStyles = {}, watermarkText }) => {
   const [images, setImages] = useState([]);
 
   useEffect(() => {
@@ -16,11 +16,28 @@ const EditGridModal = ({ isOpen, onClose, block, onSave, orientation = 'landscap
   const handleAddPhotos = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
-      const newImages = files.map(file => {
-        const url = URL.createObjectURL(file);
-        return { id: Date.now().toString() + Math.random().toString().slice(2, 6), url };
+      const readPromises = files.map(file => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const img = new window.Image();
+            img.onload = () => {
+              resolve({
+                id: Date.now().toString() + Math.random().toString().slice(2, 6),
+                url: ev.target.result,
+                content: ev.target.result,
+                width: img.width,
+                height: img.height
+              });
+            };
+            img.src = ev.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
       });
-      setImages([...images, ...newImages]);
+      Promise.all(readPromises).then(newImages => {
+        setImages([...images, ...newImages]);
+      });
     }
   };
 
@@ -82,10 +99,12 @@ const EditGridModal = ({ isOpen, onClose, block, onSave, orientation = 'landscap
             >
               <JustifiedGrid 
                 images={images}
+                spacing={8}
+                watermarkText={watermarkText}
                 animate={true}
                 renderImage={(img) => (
-                  <div className="relative group w-full h-full bg-white rounded shadow-sm overflow-hidden">
-                    <img src={img.content || img.url} alt="" className="w-full h-full object-cover" />
+                  <div className="relative group w-full h-full bg-white rounded shadow-sm overflow-hidden absolute inset-0">
+                    <img src={img.content || img.url} alt="" className="absolute inset-0 w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity border-2 border-blue-500 pointer-events-none" />
                     <button 
                       onClick={() => handleRemove(img.id)}

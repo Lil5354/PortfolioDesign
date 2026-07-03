@@ -1309,7 +1309,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
   }, [activeArtworkId]);
 
   useEffect(() => {
-    fetch("/api/site-settings")
+    fetch("/api/site-settings", { cache: "no-store" })
       .then(r => r.json())
       .then(data => {
         if (data.watermark_text) setDefaultWatermarkText(data.watermark_text);
@@ -1322,6 +1322,15 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
+      let finalWm = defaultWatermarkText || "UEF";
+      try {
+        const settingsRes = await fetch("/api/site-settings", { cache: "no-store" });
+        const settingsData = await settingsRes.json();
+        if (settingsData.watermark_text !== undefined) {
+          finalWm = settingsData.watermark_text || "UEF";
+        }
+      } catch (e) {}
+
       const body = {
         title: title.trim(),
         description: description.trim() || null,
@@ -1332,7 +1341,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: [coverImage || originalCover, ...additionalImages].filter(Boolean),
         coverImageUrl: coverImage || originalCover,
-        watermarkText: defaultWatermarkText || "UEF",
+        watermarkText: finalWm,
         watermarkPosition: "bottom-right",
         semester: yearToSemester[projectYear] || "HK1",
         academicYear: yearToAcademic[projectYear] || "2024-2025",
@@ -2627,10 +2636,10 @@ function AdminWatermarkPage({ setPage }) {
   const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
-    fetch("/api/site-settings")
+    fetch("/api/site-settings", { cache: "no-store" })
       .then(r => r.json())
       .then(data => {
-        setWatermarkText(data.watermark_text || "UEF");
+        if (data.watermark_text !== undefined) setWatermarkText(data.watermark_text || "UEF");
         setLoading(false);
       })
       .catch(() => setLoading(false));

@@ -39,16 +39,63 @@ import iconNam3 from './Logoicon/nam-3.png';
 import iconNamCuoi from './Logoicon/nam-cuoi.png';
 import iconTotNghiep from './Logoicon/5.png';
 
+const getBadgeShortName = (name) => {
+  if (!name) return "GR";
+  if (/^20\d{2}/.test(name)) {
+    return <div style={{ fontSize: 13, lineHeight: 1, textAlign: 'center' }}>{name.substring(2,4)}</div>;
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
+let globalAccountBadgesCache = [];
+let accountBadgesListeners = [];
+
+const fetchGlobalBadges = async () => {
+  try {
+    const res = await fetch('/api/accountbadges');
+    const data = await res.json();
+    globalAccountBadgesCache = data || [];
+    accountBadgesListeners.forEach(l => l(globalAccountBadgesCache));
+  } catch (e) {
+    console.error("Error fetching badges:", e);
+  }
+};
+
+const updateGlobalBadges = (newBadges) => {
+  globalAccountBadgesCache = newBadges;
+  accountBadgesListeners.forEach(l => l(globalAccountBadgesCache));
+};
+
+function useAccountBadgesGlobal() {
+  const [badges, setBadges] = useState(globalAccountBadgesCache);
+  useEffect(() => {
+    const listener = (newBadges) => setBadges(newBadges);
+    accountBadgesListeners.push(listener);
+    if (globalAccountBadgesCache.length === 0) fetchGlobalBadges();
+    return () => {
+      accountBadgesListeners = accountBadgesListeners.filter(l => l !== listener);
+    };
+  }, []);
+  return badges;
+}
+
 const getBadgeIcon = (badgeName) => {
+  const dynamicBadge = globalAccountBadgesCache.find(b => b.name === badgeName);
+  if (dynamicBadge && dynamicBadge.iconUrl) return dynamicBadge.iconUrl;
+
   if (badgeName === "Designer Mầm non") return iconNam1;
   if (badgeName === "Designer Thực tập") return iconNam2;
   if (badgeName === "Designer Chuyên nghiệp") return iconNam3;
   if (badgeName === "Designer Tiền bối") return iconNamCuoi;
   if (badgeName === "Designer Tốt nghiệp") return iconTotNghiep;
+  
   return null;
 };
 
 const getBadgeColor = (badgeName) => {
+  const dynamicBadge = globalAccountBadgesCache.find(b => b.name === badgeName);
+  if (dynamicBadge) return { text: dynamicBadge.textColor || "#ffffff", bg: dynamicBadge.bgColor || "#1A4BA8" };
+
   if (badgeName === "Designer Mầm non") return { text: "#84cc16", bg: "#ffffff" }; // Light green
   if (badgeName === "Designer Thực tập") return { text: "#22c55e", bg: "#ffffff" }; // Middle green
   if (badgeName === "Designer Chuyên nghiệp") return { text: "#166534", bg: "#ffffff" }; // Dark green
@@ -193,6 +240,13 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
                   {userRole === "student" || userRole === "guest" ? (
                     <>
                       {(userRole === "student" || userRole === "guest") && <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("dashboard"); setIsDropdownOpen(false); }}><LayoutDashboard size={16} className="text-[#666666]" /> {t("studentDashboard")}</div>}
+                      {userData.badges && userData.badges.length > 0 && (
+                        <div className="flex items-center gap-1.5 px-4 py-2">
+                           {Array.from(new Map(userData.badges.map(b => [b.name || b.iconUrl, b])).values()).map((badge, idx) => (
+                             <img key={idx} src={getBadgeIcon(badge.name)} alt={badge.name} className="w-5 h-5" title={badge.name} />
+                           ))}
+                        </div>
+                      )}
                       <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("settings"); setIsDropdownOpen(false); }}><Settings size={16} className="text-[#666666]" /> {t("accountSettings")}</div>
                       {userRole === "student" && <div className="flex items-center gap-3 px-4 py-2 hover:bg-[#F8F8F8] cursor-pointer text-[#212121] text-sm" onClick={() => { setPage("portfolio_settings"); setIsDropdownOpen(false); }}><Briefcase size={16} className="text-[#666666]" /> {t("portfolioSettings")}</div>}
                     </>
@@ -611,6 +665,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
   const [feedMode, setFeedMode] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [showYearTool, setShowYearTool] = useState(false);
+  const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
   const [hoveredId, setHoveredId] = useState(null);
   const [categoryCovers, setCategoryCovers] = useState({});
   const [toolCovers, setToolCovers] = useState({});
@@ -729,6 +784,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
     category: a.subject,
     isAiVerified: a.isAiVerified,
     badges: a.badges || [],
+    createdAt: a.createdAt,
   }));
 
   const displayData = visualSearchResults 
@@ -740,11 +796,30 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
         likes: a.likeCount || 0,
         views: a.viewCount || 0,
         isPublic: true,
-        similarityScore: a.similarityScore
+        similarityScore: a.similarityScore,
+        badges: a.badges || [],
+        createdAt: a.createdAt,
       }))
     : mapped;
 
   const paginate = (p) => setPageNum(Math.max(1, Math.min(p, data.totalPages || 1)));
+
+  const getDisplayBadge = (art) => {
+    if (!art.badges || art.badges.length === 0) return null;
+    if (filters.category && filters.category !== "Tất cả") {
+      const match = art.badges.find(b => b.name?.toLowerCase() === filters.category.toLowerCase());
+      if (match) return match;
+    }
+    if (filters.year && filters.year !== "Tất cả") {
+      const match = art.badges.find(b => b.name?.toLowerCase() === filters.year.toLowerCase());
+      if (match) return match;
+    }
+    if (filters.tool && filters.tool !== "Tất cả") {
+      const match = art.badges.find(b => b.name?.toLowerCase() === filters.tool.toLowerCase());
+      if (match) return match;
+    }
+    return art.badges[0];
+  };
 
   return (
     <div style={{ background: "#fff" }}>
@@ -854,16 +929,42 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
           </div>
 
         {showYearTool && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-            <select value={filters.year} onChange={e => setFilter("year", e.target.value)} style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, color: BLACK, background: "#fff", outline: "none", cursor: "pointer" }}>
-              {years.map(y => <option key={y} value={y}>{y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}</option>)}
-            </select>
-            <label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer", fontSize: 11, color: BLACK, fontWeight: 500, userSelect: "none" }}>
-              <input type="checkbox" checked={filters.hasBadge} onChange={e => setFilter("hasBadge", e.target.checked)} style={{ cursor: "pointer" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10, flexWrap: "wrap" }}>
+            <div style={{ position: "relative" }}>
+              <div 
+                onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
+                style={{ padding: "8px 16px", borderRadius: 999, border: `1px solid ${isYearDropdownOpen ? UEF_BLUE : GRAY_LIGHT}`, background: isYearDropdownOpen ? `${UEF_BLUE}08` : "#fff", cursor: "pointer", fontSize: 14, color: isYearDropdownOpen ? UEF_BLUE : BLACK, fontWeight: 500, minWidth: 140, display: "flex", alignItems: "center", justifyContent: "space-between", transition: "all .2s" }}
+                className="hover:border-[#ccc]"
+              >
+                <span>{filters.year === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : filters.year}</span>
+                <ChevronDown size={16} style={{ transition: "transform .2s", transform: isYearDropdownOpen ? "rotate(180deg)" : "none" }} />
+              </div>
+              {isYearDropdownOpen && (
+                <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.1)", zIndex: 100, minWidth: 160, overflow: "hidden" }}>
+                  {years.map(y => (
+                    <div 
+                      key={y}
+                      onClick={() => { setFilter("year", y); setIsYearDropdownOpen(false); }}
+                      style={{ padding: "10px 16px", fontSize: 14, cursor: "pointer", fontWeight: 500, background: filters.year === y ? `${UEF_BLUE}10` : "#fff", color: filters.year === y ? UEF_BLUE : BLACK, transition: "background .15s" }}
+                      className="hover:bg-[#f5f5f5]"
+                    >
+                      {y === "Tất cả" ? `${t("schoolYear")}: ${t("all")}` : y}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14, color: BLACK, fontWeight: 500, userSelect: "none", padding: "8px 16px", borderRadius: 999, border: `1px solid ${filters.hasBadge ? UEF_BLUE : GRAY_LIGHT}`, background: filters.hasBadge ? `${UEF_BLUE}08` : "#fff", transition: "all .2s" }} className="hover:border-[#ccc]">
+              <div style={{ width: 16, height: 16, borderRadius: 4, border: `1px solid ${filters.hasBadge ? UEF_BLUE : "#aaa"}`, background: filters.hasBadge ? UEF_BLUE : "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s" }}>
+                {filters.hasBadge && <Check size={12} color="#fff" strokeWidth={3} />}
+              </div>
+              <input type="checkbox" checked={filters.hasBadge} onChange={e => setFilter("hasBadge", e.target.checked)} style={{ display: "none" }} />
               <span>Chỉ hiện bài có Huy hiệu</span>
             </label>
+
             {activeFilterCount > 0 && (
-              <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); setFilter("hasBadge", false); }} style={{ padding: "3px 8px", borderRadius: 6, border: "none", background: "transparent", color: UEF_RED, fontSize: 11, cursor: "pointer", fontWeight: 500 }}>{t("reset")}</button>
+              <button onClick={() => { setFilter("year", "Tất cả"); setFilter("tool", "Tất cả"); setFilter("hasBadge", false); }} style={{ padding: "8px 16px", borderRadius: 999, border: `1px solid ${UEF_RED}40`, background: `${UEF_RED}08`, color: UEF_RED, fontSize: 13, cursor: "pointer", fontWeight: 600, transition: "all .2s" }} className="hover:bg-[#ffebee]">{t("reset")}</button>
             )}
           </div>
         )}
@@ -979,7 +1080,9 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
         ) : (
           <>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 20 }}>
-              {displayData.map(art => (
+              {displayData.map(art => {
+                const displayBadge = getDisplayBadge(art);
+                return (
                 <div
                   key={art.id}
                   onClick={() => setPage("detail", { artworkId: art.id })}
@@ -1013,16 +1116,15 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                     </div>
 
                     {/* BADGE ON TOP RIGHT */}
-                    {(art.badges && art.badges.length > 0) && (
-                      <div className="group" style={{ position: "absolute", top: 0, right: 16, zIndex: 10 }}>
-                        <div style={{ width: 32, height: 44, background: art.badges[0].colorCode || "#B49A65", color: art.badges[0].textColor || "#fff", clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)", display: "flex", justifyContent: "center", paddingTop: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
-                          {art.badges[0].name?.substring(0, 2).toUpperCase() || "GR"}
+                    {displayBadge && (
+                      <div className="group" style={{ position: "absolute", top: 0, left: 16, zIndex: 10 }}>
+                        <div style={{ width: 32, height: 44, background: displayBadge.colorCode || "#B49A65", color: displayBadge.textColor || "#fff", clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)", display: "flex", justifyContent: "center", paddingTop: 8, fontWeight: "bold", fontSize: 13, cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
+                          {getBadgeShortName(displayBadge.name)}
                         </div>
-                        <div className="absolute top-full mt-1 right-0 bg-white text-black p-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none" style={{ borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.2)" }}>
-                          <div style={{ position: "absolute", bottom: "100%", right: 10, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #fff" }} />
-                          <div style={{ fontSize: 10, fontWeight: "bold", color: "#888", marginBottom: 4, textTransform: "uppercase" }}>FEATURED IN</div>
-                          <div style={{ fontSize: 13, fontWeight: "bold", color: "#0057ff" }}>
-                            {art.badges[0].name} <span style={{ color: "#aaa", fontWeight: "normal" }}>— {new Date(art.badges[0].assignedAt || art.createdAt).toLocaleDateString('en-GB')}</span>
+                        <div className="absolute top-full mt-1 left-0 bg-white text-black p-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none" style={{ borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", border: "1px solid #E0E0E0" }}>
+                          <div style={{ fontSize: 10, fontWeight: "bold", color: "#888", marginBottom: 4, textTransform: "uppercase" }}>FEATURED IN {displayBadge.name.toUpperCase()}</div>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: displayBadge.textColor || "#0057ff" }}>
+                            {displayBadge.name} <span style={{ color: "#888", fontWeight: "normal", fontSize: 12, marginLeft: 4 }}>— {new Date(displayBadge.assignedAt || art.createdAt).toLocaleDateString('en-GB')}</span>
                           </div>
                         </div>
                       </div>
@@ -1050,7 +1152,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                     </div>
                   </div>
                 </div>
-              ))}
+              );})}
               {loading && page > 1 && Array.from({ length: 5 }).map((_, i) => (
                 <div key={`skeleton-${i}`} style={{ width: "100%" }}>
                   <div style={{ width: "100%", aspectRatio: "4/3", background: "#e0e0e0", borderRadius: 4, animation: "pulse 1.5s infinite" }} />
@@ -1100,6 +1202,9 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
   const [selectedMoodboard, setSelectedMoodboard] = useState(null);
   const [drafts, setDrafts] = useState([]);
   const [currentDraftId, setCurrentDraftId] = useState(null);
+  const [userBadges, setUserBadges] = useState([]);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const categories = [t("allArtworks"), "Poster", "Branding", "UI/UX", "Illustration"];
 
   const handleDeleteDraft = (e, draftId) => {
     e.stopPropagation();
@@ -1154,6 +1259,13 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
            api.collections.getByUser(uId).then(res => {
               setPortfolioMoodboards(Array.isArray(res) ? res : []);
            }).catch(() => {});
+           
+           fetch(`http://127.0.0.1:5000/api/accountbadges/user/${uId}`)
+             .then(res => res.json())
+             .then(data => {
+                if (Array.isArray(data)) setUserBadges(data);
+             })
+             .catch(() => {});
         }
       }
       setLoading(false);
@@ -1440,9 +1552,25 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                </div>
                <input type="file" id="avatarUpload" accept="image/*" style={{ display: "none" }} onChange={handleAvatarUpload} />
                
-               <h1 className="text-[22px] font-bold text-[#212121] tracking-tight mb-1">
-                  {profile.fullName}
-               </h1>
+               <div className="flex flex-wrap items-center gap-2 mb-1">
+                 <h1 className="text-[22px] font-bold text-[#212121] tracking-tight">
+                    {profile.fullName}
+                 </h1>
+                 {Array.from(new Set(userBadges.map(b => b.name))).filter(b => b && b !== "Designer Tốt nghiệp").map((b, idx) => {
+                   const iconSrc = getBadgeIcon(b);
+                   const colors = getBadgeColor(b);
+                   if (!iconSrc) return null;
+                   return (
+                     <div key={idx} className="group relative flex items-center justify-center cursor-pointer">
+                       <img src={iconSrc} alt={b} style={{ height: 24, objectFit: "contain", filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.05))" }} />
+                       <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10" 
+                            style={{ background: "#fff", padding: "6px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700, color: colors.text, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", border: `1px solid ${colors.text}40` }}>
+                         {b}
+                       </div>
+                     </div>
+                   );
+                 })}
+               </div>
                
                <p className="text-[13px] text-[#666666] font-medium mb-3">
                   {profile.profileHeadline} • {portfolioSettingsData?.portfolioSettings?.major || portfolioSettingsData?.major || pSettings?.major || t("graphicDesign")} • UEF
@@ -1542,17 +1670,31 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                    )}
                 </div>
                 {activeTab === 'work' && (
-                  <select 
-                    className="mb-2 p-2 rounded-lg border border-[#E0E0E0] bg-white text-sm font-semibold outline-none focus:border-[#1a4ba8]" 
-                    value={activeCategory} 
-                    onChange={e => setActiveCategory(e.target.value)}
-                  >
-                    <option value={t("allArtworks")}>Tất cả Category</option>
-                    <option value="Poster">Poster</option>
-                    <option value="Branding">Branding</option>
-                    <option value="UI/UX">UI/UX</option>
-                    <option value="Illustration">Illustration</option>
-                  </select>
+                  <div className="relative z-10 w-[180px] mb-2">
+                     <div 
+                        className="flex items-center justify-between w-full px-4 py-2 bg-white border border-[#E0E0E0] rounded-xl cursor-pointer hover:border-[#1a4ba8] transition-colors"
+                        onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                     >
+                        <span className="text-sm font-semibold text-[#212121]">{activeCategory}</span>
+                        <ChevronDown size={16} className={`text-[#666] transition-transform duration-200 ${isCategoryDropdownOpen ? 'rotate-180' : ''}`} />
+                     </div>
+                     {isCategoryDropdownOpen && (
+                        <div className="absolute top-full left-0 w-full mt-2 bg-white border border-[#E0E0E0] rounded-xl shadow-lg py-2 overflow-hidden z-20">
+                           {categories.map(cat => (
+                              <div 
+                                 key={cat}
+                                 className={`px-4 py-2 text-sm font-medium cursor-pointer transition-colors ${activeCategory === cat ? 'bg-[#1a4ba8]/10 text-[#1a4ba8] font-semibold' : 'text-[#666666] hover:bg-[#F8F9FA] hover:text-[#212121]'}`}
+                                 onClick={() => {
+                                    setActiveCategory(cat);
+                                    setIsCategoryDropdownOpen(false);
+                                 }}
+                              >
+                                 {cat}
+                              </div>
+                           ))}
+                        </div>
+                     )}
+                  </div>
                 )}
              </div>
 
@@ -1831,7 +1973,7 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                />
 
                {activeTab === 'timeline' && (
-                 <TimelineSection slug={slug || ''} isOwner={isOwner} setPage={setPage} />
+                 <TimelineSection entries={portfolioData?.timelineEntries} slug={slug || ''} isOwner={isOwner} setPage={setPage} />
                )}
 
              </div>
@@ -2438,15 +2580,27 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
 }
 
 function BadgesPage({ setPage, userData }) {
+  const [activeTab, setActiveTab] = useState("artwork"); // "artwork" or "account"
   const [badges, setBadges] = useState([]);
+  const [accountBadges, setAccountBadges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newBadge, setNewBadge] = useState({ name: "", colorCode: "#1A4BA8", textColor: "#FFFFFF" });
+  const [newAccountBadge, setNewAccountBadge] = useState({ name: "", iconUrl: "", tooltip: "", bgColor: "#1A4BA8", textColor: "#FFFFFF", type: "Custom", condition: "" });
+  const [editingAccountBadge, setEditingAccountBadge] = useState(null);
+  const [updatingAccountBadge, setUpdatingAccountBadge] = useState(false);
+  const [editingArtworkBadge, setEditingArtworkBadge] = useState(null);
+  const [updatingArtworkBadge, setUpdatingArtworkBadge] = useState(false);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (!userData?.id) return;
-    api.badges.list(userData.id).then(res => {
-      setBadges(res);
+    setLoading(true);
+    Promise.all([
+      api.badges.list(userData.id),
+      fetch('/api/accountbadges').then(r => r.json())
+    ]).then(([artB, accB]) => {
+      setBadges(artB);
+      setAccountBadges(accB || []);
       setLoading(false);
     }).catch(e => {
       console.error(e);
@@ -2477,6 +2631,81 @@ function BadgesPage({ setPage, userData }) {
     }
   };
 
+  const handleCreateAccountBadge = async () => {
+    if (!newAccountBadge.name) return;
+    setCreating(true);
+    try {
+      const res = await fetch("/api/accountbadges", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newAccountBadge)
+      });
+      if (!res.ok) throw new Error("Failed to create account badge");
+      const created = await res.json();
+      const newList = [created, ...accountBadges];
+      setAccountBadges(newList);
+      updateGlobalBadges(newList);
+      setNewAccountBadge({ name: "", iconUrl: "", tooltip: "", bgColor: "#1A4BA8", textColor: "#FFFFFF", type: "Custom", condition: "" });
+    } catch (e) {
+      alert("Lỗi tạo huy hiệu tài khoản: " + e.message);
+    }
+    setCreating(false);
+  };
+
+  const handleDeleteAccountBadge = async (badgeId) => {
+    if (!window.confirm("Bạn có chắc chắn xóa huy hiệu tài khoản này? Huy hiệu sẽ bị gỡ khỏi các tài khoản đang sở hữu.")) return;
+    try {
+      await fetch(`/api/accountbadges/${badgeId}`, { method: 'DELETE' });
+      const newList = accountBadges.filter(b => b.id !== badgeId);
+      setAccountBadges(newList);
+      updateGlobalBadges(newList);
+    } catch (e) {
+      alert("Lỗi xóa huy hiệu: " + e.message);
+    }
+  };
+
+  const handleUpdateArtworkBadge = async () => {
+    if (!editingArtworkBadge?.name) return;
+    setUpdatingArtworkBadge(true);
+    try {
+      const res = await fetch(`/api/badges/${editingArtworkBadge.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingArtworkBadge)
+      });
+      if (!res.ok) throw new Error("Cập nhật thất bại");
+      
+      const updated = await res.json();
+      setBadges(badges.map(b => b.id === updated.id ? updated : b));
+      setEditingArtworkBadge(null);
+    } catch (e) {
+      alert("Lỗi cập nhật huy hiệu: " + e.message);
+    } finally {
+      setUpdatingArtworkBadge(false);
+    }
+  };
+
+  const handleUpdateAccountBadge = async () => {
+    if (!editingAccountBadge?.name) return;
+    setUpdatingAccountBadge(true);
+    try {
+      const res = await fetch(`/api/accountbadges/${editingAccountBadge.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingAccountBadge)
+      });
+      if (!res.ok) throw new Error("Cập nhật thất bại");
+      const updated = await res.json();
+      const newList = accountBadges.map(b => b.id === updated.id ? updated : b);
+      setAccountBadges(newList);
+      updateGlobalBadges(newList);
+      setEditingAccountBadge(null);
+    } catch (e) {
+      alert("Lỗi cập nhật huy hiệu: " + e.message);
+    }
+    setUpdatingAccountBadge(false);
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-white relative">
       <AdminSidebar active="badges" setPage={setPage} />
@@ -2485,9 +2714,17 @@ function BadgesPage({ setPage, userData }) {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>Quản lý Huy hiệu</h2>
-            <p style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>Tạo và quản lý các huy hiệu dành tặng cho đồ án xuất sắc.</p>
+            <p style={{ color: MUTED, fontSize: 13, marginTop: 4 }}>Tạo và quản lý các huy hiệu dành tặng cho đồ án xuất sắc và tài khoản.</p>
           </div>
         </div>
+
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, borderBottom: `1px solid ${GRAY_LIGHT}`, paddingBottom: 12 }}>
+          <button onClick={() => setActiveTab("artwork")} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: activeTab === "artwork" ? CERULEAN : "transparent", color: activeTab === "artwork" ? "#fff" : MUTED, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Huy hiệu Ấn phẩm</button>
+          <button onClick={() => setActiveTab("account")} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: activeTab === "account" ? CERULEAN : "transparent", color: activeTab === "account" ? "#fff" : MUTED, fontWeight: 600, fontSize: 14, cursor: "pointer" }}>Huy hiệu Tài khoản</button>
+        </div>
+
+        {activeTab === "artwork" && (
+          <>
 
         <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: `1px solid ${GRAY_LIGHT}`, marginBottom: 32 }}>
           <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 16px", color: BLACK }}>Tạo Huy hiệu mới</h3>
@@ -2558,10 +2795,10 @@ function BadgesPage({ setPage, userData }) {
                 <p style={{ color: MUTED, fontSize: 14 }}>Chưa có huy hiệu nào được tạo.</p>
               ) : (
                 badges.map(b => (
-                  <div key={b.id} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 100, background: b.colorCode, color: b.textColor || "#fff", fontSize: 13, fontWeight: 600, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", paddingRight: 36 }}>
+                  <div key={b.id} onClick={() => setEditingArtworkBadge(b)} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 100, background: b.colorCode, color: b.textColor || "#fff", fontSize: 13, fontWeight: 600, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", paddingRight: 36, cursor: "pointer" }}>
                     <Star size={14} fill={b.textColor || "#fff"} />
                     {b.name}
-                    <div onClick={() => handleDeleteBadge(b.id)} style={{ position: "absolute", right: 6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.15)", color: b.textColor || "#fff", transition: "all .2s" }} onMouseEnter={e => e.currentTarget.style.background="rgba(0,0,0,0.3)"} onMouseLeave={e => e.currentTarget.style.background="rgba(0,0,0,0.15)"}>
+                    <div onClick={(e) => { e.stopPropagation(); handleDeleteBadge(b.id); }} style={{ position: "absolute", right: 6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.15)", color: b.textColor || "#fff", transition: "all .2s" }} onMouseEnter={e => e.currentTarget.style.background="rgba(0,0,0,0.3)"} onMouseLeave={e => e.currentTarget.style.background="rgba(0,0,0,0.15)"}>
                       <X size={12} strokeWidth={3} />
                     </div>
                   </div>
@@ -2570,6 +2807,292 @@ function BadgesPage({ setPage, userData }) {
             </div>
           )}
         </div>
+
+        {editingArtworkBadge && (
+            <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}>
+              <div style={{ background: "#fff", padding: 32, borderRadius: 20, width: "100%", maxWidth: 500, boxShadow: "0 20px 50px rgba(0,0,0,0.2)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: BLACK }}>Chỉnh sửa Huy hiệu Ấn phẩm</h3>
+                  <div onClick={() => setEditingArtworkBadge(null)} style={{ cursor: "pointer", padding: 4, borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <X size={20} color={MUTED} />
+                  </div>
+                </div>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BLACK, marginBottom: 8 }}>Tên huy hiệu</label>
+                    <input 
+                      type="text" 
+                      value={editingArtworkBadge.name} 
+                      onChange={e => setEditingArtworkBadge({ ...editingArtworkBadge, name: e.target.value })}
+                      style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, outline: "none" }}
+                    />
+                  </div>
+                  
+                  <div style={{ display: "flex", gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BLACK, marginBottom: 8 }}>Màu nền</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <input 
+                          type="color" 
+                          value={editingArtworkBadge.colorCode} 
+                          onChange={e => setEditingArtworkBadge({ ...editingArtworkBadge, colorCode: e.target.value })}
+                          style={{ width: 40, height: 40, padding: 0, border: "none", borderRadius: 8, cursor: "pointer", background: "none" }}
+                        />
+                        <input type="text" value={editingArtworkBadge.colorCode} readOnly style={{ width: 80, padding: "8px", borderRadius: 6, border: "1px solid #ddd", fontSize: 13, textAlign: "center", background: "#f8fafc" }} />
+                      </div>
+                    </div>
+                    
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BLACK, marginBottom: 8 }}>Màu chữ</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <input 
+                          type="color" 
+                          value={editingArtworkBadge.textColor || "#ffffff"} 
+                          onChange={e => setEditingArtworkBadge({ ...editingArtworkBadge, textColor: e.target.value })}
+                          style={{ width: 40, height: 40, padding: 0, border: "none", borderRadius: 8, cursor: "pointer", background: "none" }}
+                        />
+                        <input type="text" value={editingArtworkBadge.textColor || "#ffffff"} readOnly style={{ width: 80, padding: "8px", borderRadius: 6, border: "1px solid #ddd", fontSize: 13, textAlign: "center", background: "#f8fafc" }} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleUpdateArtworkBadge} 
+                  disabled={updatingArtworkBadge}
+                  style={{ background: "#1A4BA8", color: "#fff", border: "none", padding: "12px 24px", borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: "pointer", marginTop: 24, width: "100%" }}
+                >
+                  {updatingArtworkBadge ? "Đang lưu..." : "Lưu thay đổi"}
+                </button>
+              </div>
+            </div>
+        )}
+
+        </>
+        )}
+
+        {activeTab === "account" && (
+          <>
+          <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: `1px solid ${GRAY_LIGHT}`, marginBottom: 32 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 16px", color: BLACK }}>Tạo Huy hiệu Tài khoản mới</h3>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
+              <div style={{ flex: "1 1 200px" }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Tên hiển thị</label>
+                <input type="text" placeholder="VD: Sinh viên 5 tốt..." value={newAccountBadge.name} onChange={e => setNewAccountBadge({ ...newAccountBadge, name: e.target.value })} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14 }} />
+              </div>
+              <div style={{ flex: "1 1 200px" }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Tải lên Icon (Tùy chọn)</label>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => setNewAccountBadge({ ...newAccountBadge, iconUrl: event.target.result });
+                      reader.readAsDataURL(file);
+                    }
+                  }} 
+                  style={{ width: "100%", padding: "7px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14 }} 
+                />
+              </div>
+              <div style={{ flex: "1 1 200px" }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Chú thích (Tooltip)</label>
+                <input type="text" placeholder="Giải thích huy hiệu..." value={newAccountBadge.tooltip} onChange={e => setNewAccountBadge({ ...newAccountBadge, tooltip: e.target.value })} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14 }} />
+              </div>
+            </div>
+            
+            <div style={{ display: "flex", gap: 16, marginTop: 16, flexWrap: "wrap", alignItems: "flex-end" }}>
+              <div style={{ flex: "1 1 150px" }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Màu nền</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input type="color" value={newAccountBadge.bgColor} onChange={e => setNewAccountBadge({ ...newAccountBadge, bgColor: e.target.value })} style={{ width: 40, height: 40, padding: 0, border: "none", borderRadius: 8, cursor: "pointer" }} />
+                  <input type="text" value={newAccountBadge.bgColor.toUpperCase()} onChange={e => setNewAccountBadge({ ...newAccountBadge, bgColor: e.target.value })} style={{ width: 90, padding: "10px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, textTransform: "uppercase" }} />
+                </div>
+              </div>
+              <div style={{ flex: "1 1 150px" }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Màu chữ</label>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input type="color" value={newAccountBadge.textColor} onChange={e => setNewAccountBadge({ ...newAccountBadge, textColor: e.target.value })} style={{ width: 40, height: 40, padding: 0, border: "none", borderRadius: 8, cursor: "pointer" }} />
+                  <input type="text" value={newAccountBadge.textColor.toUpperCase()} onChange={e => setNewAccountBadge({ ...newAccountBadge, textColor: e.target.value })} style={{ width: 90, padding: "10px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14, textTransform: "uppercase" }} />
+                </div>
+              </div>
+              
+
+            </div>
+            
+            <div style={{ marginTop: 22 }}>
+              <button onClick={handleCreateAccountBadge} disabled={creating || !newAccountBadge.name} style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 14, fontWeight: 600, cursor: (creating || !newAccountBadge.name) ? "not-allowed" : "pointer", opacity: (creating || !newAccountBadge.name) ? 0.6 : 1 }}>
+                {creating ? "Đang tạo..." : "Tạo Huy hiệu Tài khoản"}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 16px", color: BLACK }}>Danh sách Huy hiệu Tài khoản</h3>
+            {loading ? <GlobalLoading /> : (
+              <div>
+                {accountBadges.length === 0 ? (
+                  <p style={{ color: MUTED, fontSize: 14 }}>Chưa có huy hiệu tài khoản nào được tạo.</p>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 20 }}>
+                    {accountBadges.map(b => (
+                      <div 
+                        key={b.id} 
+                        onClick={() => setEditingAccountBadge(b)}
+                        style={{ 
+                          background: "#fff", 
+                          border: "1px solid #e2e8f0", 
+                          borderRadius: 16, 
+                          padding: 20, 
+                          display: "flex", 
+                          alignItems: "center", 
+                          gap: 16, 
+                          cursor: "pointer", 
+                          transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.03)" 
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.08)";
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.borderColor = "#cbd5e1";
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.03)";
+                          e.currentTarget.style.transform = "none";
+                          e.currentTarget.style.borderColor = "#e2e8f0";
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {(b.iconUrl || getBadgeIcon(b.name)) ? (
+                            <img src={b.iconUrl || getBadgeIcon(b.name)} alt="icon" style={{ width: 72, height: 72, objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.15))" }} />
+                          ) : <div style={{ width: 72, height: 72, borderRadius: "50%", background: b.bgColor || "#1A4BA8", display: "flex", alignItems: "center", justifyContent: "center", color: b.textColor || "#fff" }}><Image size={32} /></div>}
+                        </div>
+                        <div style={{ flex: 1, overflow: "hidden" }}>
+                          <div style={{ fontWeight: 700, fontSize: 15, color: BLACK, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</div>
+                          <div style={{ fontSize: 13, color: MUTED, marginTop: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.tooltip || "Không có chú thích"}</div>
+                          {b.type === "Default" && <div style={{ fontSize: 11, fontWeight: 600, background: "#f1f5f9", color: "#64748b", display: "inline-block", padding: "3px 8px", borderRadius: 6, marginTop: 6 }}>Mặc định ({b.condition})</div>}
+                        </div>
+                        {b.type !== "Default" && (
+                          <div 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteAccountBadge(b.id); }} 
+                            style={{ padding: 8, borderRadius: "50%", background: "#fee2e2", color: "#ef4444", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}
+                            onMouseEnter={e => e.currentTarget.style.background = "#fecaca"}
+                            onMouseLeave={e => e.currentTarget.style.background = "#fee2e2"}
+                            title="Xóa huy hiệu"
+                          >
+                            <Trash2 size={16} />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
+          {editingAccountBadge && (
+            <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}>
+              <div style={{ background: "#fff", padding: 32, borderRadius: 20, width: "100%", maxWidth: 500, boxShadow: "0 20px 50px rgba(0,0,0,0.2)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                  <h3 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: BLACK }}>Chỉnh sửa Huy hiệu</h3>
+                  <div onClick={() => setEditingAccountBadge(null)} style={{ cursor: "pointer", padding: 4, borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <X size={20} color={MUTED} />
+                  </div>
+                </div>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                  <div style={{ display: "flex", gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BLACK, marginBottom: 8 }}>Tên hiển thị</label>
+                      <input 
+                        type="text" 
+                        value={editingAccountBadge.name} 
+                        onChange={e => setEditingAccountBadge({ ...editingAccountBadge, name: e.target.value })}
+                        disabled={editingAccountBadge.type === "Default"}
+                        style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, outline: "none", background: editingAccountBadge.type === "Default" ? "#f8fafc" : "#fff" }}
+                      />
+                      {editingAccountBadge.type === "Default" && <p style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>Không thể đổi tên huy hiệu mặc định.</p>}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BLACK, marginBottom: 8 }}>Upload Icon</label>
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {(editingAccountBadge.iconUrl || getBadgeIcon(editingAccountBadge.name)) ? (
+                          <img src={editingAccountBadge.iconUrl || getBadgeIcon(editingAccountBadge.name)} alt="icon" style={{ width: 80, height: 80, objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.15))" }} />
+                        ) : <div style={{ width: 80, height: 80, borderRadius: "50%", background: editingAccountBadge.bgColor || "#1A4BA8", display: "flex", alignItems: "center", justifyContent: "center", color: editingAccountBadge.textColor || "#fff" }}><Image size={32} /></div>}
+                      </div>
+                      <input 
+                        type="file" 
+                        accept="image/png, image/jpeg, image/gif, image/svg+xml"
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setEditingAccountBadge({ ...editingAccountBadge, iconUrl: reader.result });
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                        style={{ flex: 1, padding: "8px", border: "1px dashed #ccc", borderRadius: 8, fontSize: 13 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BLACK, marginBottom: 8 }}>Chú thích (Tooltip)</label>
+                    <input 
+                      type="text" 
+                      value={editingAccountBadge.tooltip} 
+                      onChange={e => setEditingAccountBadge({ ...editingAccountBadge, tooltip: e.target.value })}
+                      style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", fontSize: 14, outline: "none" }}
+                    />
+                  </div>
+
+                  <div style={{ display: "flex", gap: 24 }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BLACK, marginBottom: 8 }}>Màu nền</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <input 
+                          type="color" 
+                          value={editingAccountBadge.bgColor} 
+                          onChange={e => setEditingAccountBadge({ ...editingAccountBadge, bgColor: e.target.value })}
+                          style={{ width: 40, height: 40, padding: 0, border: "none", borderRadius: 8, cursor: "pointer", background: "none" }}
+                        />
+                        <input type="text" value={editingAccountBadge.bgColor} readOnly style={{ width: 80, padding: "8px", borderRadius: 6, border: "1px solid #ddd", fontSize: 13, textAlign: "center", background: "#f8fafc" }} />
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: BLACK, marginBottom: 8 }}>Màu chữ icon</label>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <input 
+                          type="color" 
+                          value={editingAccountBadge.textColor} 
+                          onChange={e => setEditingAccountBadge({ ...editingAccountBadge, textColor: e.target.value })}
+                          style={{ width: 40, height: 40, padding: 0, border: "none", borderRadius: 8, cursor: "pointer", background: "none" }}
+                        />
+                        <input type="text" value={editingAccountBadge.textColor} readOnly style={{ width: 80, padding: "8px", borderRadius: 6, border: "1px solid #ddd", fontSize: 13, textAlign: "center", background: "#f8fafc" }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={handleUpdateAccountBadge} 
+                    disabled={updatingAccountBadge}
+                    style={{ background: "#1A4BA8", color: "#fff", border: "none", padding: "12px 24px", borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: "pointer", marginTop: 8 }}
+                  >
+                    {updatingAccountBadge ? "Đang lưu..." : "Lưu thay đổi"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -2789,7 +3312,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
   const [coverImage, setCoverImage] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]);
   const [error, setError] = useState("");
-  const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
+  const [defaultWatermarkText, setDefaultWatermarkText] = useState(() => "UEF");
   const [blocks, setBlocks] = useState(() => {
     const initialBlocks = pageParams?.draftBlocks || [];
     return initialBlocks.map(b => {
@@ -2877,6 +3400,13 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
            console.error("Error parsing draftSettings:", err);
        }
     }
+    // fetch global watermark
+    fetch('/api/site-settings?_t=' + Date.now(), { cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.watermark_text) setDefaultWatermarkText(data.watermark_text);
+      })
+      .catch(() => {});
   }, [pageParams]);
 
   const addBlock = (type) => {
@@ -2897,7 +3427,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
   };
 
   useEffect(() => {
-    fetch("/api/site-settings")
+    fetch("/api/site-settings?_t=" + Date.now(), { cache: "no-store" })
       .then(r => r.json())
       .then(data => {
         if (data.watermark_text) setDefaultWatermarkText(data.watermark_text);
@@ -3004,7 +3534,15 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
     };
 
     try {
-      const finalWatermarkText = defaultWatermarkText || "UEF";
+      let finalWatermarkText = defaultWatermarkText || "UEF";
+      try {
+        const settingsRes = await fetch("/api/site-settings?_t=" + Date.now(), { cache: "no-store" });
+        const settingsData = await settingsRes.json();
+        if (settingsData.watermark_text !== undefined) {
+          finalWatermarkText = settingsData.watermark_text || "UEF";
+        }
+      } catch (e) {}
+
       const watermarkedCover = await generateWatermarkDataURL(coverImage, finalWatermarkText);
 
       setUploadState("analyzing_ai");
@@ -3904,7 +4442,18 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, 
   const [sendingReport, setSendingReport] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [shareToast, setShareToast] = useState(false);
+  const [showBadgeMenu, setShowBadgeMenu] = useState(false);
+  const badgeMenuRef = useRef(null);
 
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (showBadgeMenu && badgeMenuRef.current && !badgeMenuRef.current.contains(e.target)) {
+        setShowBadgeMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showBadgeMenu]);
   const [fullscreenImageIndex, setFullscreenImageIndex] = React.useState(0);
   const handleShare = () => {
     if (navigator.clipboard) {
@@ -4573,17 +5122,19 @@ if (mins < 1) return t("justNow");
               })()}
               
               {(art.badges && art.badges.length > 0) && (
-                <div className="group" style={{ position: "absolute", top: 0, right: 24, zIndex: 60, cursor: "pointer" }}>
-                   <div style={{ width: 36, height: 48, background: art.badges[0].colorCode || "#B49A65", color: art.badges[0].textColor || "#fff", clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)", display: "flex", justifyContent: "center", paddingTop: 10, fontWeight: "bold", fontSize: 14 }}>
-                      {art.badges[0].name?.substring(0, 2).toUpperCase() || "GR"}
-                   </div>
-                   <div className="absolute top-full mt-2 bg-white text-black p-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none" style={{ borderRadius: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.2)", right: -10 }}>
-                      <div style={{ position: "absolute", bottom: "100%", right: 22, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #fff" }} />
-                      <div style={{ fontSize: 10, fontWeight: "bold", color: "#888", marginBottom: 4, textTransform: "uppercase" }}>FEATURED IN</div>
-                      <div style={{ fontSize: 13, fontWeight: "bold", color: "#0057ff" }}>
-                        {art.badges[0].name} <span style={{ color: "#aaa", fontWeight: "normal" }}>— {new Date(art.badges[0].assignedAt || art.createdAt).toLocaleDateString('en-GB')}</span>
-                      </div>
-                   </div>
+                <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", zIndex: 60, display: "flex", gap: 8 }}>
+                  {art.badges.slice(0, 5).map((badge, idx) => (
+                    <div key={idx} className="group" style={{ position: "relative", cursor: "pointer" }}>
+                       <div style={{ width: 36, height: 48, background: badge.colorCode || "#B49A65", color: badge.textColor || "#fff", clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)", display: "flex", justifyContent: "center", paddingTop: 10, fontWeight: "bold", fontSize: 14 }}>
+                          {getBadgeShortName(badge.name)}
+                       </div>
+                       <div className="absolute top-full mt-2 bg-white text-black p-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none" style={{ borderRadius: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", left: "50%", transform: "translateX(-50%)", border: "1px solid #E0E0E0" }}>
+                          <div style={{ fontSize: 13, fontWeight: "bold", color: badge.textColor || "#0057ff", textAlign: "center" }}>
+                            {badge.name} <span style={{ color: "#888", fontWeight: "normal", fontSize: 12, marginLeft: 4 }}>— {new Date(badge.assignedAt || art.createdAt).toLocaleDateString('en-GB')}</span>
+                          </div>
+                       </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -5457,14 +6008,14 @@ if (mins < 1) return t("justNow");
             })()}
 
             {canGrade && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", position: "relative", pointerEvents: "auto" }} onMouseEnter={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'block'; }} onMouseLeave={e => { e.currentTarget.querySelector('.badge-menu').style.display = 'none'; }}>
+              <div ref={badgeMenuRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, cursor: "pointer", position: "relative", pointerEvents: "auto" }} onClick={() => setShowBadgeMenu(!showBadgeMenu)}>
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
                   <Star size={14} color="#fff" fill="#fff" />
                 </div>
                 <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff", whiteSpace: "nowrap" }}>Badge</span>
                 
                 {/* Dropdown Menu Huy Hiệu */}
-                <div className="badge-menu" style={{ display: "none", position: "absolute", top: 0, right: "100%", marginRight: 16, background: "#fff", borderRadius: 8, padding: 12, minWidth: 200, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", zIndex: 200 }}>
+                <div className="badge-menu" style={{ display: showBadgeMenu ? "block" : "none", position: "absolute", top: 0, right: "100%", marginRight: 16, background: "#fff", borderRadius: 8, padding: 12, minWidth: 200, boxShadow: "0 8px 30px rgba(0,0,0,0.15)", zIndex: 200 }} onClick={e => e.stopPropagation()}>
                   <h4 style={{ margin: "0 0 10px", fontSize: 13, color: BLACK, fontWeight: 700 }}>Huy hiệu của bạn</h4>
                   {lecturerBadges.length === 0 ? (
                     <p style={{ margin: 0, fontSize: 12, color: MUTED }}>Bạn chưa tạo huy hiệu nào.</p>
@@ -5473,7 +6024,7 @@ if (mins < 1) return t("justNow");
                       {lecturerBadges.map(b => {
                         const isAssigned = (art.badges || []).some(ab => ab.id === b.id);
                         return (
-                          <div key={b.id} onClick={() => handleAssignBadge(b.id)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, background: isAssigned ? b.colorCode : GRAY_BG, color: isAssigned ? (b.textColor || "#fff") : BLACK, fontSize: 13, fontWeight: 600, cursor: assigningBadge ? "wait" : "pointer" }}>
+                          <div key={b.id} onClick={() => { handleAssignBadge(b.id); setShowBadgeMenu(false); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, background: isAssigned ? b.colorCode : GRAY_BG, color: isAssigned ? (b.textColor || "#fff") : BLACK, fontSize: 13, fontWeight: 600, cursor: assigningBadge ? "wait" : "pointer" }}>
                             <Star size={14} fill={isAssigned ? (b.textColor || "#fff") : "none"} color={isAssigned ? (b.textColor || "#fff") : BLACK} />
                             {b.name}
                           </div>
@@ -6547,9 +7098,7 @@ function AdminOrdersPage({ setPage }) {
 }
 
 function AdminDashboardPage({ setPage }) {
-  const { user: authUser } = useAuth();
-  const userRole = authUser?.role || "admin";
-  const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, pendingArtworks: 0, totalInteractions: 0 });
+    const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, totalInteractions: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -6564,12 +7113,7 @@ function AdminDashboardPage({ setPage }) {
     }).catch(() => setLoading(false));
   }, []);
 
-  const stats = userRole === "lecturer" ? [
-    { label: "Đã duyệt", value: adminStats.publishedArtworks || 0, hint: "Tổng ấn phẩm đã duyệt", accent: "#1a4ba8" },
-    { label: "Cần chấm điểm", value: adminStats.pendingArtworks || 0, hint: "Ấn phẩm đang chờ chấm", accent: "#212121" },
-    { label: "Bị báo cáo", value: adminStats.reportedArtworks || 0, hint: "Cần xem xét xử lý", accent: "#8B1A1A" },
-    { label: "Lượt tương tác", value: (adminStats.totalInteractions || 0).toLocaleString(), hint: "Lượt thích và bình luận", accent: "#0d2e6e" },
-  ] : [
+  const stats = [
     { label: t("publishedArtworks"), value: adminStats.publishedArtworks || 0, hint: t("totalPublishedArtworks"), accent: "#1a4ba8" },
     { label: t("reportedArtworks"), value: adminStats.reportedArtworks || 0, hint: t("needsProcessing"), accent: "#8B1A1A" },
     { label: t("totalAccounts"), value: adminStats.totalAccounts || 0, hint: "SV + GV + Admin", accent: "#212121" },
@@ -6579,7 +7123,7 @@ function AdminDashboardPage({ setPage }) {
   const categoryCounts = [];
   const recent = recentActivity.slice(0, 4).map(a => ({
     color: a.isPublic ? "#1a4ba8" : "#8B1A1A",
-    text: `${a.user?.fullName || "User"} ${a.isPublic ? "đã duyệt tác phẩm" : "vừa đăng tải"} "${(a.title || "").slice(0, 30)}"`,
+    text: `${a.user?.fullName || "User"} ${a.isPublic ? t("approvedArtwork") : t("justPosted")} "${(a.title || "").slice(0, 30)}"`,
   }));
 
   const statusBadge = (s) => {
@@ -6595,8 +7139,8 @@ function AdminDashboardPage({ setPage }) {
       <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[#212121]">{userRole === "lecturer" ? "Tổng quan Giảng Viên" : t("adminOverview")}</h2>
-            <p className="text-sm text-[#666666] mt-1">{userRole === "lecturer" ? "Theo dõi và quản lý các hoạt động dành cho giảng viên." : t("adminDescription")}</p>
+            <h2 className="text-2xl font-bold text-[#212121]">{t("adminOverview")}</h2>
+            <p className="text-sm text-[#666666] mt-1">{t("adminDescription")}</p>
           </div>
           <button onClick={async () => {
               const doc = new jsPDF();
@@ -6684,7 +7228,7 @@ function AdminDashboardPage({ setPage }) {
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.subject || ""}</td>
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("vi-VN") : ""}</td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap ${statusBadge(aStatus)}`}>{aStatus}</span>
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(aStatus)}`}>{aStatus}</span>
                       </td>
                     </tr>
                   );
@@ -6754,201 +7298,34 @@ function AdminDashboardPage({ setPage }) {
 
 
 
-function PendingArtworksPage({ setPage, userData }) {
-  const [artworks, setArtworks] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    api.artworks.list({ limit: "50", isPending: "true" }).then(res => {
-      setArtworks(res.artworks || []);
-      setLoading(false);
-    }).catch(err => {
-      console.error(err);
-      setLoading(false);
-    });
-  }, []);
-
-  return (
-    <div className="flex h-screen overflow-hidden bg-white relative">
-      <AdminSidebar active="pending_artworks" setPage={setPage} />
-      <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
-        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 4px", color: BLACK }}>Chấm điểm</h2>
-        <p style={{ color: MUTED, fontSize: 13, marginBottom: 28 }}>Danh sách các tác phẩm sinh viên nộp đang chờ giảng viên chấm điểm và phê duyệt.</p>
-
-        {loading ? <GlobalLoading /> : artworks.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>
-            <p style={{ color: MUTED }}>Không có tác phẩm nào đang chờ duyệt.</p>
-          </div>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-            {artworks.map(art => (
-              <div key={art.id} style={{ background: "#fff", borderRadius: 12, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}`, minWidth: 0 }}>
-                <div style={{ position: "relative", background: GRAY_BG }}>
-                  <img src={art.coverImageUrl} alt={art.title} style={{ width: "100%", height: 160, objectFit: "cover", display: "block", cursor: "pointer" }} onClick={() => setPage("detail", { artworkId: art.id })} />
-                  <div style={{ position: "absolute", top: 8, left: 8 }}>
-                    <span style={{ background: "#fffBEB", color: "#b45309", fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 10, border: "1px solid #fcd34d" }}>Chờ duyệt</span>
-                  </div>
-                </div>
-                <div style={{ padding: "12px 14px" }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, margin: "0 0 4px", color: BLACK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
-                  <p style={{ fontSize: 11, color: MUTED, margin: "0 0 8px" }}>Sinh viên: <span style={{ fontWeight: 600, color: BLACK }}>{art.user?.fullName}</span></p>
-                  <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
-                    <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.subject}</span>
-                    <span style={{ background: GRAY_BG, fontSize: 10, padding: "2px 7px", borderRadius: 6, color: MUTED, border: `1px solid ${GRAY_LIGHT}` }}>{art.academicYear}</span>
-                  </div>
-                  <button onClick={() => setPage("detail", { artworkId: art.id })} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                    Vào chấm điểm
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 function MessagesPage({ setPage, userData }) {
-  const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState(null);
-  const [frozenOrder, setFrozenOrder] = useState(null);
-  const [activeTab, setActiveTab] = useState("inbox");
-
-  const [replyText, setReplyText] = useState({});
-  const [replying, setReplying] = useState({});
-  const { user: authUser } = useAuth();
 
   useEffect(() => {
-    const fetchMsgs = () => {
-      api.messages.list().then(data => {
-        setMessages(Array.isArray(data) ? data : []);
-        setLoading(false);
-      }).catch(() => setLoading(false));
-    };
-    fetchMsgs();
+    api.messages.list().then(data => {
+      setMessages(Array.isArray(data) ? data : []);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
 
-    const connection = new HubConnectionBuilder()
-      .withUrl("/chatHub", {
-        accessTokenFactory: () => localStorage.getItem("token") || ""
-      })
-      .withAutomaticReconnect()
-      .build();
-
-    connection.start().catch(err => console.log("SignalR error", err));
-
-    connection.on("ReceiveMessage", (message) => {
-      fetchMsgs();
-    });
-
-    return () => {
-      connection.stop();
-    };
-  }, [activeTab]);
-
-  const toggleMessage = (id, thread) => {
+  const toggleMessage = (id) => {
     if (expandedId === id) {
       setExpandedId(null);
-      setFrozenOrder(null);
     } else {
       setExpandedId(id);
-      // Capture current order to prevent jumping when sending a reply
-      setFrozenOrder(threadedMessages.map(t => t.id));
-      if (thread && thread.isThread) {
-        thread.messages.forEach(m => {
-          if (!m.isRead) api.messages.markRead(m.id).catch(() => {});
-        });
-        setMessages(prev => prev.map(m => (thread.messages.some(tm => tm.id === m.id) ? { ...m, isRead: true } : m)));
-      } else {
-        api.messages.markRead(id).catch(() => {});
-        setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m));
-      }
+      api.messages.markRead(id).catch(() => {});
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m));
     }
   };
 
-  const handleReply = async (thread) => {
-    const text = (replyText[thread.id] || "").trim();
-    if (!text) return;
-    
-    setReplying(prev => ({ ...prev, [thread.id]: true }));
+  const handleArchive = async (id) => {
     try {
-      // Find original sender to reply to
-      const originalMsg = thread.messages.find(m => !m.senderName?.startsWith("To: "));
-      let recipientSlug = "uef-design-gallery";
-      
-      if (originalMsg && originalMsg.senderEmail) {
-        recipientSlug = originalMsg.senderEmail;
-      } else if (thread.artworkData?.artworkId) {
-        try {
-          const art = await api.artworks.get(thread.artworkData.artworkId);
-          if (art && art.user && art.user.email) {
-            recipientSlug = art.user.email;
-          }
-        } catch (err) {
-          console.error("Failed to fetch artwork to find recipient email:", err);
-        }
-      }
-      
-      const newMsgData = await api.messages.send({
-        recipientSlug: recipientSlug,
-        senderName: authUser?.fullName || authUser?.name || "Bạn",
-        senderEmail: authUser?.email || "",
-        senderCompany: "UEF",
-        purpose: "message",
-          content: text,
-      });
-      
-      // Update local messages
-      const outboxMsg = {
-        ...newMsgData,
-        senderName: `To: ${recipientSlug}`,
-        recipientSlug: recipientSlug,
-        isRead: true
-      };
-      setMessages(prev => [outboxMsg, ...prev]);
-      setReplyText(prev => ({ ...prev, [thread.id]: "" }));
-    } catch (e) {
-      alert("Lỗi khi gửi phản hồi: " + (e?.message || "Vui lòng thử lại"));
-    } finally {
-      setReplying(prev => ({ ...prev, [thread.id]: false }));
-    }
-  };
-
-  const handleArchive = async (id, thread) => {
-    try {
-      if (thread && thread.isThread) {
-        await Promise.all(thread.messages.map(m => api.messages.archive(m.id)));
-        setMessages(prev => prev.map(m => thread.messages.some(tm => tm.id === m.id) ? { ...m, isArchived: true } : m));
-      } else {
-        await api.messages.archive(id);
-        setMessages(prev => prev.map(m => m.id === id ? { ...m, isArchived: true } : m));
-      }
+      await api.messages.archive(id);
+      setMessages(prev => prev.filter(m => m.id !== id));
     } catch (e) {
       alert(t("archiveError") + (e?.message || t("pleaseTryAgain")));
-    }
-  };
-
-  const handleUnarchive = async (id, thread) => {
-    try {
-      if (thread && thread.isThread) {
-        await Promise.all(thread.messages.map(m => api.messages.unarchive(m.id)));
-        setMessages(prev => prev.map(m => thread.messages.some(tm => tm.id === m.id) ? { ...m, isArchived: false } : m));
-      } else {
-        await api.messages.unarchive(id);
-        setMessages(prev => prev.map(m => m.id === id ? { ...m, isArchived: false } : m));
-      }
-    } catch (e) {
-      alert("Lỗi khôi phục: " + (e?.message || t("pleaseTryAgain")));
-    }
-  };
-
-  const handleUpdateStatus = async (id, status) => {
-    try {
-      await api.messages.updateStatus(id, { status });
-      setMessages(prev => prev.map(m => m.id === id ? { ...m, status } : m));
-    } catch (e) {
-      alert("Lỗi cập nhật trạng thái: " + (e?.message || t("pleaseTryAgain")));
     }
   };
 
@@ -6961,316 +7338,112 @@ function MessagesPage({ setPage, userData }) {
     return d.toLocaleDateString("vi-VN");
   };
 
-  const threadedMessages = React.useMemo(() => {
-    const filtered = messages.filter(m => activeTab === "archived" ? m.isArchived : !m.isArchived);
-    const groups = {};
-
-    filtered.forEach(msg => {
-      const isMe = msg.senderName?.startsWith("To: ");
-      const otherEmail = msg.recipientSlug || msg.senderEmail || "uef-design-gallery";
-      const otherAvatarUrl = msg.senderAvatarUrl;
-      const otherName = isMe ? (msg.recipientSlug || msg.senderName) : msg.senderName;
-      
-      let groupId = "chat_" + otherEmail;
-      
-      let artworkData = null;
-      if (msg.purpose === 'order' || msg.purpose === 'feedback') {
-        try {
-          artworkData = JSON.parse(msg.content);
-        } catch {}
-      }
-
-      if (!groups[groupId]) {
-        groups[groupId] = {
-          id: groupId,
-          otherEmail: otherEmail,
-          otherAvatarUrl: otherAvatarUrl,
-          otherName: otherName,
-          artworkData: artworkData,
-          messages: []
-        };
-      } else {
-        if (!groups[groupId].otherAvatarUrl && otherAvatarUrl) groups[groupId].otherAvatarUrl = otherAvatarUrl;
-        if (!groups[groupId].otherName && otherName && !otherName.startsWith("To: ")) groups[groupId].otherName = otherName;
-      }
-      
-      groups[groupId].messages.push(msg);
-    });
-
-    Object.values(groups).forEach(g => {
-      g.messages.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    });
-
-    const result = [];
-    Object.values(groups).forEach(g => {
-      const latestMsg = g.messages[g.messages.length - 1];
-      result.push({
-        isThread: true,
-        id: g.id,
-        otherEmail: g.otherEmail,
-        otherAvatarUrl: g.otherAvatarUrl,
-        otherName: g.otherName,
-        artworkData: g.artworkData,
-        messages: g.messages,
-        latestMessage: latestMsg,
-        createdAt: latestMsg.createdAt,
-        isRead: g.messages.every(m => m.isRead),
-        purpose: latestMsg.purpose,
-      });
-    });
-
-    result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    if (frozenOrder) {
-      result.sort((a, b) => {
-        const idxA = frozenOrder.indexOf(a.id);
-        const idxB = frozenOrder.indexOf(b.id);
-        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-        if (idxA === -1 && idxB !== -1) return -1;
-        if (idxB === -1 && idxA !== -1) return 1;
-        return 0;
-      });
-    }
-    
-    return result;
-  }, [messages, activeTab]);
-
   return (
     <div style={{ display: "flex", minHeight: "calc(100vh - 60px)", background: GRAY_BG }}>
       <DashboardSidebar activePage="messages" setPage={setPage} userData={userData} />
-      <div style={{ flex: 1, padding: "32px 40px", minWidth: 0 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-          <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: BLACK }}>{t("inboxTitle")}</h2>
-          <div style={{ display: "flex", gap: 8, background: "#fff", padding: 4, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
-            <button onClick={() => { setActiveTab("inbox"); setExpandedId(null); setFrozenOrder(null); }} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "inbox" ? "#f3f4f6" : "transparent", color: activeTab === "inbox" ? BLACK : MUTED }}>Hộp thư đến</button>
-            <button onClick={() => { setActiveTab("archived"); setExpandedId(null); setFrozenOrder(null); }} style={{ padding: "6px 16px", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", background: activeTab === "archived" ? "#f3f4f6" : "transparent", color: activeTab === "archived" ? BLACK : MUTED }}>Đã lưu trữ</button>
-          </div>
-        </div>
+      <div style={{ flex: 1, padding: "32px 40px" }}>
+        <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 24px", color: BLACK }}>{t("inboxTitle")}</h2>
         {loading ? (
           <p style={{ textAlign: "center", color: MUTED, padding: 40 }}>{t("loading")}</p>
-        ) : threadedMessages.length === 0 ? (
-          <p style={{ textAlign: "center", color: MUTED, padding: 40, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>{activeTab === "archived" ? "Chưa có tin nhắn lưu trữ" : t("noMessages")}</p>
+        ) : messages.length === 0 ? (
+          <p style={{ textAlign: "center", color: MUTED, padding: 40, background: "#fff", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>{t("noMessages")}</p>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {threadedMessages.map(thread => {
-              const msg = thread.latestMessage;
-              const isExpanded = expandedId === thread.id;
-              
-              let avatarUrl = null;
-              if (thread.isThread && thread.artworkData?.artworkImage) {
-                 avatarUrl = thread.artworkData.artworkImage;
-              } else if (msg.purpose === 'order') {
-                try {
-                  const data = JSON.parse(msg.content);
-                  if (data.artworkImage) avatarUrl = data.artworkImage;
-                } catch {}
-              }
-
-              if (!avatarUrl && thread.otherAvatarUrl) avatarUrl = thread.otherAvatarUrl;
-
-                // Determine the other party's name
-                let displayName = thread.otherName || thread.otherEmail || "Người dùng ẩn danh";
-                if (displayName.startsWith("To: ")) displayName = displayName.replace("To: ", "Gửi đến: ");
-
-              // Subtext is latest message
-              let subText = msg.purpose === 'order' ? t("orderArtwork") : (msg.content || "");
-              if (thread.isThread && msg.purpose !== 'order') {
-                try {
-                  const data = JSON.parse(msg.content);
-                  subText = data.description || subText;
-                } catch {}
-              }
-
-              return (
-              <div key={thread.id} style={{ display: "flex", flexDirection: "column", background: thread.isRead ? "#fff" : "#f8faff", borderRadius: 12, border: `1px solid ${thread.isRead ? "#eaeaea" : "#cce0ff"}`, overflow: "hidden", transition: "all 0.2s" }}>
-                <div onClick={() => toggleMessage(thread.id, thread)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", cursor: "pointer" }} onMouseOver={e => { if (!isExpanded) e.currentTarget.style.background = thread.isRead ? "#fdfdfd" : "#f0f6ff" }} onMouseOut={e => { e.currentTarget.style.background = "transparent" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: thread.isRead ? "#f0f0f0" : "linear-gradient(135deg, #1a4ba8, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", color: thread.isRead ? "#888" : "#fff", fontWeight: 700, fontSize: 16, flexShrink: 0 }}>
-                  {avatarUrl ? (
-                    <img src={avatarUrl} alt="avatar" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} />
-                  ) : (
-                    (msg.senderName?.replace("To: ", "") || "?").charAt(0).toUpperCase()
-                  )}
+            {messages.map(msg => (
+              <div key={msg.id} style={{ display: "flex", flexDirection: "column", background: msg.isRead ? "#fff" : "#eef4ff", borderRadius: 12, border: `1px solid ${msg.isRead ? GRAY_LIGHT : "#a8bce0"}`, overflow: "hidden" }}>
+                <div onClick={() => toggleMessage(msg.id)} style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", cursor: "pointer" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: msg.isRead ? GRAY_BG : CERULEAN, display: "flex", alignItems: "center", justifyContent: "center", color: msg.isRead ? MUTED : "#fff", fontWeight: 700, fontSize: 16 }}>
+                    {msg.senderName?.charAt(0) || "?"}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 2 }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
-                        <p style={{ fontSize: 15, fontWeight: thread.isRead ? 600 : 700, color: "#1a1a1a", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {displayName}
-                        </p>
-                        {thread.isThread && <span style={{ fontSize: 12, color: "#666", whiteSpace: "nowrap" }}>• {thread.messages.length} tin nhắn</span>}
-                        {!thread.isThread && msg.senderCompany && msg.purpose !== 'order' && <span style={{ fontSize: 12, color: "#666", whiteSpace: "nowrap" }}>• {msg.senderCompany}</span>}
-                      </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                        <span style={{ fontSize: 12, color: "#888", fontWeight: 500 }}>{formatDate(thread.createdAt)}</span>
-                      </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+                      <p style={{ fontSize: 15, fontWeight: msg.isRead ? 600 : 700, color: BLACK, margin: "0 0 4px" }}>{msg.senderName}</p>
+                      {msg.senderCompany && <span style={{ fontSize: 13, color: MUTED }}>• {msg.senderCompany}</span>}
                     </div>
                     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      {thread.purpose === 'order' ? (
-                        <span style={{ fontSize: 11, color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>[{t("order")}]</span>
-                      ) : thread.purpose === 'feedback' ? (
-                        <span style={{ fontSize: 11, color: "#1a4ba8", fontWeight: 600, whiteSpace: "nowrap" }}>[Feedback Kín]</span>
-                      ) : (
-                        thread.purpose && <span style={{ fontSize: 11, color: "#555", fontWeight: 600, whiteSpace: "nowrap" }}>[{thread.purpose}]</span>
+                      {msg.purpose === 'order' && (
+                        <span style={{ background: "#ECFDF5", border: `1px solid #10B981`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: "#059669", whiteSpace: "nowrap" }}>{t("order")}</span>
                       )}
-                      <p style={{ fontSize: 13, color: thread.isRead ? "#666" : "#333", margin: 0, fontWeight: thread.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                        {msg.senderName?.startsWith("To: ") ? "Bạn: " : ""}{subText}
-                      </p>
+                      {msg.purpose && msg.purpose !== 'order' && <span style={{ background: GRAY_BG, border: `1px solid ${GRAY_LIGHT}`, fontSize: 11, padding: "2px 8px", borderRadius: 12, color: MUTED, whiteSpace: "nowrap" }}>{msg.purpose}</span>}
+                      {msg.purpose === 'order' && (
+                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t("orderArtwork")}</p>
+                      )}
+                      {msg.purpose !== 'order' && msg.content && (
+                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
+                      )}
                     </div>
                   </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                    <span style={{ fontSize: 12, color: MUTED, whiteSpace: "nowrap" }}>{formatDate(msg.createdAt)}</span>
+                    {msg.isRead ? <MailOpen size={14} color={MUTED} /> : <Mail size={14} color={CERULEAN} />}
+                  </div>
                 </div>
-                
-                {isExpanded && (
-                  <div style={{ padding: "0 16px 16px 70px" }}>
-                    <div style={{ paddingTop: 16, borderTop: "1px dashed #eaeaea", display: "flex", flexDirection: "column", gap: 16 }}>
-                      {thread.isThread ? (
-                        // Thread View
-                        <>
-                          {thread.artworkData && (
-                            <div style={{ display: "flex", gap: 12, alignItems: "center", background: "#fdfdfd", border: "1px solid #eaeaea", borderRadius: 8, padding: 12, marginBottom: 16 }}>
-                              {thread.artworkData.artworkImage && (
-                                <img src={thread.artworkData.artworkImage} alt={thread.artworkData.artworkTitle || "Tác phẩm"} style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 4 }} />
-                              )}
-                              <div style={{ flex: 1 }}>
-                                <p style={{ fontSize: 14, fontWeight: 700, color: BLACK, margin: "0 0 4px" }}>{thread.artworkData.artworkTitle || "Tác phẩm"}</p>
-                                <div style={{ display: "flex", gap: 8 }}>
-                                  <button onClick={() => setPage("detail", { artworkId: thread.artworkId })} style={{ padding: "4px 8px", borderRadius: 4, border: "none", background: "#f0f0f0", color: "#333", fontSize: 11, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                                    <ExternalLink size={12} /> Xem tác phẩm
-                                  </button>
-                                  {msg.status !== "completed" && (
-                                    <button onClick={() => handleUpdateStatus(msg.id, "completed")} style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #10B981", background: "transparent", color: "#10B981", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>Đánh dấu hoàn thành</button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          
+                {expandedId === msg.id && (
+                  <div style={{ padding: "0 20px 20px 80px" }}>
+                    <div style={{ padding: "16px", background: GRAY_BG, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
+                      {msg.purpose === 'order' ? (
+                        <div style={{ display: "flex", gap: 16, alignItems: "start" }}>
                           {(() => {
-                            const originalMsg = thread.messages.find(m => !m.senderName?.startsWith("To: ")) || msg;
-                            let feedbackText = originalMsg.content;
                             try {
-                              const d = JSON.parse(originalMsg.content);
-                              feedbackText = d.description || originalMsg.content;
-                            } catch {}
-                            
-                            const emailBody = `Kính gửi ${originalMsg.senderName?.replace("To: ", "") || "bạn"},
-
-[Vui lòng nhập nội dung phản hồi của bạn tại đây...]
-
-Trân trọng,
-[Tên của bạn]
-
---------------------------------------------------
-🔴 🟡 🔵 THÔNG TIN TRAO ĐỔI TỪ UEF DESIGN GALLERY
---------------------------------------------------
-📌 Chủ đề: ${thread.artworkData?.artworkTitle ? `Phản hồi về tác phẩm "${thread.artworkData.artworkTitle}"` : (thread.purpose || "Liên hệ từ Portfolio")}
-📅 Thời gian gửi: ${formatDate(originalMsg.createdAt)}
-
-📝 NỘI DUNG GỐC:
-"${feedbackText}"
---------------------------------------------------
-`;
-                            return (
-                              <div style={{ marginTop: 8 }}>
-                                {originalMsg.senderEmail && (
-                                  <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                                    <span style={{ fontSize: 12, color: "#888" }}>Email gốc:</span>
-                                    <a href={`mailto:${originalMsg.senderEmail}`} style={{ fontSize: 13, color: "#1a4ba8", textDecoration: "none", fontWeight: 500 }}>{originalMsg.senderEmail}</a>
+                              const data = JSON.parse(msg.content);
+                              return (
+                                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                                  <div style={{ flex: "0 0 120px", borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                                    <img src={data.artworkImage} alt={data.artworkTitle} style={{ width: "100%", height: 120, objectFit: "cover" }} />
                                   </div>
-                                )}
-                                <div style={{ background: "#f8f9fa", padding: 16, borderRadius: 8, border: "1px solid #eee" }}>
-                                  <p style={{ fontSize: 13, color: "#333", margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{feedbackText}</p>
+                                  <div>
+                                    <p style={{ fontSize: 14, fontWeight: 600, color: BLACK, margin: "0 0 8px" }}>{data.artworkTitle}</p>
+                                    <p style={{ fontSize: 13, color: "#444", margin: "0 0 8px", lineHeight: 1.5 }}>{data.description || t("noDescription")}</p>
+                                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                                      {data.phone && (
+                                        <a href={`tel:${data.phone}`} style={{ fontSize: 13, color: CERULEAN, textDecoration: "underline" }}>📞 {data.phone}</a>
+                                      )}
+                                      {data.company && <p style={{ fontSize: 13, color: "#666" }}>🏢 {data.company}</p>}
+                                    </div>
+                                  </div>
                                 </div>
-                                
-                                <div style={{ display: "flex", gap: 8, marginTop: 16, alignItems: "center", borderTop: "1px solid #eee", paddingTop: 16 }}>
-                                  <a
-                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(originalMsg.senderEmail || "uef-design-gallery")}&su=${encodeURIComponent(`Reply: ${thread.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(emailBody)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
-                                    title="Phản hồi qua Email"
-                                  >
-                                    <Mail size={14} /> Phản hồi qua Email
-                                  </a>
-                                </div>
-                              </div>
-                            );
+                              );
+                            } catch {
+                              return <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>;
+                            }
                           })()}
-                        </>
+                        </div>
                       ) : (
-                        // Normal Message View
-                        <>
-                          {(() => {
-                            let feedbackText = msg.content;
-                            try {
-                              const d = JSON.parse(msg.content);
-                              feedbackText = d.description || msg.content;
-                            } catch {}
-                            
-                            const emailBody = `Kính gửi ${msg.senderName?.replace("To: ", "") || "bạn"},
-
-[Vui lòng nhập nội dung phản hồi của bạn tại đây...]
-
-Trân trọng,
-[Tên của bạn]
-
---------------------------------------------------
-🔴 🟡 🔵 THÔNG TIN TRAO ĐỔI TỪ UEF DESIGN GALLERY
---------------------------------------------------
-📌 Chủ đề: ${msg.purpose || "Liên hệ từ Portfolio"}
-📅 Thời gian gửi: ${formatDate(msg.createdAt)}
-
-📝 NỘI DUNG GỐC:
-"${feedbackText}"
---------------------------------------------------
-`;
-                            return (
-                              <div style={{ marginTop: 8 }}>
-                                {msg.senderEmail && (
-                                  <div style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                                    <span style={{ fontSize: 12, color: "#888" }}>Email gốc:</span>
-                                    <a href={`mailto:${msg.senderEmail}`} style={{ fontSize: 13, color: "#1a4ba8", textDecoration: "none", fontWeight: 500 }}>{msg.senderEmail}</a>
-                                  </div>
-                                )}
-                                <div style={{ background: "#f8f9fa", padding: 16, borderRadius: 8, border: "1px solid #eee" }}>
-                                  <p style={{ fontSize: 13, color: "#333", margin: 0, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{feedbackText}</p>
-                                </div>
-                                
-                                <div style={{ display: "flex", gap: 8, marginTop: 16, alignItems: "center", borderTop: "1px solid #eee", paddingTop: 16 }}>
-                                  <a
-                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail || "uef-design-gallery")}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(emailBody)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
-                                    title="Phản hồi qua Email"
-                                  >
-                                    <Mail size={14} /> Phản hồi qua Email
-                                  </a>
-                                </div>
-                              </div>
-                            );
-                          })()}
-                        </>
+                        <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>
                       )}
-
-                      {/* Archive Actions */}
-                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                        {activeTab === "inbox" ? (
-                          <button onClick={() => handleArchive(msg.id, thread)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
-                            <Archive size={14} /> {t("archive")}
-                          </button>
-                        ) : (
-                          <button onClick={() => handleUnarchive(msg.id, thread)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 12, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
-                            <ArchiveRestore size={14} /> Khôi phục
-                          </button>
-                        )}
-                      </div>
-
+                    </div>
+                    <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+                      {msg.purpose === 'order' ? (
+                        <button onClick={() => {
+                          const data = JSON.parse(msg.content);
+                          if (data.artworkId) {
+                            setPage("detail", { artworkId: data.artworkId });
+                          } else {
+                            setPage("messages");
+                          }
+                        }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <Mail size={14} /> {t("viewArtwork")}
+                        </button>
+                      ) : (
+                        <a
+                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(
+                            `--- Original message from ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Purpose: ${msg.purpose}\n` : ""}${msg.content}\n\n--- My reply ---\n`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                        >
+                          <Mail size={14} /> {t("replyViaEmail")}
+                        </a>
+                      )}
+                      <button onClick={() => handleArchive(msg.id)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
+                        <Archive size={14} /> {t("archive")}
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
-              );
-            })}
+            ))}
           </div>
         )}
       </div>
@@ -7279,31 +7452,28 @@ Trân trọng,
 }
 
 function AdminSidebar({ active, setPage }) {
-  const { user: authUser } = useAuth();
-  const userRole = authUser?.role || "admin";
-  const items = [
-    { icon: <LayoutDashboard size={18} />, label: "Tổng quan", page: "admin", roles: ["admin", "lecturer"] },
-    { icon: <CheckCircle size={18} />, label: "Chấm điểm", page: "pending_artworks", roles: ["admin", "lecturer"] },
-    { icon: <FileBadge size={18} />, label: "Quản lý huy hiệu", page: "badges", roles: ["admin"] },
-    { icon: <Users size={18} />, label: "Tài khoản", page: "admin_users", roles: ["admin"] },
-    { icon: <ShoppingCart size={18} />, label: "Đơn hàng", page: "admin_orders", roles: ["admin"] },
-    { icon: <ShieldAlert size={18} />, label: "Quản lý ấn phẩm", page: "admin_artworks", roles: ["admin", "lecturer"] },
-    { icon: <Folder size={18} />, label: "Quản lý Moodboard", page: "admin_export", roles: ["admin", "lecturer"] },
-    { icon: <Settings size={18} />, label: "Cài đặt Watermark", page: "admin_watermark", roles: ["admin"] },
-    { icon: <Settings size={18} />, label: "Cài đặt Layout", page: "admin_layout", roles: ["admin"] },
-  ].filter(item => item.roles.includes(userRole));
+    const items = [
+    { icon: <LayoutDashboard size={18} />, label: t("overview"), page: "admin" },
+    { icon: <Users size={18} />, label: t("accounts"), page: "admin_users" },
+    { icon: <ShoppingCart size={18} />, label: t("orders"), page: "admin_orders" },
+    { icon: <ShieldAlert size={18} />, label: t("artworkWarnings"), page: "admin_artworks" },
+    { icon: <Folder size={18} />, label: t("collectionManagement"), page: "admin_export" },
+    { icon: <Star size={18} />, label: "Quản lý huy hiệu", page: "badges" },
+    { icon: <FileBadge size={18} />, label: t("watermarkSettings"), page: "admin_watermark" },
+    { icon: <Settings size={18} />, label: "Layout Settings", page: "admin_layout" },
+  ];
 
   return (
     <div className="w-64 bg-[#F8F8F8] border-r border-[#E0E0E0] flex-shrink-0 flex flex-col h-full overflow-y-auto">
       <div className="p-6 border-b border-[#E0E0E0]">
-        <h3 className="font-medium text-[#212121] text-[13px] uppercase tracking-wider">{userRole === "lecturer" ? "Trang Giảng Viên" : t("adminPanel")}</h3>
-        <p className="text-[11px] text-[#666666] mt-1">{userRole === "lecturer" ? "Lecturer Dashboard" : t("adminSystem")}</p>
+        <h3 className="font-bold text-[#212121] text-sm uppercase tracking-wider">{t("adminPanel")}</h3>
+        <p className="text-xs text-[#666666] mt-1">{t("adminSystem")}</p>
       </div>
       <div className="py-4">
         {items.map(item => (
           <div key={item.label} onClick={() => setPage(item.page)} className={`flex items-center gap-3 px-6 py-3 cursor-pointer border-r-4 ${active === item.page ? 'bg-[#e0eaff] border-[#1a4ba8] text-[#1a4ba8]' : 'border-transparent text-[#212121] hover:bg-white'}`}>
             <span className={active === item.page ? 'text-[#1a4ba8]' : 'text-[#666666]'}>{item.icon}</span>
-            <span className={`text-[13px] ${active === item.page ? 'font-medium' : 'font-normal'}`}>{item.label}</span>
+            <span className={`text-sm ${active === item.page ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>
           </div>
         ))}
       </div>
@@ -7314,15 +7484,7 @@ function AdminSidebar({ active, setPage }) {
 }
 
 function EditArtworkPage({ setPage, activeArtworkId }) {
-  const { user: currentUser } = useAuth();
-  if (currentUser?.role !== "student") {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "#f9fafb" }}>
-        <h2 style={{ fontSize: 24, fontWeight: "bold", color: "#ef4444" }}>Bạn không có quyền truy cập trang này.</h2>
-      </div>
-    );
-  }
-  const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState({ type: "", text: "" });
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -7341,7 +7503,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
   const [coverImage, setCoverImage] = useState(null);
   const [originalCover, setOriginalCover] = useState("");
   const [additionalImages, setAdditionalImages] = useState([]);
-  const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
+  const [defaultWatermarkText, setDefaultWatermarkText] = useState(() => "UEF");
 
   const allSubjects = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
   const semesterToYear = { HK1: "Năm 1", HK2: "Năm 2", HK3: "Năm 3" };
@@ -7369,42 +7531,8 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     }).catch(() => setLoading(false));
   }, [activeArtworkId]);
 
-  const autoSaveStateRef = React.useRef({ title, description, subject, tools, tags, friends, coverImage, originalCover, additionalImages, projectYear, defaultWatermarkText });
   useEffect(() => {
-    autoSaveStateRef.current = { title, description, subject, tools, tags, friends, coverImage, originalCover, additionalImages, projectYear, defaultWatermarkText };
-  });
-
-  useEffect(() => {
-    const timer = setInterval(async () => {
-      const state = autoSaveStateRef.current;
-      if (!state.title?.trim()) return;
-      try {
-        const body = {
-          title: state.title.trim(),
-          description: state.description?.trim() || null,
-          subject: state.subject || null,
-          toolsUsed: state.tools,
-          tags: state.tags,
-          collaborators: state.friends.map(f => f.fullName || f),
-          collaboratorIds: state.friends.map(f => f.id).filter(Boolean),
-          fileUrls: [state.coverImage || state.originalCover, ...state.additionalImages].filter(Boolean),
-          coverImageUrl: state.coverImage || state.originalCover,
-          watermarkText: state.defaultWatermarkText || "UEF",
-          watermarkPosition: "bottom-right",
-          semester: yearToSemester[state.projectYear] || "HK1",
-          academicYear: yearToAcademic[state.projectYear] || "2024-2025",
-        };
-        await api.artworks.update(activeArtworkId, body);
-        console.log("Auto-saved at", new Date().toLocaleTimeString());
-      } catch (e) {
-        console.error("Auto-save failed", e);
-      }
-    }, 60000);
-    return () => clearInterval(timer);
-  }, [activeArtworkId]);
-
-  useEffect(() => {
-    fetch("/api/site-settings")
+    fetch("/api/site-settings?_t=" + Date.now(), { cache: "no-store" })
       .then(r => r.json())
       .then(data => {
         if (data.watermark_text) setDefaultWatermarkText(data.watermark_text);
@@ -7417,6 +7545,15 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
+      let finalWm = defaultWatermarkText || "UEF";
+      try {
+        const settingsRes = await fetch("/api/site-settings", { cache: "no-store" });
+        const settingsData = await settingsRes.json();
+        if (settingsData.watermark_text !== undefined) {
+          finalWm = settingsData.watermark_text || "UEF";
+        }
+      } catch (e) {}
+
       const body = {
         title: title.trim(),
         description: description.trim() || null,
@@ -7427,7 +7564,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
         collaboratorIds: friends.map(f => f.id).filter(Boolean),
         fileUrls: [coverImage || originalCover, ...additionalImages].filter(Boolean),
         coverImageUrl: coverImage || originalCover,
-        watermarkText: defaultWatermarkText || "UEF",
+        watermarkText: finalWm,
         watermarkPosition: "bottom-right",
         semester: yearToSemester[projectYear] || "HK1",
         academicYear: yearToAcademic[projectYear] || "2024-2025",
@@ -7480,7 +7617,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Cảnh báo: Việc xóa bài sẽ làm mất vĩnh viễn toàn bộ Like và Bình luận của bài viết này. Bạn có chắc chắn muốn tiếp tục?")) return;
+    if (!confirm(t("confirmDeleteArtwork"))) return;
     try {
       await api.artworks.delete(activeArtworkId);
       setPage("dashboard");
@@ -7536,7 +7673,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("courseName")}</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#1a4ba8] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("projectType")}</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#eef4ff] border-[#1a4ba8] text-[#1a4ba8]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("assignmentType")}</label><div className="flex gap-3">{[{ key: false, label: t("individual"), icon: <User size={16} /> }, { key: true, label: t("group"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#eef4ff] border-[#1a4ba8]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#1a4ba8]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#1a4ba8]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
-            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#e0eaff] text-[#1a4ba8] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(u.fullName || "User") + "&background=random"} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
+            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#e0eaff] text-[#1a4ba8] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#1a4ba8] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("category")}</label>
               <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#1a4ba8] focus:bg-white transition-colors cursor-pointer">
@@ -7576,6 +7713,10 @@ function AdminUsersPage({ setPage }) {
   const [editModal, setEditModal] = useState({ isOpen: false, user: null });
   const [importFileName, setImportFileName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [userBadges, setUserBadges] = useState([]);
+  const [availableBadges, setAvailableBadges] = useState([]);
+  const [badgesLoading, setBadgesLoading] = useState(false);
   const { userRole } = useAuth();
   const importInputRef = useRef(null);
   const roleLabel = { student: "Sinh viên", lecturer: t("lecturer"), admin: t("admin"), guest: t("guestLabel") || "Khách" };
@@ -7589,6 +7730,35 @@ function AdminUsersPage({ setPage }) {
 
   const handleEditChange = (field, value) => {
     setEditModal(prev => ({ ...prev, user: { ...prev.user, [field]: value } }));
+  };
+
+  useEffect(() => {
+    if (editModal.isOpen && editModal.user) {
+      setBadgesLoading(true);
+      Promise.all([
+        fetch(`/api/accountbadges/user/${editModal.user.id}`).then(r => r.json()),
+        fetch('/api/accountbadges').then(r => r.json())
+      ]).then(([userB, allB]) => {
+        setUserBadges(userB || []);
+        setAvailableBadges(allB || []);
+        setBadgesLoading(false);
+      }).catch(() => setBadgesLoading(false));
+    }
+  }, [editModal.isOpen, editModal.user?.id]);
+
+  const toggleBadge = async (badgeId) => {
+    try {
+      const res = await fetch(`/api/accountbadges/${badgeId}/assign/${editModal.user.id}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.status === "assigned") {
+        const b = availableBadges.find(x => x.id === badgeId);
+        if (b) setUserBadges(prev => [...prev, b]);
+      } else {
+        setUserBadges(prev => prev.filter(x => x.id !== badgeId));
+      }
+    } catch (e) {
+      alert("Lỗi cấp/thu hồi huy hiệu: " + e.message);
+    }
   };
 
   const handleSaveUser = async () => {
@@ -7617,8 +7787,15 @@ function AdminUsersPage({ setPage }) {
     } catch {}
   };
 
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = (u.fullName || "").toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (u.email || "").toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesRole = roleFilter === "all" || u.role === roleFilter;
+    return matchesSearch && matchesRole;
+  });
+
   const handleExportExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(users.filter(u => u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())).map(u => ({
+    const ws = XLSX.utils.json_to_sheet(filteredUsers.map(u => ({
       "Họ tên": u.fullName,
       "Email": u.email,
       "Vai trò": roleLabel[u.role] || u.role,
@@ -7709,6 +7886,17 @@ function AdminUsersPage({ setPage }) {
               <ArrowDownCircle size={16} className="-rotate-90" />
               Import Excel
             </button>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="px-3 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]"
+            >
+              <option value="all">Tất cả vai trò</option>
+              <option value="admin">Quản trị viên (Admin)</option>
+              <option value="lecturer">Giảng viên</option>
+              <option value="student">Sinh viên</option>
+              <option value="guest">Khách (Guest)</option>
+            </select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666666]" size={16} />
               <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t("searchUser")} className="pl-10 pr-4 py-2 bg-white border border-[#E0E0E0] rounded-lg text-sm w-64 outline-none focus:border-[#1a4ba8]" />
@@ -7722,7 +7910,7 @@ function AdminUsersPage({ setPage }) {
           </div>
         )}
 
-        {loading ? <div className="text-center py-16 text-[#666666] text-sm">{t("loadingList")}</div> : users.length === 0 ? <div className="text-center py-16 text-[#666666] text-sm">{t("noUsers")}</div> : (
+        {loading ? <div className="text-center py-16 text-[#666666] text-sm">{t("loadingList")}</div> : filteredUsers.length === 0 ? <div className="text-center py-16 text-[#666666] text-sm">{t("noUsers")}</div> : (
         <div className="border border-[#E0E0E0] rounded-xl overflow-hidden shadow-sm">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -7735,7 +7923,7 @@ function AdminUsersPage({ setPage }) {
               </tr>
             </thead>
             <tbody>
-              {users.filter(u => u.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())).map(u => {
+              {filteredUsers.map(u => {
                 const roleVal = roleLabel[u.role] || u.role;
                 const locked = !u.isActive;
                 return (
@@ -7777,7 +7965,7 @@ function AdminUsersPage({ setPage }) {
       </div>
 
       {confirmModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden flex flex-col p-6 text-center">
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <ShieldAlert size={28} className="text-[#8B1A1A]" />
@@ -7891,6 +8079,46 @@ function AdminUsersPage({ setPage }) {
                 )}
                 
               </div>
+            </div>
+
+            {/* Quản lý Huy hiệu Tài khoản */}
+            <div className="mt-6 border-t pt-4">
+              <h4 className="font-semibold text-[#1a4ba8] mb-3">Huy hiệu Tài khoản</h4>
+              {badgesLoading ? <p className="text-sm text-gray-500">Đang tải...</p> : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-2">Huy hiệu hiện có (bao gồm tự động)</label>
+                    <div className="flex flex-wrap gap-2">
+                      {userBadges.length === 0 ? <span className="text-sm text-gray-400">Chưa có huy hiệu</span> : userBadges.map(b => (
+                        <div key={b.id} className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-semibold" style={{ background: b.bgColor || "#f0f0f0", color: b.textColor || "#333", borderColor: "rgba(0,0,0,0.1)" }} title={b.tooltip}>
+                          {(b.iconUrl || getBadgeIcon(b.name)) && <img src={b.iconUrl || getBadgeIcon(b.name)} className="w-3.5 h-3.5 object-cover" />}
+                          {b.name}
+                          {b.type === "Default" && <span className="opacity-70 text-[10px] ml-1">(Tự động)</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-2">Cấp/Thu hồi huy hiệu tùy chỉnh</label>
+                    <div className="flex flex-col gap-2 max-h-32 overflow-y-auto pr-2">
+                      {availableBadges.length === 0 ? <span className="text-sm text-gray-400">Chưa có huy hiệu Custom nào trong hệ thống.</span> : availableBadges.map(b => {
+                        const hasBadge = userBadges.some(ub => ub.id === b.id);
+                        return (
+                          <div key={b.id} className="flex items-center justify-between border border-gray-200 rounded-md p-2 hover:bg-gray-50">
+                            <div className="flex items-center gap-2">
+                              {(b.iconUrl || getBadgeIcon(b.name)) && <img src={b.iconUrl || getBadgeIcon(b.name)} className="w-4 h-4 object-cover" />}
+                              <span className="text-sm font-medium">{b.name}</span>
+                            </div>
+                            <button onClick={() => toggleBadge(b.id)} className={`px-3 py-1 rounded text-xs font-bold ${hasBadge ? 'bg-red-50 text-red-600 hover:bg-red-100' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}>
+                              {hasBadge ? 'Thu hồi' : 'Cấp'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex justify-end gap-3 border-t pt-4">
@@ -8370,7 +8598,7 @@ function AdminArtworksPage({ setPage }) {
       )}
 
       {confirmModal.isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-sm overflow-hidden flex flex-col p-6 text-center">
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <ShieldAlert size={28} className="text-[#8B1A1A]" />
@@ -8861,16 +9089,16 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
 }
 
 function AdminWatermarkPage({ setPage }) {
-  const [watermarkText, setWatermarkText] = useState("");
+  const [watermarkText, setWatermarkText] = useState(() => "UEF");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
-    fetch("/api/site-settings")
+    fetch("/api/site-settings?_t=" + Date.now(), { cache: "no-store" })
       .then(r => r.json())
       .then(data => {
-        setWatermarkText(data.watermark_text || "UEF");
+        if (data.watermark_text !== undefined) setWatermarkText(data.watermark_text || "UEF");
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -8880,9 +9108,13 @@ function AdminWatermarkPage({ setPage }) {
     setSaving(true);
     setMessage({ type: "", text: "" });
     try {
-      const res = await fetch("/api/site-settings", {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/site-settings?_t=" + Date.now(), {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ key: "watermark_text", value: watermarkText.trim() || "UEF" }),
       });
       if (!res.ok) throw new Error("Save failed");
@@ -9547,11 +9779,11 @@ function LandingPage({ setPage, isLoggedIn, setActiveArtworkId }) {
             <div className="flex items-center gap-3 mb-4">
               <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
               <div>
-                <p className="font-bold text-[#212121]">{getSetting('siteName') || footerInfo?.brand || 'Design Gallery'}</p>
+                <p className="font-bold text-[#212121]">{footerInfo?.brand || 'Design Gallery'}</p>
                 <p className="text-xs text-[#666]">{footerInfo?.subtitle || 'Khoa Thiết kế Đồ họa'}</p>
               </div>
             </div>
-            <p className="text-sm text-[#666] leading-relaxed mb-4">{getSetting('siteDescription') || footerInfo?.description || 'Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.'}</p>
+            <p className="text-sm text-[#666] leading-relaxed mb-4">{footerInfo?.description || 'Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.'}</p>
             <div className="flex gap-3">
               <a href={footerInfo?.emailUrl || "mailto:khoathietke@uef.edu.vn"} className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Mail size={15} /></a>
               <a href={footerInfo?.facebookUrl || "https://facebook.com/uef.edu.vn"} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Globe size={15} /></a>
@@ -10249,11 +10481,11 @@ function AboutPage({ setPage, isLoggedIn }) {
             <div className="flex items-center gap-3 mb-4">
               <img src="/logo-uef.png" alt="UEF" className="h-9 object-contain" />
               <div>
-                <p className="font-bold text-[#212121]">{getSetting('siteName') || footerInfo?.brand || 'Design Gallery'}</p>
+                <p className="font-bold text-[#212121]">{footerInfo?.brand || 'Design Gallery'}</p>
                 <p className="text-xs text-[#666]">{footerInfo?.subtitle || 'Khoa Thiết kế Đồ họa'}</p>
               </div>
             </div>
-            <p className="text-sm text-[#666] leading-relaxed mb-4">{getSetting('siteDescription') || footerInfo?.description || 'Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.'}</p>
+            <p className="text-sm text-[#666] leading-relaxed mb-4">{footerInfo?.description || 'Nền tảng E-Portfolio kết nối sinh viên Thiết kế Đồ họa UEF với giảng viên và nhà tuyển dụng.'}</p>
             <div className="flex gap-3">
               <a href={footerInfo?.emailUrl || "mailto:khoathietke@uef.edu.vn"} className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Mail size={15} /></a>
               <a href={footerInfo?.facebookUrl || "https://facebook.com/uef.edu.vn"} target="_blank" rel="noreferrer" className="w-9 h-9 rounded-full bg-[#eef4ff] text-[#1a4ba8] flex items-center justify-center hover:bg-[#1a4ba8] hover:text-white transition-all"><Globe size={15} /></a>
@@ -11267,7 +11499,7 @@ function TimelineSection({ entries: propEntries, slug, isOwner, setPage }) {
       setFetchedEntries(Array.isArray(data) ? data : []);
       setFetchDone(true);
     }).catch(() => { setFetchedEntries([]); setFetchDone(true); });
-  }, [slug]);
+  }, [slug, propEntries]);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const isTransitioning = useRef(false);
@@ -11559,6 +11791,7 @@ function TimelineSection({ entries: propEntries, slug, isOwner, setPage }) {
 }
 
 export default function App() {
+    useAccountBadgesGlobal(); // Trigger global app re-render on badge settings change
     const { user: authUser, loading, logout, refreshSession } = useAuth();
 
   const getHashState = useCallback(() => {

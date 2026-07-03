@@ -1084,7 +1084,7 @@ function UploadPage({ setPage, setActiveArtworkId }) {
   const [defaultWatermarkText, setDefaultWatermarkText] = useState("UEF");
 
   useEffect(() => {
-    fetch("/api/site-settings")
+    fetch("/api/site-settings", { cache: "no-store" })
       .then(r => r.json())
       .then(data => {
         if (data.watermark_text) setDefaultWatermarkText(data.watermark_text);
@@ -1675,7 +1675,15 @@ if (mins < 1) return t("justNow");
     canvas.height = img.naturalHeight;
     const ctx = canvas.getContext("2d");
     ctx.drawImage(img, 0, 0);
-    const wmText = art.watermarkText || "UEF";
+      let finalWm = art.watermarkText || "UEF";
+      try {
+        const settingsRes = await fetch("/api/site-settings", { cache: "no-store" });
+        const settingsData = await settingsRes.json();
+        if (settingsData.watermark_text !== undefined) {
+          finalWm = settingsData.watermark_text || "UEF";
+        }
+      } catch (e) {}
+      const wmText = finalWm;
     const wmSize = Math.max(Math.min(canvas.width, canvas.height) * 0.04, 14);
     ctx.font = `bold ${wmSize}px sans-serif`;
     ctx.textAlign = "right";

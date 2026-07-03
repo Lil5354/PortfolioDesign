@@ -6,7 +6,8 @@ const JustifiedGrid = ({
   maxImagesPerRow = 4,
   spacing = 2,
   renderImage = null,
-  animate = false
+  animate = false,
+  watermarkText = "UEF"
 }) => {
   const [loadedImages, setLoadedImages] = useState([]);
 
@@ -58,31 +59,37 @@ const JustifiedGrid = ({
 
   return (
     <div 
-      className="flex flex-col w-full flex-1 relative h-full min-h-0 overflow-hidden" 
+      className="flex flex-col w-full relative overflow-hidden" 
       style={{ gap: `${spacing}px` }}
     >
       {rows.map((row, rowIndex) => (
         <div 
           key={rowIndex} 
           className="flex flex-row w-full" 
-          style={{ flex: row.flexWeight, gap: `${spacing}px`, minHeight: 0 }}
+          style={{ gap: `${spacing}px` }}
         >
           {row.images.map((img, colIndex) => (
             <div 
               key={img.id || colIndex} 
-              style={{ flex: img.aspectRatio, minWidth: 0, position: 'relative', overflow: 'hidden' }}
-              className={animate ? "transition-all duration-300" : ""}
+              style={{ 
+                flex: `${img.aspectRatio} 1 0%`, 
+                minWidth: 0, 
+                position: 'relative', 
+                overflow: 'hidden',
+                aspectRatio: `${img.aspectRatio} / 1`
+              }}
+              className={`${animate ? "transition-all duration-300" : ""}`}
             >
               {renderImage ? renderImage(img) : (
                 <>
                   <img 
                     src={img.content || img.url} 
-                    className="w-full h-full object-cover" 
+                    className="absolute inset-0 w-full h-full object-cover" 
                     alt="" 
                     draggable={false}
                   />
                   <div className="absolute bottom-2 right-2 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider pointer-events-none">
-                    UEF
+                    {watermarkText}
                   </div>
                 </>
               )}

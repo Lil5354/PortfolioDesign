@@ -78,6 +78,18 @@ public class ArtworksController : ControllerBase
         });
     }
 
+    [HttpPost("sync-all-badges")]
+    [AllowAnonymous]
+    public async Task<IActionResult> SyncAllBadges()
+    {
+        var artworks = await _context.Artworks.ToListAsync();
+        foreach (var art in artworks)
+        {
+            await SyncAutoBadges(art);
+        }
+        return Ok(new { message = $"Synced badges for {artworks.Count} artworks." });
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetArtworks(
         [FromQuery] string? category,
@@ -120,9 +132,9 @@ public class ArtworksController : ControllerBase
             query = query.Where(a => a.Title.ToLower().Contains(searchLower) || (a.Description != null && a.Description.ToLower().Contains(searchLower)));
         }
 
-        if (!string.IsNullOrEmpty(category)) query = query.Where(a => a.Subject == category);
-        if (!string.IsNullOrEmpty(tool)) query = query.Where(a => a.ToolsUsed.Contains(tool));
-        if (!string.IsNullOrEmpty(year)) query = query.Where(a => a.AcademicYear == year);
+        if (!string.IsNullOrEmpty(category)) query = query.Where(a => a.Subject != null && a.Subject.ToLower() == category.ToLower());
+        if (!string.IsNullOrEmpty(tool)) query = query.Where(a => a.ToolsUsed != null && a.ToolsUsed.Any(t => t.ToLower() == tool.ToLower()));
+        if (!string.IsNullOrEmpty(year)) query = query.Where(a => a.AcademicYear != null && a.AcademicYear.ToLower() == year.ToLower());
         if (!string.IsNullOrEmpty(userId)) query = query.Where(a => a.UserId == userId);
         if (hasBadge == true)
         {
@@ -162,7 +174,8 @@ public class ArtworksController : ControllerBase
                 a.Tags,
                 a.FileUrls,
                 a.BlocksJson,
-                Badges = _context.ArtworkBadges.Where(ab => ab.ArtworkId == a.Id).Select(ab => new { ab.Badge.Id, ab.Badge.Name, ab.Badge.ColorCode }).ToList(),
+                a.WatermarkText,
+                Badges = _context.ArtworkBadges.Where(ab => ab.ArtworkId == a.Id).Select(ab => new { ab.Badge.Id, ab.Badge.Name, ab.Badge.ColorCode, ab.Badge.TextColor }).ToList(),
                 User = new { a.User.Id, a.User.FullName, a.User.StudentId, a.User.AvatarUrl, PortfolioSettings = a.User.PortfolioSettings }
             })
             .ToListAsync();
@@ -268,8 +281,9 @@ public class ArtworksController : ControllerBase
             artwork.AiGeneratedPct,
             isLiked = isLiked,
             Grade = gradeData,
-            Badges = artwork.ArtworkBadges.Select(ab => new { ab.Badge.Id, ab.Badge.Name, ab.Badge.ColorCode, ab.Badge.LecturerId }).ToList(),
+            Badges = artwork.ArtworkBadges.Select(ab => new { ab.Badge.Id, ab.Badge.Name, ab.Badge.ColorCode, ab.Badge.TextColor, ab.Badge.LecturerId }).ToList(),
             Comments = filteredComments,
+            WatermarkText = artwork.WatermarkText,
             User = new { artwork.User.Id, artwork.User.FullName, artwork.User.StudentId, artwork.User.AvatarUrl, PortfolioSettings = artwork.User.PortfolioSettings }
         };
 
@@ -788,6 +802,7 @@ public class ArtworksController : ControllerBase
 
         _context.Artworks.Add(artwork);
         await _context.SaveChangesAsync();
+        await SyncAutoBadges(artwork);
         
         return Ok(artwork);
     }
@@ -888,6 +903,7 @@ public class ArtworksController : ControllerBase
             await _context.SaveChangesAsync();
         }
 
+        await SyncAutoBadges(artwork);
         return Ok(artwork);
     }
 
@@ -1175,6 +1191,89 @@ public class ArtworksController : ControllerBase
         }
 
         return Ok(new { message = $"Indexed {count} artworks successfully." });
+    }
+
+    private async Task SyncAutoBadges(Artwork artwork)
+    {
+        var autoBadgeNames = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(artwork.AcademicYear))
+            autoBadgeNames.Add(artwork.AcademicYear.Trim());
+
+        if (!string.IsNullOrWhiteSpace(artwork.Subject))
+            autoBadgeNames.Add(artwork.Subject.Trim());
+
+        if (artwork.ToolsUsed != null && artwork.ToolsUsed.Any())
+        {
+            foreach (var t in artwork.ToolsUsed)
+            {
+                if (!string.IsNullOrWhiteSpace(t))
+                    autoBadgeNames.Add(t.Trim());
+            }
+        }
+
+        autoBadgeNames = autoBadgeNames.Where(n => !string.IsNullOrEmpty(n)).Distinct().ToList();
+
+        if (!autoBadgeNames.Any()) return;
+
+        var systemUser = await _context.Users.FirstOrDefaultAsync(u => u.Role == Role.admin);
+        var systemLecturerId = systemUser?.Id ?? "system"; // Will fail FK if no admin, but it's safe if admin exists
+
+        var dbBadges = new List<Badge>();
+        foreach (var name in autoBadgeNames)
+        {
+            var badge = await _context.Badges.FirstOrDefaultAsync(b => b.Name.ToLower() == name.ToLower());
+            if (badge == null)
+            {
+                string bgColor = "#8b5cf6"; // Violet 500
+                if (System.Text.RegularExpressions.Regex.IsMatch(name, @"^20\d{2}$"))
+                    bgColor = "#eab308"; // Yellow 500
+                else if (new[] { "photoshop", "illustrator", "figma", "sketch", "after effects", "premiere", "blender", "maya", "indesign", "lightroom" }.Contains(name.ToLower()))
+                    bgColor = "#3b82f6"; // Blue 500
+
+                badge = new Badge
+                {
+                    Id = Guid.NewGuid(),
+                    Name = name,
+                    ColorCode = bgColor, 
+                    TextColor = "#FFFFFF",
+                    CreatedAt = DateTime.UtcNow,
+                    LecturerId = systemLecturerId
+                };
+                _context.Badges.Add(badge);
+            }
+            dbBadges.Add(badge);
+        }
+        await _context.SaveChangesAsync();
+
+        var existingArtworkBadges = await _context.ArtworkBadges
+            .Include(ab => ab.Badge)
+            .Where(ab => ab.ArtworkId == artwork.Id)
+            .ToListAsync();
+
+        foreach (var badge in dbBadges)
+        {
+            if (!existingArtworkBadges.Any(ab => ab.BadgeId == badge.Id))
+            {
+                _context.ArtworkBadges.Add(new ArtworkBadge
+                {
+                    ArtworkId = artwork.Id,
+                    BadgeId = badge.Id,
+                    AssignedAt = DateTime.UtcNow
+                });
+            }
+        }
+        
+        var badgesToRemove = existingArtworkBadges
+            .Where(ab => ab.Badge.LecturerId == "system" && !autoBadgeNames.Any(an => string.Equals(ab.Badge.Name, an, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+            
+        if (badgesToRemove.Any())
+        {
+            _context.ArtworkBadges.RemoveRange(badgesToRemove);
+        }
+
+        await _context.SaveChangesAsync();
     }
 }
 

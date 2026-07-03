@@ -24,6 +24,8 @@ public class GalleryDbContext : DbContext
     public DbSet<Models.Badge> Badges { get; set; }
     public DbSet<Models.ArtworkBadge> ArtworkBadges { get; set; }
     public DbSet<Models.Follow> Follows { get; set; }
+    public DbSet<Models.AccountBadge> AccountBadges { get; set; }
+    public DbSet<Models.UserAccountBadge> UserAccountBadges { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -47,6 +49,20 @@ public class GalleryDbContext : DbContext
         // modelBuilder.Entity<Models.PortfolioSetting>().Property(x => x.SocialLinks).HasColumnType("jsonb");
         modelBuilder.Entity<Models.SiteSetting>().Property(x => x.Id).HasColumnName("setting_id");
         modelBuilder.Entity<Models.Badge>().Property(x => x.Id).HasColumnName("badge_id");
+        modelBuilder.Entity<Models.AccountBadge>().Property(x => x.Id).HasColumnName("account_badge_id");
+
+        modelBuilder.Entity<Models.UserAccountBadge>()
+            .HasKey(uab => new { uab.UserId, uab.AccountBadgeId });
+
+        modelBuilder.Entity<Models.UserAccountBadge>()
+            .HasOne(uab => uab.User)
+            .WithMany()
+            .HasForeignKey(uab => uab.UserId);
+
+        modelBuilder.Entity<Models.UserAccountBadge>()
+            .HasOne(uab => uab.AccountBadge)
+            .WithMany(ab => ab.UserAccountBadges)
+            .HasForeignKey(uab => uab.AccountBadgeId);
 
         // Explicitly set column types and conversion for Enums (SQLite uses string conversion)
         modelBuilder.Entity<Models.User>().Property(x => x.Role).HasConversion<string>();

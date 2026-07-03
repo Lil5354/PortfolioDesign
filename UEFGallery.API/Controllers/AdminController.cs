@@ -274,6 +274,21 @@ public class AdminController : ControllerBase
         var artwork = await _context.Artworks.FindAsync(id);
         if (artwork == null) return NotFound();
 
+        var reports = _context.Reports.Where(r => r.ArtworkId == id);
+        _context.Reports.RemoveRange(reports);
+
+        var likes = _context.Likes.Where(l => l.ArtworkId == id);
+        _context.Likes.RemoveRange(likes);
+
+        var comments = _context.Comments.Where(c => c.ArtworkId == id);
+        _context.Comments.RemoveRange(comments);
+
+        var grades = _context.Grades.Where(g => g.ArtworkId == id);
+        _context.Grades.RemoveRange(grades);
+
+        var collectionItems = _context.CollectionItems.Where(c => c.ArtworkId == id);
+        _context.CollectionItems.RemoveRange(collectionItems);
+
         _context.Artworks.Remove(artwork);
         await _context.SaveChangesAsync();
 
