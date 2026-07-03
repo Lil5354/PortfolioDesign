@@ -2905,19 +2905,30 @@ function BadgesPage({ setPage, userData }) {
               </div>
               <div style={{ flex: "1 1 200px" }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Tải lên Icon (Tùy chọn)</label>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (event) => setNewAccountBadge({ ...newAccountBadge, iconUrl: event.target.result });
-                      reader.readAsDataURL(file);
-                    }
-                  }} 
-                  style={{ width: "100%", padding: "7px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 14 }} 
-                />
+                <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                  <div style={{ position: "relative", flex: 1 }}>
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => setNewAccountBadge({ ...newAccountBadge, iconUrl: event.target.result });
+                          reader.readAsDataURL(file);
+                        }
+                      }} 
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }} 
+                    />
+                    <div style={{ padding: "8px 14px", borderRadius: 8, border: "1px dashed #1a4ba8", background: "#f0f4ff", color: "#1a4ba8", fontSize: 14, textAlign: "center", fontWeight: 500, pointerEvents: "none" }}>
+                      <Upload size={16} style={{ display: "inline-block", marginRight: 6, verticalAlign: "text-bottom" }} />
+                      Nhấn để tải ảnh lên
+                    </div>
+                  </div>
+                  {newAccountBadge.iconUrl && (
+                    <img src={newAccountBadge.iconUrl} style={{ width: 40, height: 40, objectFit: "contain", border: "1px solid #ddd", borderRadius: 4 }} alt="Preview" />
+                  )}
+                </div>
               </div>
               <div style={{ flex: "1 1 200px" }}>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, marginBottom: 6, color: BLACK }}>Chú thích (Tooltip)</label>
@@ -3048,20 +3059,26 @@ function BadgesPage({ setPage, userData }) {
                           <img src={editingAccountBadge.iconUrl || getBadgeIcon(editingAccountBadge.name)} alt="icon" style={{ width: 80, height: 80, objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.15))" }} />
                         ) : <div style={{ width: 80, height: 80, borderRadius: "50%", background: editingAccountBadge.bgColor || "#1A4BA8", display: "flex", alignItems: "center", justifyContent: "center", color: editingAccountBadge.textColor || "#fff" }}><Image size={32} /></div>}
                       </div>
-                      <input 
-                        type="file" 
-                        accept="image/png, image/jpeg, image/gif, image/svg+xml"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          if (!file) return;
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setEditingAccountBadge({ ...editingAccountBadge, iconUrl: reader.result });
-                          };
-                          reader.readAsDataURL(file);
-                        }}
-                        style={{ flex: 1, padding: "8px", border: "1px dashed #ccc", borderRadius: 8, fontSize: 13 }}
-                      />
+                      <div style={{ flex: 1, position: "relative" }}>
+                        <input 
+                          type="file" 
+                          accept="image/png, image/jpeg, image/gif, image/svg+xml"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setEditingAccountBadge({ ...editingAccountBadge, iconUrl: reader.result });
+                            };
+                            reader.readAsDataURL(file);
+                          }}
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "pointer" }}
+                        />
+                        <div style={{ padding: "16px", border: "1px dashed #1a4ba8", borderRadius: 8, background: "#f0f4ff", textAlign: "center", color: "#1a4ba8", fontSize: 13, fontWeight: 500, pointerEvents: "none" }}>
+                          <Upload size={18} style={{ display: "inline-block", marginBottom: 4 }} /><br/>
+                          Nhấn để tải ảnh lên
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -8124,7 +8141,7 @@ function AdminUsersPage({ setPage }) {
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-2">Cấp/Thu hồi huy hiệu tùy chỉnh</label>
                     <div className="flex flex-col gap-2 max-h-32 overflow-y-auto pr-2">
-                      {availableBadges.length === 0 ? <span className="text-sm text-gray-400">Chưa có huy hiệu Custom nào trong hệ thống.</span> : availableBadges.map(b => {
+                      {availableBadges.filter(b => b.type !== 'Default').length === 0 ? <span className="text-sm text-gray-400">Chưa có huy hiệu Custom nào trong hệ thống.</span> : availableBadges.filter(b => b.type !== 'Default').map(b => {
                         const hasBadge = userBadges.some(ub => ub.id === b.id);
                         return (
                           <div key={b.id} className="flex items-center justify-between border border-gray-200 rounded-md p-2 hover:bg-gray-50">
