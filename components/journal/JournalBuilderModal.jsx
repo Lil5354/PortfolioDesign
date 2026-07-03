@@ -558,7 +558,8 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                 <div className="w-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2) }}>
                   <JustifiedGrid 
                     images={block.images} 
-                    containerWidth="auto" 
+                    targetWidth={block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2)}
+                    targetHeight={block.fullWidth ? (orientation === 'landscape' ? 600 : 800) : ((orientation === 'landscape' ? 600 : 800) - (projectStyles.contentSpacing || 0)*2)}
                     watermarkText={settings?.watermark_text || "UEF"}
                   />
                 </div>
@@ -680,13 +681,14 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                          )}
                          {block.type === 'grid' && (
                            <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                             <div className="w-full flex-1 flex flex-col justify-center items-center min-h-0 overflow-hidden" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2), margin: "0 auto" }}>
-                               <JustifiedGrid 
-                                 images={block.images || []} 
-                                 containerWidth="auto" 
-                                 watermarkText={settings?.watermark_text || "UEF"}
-                               />
-                             </div>
+                               <div className="w-full flex-1 flex flex-col justify-center items-center min-h-0 overflow-hidden" style={{ maxWidth: block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2), margin: "0 auto" }}>
+                                 <JustifiedGrid 
+                                   images={block.images || []} 
+                                   targetWidth={block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2)}
+                                   targetHeight={block.fullWidth ? (orientation === 'landscape' ? 600 : 800) : ((orientation === 'landscape' ? 600 : 800) - (projectStyles.contentSpacing || 0)*2)}
+                                   watermarkText={settings?.watermark_text || "UEF"}
+                                 />
+                               </div>
                            </div>
                          )}
                          {block.type === 'text' && (

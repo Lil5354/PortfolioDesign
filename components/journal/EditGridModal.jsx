@@ -100,6 +100,8 @@ const EditGridModal = ({ isOpen, onClose, block, onSave, orientation = 'landscap
               <JustifiedGrid 
                 images={images}
                 spacing={8}
+                targetWidth={block.fullWidth ? (orientation === 'landscape' ? 800 : 600) : ((orientation === 'landscape' ? 800 : 600) - (projectStyles.contentSpacing || 0)*2)}
+                targetHeight={block.fullWidth ? (orientation === 'landscape' ? 600 : 800) : ((orientation === 'landscape' ? 600 : 800) - (projectStyles.contentSpacing || 0)*2)}
                 watermarkText={watermarkText}
                 animate={true}
                 renderImage={(img) => (
