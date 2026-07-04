@@ -839,32 +839,32 @@ function AdminOrdersPage({ setPage }) {
         }
         return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl overflow-hidden flex flex-col p-6">
-            <div className="flex justify-between items-center mb-4 border-b pb-3">
-              <h3 className="font-bold text-lg text-[#212121]">Chi tiết đơn hàng</h3>
-              <button onClick={() => setSelectedOrder(null)} className="text-[#666666] hover:text-black">
-                <X size={20} />
+          <div className="bg-white shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col p-8 rounded-none">
+            <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+              <h3 className="font-light text-xl tracking-wide text-[#212121]">Chi tiết đơn hàng</h3>
+              <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-black transition-colors">
+                <X size={24} strokeWidth={1.5} />
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <img src={parsed.artworkImage || selectedOrder.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&h=500&fit=crop"} alt="Artwork" className="w-full h-auto aspect-square object-cover rounded-lg border border-gray-200" />
+                <img src={parsed.artworkImage || selectedOrder.coverImageUrl || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=500&h=500&fit=crop"} alt="Artwork" className="w-full h-auto aspect-square object-cover border border-gray-100 rounded-none" />
               </div>
-              <div className="space-y-4">
-                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tài khoản người đặt (Buyer)</strong> <p className="text-sm font-medium">{selectedOrder.senderName} ({selectedOrder.senderEmail})</p></div>
-                {parsed.company && <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Công ty / Tổ chức</strong> <p className="text-sm font-medium">{parsed.company}</p></div>}
-                {parsed.phone && <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Số điện thoại</strong> <p className="text-sm font-medium">{parsed.phone}</p></div>}
-                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tên Ấn phẩm</strong> <p className="text-sm font-medium">{parsed.artworkTitle || '—'}</p></div>
-                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Tác giả (Student)</strong> <p className="text-sm font-medium">{selectedOrder.recipient?.fullName || '—'}</p></div>
+              <div className="space-y-5">
+                <div><span className="block text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Tài khoản người đặt (Buyer)</span> <p className="text-[13.5px] text-gray-800 font-light">{selectedOrder.senderName} ({selectedOrder.senderEmail})</p></div>
+                {parsed.company && <div><span className="block text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Công ty / Tổ chức</span> <p className="text-[13.5px] text-gray-800 font-light">{parsed.company}</p></div>}
+                {parsed.phone && <div><span className="block text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Số điện thoại</span> <p className="text-[13.5px] text-gray-800 font-light">{parsed.phone}</p></div>}
+                <div><span className="block text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Tên Ấn phẩm</span> <p className="text-[13.5px] text-gray-800 font-light">{parsed.artworkTitle || '—'}</p></div>
+                <div><span className="block text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Tác giả (Student)</span> <p className="text-[13.5px] text-gray-800 font-light">{selectedOrder.recipient?.fullName || '—'}</p></div>
                 {parsed.artworkId && (
                   <div>
-                    <strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Link liên kết</strong> 
-                    <button onClick={() => setPage("detail", { artworkId: parsed.artworkId })} className="text-sm font-medium text-[#1a4ba8] hover:underline flex items-center gap-1">
-                      Chuyển đến ấn phẩm <ExternalLink size={14} />
+                    <span className="block text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Link liên kết</span> 
+                    <button onClick={() => setPage("detail", { artworkId: parsed.artworkId })} className="text-[13.5px] font-light text-[#1a4ba8] hover:text-[#0f2e6e] flex items-center gap-1.5 transition-colors">
+                      Chuyển đến ấn phẩm <ExternalLink size={14} strokeWidth={1.5} />
                     </button>
                   </div>
                 )}
-                <div><strong className="block text-xs text-gray-500 uppercase tracking-wider mb-1">Nội dung order</strong> <p className="text-sm font-medium bg-gray-50 p-3 rounded-lg border">{parsed.description || selectedOrder.content}</p></div>
+                <div><span className="block text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Nội dung order</span> <p className="text-[13.5px] text-gray-700 font-light bg-gray-50/50 p-4 border border-gray-100 rounded-none leading-relaxed">{parsed.description || selectedOrder.content}</p></div>
               </div>
             </div>
           </div>
