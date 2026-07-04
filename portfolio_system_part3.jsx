@@ -864,7 +864,7 @@ function AdminOrdersPage({ setPage }) {
                     </button>
                   </div>
                 )}
-                <div><span className="block text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Nội dung order</span> <p className="text-[13.5px] text-gray-700 font-light bg-gray-50/50 p-4 border border-gray-100 rounded-none leading-relaxed">{parsed.description || selectedOrder.content}</p></div>
+                <div><span className="block text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Nội dung order</span> <p className="text-[13.5px] text-gray-700 font-light bg-gray-50/50 p-4 border border-gray-100 rounded-xl leading-relaxed">{parsed.description || selectedOrder.content}</p></div>
               </div>
             </div>
           </div>
