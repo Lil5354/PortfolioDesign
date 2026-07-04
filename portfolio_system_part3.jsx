@@ -3450,7 +3450,22 @@ function AboutPage({ setPage }) {
     setOpenFaq(openFaq === idx ? null : idx);
   };
 
-  const images = [
+  const [dynamicImages, setDynamicImages] = useState([]);
+  
+  useEffect(() => {
+    fetch('http://localhost:5000/api/artworks')
+      .then(res => res.json())
+      .then(data => {
+        if (data.artworks && Array.isArray(data.artworks)) {
+          const sorted = [...data.artworks].sort((a, b) => ((b.viewCount || 0) + (b.likeCount || 0)) - ((a.viewCount || 0) + (a.likeCount || 0)));
+          const topImages = sorted.map(a => a.coverImageUrl).filter(Boolean);
+          setDynamicImages(topImages.slice(0, 10));
+        }
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  const defaultImages = [
     "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
     "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400&q=80",
     "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&q=80",
@@ -3462,6 +3477,10 @@ function AboutPage({ setPage }) {
     "https://images.unsplash.com/photo-1542744094-24638eff58bb?w=400&q=80",
     "https://images.unsplash.com/photo-1572044162444-ad60f128bdea?w=400&q=80"
   ];
+
+  const images = dynamicImages.length > 0 
+    ? [...dynamicImages, ...defaultImages].slice(0, 10) 
+    : defaultImages;
 
   return (
     <div className="bg-white min-h-screen text-[#212121] overflow-x-hidden font-sans">
