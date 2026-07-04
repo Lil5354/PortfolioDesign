@@ -46,6 +46,7 @@ public class OrdersController : ControllerBase
         }
 
         var orders = await query
+            .Include(m => m.Recipient)
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync();
 
