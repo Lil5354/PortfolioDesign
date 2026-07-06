@@ -598,8 +598,6 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
                  <ChevronLeft size={20} />
                </button>
                
-               <span style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.5px", marginRight: 8 }}>Bēhance</span>
-               
                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                  <img src={currentUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", cursor: "pointer", border: "1px solid #333" }} />
                  <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
@@ -847,10 +845,10 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
           {/* Status Progress & Dropdown */}
           <div className="flex items-center gap-3 ml-2">
             <div className="hidden lg:flex items-center bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200">
-               {['Draft', 'Submitted', 'Revision', 'Approved', 'Published'].map((status, idx) => {
+               {['Draft', 'Revision', 'Final', 'Approved', 'Published'].map((status, idx) => {
                  const isActive = settingsData?.projectStatus === status;
                  // Determine if it's "passed"
-                 const statuses = ['Draft', 'Submitted', 'Revision', 'Approved', 'Published'];
+                 const statuses = ['Draft', 'Revision', 'Final', 'Approved', 'Published'];
                  const currentIndex = statuses.indexOf(settingsData?.projectStatus || 'Draft');
                  const isPassed = idx <= currentIndex;
                  
@@ -871,10 +869,11 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
               className="text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md px-2 py-1.5 outline-none focus:border-[#2b64ff] cursor-pointer hover:bg-gray-50 transition shadow-sm"
             >
               <option value="Draft">Draft</option>
-              <option value="Submitted">Submit for Review</option>
-              <option value="Revision">Request Revision</option>
-              <option value="Approved">Approve Project</option>
-              <option value="Published">Publish (Public)</option>
+              <option value="Revision">Xin góp ý (Revision)</option>
+              <option value="Final">Bản cuối (Final)</option>
+              <option value="Reopen">Yêu cầu làm lại (Reopen)</option>
+              <option value="Approved">Đã duyệt (Approved)</option>
+              <option value="Published">Công khai (Published)</option>
             </select>
           </div>
         </div>
@@ -961,16 +960,7 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
             </div>
           </div>
           
-          <div className="p-4">
-            <h3 className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-3">Attach Assets</h3>
-            <div className="flex flex-col items-center border border-gray-200 rounded p-4 bg-[#f8f8f8]">
-               <button className="px-4 py-1.5 border border-gray-300 bg-white rounded-full text-sm font-semibold text-gray-800 mb-3 w-full hover:bg-gray-50 flex items-center justify-center gap-2">
-                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                 Attach Assets
-               </button>
-               <p className="text-[11px] text-gray-500 text-center leading-relaxed">Add files like fonts, illustrations, photos, zips, or templates as free or paid downloads.</p>
-            </div>
-          </div>
+
         </div>
       </div>
 

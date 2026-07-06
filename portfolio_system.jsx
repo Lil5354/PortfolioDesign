@@ -100,10 +100,32 @@ import {
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
   MapPin, Phone, ArrowRight, Star, Monitor, BookOpen, Calendar, EyeOff, Archive, ArchiveRestore,
   GraduationCap, Rocket, Upload, Menu, ShoppingCart, Languages,
-  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight, ChevronLeft, ThumbsUp, MessageCircle, Package, FileText, Tag, Download, FolderInput, FolderPlus, AlertTriangle, Camera, ImageIcon, Reply, RefreshCw, Save
+  ShieldCheck, UserPlus, FileBadge, Zap, LayoutGrid, Building2, ClipboardList, Info, Filter, ChevronRight, ChevronLeft, ThumbsUp, MessageCircle, Package, FileText, Tag, Download, FolderInput, FolderPlus, AlertTriangle, Camera, ImageIcon, Reply, RefreshCw, Save, Edit3
 } from "lucide-react";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+
+export function ProjectStatusIcon({ status }) {
+  if (!status || status === 'Draft') {
+    return <div title="Nháp" style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.9)', color: '#666', padding: '6px', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 10 }}><Edit3 size={16} /></div>;
+  }
+  if (status === 'Revision') {
+    return <div title="Xin góp ý" style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.9)', color: '#f59e0b', padding: '6px', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 10 }}><Clock size={16} /></div>;
+  }
+  if (status === 'Final' || status === 'pending_approval') {
+    return <div title="Bản cuối" style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.9)', color: '#3b82f6', padding: '6px', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 10 }}><Rocket size={16} /></div>;
+  }
+  if (status === 'Reopen') {
+    return <div title="Yêu cầu làm lại" style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.9)', color: '#ef4444', padding: '6px', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 10 }}><RefreshCw size={16} /></div>;
+  }
+  if (status === 'Approved') {
+    return <div title="Đã duyệt" style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.9)', color: '#10b981', padding: '6px', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 10 }}><CheckCircle size={16} /></div>;
+  }
+  if (status === 'Published') {
+    return <div title="Public" style={{ position: 'absolute', top: 8, right: 8, background: 'rgba(255,255,255,0.9)', color: '#8b5cf6', padding: '6px', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', zIndex: 10 }}><Globe size={16} /></div>;
+  }
+  return null;
+}
 
 import iconNam1 from './Logoicon/nam-1.png';
 import iconNam2 from './Logoicon/nam-2.png';
@@ -1988,6 +2010,7 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                          return (
                           <div key={draft.id} className="group relative aspect-[4/3] rounded-sm overflow-hidden bg-[#222222] border border-[#E0E0E0] cursor-pointer">
                             <img src={draft.coverImageUrl} className="w-full h-full object-cover group-hover:opacity-40 transition-opacity duration-300" />
+                            <ProjectStatusIcon status={draft.settingsData?.projectStatus || draft.status || "Draft"} />
                             
                             {/* OVERLAY */}
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center p-6 z-10 backdrop-blur-[2px]">
@@ -2064,6 +2087,7 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                              title: newDraft.title,
                              coverImageUrl: newDraft.coverImageUrl,
                              blocksJson: JSON.stringify(newDraft.blocks),
+                             settingsData: typeof newDraft.settingsData === 'string' ? newDraft.settingsData : JSON.stringify(newDraft.settingsData),
                              status: 'draft'
                           });
                         } else {
@@ -2072,6 +2096,7 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                              coverImageUrl: newDraft.coverImageUrl,
                              description: "Draft",
                              blocksJson: JSON.stringify(newDraft.blocks),
+                             settingsData: typeof newDraft.settingsData === 'string' ? newDraft.settingsData : JSON.stringify(newDraft.settingsData),
                              status: 'draft'
                           });
                         }
@@ -3429,6 +3454,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
     );
   }
   const [showPopup, setShowPopup] = useState(false);
+  const [submissionType, setSubmissionType] = useState("Final");
   const [isEbookViewerOpen, setIsEbookViewerOpen] = useState(false);
   const [isEbook, setIsEbook] = useState(false);
   const [ebookOrientation, setEbookOrientation] = useState('portrait');
@@ -3689,7 +3715,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
 
       setUploadState("analyzing_ai");
       const aiResult = await api.artworks.analyzeArtworkWithAI(coverImage);
-      let uploadStatus = "pending_approval";
+      let uploadStatus = submissionType === "Final" ? "pending_approval" : "revision";
       if (aiResult.originalityScore < 50) {
         const proceed = window.confirm(
           `CẢNH BÁO AI:\n\n` +
@@ -4030,23 +4056,39 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
 
         <div style={{ marginTop: 24, padding: 32, background: "#f9f9f9", borderRadius: 12, border: `1px solid ${GRAY_LIGHT}` }}>
           <h3 style={{ fontSize: 18, fontWeight: 700, color: BLACK, marginBottom: 16 }}>Hoàn tất và Đăng đồ án</h3>
-          <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px", marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
-              <div onClick={() => setAgreedToTerms(!agreedToTerms)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${agreedToTerms ? CERULEAN : GRAY_LIGHT}`, background: agreedToTerms ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>{agreedToTerms && <Check size={12} color="#fff" strokeWidth={3} />}</div>
-              <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6, margin: 0 }}>{t("fullCommitment")}</p>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div onClick={() => setNotifyOnConfirm(!notifyOnConfirm)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${notifyOnConfirm ? CERULEAN : GRAY_LIGHT}`, background: notifyOnConfirm ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>{notifyOnConfirm && <Check size={12} color="#fff" strokeWidth={3} />}</div>
-              <span style={{ fontSize: 12, color: "#666" }}>{t("notifyOnConfirmText")}</span>
-            </div>
+          
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ fontSize: 14, fontWeight: 600, color: BLACK, display: "block", marginBottom: 8 }}>Mục đích nộp bài</label>
+            <select 
+              value={submissionType}
+              onChange={(e) => setSubmissionType(e.target.value)}
+              style={{ width: "100%", padding: "12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, outline: "none", fontSize: 14 }}
+            >
+              <option value="Final">Nộp bản cuối (Final)</option>
+              <option value="Revision">Gửi xin góp ý (Request for Revision)</option>
+            </select>
           </div>
+
+          {submissionType === "Final" && (
+            <div style={{ background: "#FEFCF3", border: `1px solid #F0E6CC`, borderRadius: 10, padding: "14px 16px", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
+                <div onClick={() => setAgreedToTerms(!agreedToTerms)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${agreedToTerms ? CERULEAN : GRAY_LIGHT}`, background: agreedToTerms ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, cursor: "pointer" }}>{agreedToTerms && <Check size={12} color="#fff" strokeWidth={3} />}</div>
+                <p style={{ fontSize: 12, color: "#666", lineHeight: 1.6, margin: 0 }}>{t("fullCommitment")}</p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div onClick={() => setNotifyOnConfirm(!notifyOnConfirm)} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${notifyOnConfirm ? CERULEAN : GRAY_LIGHT}`, background: notifyOnConfirm ? CERULEAN : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, cursor: "pointer" }}>{notifyOnConfirm && <Check size={12} color="#fff" strokeWidth={3} />}</div>
+                <span style={{ fontSize: 12, color: "#666" }}>{t("notifyOnConfirmText")}</span>
+              </div>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 12 }}>
             {isFromDraft && (
               <button onClick={() => setShowUploadPreview(true)} style={{ flex: 1, padding: "13px", borderRadius: 10, border: `1px solid ${CERULEAN}`, background: "transparent", color: CERULEAN, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>Preview</button>
             )}
-            <button onClick={() => setShowPopup(true)} disabled={!agreedToTerms} style={{ flex: isFromDraft ? 1 : "auto", width: isFromDraft ? "auto" : "100%", padding: "13px", borderRadius: 10, border: "none", background: agreedToTerms ? CERULEAN : GRAY_LIGHT, color: agreedToTerms ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: agreedToTerms ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{t("submitArtwork")}</button>
+            <button onClick={() => setShowPopup(true)} disabled={submissionType === "Final" && !agreedToTerms} style={{ flex: isFromDraft ? 1 : "auto", width: isFromDraft ? "auto" : "100%", padding: "13px", borderRadius: 10, border: "none", background: (submissionType === "Revision" || agreedToTerms) ? CERULEAN : GRAY_LIGHT, color: (submissionType === "Revision" || agreedToTerms) ? "#fff" : MUTED, fontSize: 15, fontWeight: 700, cursor: (submissionType === "Revision" || agreedToTerms) ? "pointer" : "not-allowed", letterSpacing: "0.3px" }}>{submissionType === "Final" ? t("submitArtwork") : "Nộp bài"}</button>
           </div>
-          <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("postSubmissionNote")}</p>
+          {submissionType === "Final" && <p style={{ textAlign: "center", fontSize: 11, color: MUTED, marginTop: 8 }}>{t("postSubmissionNote")}</p>}
         </div>
       </div>
       {showUploadPreview && isFromDraft && (
@@ -7310,6 +7352,8 @@ function AdminOrdersPage({ setPage }) {
 }
 
 function AdminDashboardPage({ setPage }) {
+    const { user } = useAuth();
+    const userRole = user?.role || "admin";
     const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, totalInteractions: 0 });
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -7351,8 +7395,8 @@ function AdminDashboardPage({ setPage }) {
       <div className="flex-1 overflow-y-auto p-8 bg-[#F8F8F8]">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-[#212121]">{t("adminOverview")}</h2>
-            <p className="text-sm text-[#666666] mt-1">{t("adminDescription")}</p>
+            <h2 className="text-2xl font-bold text-[#212121]">{userRole === 'lecturer' ? 'Tổng quan Giảng viên' : t("adminOverview")}</h2>
+            <p className="text-sm text-[#666666] mt-1">{userRole === 'lecturer' ? 'Theo dõi tiến độ, số liệu hệ thống của sinh viên' : t("adminDescription")}</p>
           </div>
           <button onClick={async () => {
               const doc = new jsPDF();
@@ -7664,22 +7708,25 @@ function MessagesPage({ setPage, userData }) {
 }
 
 function AdminSidebar({ active, setPage }) {
-    const items = [
+  const { user } = useAuth();
+  const userRole = user?.role || "admin";
+  
+  const items = [
     { icon: <LayoutDashboard size={18} />, label: t("overview"), page: "admin" },
-    { icon: <Users size={18} />, label: t("accounts"), page: "admin_users" },
+    { icon: <Users size={18} />, label: t("accounts"), page: "admin_users", adminOnly: true },
     { icon: <ShoppingCart size={18} />, label: t("orders"), page: "admin_orders" },
-    { icon: <ShieldAlert size={18} />, label: t("artworkWarnings"), page: "admin_artworks" },
-    { icon: <Folder size={18} />, label: t("collectionManagement"), page: "admin_export" },
-    { icon: <Star size={18} />, label: "Quản lý huy hiệu", page: "badges" },
-    { icon: <FileBadge size={18} />, label: t("watermarkSettings"), page: "admin_watermark" },
-    { icon: <Settings size={18} />, label: "Layout Settings", page: "admin_layout" },
-  ];
+    { icon: <ShieldAlert size={18} />, label: "Quản lý ấn phẩm", page: "admin_artworks" },
+    { icon: <Folder size={18} />, label: "In tập san", page: "admin_export" },
+    { icon: <Star size={18} />, label: "Quản lý huy hiệu", page: "badges", adminOnly: true },
+    { icon: <FileBadge size={18} />, label: t("watermarkSettings"), page: "admin_watermark", adminOnly: true },
+    { icon: <Settings size={18} />, label: "Cài đặt giao diện", page: "admin_layout", adminOnly: true },
+  ].filter(item => !item.adminOnly || userRole === "admin");
 
   return (
     <div className="w-64 bg-[#F8F8F8] border-r border-[#E0E0E0] flex-shrink-0 flex flex-col h-full overflow-y-auto">
       <div className="p-6 border-b border-[#E0E0E0]">
-        <h3 className="font-bold text-[#212121] text-sm uppercase tracking-wider">{t("adminPanel")}</h3>
-        <p className="text-xs text-[#666666] mt-1">{t("adminSystem")}</p>
+        <h3 className="font-bold text-[#212121] text-sm uppercase tracking-wider">{userRole === 'lecturer' ? 'GIẢNG VIÊN' : t("adminPanel")}</h3>
+        <p className="text-xs text-[#666666] mt-1">{userRole === 'lecturer' ? 'Hệ thống Giảng viên' : t("adminSystem")}</p>
       </div>
       <div className="py-4">
         {items.map(item => (
@@ -8378,6 +8425,8 @@ function AdminArtworksPage({ setPage }) {
   const [galleryImages, setGalleryImages] = useState([]);
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
+  const [displayedCount, setDisplayedCount] = useState(25);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const observerTarget = useRef(null);
   const fetchId = useRef(0);
@@ -8409,20 +8458,30 @@ function AdminArtworksPage({ setPage }) {
   useEffect(() => {
     setPageNum(1);
     setSelectedIds([]);
+    setDisplayedCount(25);
   }, [activeTab, query, filterSubject, filterYear]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
-        if (entries[0].isIntersecting && !loading && (data.page || 1) < (data.totalPages || 0)) {
-          setPageNum(p => p + 1);
+        if (entries[0].isIntersecting) {
+          if (displayedCount < (data.artworks?.length || 0)) {
+            setIsLoadingMore(true);
+            setTimeout(() => {
+              setDisplayedCount(prev => Math.min(prev + 25, (data.artworks?.length || 0)));
+              setIsLoadingMore(false);
+            }, 300);
+          } else if (!loading && (data.page || 1) < (data.totalPages || 0)) {
+            setPageNum(p => p + 1);
+          }
         }
       },
       { threshold: 0.1 }
     );
     if (observerTarget.current) observer.observe(observerTarget.current);
     return () => { if (observerTarget.current) observer.unobserve(observerTarget.current); };
-  }, [loading, data.page, data.totalPages]);
+  }, [loading, data.page, data.totalPages, displayedCount, data.artworks?.length]);
+
 
   const filtered = data.artworks || [];
   const selected = filtered.find((a) => a.id === selectedId) ?? null;
@@ -8448,12 +8507,17 @@ function AdminArtworksPage({ setPage }) {
   };
 
   const approveArtwork = async (id) => {
-    try { await api.admin.setArtworkStatus(id, true); fetchArtworks(); } catch {}
+    try { await api.admin.setArtworkStatus(id, true, "Approved"); fetchArtworks(); } catch {}
     setSelectedIds([]);
   };
 
   const hideArtwork = async (id) => {
-    try { await api.admin.setArtworkStatus(id, false); fetchArtworks(); } catch {}
+    try { await api.admin.setArtworkStatus(id, false, "Draft"); fetchArtworks(); } catch {}
+    setSelectedIds([]);
+  };
+
+  const reopenArtwork = async (id) => {
+    try { await api.admin.setArtworkStatus(id, false, "Reopen"); fetchArtworks(); } catch {}
     setSelectedIds([]);
   };
 
@@ -8511,6 +8575,16 @@ function AdminArtworksPage({ setPage }) {
     </div>
   );
 
+  const getArtworkStatus = (a) => {
+    if (a.settingsData) {
+      try {
+        const settings = typeof a.settingsData === 'string' ? JSON.parse(a.settingsData) : a.settingsData;
+        if (settings.projectStatus) return settings.projectStatus;
+      } catch(e) {}
+    }
+    return a.status;
+  };
+
   return (
     <div className="flex h-screen overflow-hidden bg-white relative">
       <AdminSidebar active="admin_artworks" setPage={setPage} />
@@ -8519,8 +8593,8 @@ function AdminArtworksPage({ setPage }) {
         <div className="p-8 border-b border-[#E0E0E0]">
           <div className="flex items-start justify-between gap-6">
             <div>
-              <h2 className="text-2xl font-bold text-[#212121]">{t("processArtworks")}</h2>
-              <p className="text-sm text-[#666666] mt-1">{t("processArtworksDesc")}</p>
+              <h2 className="text-2xl font-bold text-[#212121]">Quản lý ấn phẩm</h2>
+              <p className="text-sm text-[#666666] mt-1">Duyệt và quản lý các ấn phẩm trên hệ thống</p>
             </div>
           </div>
 
@@ -8613,7 +8687,7 @@ function AdminArtworksPage({ setPage }) {
                   onChange={(e) => toggleSelectAll(e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-sm font-semibold text-[#212121]">{filtered.length} / {tabCount(activeTab)} {t("artworks")}</span>
+                <span className="text-sm font-semibold text-[#212121]">{Math.min(displayedCount, filtered.length)} / {tabCount(activeTab)} {t("artworks")}</span>
               </div>
               {selectedIds.length > 0 && (
                 <span className="text-sm text-[#666666]">{t("selected")} {selectedIds.length}</span>
@@ -8647,14 +8721,14 @@ function AdminArtworksPage({ setPage }) {
                         Không tìm thấy ấn phẩm nào.
                       </td>
                     </tr>
-                  ) : filtered.map((a) => (
+                  ) : filtered.slice(0, displayedCount).map((a) => (
                     <tr
                       key={a.id}
                       onClick={() => setSelectedId(a.id)}
-                      className={`border-b transition-colors cursor-pointer ${
+                      className={`transition-colors cursor-pointer ${
                         selectedId === a.id ? "bg-[#e0eaff]" : (a._count?.reports || 0) > 0 ? "bg-red-50" : a.isPending ? "bg-amber-50" : "bg-white"
                       } ${
-                        (a._count?.reports || 0) > 0 ? "border-l-4 border-l-[#8B1A1A]" : "border-[#E0E0E0]"
+                        (a._count?.reports || 0) > 0 ? "border-l-4 border-l-[#8B1A1A]" : ""
                       } hover:bg-[#F8F8F8]`}
                     >
                       <td className="px-4 py-3">
@@ -8683,6 +8757,20 @@ function AdminArtworksPage({ setPage }) {
                             {a.isPublic ? <Check size={12} className="text-green-600" /> : <EyeOff size={12} className="text-[#666666]" />}
                             {a.isPublic ? t("public") : t("private")}
                           </span>
+                          {getArtworkStatus(a) && (() => {
+                            const st = getArtworkStatus(a);
+                            return (
+                              <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs px-2.5 py-1 rounded-full font-medium bg-[#eef4ff] text-[#1a4ba8] border border-[#d1e0ff]">
+                                {st === 'Draft' ? <Edit3 size={12} /> : 
+                                 st === 'Revision' ? <Clock size={12} className="text-amber-600" /> : 
+                                 st === 'Final' || st === 'pending_approval' ? <Rocket size={12} /> :
+                                 st === 'Reopen' ? <RefreshCw size={12} className="text-red-600" /> :
+                                 st === 'Approved' ? <CheckCircle size={12} className="text-green-600" /> :
+                                 <Globe size={12} />}
+                                {st === 'pending_approval' ? 'Final' : st}
+                              </span>
+                            );
+                          })()}
                           {(a._count?.reports || 0) > 0 && (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#8B1A1A] bg-red-50 px-2 py-0.5 rounded-full border border-[#F5C5C5]">
                               <ShieldAlert size={11} /> {(a._count?.reports || 0)}
@@ -8690,6 +8778,23 @@ function AdminArtworksPage({ setPage }) {
                           )}
                         </div>
                       </td>
+                    </tr>
+                  ))}
+                  {isLoadingMore && Array.from({ length: 3 }).map((_, i) => (
+                    <tr key={`skeleton-${i}`} className="animate-pulse">
+                      <td className="px-4 py-3"><div className="w-4 h-4 bg-gray-200 rounded"></div></td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gray-200 rounded-md"></div>
+                          <div className="min-w-0 space-y-2">
+                            <div className="h-3.5 bg-gray-200 rounded w-32"></div>
+                            <div className="h-3 bg-gray-200 rounded w-20"></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3"><div className="h-3.5 bg-gray-200 rounded w-24"></div></td>
+                      <td className="px-4 py-3"><div className="h-3.5 bg-gray-200 rounded w-20"></div></td>
+                      <td className="px-4 py-3"><div className="h-6 bg-gray-200 rounded-full w-24"></div></td>
                     </tr>
                   ))}
                   {filtered.length === 0 && (
@@ -8753,6 +8858,20 @@ function AdminArtworksPage({ setPage }) {
                     {selected.isPublic ? <Check size={10} className="text-green-600" /> : <EyeOff size={10} />}
                     {selected.isPublic ? t("public") : t("private")}
                   </span>
+                  {getArtworkStatus(selected) && (() => {
+                    const st = getArtworkStatus(selected);
+                    return (
+                      <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] px-2.5 py-1 rounded-full font-medium bg-[#eef4ff] text-[#1a4ba8] border border-[#d1e0ff] ml-2">
+                        {st === 'Draft' ? <Edit3 size={10} /> : 
+                         st === 'Revision' ? <Clock size={10} className="text-amber-600" /> : 
+                         st === 'Final' || st === 'pending_approval' ? <Rocket size={10} /> :
+                         st === 'Reopen' ? <RefreshCw size={10} className="text-red-600" /> :
+                         st === 'Approved' ? <CheckCircle size={10} className="text-green-600" /> :
+                         <Globe size={10} />}
+                        {st === 'pending_approval' ? 'Final' : st}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <div>
                   <p className="text-[11px] text-[#888] uppercase tracking-wide mb-1.5">{t("score")}</p>
@@ -8802,13 +8921,18 @@ function AdminArtworksPage({ setPage }) {
                 )}
               </div>
 
-              <div className="mt-6 pt-4 border-t border-[#E0E0E0] grid grid-cols-3 gap-3">
+              <div className="mt-6 pt-4 border-t border-[#E0E0E0] grid grid-cols-2 gap-3">
                 {!selected.isPublic ? (
-                  <button onClick={() => { approveArtwork(selected.id); setSelectedId(null); }} className="py-2.5 rounded-lg border border-[#1a4ba8] bg-white text-[#1a4ba8] text-[13px] font-semibold hover:bg-[#eef4ff] transition-colors">
-                    <Check size={14} className="inline mr-1.5" /> {t("approveArtwork")}
-                  </button>
+                  <>
+                    <button onClick={() => { approveArtwork(selected.id); setSelectedId(null); }} className="py-2.5 rounded-lg border border-[#1a4ba8] bg-white text-[#1a4ba8] text-[13px] font-semibold hover:bg-[#eef4ff] transition-colors">
+                      <Check size={14} className="inline mr-1.5" /> {t("approveArtwork")}
+                    </button>
+                    <button onClick={() => { reopenArtwork(selected.id); setSelectedId(null); }} className="py-2.5 rounded-lg border border-amber-600 bg-white text-amber-600 text-[13px] font-semibold hover:bg-amber-50 transition-colors">
+                      <RefreshCw size={14} className="inline mr-1.5" /> Yêu cầu làm lại
+                    </button>
+                  </>
                 ) : (
-                  <button onClick={() => { hideArtwork(selected.id); setSelectedId(null); }} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-[13px] font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors">
+                  <button onClick={() => { hideArtwork(selected.id); setSelectedId(null); }} className="py-2.5 rounded-lg border border-[#E0E0E0] bg-white text-[13px] font-semibold text-[#666666] hover:bg-[#F8F8F8] hover:text-[#212121] transition-colors col-span-2">
                     {t("hideArtwork")}
                   </button>
                 )}
@@ -8984,6 +9108,7 @@ function SortableArtworkCard({ item, id, onClick, deleteMode, isSelected, onTogg
             {item.category}
           </div>
         )}
+        <ProjectStatusIcon status={item.artwork?.status} />
         {item.award && item.award !== "Không có" && (
           <div className="absolute top-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm" style={{ backgroundColor: badgeColors[item.award] || "#fff", color: item.award==="Vàng" ? "#744210" : (item.award==="Bạc" ? "#2d3748" : "#7b341e") }} title={`Giải ${item.award}`}>
             ★
@@ -12423,7 +12548,7 @@ export default function App() {
         isLoggedIn ? <EditArtworkPage setPage={setPage} activeArtworkId={activeArtworkId} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "admin_orders" && (
-        userRole === "admin" ? <AdminOrdersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
+        (userRole === "admin" || userRole === "lecturer") ? <AdminOrdersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />
       )}
       {page === "admin_users" && (
         userRole === "admin" ? <AdminUsersPage setPage={setPage} /> : <AccessDenied setPage={setPage} />

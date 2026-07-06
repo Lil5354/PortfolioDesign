@@ -852,7 +852,8 @@ public class ArtworksController : ControllerBase
         if (!string.IsNullOrEmpty(dto.OriginalCoverUrl)) artwork.OriginalCoverUrl = dto.OriginalCoverUrl;
         if (dto.WatermarkImageUrl != null) artwork.WatermarkImageUrl = dto.WatermarkImageUrl;
         if (dto.FileUrls != null) artwork.FileUrls = dto.FileUrls;
-        if (dto.BlocksJson != null && dto.BlocksJson != artwork.BlocksJson) { artwork.BlocksJson = dto.BlocksJson; }
+        if (dto.BlocksJson != null) artwork.BlocksJson = dto.BlocksJson;
+        if (dto.SettingsData != null) artwork.SettingsData = dto.SettingsData;
         if (dto.WatermarkText != null) artwork.WatermarkText = dto.WatermarkText;
         if (dto.WatermarkPosition != null) artwork.WatermarkPosition = dto.WatermarkPosition;
 
@@ -1338,6 +1339,7 @@ public class UpdateArtworkDto
     public string? WatermarkImageUrl { get; set; }
     public List<string>? FileUrls { get; set; }
     public string? BlocksJson { get; set; }
+    public string? SettingsData { get; set; }
     public string? WatermarkText { get; set; }
     public string? WatermarkPosition { get; set; }
     public bool? IsPublic { get; set; }

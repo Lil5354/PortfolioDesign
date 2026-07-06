@@ -68,6 +68,9 @@ public class Artwork
     [Column(TypeName = "jsonb")]
     public string? BlocksJson { get; set; }
 
+    [Column(TypeName = "jsonb")]
+    public string? SettingsData { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }

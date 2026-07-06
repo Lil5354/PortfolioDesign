@@ -252,6 +252,16 @@ public class AdminController : ControllerBase
         {
             artwork.IsPending = false;
         }
+        if (!string.IsNullOrEmpty(dto.Status))
+        {
+            var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var settings = string.IsNullOrEmpty(artwork.SettingsData)
+                ? new System.Text.Json.Nodes.JsonObject()
+                : System.Text.Json.Nodes.JsonNode.Parse(artwork.SettingsData)?.AsObject() ?? new System.Text.Json.Nodes.JsonObject();
+
+            settings["projectStatus"] = dto.Status;
+            artwork.SettingsData = settings.ToJsonString();
+        }
 
         await _context.SaveChangesAsync();
         return Ok(new { success = true });
@@ -304,6 +314,7 @@ public class LockUserDto
 public class SetArtworkStatusDto
 {
     public bool IsPublic { get; set; }
+    public string Status { get; set; }
 }
 
 public class ToggleHighlightDto
