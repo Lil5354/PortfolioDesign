@@ -20,6 +20,78 @@ import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+
+window.MOCK_PROJECTS = [
+  {
+    id: "mock-1",
+    title: "[Draft] Brand Identity Concept",
+    subject: "Graphic Design",
+    description: "This is a draft version. It only has a cover image and no case study yet.",
+    coverImageUrl: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&q=80",
+    settingsData: JSON.stringify({ projectStatus: "Draft", aiUsage: "none", role: "Designer" }),
+    blocksJson: JSON.stringify([]),
+    user: { name: "Mock Student", id: "student-1", portfolioSettings: { portfolioSlug: "student-1" } },
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "mock-2",
+    title: "[Submitted] Packaging Design",
+    subject: "Graphic Design",
+    description: "Submitted for grading. Waiting for instructor feedback.",
+    coverImageUrl: "https://images.unsplash.com/photo-1607083206968-13611e3d76db?w=800&q=80",
+    settingsData: JSON.stringify({ projectStatus: "Submitted", aiUsage: "brainstorm", role: "Lead Designer" }),
+    blocksJson: JSON.stringify([
+      { id: "1", type: "text", content: "<h2 style='text-align:center;'>1. Research & Ideation</h2><p>Here is some early research.</p>" },
+      { id: "2", type: "image", content: "https://images.unsplash.com/photo-1607083206968-13611e3d76db?w=800&q=80", caption: "Initial sketch" }
+    ]),
+    user: { name: "Mock Student", id: "student-1", portfolioSettings: { portfolioSlug: "student-1" } },
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "mock-3",
+    title: "[Revision] Poster Typography",
+    subject: "Graphic Design",
+    description: "Instructor requested some changes. See comments.",
+    coverImageUrl: "https://images.unsplash.com/photo-1561089489-8d8a7a922d25?w=800&q=80",
+    settingsData: JSON.stringify({ projectStatus: "Revision", aiUsage: "none", role: "Typography" }),
+    blocksJson: JSON.stringify([
+      { id: "1", type: "image", content: "https://images.unsplash.com/photo-1561089489-8d8a7a922d25?w=800&q=80", caption: "Typography test 1" }
+    ]),
+    comments: [
+      { id: "c1", content: "The contrast is too low on the second section. Please revise.", authorName: "Instructor Long", createdAt: new Date().toISOString() }
+    ],
+    user: { name: "Mock Student", id: "student-1", portfolioSettings: { portfolioSlug: "student-1" } },
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "mock-4",
+    title: "[Approved] UX/UI Mobile App",
+    subject: "UI/UX",
+    description: "This project has been graded and approved by the instructor. It has the Academic Verified badge.",
+    coverImageUrl: "https://images.unsplash.com/photo-1618761714954-0b8cd0026356?w=800&q=80",
+    settingsData: JSON.stringify({ projectStatus: "Approved", aiUsage: "generation", aiPrompt: "Generate abstract mobile UI patterns", role: "UI Designer" }),
+    blocksJson: JSON.stringify([
+      { id: "1", type: "text", content: "<h2 style='text-align:center;'>Final Design</h2><p>Approved outcome.</p>" },
+      { id: "2", type: "image", content: "https://images.unsplash.com/photo-1618761714954-0b8cd0026356?w=800&q=80" }
+    ]),
+    user: { name: "Mock Student", id: "student-1", portfolioSettings: { portfolioSlug: "student-1" } },
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "mock-5",
+    title: "[Published] 3D Product Render",
+    subject: "3D Animation",
+    description: "Published to the public portfolio.",
+    coverImageUrl: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=800&q=80",
+    settingsData: JSON.stringify({ projectStatus: "Published", aiUsage: "editing", role: "3D Artist" }),
+    blocksJson: JSON.stringify([
+      { id: "1", type: "video", content: "https://www.w3schools.com/html/mov_bbb.mp4" }
+    ]),
+    user: { name: "Mock Student", id: "student-1", portfolioSettings: { portfolioSlug: "student-1" } },
+    createdAt: new Date().toISOString()
+  }
+];
+
 import HTMLFlipBook from 'react-pageflip';
 import {
   Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
@@ -1271,7 +1343,10 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
     ]).then(([pData, pStats]) => {
       if (pData) {
         pData.stats = { ...(pData.stats || {}), ...pStats };
-        if (pData.artworks) setPortfolioArtworks(pData.artworks);
+        if (pData.artworks) {
+          const mergedArtworks = [...(window.MOCK_PROJECTS || []), ...pData.artworks];
+          setPortfolioArtworks(mergedArtworks);
+        }
         setPortfolioData(pData);
         const pSet = pData.portfolioSettings || pData.settings || {};
         setPublicMoodboards(pSet.publicMoodboards || []);
@@ -1383,6 +1458,12 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
     : [];
     
   const featuredWorks = allFeatured.slice(0, 10).map((a, i) => {
+    let settings = {};
+    if (a.settingsData) {
+      try {
+        settings = typeof a.settingsData === 'string' ? JSON.parse(a.settingsData) : a.settingsData;
+      } catch (e) {}
+    }
     return {
       id: a.id,
       title: a.title,
@@ -1392,22 +1473,32 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
       student: a.user?.fullName || a.student || profile.fullName,
       views: a.viewCount || a.likes || 0,
       likes: a.likeCount || a.likes || 0,
-      isPublic: a.isPublic !== false
+      isPublic: a.isPublic !== false,
+      projectStatus: settings?.projectStatus || 'Draft'
     };
   });
 
   const allPortfolioWorks = (portfolioArtworks && portfolioArtworks.length > 0) 
-    ? portfolioArtworks.map((a) => ({
-        id: a.id,
-        title: a.title,
-        img: a.coverImageUrl || a.img,
-        tools: a.toolsUsed || [],
-        tags: a.tags || [],
-        student: a.user?.fullName || a.student || profile.fullName,
-        views: a.viewCount || 0,
-        likes: a.likeCount || 0,
-        isPublic: a.isPublic !== false
-      }))
+    ? portfolioArtworks.map((a) => {
+        let settings = {};
+        if (a.settingsData) {
+          try {
+            settings = typeof a.settingsData === 'string' ? JSON.parse(a.settingsData) : a.settingsData;
+          } catch (e) {}
+        }
+        return {
+          id: a.id,
+          title: a.title,
+          img: a.coverImageUrl || a.img,
+          tools: a.toolsUsed || [],
+          tags: a.tags || [],
+          student: a.user?.fullName || a.student || profile.fullName,
+          views: a.viewCount || 0,
+          likes: a.likeCount || 0,
+          isPublic: a.isPublic !== false,
+          projectStatus: settings?.projectStatus || 'Draft'
+        };
+      })
     : [];
 
   const handleContactSubmit = async () => {
@@ -1742,6 +1833,12 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                              <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
                            </div>
                          )}
+                         {art.projectStatus === 'Approved' && (
+                           <div style={{ position: "absolute", top: 8, right: 8, background: "linear-gradient(90deg, #1a4ba8, #2b64ff)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2, boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }} title="Academic Verified">
+                             <ShieldCheck size={10} color="#fff" />
+                             <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.2px", textTransform: "uppercase" }}>Verified</span>
+                           </div>
+                         )}
                        </div>
                        <p style={{ margin: "8px 0 2px", fontSize: 14, fontWeight: 600, color: "#212121", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{art.title}</p>
                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -1796,6 +1893,12 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                              <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.65)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2 }}>
                                <Lock size={10} color="#fff" />
                                <span style={{ color: "#fff", fontSize: 11, fontWeight: 600 }}>{t("private")}</span>
+                             </div>
+                           )}
+                           {art.projectStatus === 'Approved' && (
+                             <div style={{ position: "absolute", top: 8, right: 8, background: "linear-gradient(90deg, #1a4ba8, #2b64ff)", borderRadius: 4, padding: "3px 7px", display: "flex", alignItems: "center", gap: 4, zIndex: 2, boxShadow: "0 2px 4px rgba(0,0,0,0.2)" }} title="Academic Verified">
+                               <ShieldCheck size={10} color="#fff" />
+                               <span style={{ color: "#fff", fontSize: 10, fontWeight: 700, letterSpacing: "0.2px", textTransform: "uppercase" }}>Verified</span>
                              </div>
                            )}
                          </div>
@@ -4056,7 +4159,16 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
                              ) : (
                                 blocks.map(block => (
                                    <div key={block.id} style={{ width: block.fullWidth ? "100%" : "min(100%, 1024px)", margin: "0 auto", padding: block.fullWidth ? "0" : `0px`, marginBottom: 16 }}>
-                                      {block.type === 'image' && block.content && <img src={block.content} style={{ width: "100%", height: "auto", display: "block" }} />}
+                                      {block.type === 'image' && block.content && (
+                                        <div style={{ position: "relative" }}>
+                                          <img src={block.content} style={{ width: "100%", height: "auto", display: "block" }} />
+                                          {block.caption && (
+                                            <div style={{ textAlign: "center", fontSize: 13, color: "#666", marginTop: 8, fontStyle: "italic" }}>
+                                              {block.caption}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
                                       {block.type === 'text' && <div style={{ color: "#212121", padding: 16, fontSize: 17, fontFamily: "sans-serif", whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: block.content ? block.content.replace(/\n/g, '<br/>') : '' }}></div>}
                                       {block.type === 'grid' && <div style={{ width: "100%", height: 300, background: "rgba(0,0,0,0.05)", border: "1px dashed rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.4)" }}>Grid Preview</div>}
                                       {block.type === 'video' && <div style={{ width: "100%", height: 300, background: "rgba(0,0,0,0.05)", border: "1px dashed rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.4)" }}>Video/Audio Preview</div>}
@@ -4607,14 +4719,47 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, 
     setLoading(true);
     setActiveImageIdx(0);
       setLoadError(false);
+      
+      if (String(activeArtworkId).startsWith('mock-')) {
+         const mockArt = window.MOCK_PROJECTS?.find(p => p.id === activeArtworkId);
+         if (mockArt) {
+            let parsedSettings = {};
+            try {
+              parsedSettings = typeof mockArt.settingsData === 'string' ? JSON.parse(mockArt.settingsData) : mockArt.settingsData;
+            } catch(e) {}
+            
+            setArt({
+              ...mockArt,
+              subject: mockArt.subject || t("artwork"),
+              tags: mockArt.tags || [],
+              toolsUsed: mockArt.toolsUsed || [],
+              description: mockArt.description || "",
+              settings: parsedSettings
+            });
+            setIsLiked(false);
+            setLikeCount(0);
+            setComments(mockArt.comments || []);
+            setExistingGrade(null);
+            setLoading(false);
+            return;
+         }
+      }
+
       api.artworks.incrementView(activeArtworkId).catch(() => {});
       api.artworks.get(activeArtworkId).then(res => {
+      let parsedSettings = {};
+      if (res.settingsData) {
+        try {
+          parsedSettings = typeof res.settingsData === 'string' ? JSON.parse(res.settingsData) : res.settingsData;
+        } catch(e) {}
+      }
       setArt({
         ...res,
         subject: res.subject || t("artwork"),
         tags: res.tags || [],
         toolsUsed: res.toolsUsed || [],
         description: res.description || "",
+        settings: parsedSettings
       });
       setIsLiked(res.isLiked || false);
       setLikeCount(res.likeCount || 0);
@@ -5886,6 +6031,33 @@ if (mins < 1) return t("justNow");
 
                 <p style={{ margin: 0, fontSize: 12, color: "#888" }}>Published: {new Date(art.createdAt || Date.now()).toLocaleDateString()}</p>
               </div>
+              {/* Role / Responsibility */}
+              {art.settings?.role && (
+                <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)", marginBottom: 24 }}>
+                  <span style={{ fontSize: 11, fontWeight: "bold", color: "#888", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Role / Responsibility</span>
+                  <p style={{ fontSize: 14, color: "#191919", margin: 0, fontWeight: 500 }}>{art.settings.role}</p>
+                </div>
+              )}
+
+              {/* AI Usage Declaration */}
+              {art.settings?.aiUsage && art.settings.aiUsage !== 'none' && (
+                <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)", marginBottom: 24 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                    <ShieldCheck size={16} color="#2b64ff" />
+                    <span style={{ fontSize: 11, fontWeight: "bold", color: "#2b64ff", textTransform: "uppercase", letterSpacing: 1 }}>AI Usage Declaration</span>
+                  </div>
+                  <p style={{ fontSize: 13, color: "#191919", margin: "0 0 8px 0", fontWeight: 600 }}>
+                    {art.settings.aiUsage === 'brainstorm' && 'Used AI for ideation & brainstorming'}
+                    {art.settings.aiUsage === 'generation' && 'Used AI to generate raw assets/images'}
+                    {art.settings.aiUsage === 'editing' && 'Used AI for post-processing & editing'}
+                  </p>
+                  {art.settings.aiPrompt && (
+                    <div style={{ background: "#F8F8F8", padding: 12, borderRadius: 6, fontSize: 13, color: "#666", lineHeight: 1.5, wordBreak: "break-word" }}>
+                      {art.settings.aiPrompt}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Tools & Creative Fields */}
               <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
@@ -7553,6 +7725,23 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
   useEffect(() => {
     if (!activeArtworkId) return;
     setLoading(true);
+    
+    if (String(activeArtworkId).startsWith('mock-')) {
+       const mockArt = window.MOCK_PROJECTS?.find(p => p.id === activeArtworkId);
+       if (mockArt) {
+          setTitle(mockArt.title || "");
+          setDescription(mockArt.description || "");
+          setSubject(mockArt.subject || "");
+          setTools(mockArt.toolsUsed || []);
+          setTags(mockArt.tags || []);
+          setOriginalCover(mockArt.coverImageUrl || "");
+          setAdditionalImages((mockArt.fileUrls || []).filter(url => url !== mockArt.coverImageUrl));
+          setProjectYear("Năm 3");
+          setLoading(false);
+          return;
+       }
+    }
+
     api.artworks.get(activeArtworkId).then(res => {
       setTitle(res.title || "");
       setDescription(res.description || "");
@@ -8980,9 +9169,16 @@ function CollectionExportConfigPage({ setPage, collection, onUpdateCollection, o
                           onClick={() => {
                             if (deleteMode) return;
                             setDetailArtwork(it);
-                            api.artworks.get(it.artworkId).then(fullArt => {
-                              setDetailArtwork(prev => prev?.artworkId === it.artworkId ? { ...prev, artwork: { ...prev.artwork, ...fullArt } } : prev);
-                            }).catch(() => {});
+                            if (String(it.artworkId).startsWith('mock-')) {
+                              const mockArt = window.MOCK_PROJECTS?.find(p => p.id === it.artworkId);
+                              if (mockArt) {
+                                setDetailArtwork(prev => prev?.artworkId === it.artworkId ? { ...prev, artwork: { ...prev.artwork, ...mockArt } } : prev);
+                              }
+                            } else {
+                              api.artworks.get(it.artworkId).then(fullArt => {
+                                setDetailArtwork(prev => prev?.artworkId === it.artworkId ? { ...prev, artwork: { ...prev.artwork, ...fullArt } } : prev);
+                              }).catch(() => {});
+                            }
                           }}
                         />
                       ))}
@@ -12045,15 +12241,23 @@ export default function App() {
     setSaveModal({ open: true, artwork: art });
     
     // Fetch full artwork to get fileUrls and blocksJson
-    api.artworks.get(art.id).then(fullArt => {
-      setSaveModal(prev => prev.artwork?.id === art.id ? { ...prev, artwork: fullArt } : prev);
-    }).catch(() => {
-      // Fallback to mock data if API fails
-      const mockArt = artworks.find(a => String(a.id) === String(art.id));
+    if (String(art.id).startsWith('mock-')) {
+      const mockArt = window.MOCK_PROJECTS?.find(p => p.id === art.id);
       if (mockArt) {
         setSaveModal(prev => prev.artwork?.id === art.id ? { ...prev, artwork: { ...prev.artwork, ...mockArt } } : prev);
       }
-    });
+    } else {
+      api.artworks.get(art.id).then(fullArt => {
+        setSaveModal(prev => prev.artwork?.id === art.id ? { ...prev, artwork: fullArt } : prev);
+      }).catch(() => {
+        // Fallback to mock data if API fails
+        const mockArt = artworks.find(a => String(a.id) === String(art.id));
+        if (mockArt) {
+          setSaveModal(prev => prev.artwork?.id === art.id ? { ...prev, artwork: { ...prev.artwork, ...mockArt } } : prev);
+        }
+      });
+    }
+
 
     setToast({
       title: "Đã lưu tạm",

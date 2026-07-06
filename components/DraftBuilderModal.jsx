@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle } from "lucide-react";
+import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle, FileText } from "lucide-react";
 import JustifiedGrid from "./journal/JustifiedGrid";
 import EditGridModal from "./journal/EditGridModal";
 import ReorderProjectModal from "./journal/ReorderProjectModal";
@@ -26,20 +26,26 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [projectStyles, setProjectStyles] = useState(initialSettingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
   const [settingsData, setSettingsData] = useState(initialSettingsData || {
-    coverImage: null, title: '', tags: '', category: '', tools: '', projectYear: 'Năm 3', description: '', license: 'All Rights Reserved', coOwners: ''
+    coverImage: null, title: '', tags: '', category: '', tools: '', role: '', projectYear: 'Năm 3', description: '', license: 'All Rights Reserved', coOwners: '',
+    projectStatus: 'Draft', aiUsage: 'none', aiPrompt: ''
   });
 
   useEffect(() => {
     if (isOpen) {
-      setBlocks(initialBlocks?.length ? [...initialBlocks] : []);
-      setSettingsData(initialSettingsData ? { ...initialSettingsData } : {
-        coverImage: null, title: '', tags: '', category: '', tools: '', projectYear: 'Năm 3', description: '', license: 'All Rights Reserved', coOwners: ''
-      });
-      setProjectStyles(initialSettingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
+      setBlocks(initialBlocks || []);
+      if (initialSettingsData) {
+        setSettingsData({ projectStatus: 'Draft', role: '', aiUsage: 'none', aiPrompt: '', ...initialSettingsData });
+        setProjectStyles(initialSettingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
+      } else {
+        setSettingsData({
+          coverImage: null, title: '', tags: '', category: '', tools: '', role: '', projectYear: 'Năm 3', description: '', license: 'All Rights Reserved', coOwners: '',
+          projectStatus: 'Draft', aiUsage: 'none', aiPrompt: ''
+        });
+        setProjectStyles({ backgroundColor: '#ffffff', contentSpacing: 0 });
+      }
       setIsPreviewMode(false);
       setIsSettingsModalOpen(false);
       setIsStylesModalOpen(false);
-      setProjectStyles(initialSettingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -73,8 +79,8 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
   
   if (!isOpen) return null;
 
-  const addBlock = (type) => {
-    setBlocks([...blocks, { id: Date.now().toString(), type, content: "", fullWidth: false }]);
+  const addBlock = (type, initialContent = "") => {
+    setBlocks([...blocks, { id: Date.now().toString(), type, content: initialContent, fullWidth: false }]);
   };
 
   const updateBlock = (id, newProps) => {
@@ -385,8 +391,21 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
                  )}
                </div>
              ))}
-           </div>
-        )}
+             
+             {/* Caption Input */}
+             <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto">
+               <input 
+                 type="text" 
+                 placeholder="Add a caption (optional)" 
+                 value={block.caption || ''} 
+                 onChange={(e) => updateBlock(block.id, { caption: e.target.value })} 
+                 className="bg-white/90 backdrop-blur border border-gray-200 shadow-sm text-sm px-4 py-2 rounded-full w-[80%] max-w-[500px] text-center outline-none focus:border-blue-500 focus:bg-white text-gray-800"
+                 onClick={(e) => e.stopPropagation()}
+               />
+             </div>
+            </div>
+              
+         )}
         {block.type === 'text' && (
            <div 
              className={`w-full h-full min-h-[100px] flex flex-col relative transition-all duration-200 border 
@@ -824,6 +843,40 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
           <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition">
             <ChevronLeft size={20} className="text-gray-600" />
           </button>
+          
+          {/* Status Progress & Dropdown */}
+          <div className="flex items-center gap-3 ml-2">
+            <div className="hidden lg:flex items-center bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200">
+               {['Draft', 'Submitted', 'Revision', 'Approved', 'Published'].map((status, idx) => {
+                 const isActive = settingsData?.projectStatus === status;
+                 // Determine if it's "passed"
+                 const statuses = ['Draft', 'Submitted', 'Revision', 'Approved', 'Published'];
+                 const currentIndex = statuses.indexOf(settingsData?.projectStatus || 'Draft');
+                 const isPassed = idx <= currentIndex;
+                 
+                 return (
+                   <React.Fragment key={status}>
+                     <div className={`flex items-center justify-center text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors ${isActive ? 'bg-[#2b64ff] text-white shadow-sm' : isPassed ? 'text-[#2b64ff]' : 'text-gray-400'}`}>
+                       {status}
+                     </div>
+                     {idx < 4 && <div className={`w-3 h-[2px] mx-1 rounded-full ${isPassed && idx < currentIndex ? 'bg-[#2b64ff]' : 'bg-gray-200'}`}></div>}
+                   </React.Fragment>
+                 );
+               })}
+            </div>
+            
+            <select 
+              value={settingsData?.projectStatus || 'Draft'}
+              onChange={(e) => setSettingsData({...settingsData, projectStatus: e.target.value})}
+              className="text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-md px-2 py-1.5 outline-none focus:border-[#2b64ff] cursor-pointer hover:bg-gray-50 transition shadow-sm"
+            >
+              <option value="Draft">Draft</option>
+              <option value="Submitted">Submit for Review</option>
+              <option value="Revision">Request Revision</option>
+              <option value="Approved">Approve Project</option>
+              <option value="Published">Publish (Public)</option>
+            </select>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button className="text-sm font-semibold text-gray-500 hover:text-gray-800 transition" onClick={() => setIsPreviewMode(true)}>Preview</button>
@@ -887,7 +940,7 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
           
           <div className="p-4 border-b border-gray-200">
             <h3 className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-3">Edit Project</h3>
-            <div className="grid grid-cols-2 gap-[1px] bg-gray-200 border border-gray-200 rounded overflow-hidden">
+            <div className="grid grid-cols-3 gap-[1px] bg-gray-200 border border-gray-200 rounded overflow-hidden">
               <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition text-blue-600" onClick={() => setIsStylesModalOpen(true)}>
                 <PenTool size={20} />
                 <span className="text-[13px] font-medium">Styles</span>
@@ -895,6 +948,10 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
               <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" onClick={() => setIsSettingsModalOpen(true)}>
                 <Settings size={20} className="text-gray-800" />
                 <span className="text-[13px] font-medium text-gray-700">Settings</span>
+              </button>
+              <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition text-indigo-600" onClick={() => setIsReorderModalOpen(true)}>
+                <LayoutGrid size={20} />
+                <span className="text-[13px] font-medium">Rearrange</span>
               </button>
             </div>
             
@@ -1022,7 +1079,12 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
                   
                   <div className="mb-6">
                     <label className="block font-bold text-[15px] text-gray-900 mb-2">Tools Used</label>
-                    <input type="text" className="w-full border border-gray-300 rounded p-3 text-gray-900 outline-none focus:border-blue-500 transition" placeholder="What software, hardware, or materials did you use?" value={settingsData.tools} onChange={e => setSettingsData({...settingsData, tools: e.target.value})} />
+                    <input type="text" className="w-full border border-gray-300 rounded p-3 text-gray-900 outline-none focus:border-blue-500 transition" placeholder="What software, hardware, or materials did you use?" value={settingsData.tools || ''} onChange={e => setSettingsData({...settingsData, tools: e.target.value})} />
+                  </div>
+
+                  <div className="mb-6">
+                    <label className="block font-bold text-[15px] text-gray-900 mb-2">Role / Responsibility</label>
+                    <input type="text" className="w-full border border-gray-300 rounded p-3 text-gray-900 outline-none focus:border-blue-500 transition" placeholder="e.g. Lead UI/UX, 3D Modeler, Concept Artist" value={settingsData.role || ''} onChange={e => setSettingsData({...settingsData, role: e.target.value})} />
                   </div>
                   
                   <div className="mb-6">
@@ -1047,7 +1109,24 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
                   
                   <div className="mb-6">
                     <label className="block font-bold text-[15px] text-gray-900 mb-2">Description</label>
-                    <textarea className="w-full h-24 resize-none border border-gray-300 rounded p-3 text-gray-900 outline-none focus:border-blue-500 transition" placeholder="Add a short description for your project" value={settingsData.description} onChange={e => setSettingsData({...settingsData, description: e.target.value})} />
+                    <textarea className="w-full h-24 resize-none border border-gray-300 rounded p-3 text-gray-900 outline-none focus:border-blue-500 transition" placeholder="Add a short description for your project" value={settingsData.description || ''} onChange={e => setSettingsData({...settingsData, description: e.target.value})} />
+                  </div>
+
+                  <div className="mb-6 bg-gray-50 border border-gray-200 rounded p-4">
+                    <label className="block font-bold text-[15px] text-gray-900 mb-1">AI Usage Declaration</label>
+                    <p className="text-xs text-gray-500 mb-3">Declare how AI was used in your creative process.</p>
+                    <select className="w-full border border-gray-300 rounded p-3 text-gray-900 outline-none focus:border-blue-500 transition bg-white mb-3" value={settingsData.aiUsage || 'none'} onChange={e => setSettingsData({...settingsData, aiUsage: e.target.value})}>
+                      <option value="none">No AI was used in this project</option>
+                      <option value="brainstorm">Used AI for ideation & brainstorming</option>
+                      <option value="generation">Used AI to generate raw assets/images</option>
+                      <option value="editing">Used AI for post-processing & editing</option>
+                    </select>
+                    {settingsData.aiUsage && settingsData.aiUsage !== 'none' && (
+                      <div>
+                        <label className="block font-bold text-[13px] text-gray-700 mb-2">AI Prompts / Description</label>
+                        <textarea className="w-full h-20 resize-none border border-gray-300 rounded p-3 text-gray-900 outline-none focus:border-blue-500 transition" placeholder="List the AI tools used, your prompts, or how you used them..." value={settingsData.aiPrompt || ''} onChange={e => setSettingsData({...settingsData, aiPrompt: e.target.value})} />
+                      </div>
+                    )}
                   </div>
                   
                   <div className="mb-6">
