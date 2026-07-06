@@ -1,0 +1,86 @@
+[
+  [
+    "__EFMigrationsLock",
+    "CREATE TABLE \"__EFMigrationsLock\" (\r\n    \"Id\" INTEGER NOT NULL CONSTRAINT \"PK___EFMigrationsLock\" PRIMARY KEY,\r\n    \"Timestamp\" TEXT NOT NULL\r\n)"
+  ],
+  [
+    "__EFMigrationsHistory",
+    "CREATE TABLE \"__EFMigrationsHistory\" (\r\n    \"migration_id\" TEXT NOT NULL CONSTRAINT \"pk___ef_migrations_history\" PRIMARY KEY,\r\n    \"product_version\" TEXT NOT NULL\r\n)"
+  ],
+  [
+    "site_sections",
+    "CREATE TABLE \"site_sections\" (\r\n    \"section_id\" TEXT NOT NULL CONSTRAINT \"pk_site_sections\" PRIMARY KEY,\r\n    \"page\" TEXT NOT NULL,\r\n    \"section\" TEXT NOT NULL,\r\n    \"label\" TEXT NOT NULL,\r\n    \"sort_order\" INTEGER NOT NULL,\r\n    \"is_active\" INTEGER NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    \"updated_at\" TEXT NOT NULL\r\n)"
+  ],
+  [
+    "site_settings",
+    "CREATE TABLE \"site_settings\" (\r\n    \"setting_id\" TEXT NOT NULL CONSTRAINT \"pk_site_settings\" PRIMARY KEY,\r\n    \"key\" TEXT NOT NULL,\r\n    \"value\" TEXT NOT NULL,\r\n    \"type\" TEXT NOT NULL\r\n)"
+  ],
+  [
+    "users",
+    "CREATE TABLE \"users\" (\r\n    \"user_id\" TEXT NOT NULL CONSTRAINT \"pk_users\" PRIMARY KEY,\r\n    \"email\" TEXT NOT NULL,\r\n    \"password_hash\" TEXT NOT NULL,\r\n    \"full_name\" TEXT NOT NULL,\r\n    \"student_id\" TEXT NULL,\r\n    \"role\" TEXT NOT NULL,\r\n    \"avatar_url\" TEXT NULL,\r\n    \"bio\" TEXT NULL,\r\n    \"phone\" TEXT NULL,\r\n    \"address\" TEXT NULL,\r\n    \"major\" TEXT NULL,\r\n    \"cohort\" TEXT NULL,\r\n    \"department\" TEXT NULL,\r\n    \"managed_classes\" TEXT NULL,\r\n    \"title\" TEXT NULL,\r\n    \"company\" TEXT NULL,\r\n    \"position\" TEXT NULL,\r\n    \"industry\" TEXT NULL,\r\n    \"is_active\" INTEGER NOT NULL,\r\n    \"email_verified\" TEXT NULL,\r\n    \"verification_code\" TEXT NULL,\r\n    \"verification_code_expires\" TEXT NULL,\r\n    \"reset_code\" TEXT NULL,\r\n    \"reset_code_expires\" TEXT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    \"updated_at\" TEXT NOT NULL\r\n)"
+  ],
+  [
+    "site_section_items",
+    "CREATE TABLE \"site_section_items\" (\r\n    \"item_id\" TEXT NOT NULL CONSTRAINT \"pk_site_section_items\" PRIMARY KEY,\r\n    \"section_id\" TEXT NOT NULL,\r\n    \"sort_order\" INTEGER NOT NULL,\r\n    \"content\" TEXT NOT NULL,\r\n    \"is_active\" INTEGER NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    \"updated_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_site_section_items_site_sections_section_id\" FOREIGN KEY (\"section_id\") REFERENCES \"site_sections\" (\"section_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "artworks",
+    "CREATE TABLE \"artworks\" (\r\n    \"artwork_id\" TEXT NOT NULL CONSTRAINT \"pk_artworks\" PRIMARY KEY,\r\n    \"user_id\" TEXT NOT NULL,\r\n    \"title\" TEXT NOT NULL,\r\n    \"description\" TEXT NULL,\r\n    \"tools_used\" TEXT NULL,\r\n    \"subject\" TEXT NULL,\r\n    \"semester\" TEXT NULL,\r\n    \"academic_year\" TEXT NULL,\r\n    \"tags\" TEXT NULL,\r\n    \"collaborators\" TEXT NULL,\r\n    \"collaborator_ids\" TEXT NULL,\r\n    \"cover_image_url\" TEXT NOT NULL,\r\n    \"original_cover_url\" TEXT NULL,\r\n    \"watermark_image_url\" TEXT NULL,\r\n    \"file_urls\" TEXT NULL,\r\n    \"watermark_text\" TEXT NULL,\r\n    \"watermark_position\" TEXT NULL,\r\n    \"is_public\" INTEGER NOT NULL,\r\n    \"is_pending\" INTEGER NOT NULL,\r\n    \"is_highlighted\" INTEGER NOT NULL,\r\n    \"is_ai_confirmed\" INTEGER NOT NULL,\r\n    \"ai_score\" INTEGER NULL,\r\n    \"ai_generated_pct\" INTEGER NULL,\r\n    \"is_ai_verified\" INTEGER NOT NULL,\r\n    \"view_count\" INTEGER NOT NULL,\r\n    \"like_count\" INTEGER NOT NULL,\r\n    \"portfolio_slug\" TEXT NULL,\r\n    \"blocks_json\" jsonb NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    \"updated_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_artworks_users_user_id\" FOREIGN KEY (\"user_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "badges",
+    "CREATE TABLE \"badges\" (\r\n    \"badge_id\" TEXT NOT NULL CONSTRAINT \"pk_badges\" PRIMARY KEY,\r\n    \"name\" TEXT NOT NULL,\r\n    \"color_code\" TEXT NOT NULL,\r\n    \"text_color\" TEXT NOT NULL,\r\n    \"lecturer_id\" TEXT NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_badges_users_lecturer_id\" FOREIGN KEY (\"lecturer_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "follows",
+    "CREATE TABLE \"follows\" (\r\n    \"follower_id\" TEXT NOT NULL,\r\n    \"followed_id\" TEXT NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"pk_follows\" PRIMARY KEY (\"follower_id\", \"followed_id\"),\r\n    CONSTRAINT \"fk_follows_users_followed_id\" FOREIGN KEY (\"followed_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE,\r\n    CONSTRAINT \"fk_follows_users_follower_id\" FOREIGN KEY (\"follower_id\") REFERENCES \"users\" (\"user_id\") ON DELETE RESTRICT\r\n)"
+  ],
+  [
+    "messages",
+    "CREATE TABLE \"messages\" (\r\n    \"message_id\" TEXT NOT NULL CONSTRAINT \"pk_messages\" PRIMARY KEY,\r\n    \"recipient_id\" TEXT NOT NULL,\r\n    \"sender_name\" TEXT NOT NULL,\r\n    \"sender_email\" TEXT NOT NULL,\r\n    \"sender_company\" TEXT NULL,\r\n    \"purpose\" TEXT NULL,\r\n    \"status\" TEXT NULL,\r\n    \"content\" TEXT NOT NULL,\r\n    \"is_read\" INTEGER NOT NULL,\r\n    \"is_emailed\" INTEGER NOT NULL,\r\n    \"is_archived\" INTEGER NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_messages_users_recipient_id\" FOREIGN KEY (\"recipient_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "notifications",
+    "CREATE TABLE \"notifications\" (\r\n    \"notification_id\" TEXT NOT NULL CONSTRAINT \"pk_notifications\" PRIMARY KEY,\r\n    \"user_id\" TEXT NOT NULL,\r\n    \"type\" TEXT NOT NULL,\r\n    \"reference_id\" TEXT NULL,\r\n    \"reference_type\" TEXT NULL,\r\n    \"content\" TEXT NOT NULL,\r\n    \"is_read\" INTEGER NOT NULL,\r\n    \"actor_id\" TEXT NULL,\r\n    \"actor_name\" TEXT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_notifications_users_user_id\" FOREIGN KEY (\"user_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "portfolio_settings",
+    "CREATE TABLE \"portfolio_settings\" (\r\n    \"setting_id\" TEXT NOT NULL CONSTRAINT \"pk_portfolio_settings\" PRIMARY KEY,\r\n    \"user_id\" TEXT NOT NULL,\r\n    \"portfolio_slug\" TEXT NULL,\r\n    \"is_portfolio_public\" INTEGER NOT NULL,\r\n    \"show_email\" INTEGER NOT NULL,\r\n    \"profile_headline\" TEXT NULL,\r\n    \"banner_url\" TEXT NULL,\r\n    \"social_links\" TEXT NULL,\r\n    \"contact_enabled\" INTEGER NOT NULL,\r\n    \"display_order\" TEXT NOT NULL,\r\n    \"major\" TEXT NULL,\r\n    \"year_level\" TEXT NULL,\r\n    \"featured_artwork_ids\" TEXT NULL,\r\n    \"updated_at\" TEXT NOT NULL, \"public_moodboards\" TEXT NULL,\r\n    CONSTRAINT \"fk_portfolio_settings_users_user_id\" FOREIGN KEY (\"user_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "timeline_entries",
+    "CREATE TABLE \"timeline_entries\" (\r\n    \"entry_id\" TEXT NOT NULL CONSTRAINT \"pk_timeline_entries\" PRIMARY KEY,\r\n    \"user_id\" TEXT NOT NULL,\r\n    \"month\" TEXT NOT NULL,\r\n    \"year\" TEXT NOT NULL,\r\n    \"title\" TEXT NOT NULL,\r\n    \"description\" TEXT NULL,\r\n    \"tags\" TEXT NULL,\r\n    \"link_url\" TEXT NULL,\r\n    \"link_label\" TEXT NULL,\r\n    \"image_url\" TEXT NULL,\r\n    \"sort_order\" INTEGER NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    \"updated_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_timeline_entries_users_user_id\" FOREIGN KEY (\"user_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "collection_items",
+    "CREATE TABLE \"collection_items\" (\r\n    \"collection_item_id\" TEXT NOT NULL CONSTRAINT \"pk_collection_items\" PRIMARY KEY,\r\n    \"lecturer_id\" TEXT NOT NULL,\r\n    \"artwork_id\" TEXT NOT NULL,\r\n    \"collection_name\" TEXT NULL,\r\n    \"curator_essay\" TEXT NULL,\r\n    \"theme\" TEXT NULL,\r\n    \"note\" TEXT NULL,\r\n    \"added_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_collection_items_artworks_artwork_id\" FOREIGN KEY (\"artwork_id\") REFERENCES \"artworks\" (\"artwork_id\") ON DELETE CASCADE,\r\n    CONSTRAINT \"fk_collection_items_users_lecturer_id\" FOREIGN KEY (\"lecturer_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "grades",
+    "CREATE TABLE \"grades\" (\r\n    \"grade_id\" TEXT NOT NULL CONSTRAINT \"pk_grades\" PRIMARY KEY,\r\n    \"artwork_id\" TEXT NOT NULL,\r\n    \"lecturer_id\" TEXT NOT NULL,\r\n    \"score\" TEXT NULL,\r\n    \"comment\" TEXT NULL,\r\n    \"is_visible_to_student\" INTEGER NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    \"updated_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_grades_artworks_artwork_id\" FOREIGN KEY (\"artwork_id\") REFERENCES \"artworks\" (\"artwork_id\") ON DELETE CASCADE,\r\n    CONSTRAINT \"fk_grades_users_lecturer_id\" FOREIGN KEY (\"lecturer_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "likes",
+    "CREATE TABLE \"likes\" (\r\n    \"like_id\" TEXT NOT NULL CONSTRAINT \"pk_likes\" PRIMARY KEY,\r\n    \"artwork_id\" TEXT NOT NULL,\r\n    \"user_id\" TEXT NULL,\r\n    \"ip_address\" TEXT NULL,\r\n    \"reaction_type\" TEXT NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_likes_artworks_artwork_id\" FOREIGN KEY (\"artwork_id\") REFERENCES \"artworks\" (\"artwork_id\") ON DELETE CASCADE,\r\n    CONSTRAINT \"fk_likes_users_user_id\" FOREIGN KEY (\"user_id\") REFERENCES \"users\" (\"user_id\")\r\n)"
+  ],
+  [
+    "reports",
+    "CREATE TABLE \"reports\" (\r\n    \"report_id\" TEXT NOT NULL CONSTRAINT \"pk_reports\" PRIMARY KEY,\r\n    \"artwork_id\" TEXT NOT NULL,\r\n    \"user_id\" TEXT NULL,\r\n    \"violation_type\" TEXT NOT NULL,\r\n    \"detail\" TEXT NULL,\r\n    \"status\" TEXT NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    \"updated_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_reports_artworks_artwork_id\" FOREIGN KEY (\"artwork_id\") REFERENCES \"artworks\" (\"artwork_id\") ON DELETE CASCADE,\r\n    CONSTRAINT \"fk_reports_users_user_id\" FOREIGN KEY (\"user_id\") REFERENCES \"users\" (\"user_id\")\r\n)"
+  ],
+  [
+    "artwork_badges",
+    "CREATE TABLE \"artwork_badges\" (\r\n    \"artwork_id\" TEXT NOT NULL,\r\n    \"badge_id\" TEXT NOT NULL,\r\n    \"assigned_at\" TEXT NOT NULL,\r\n    CONSTRAINT \"pk_artwork_badges\" PRIMARY KEY (\"artwork_id\", \"badge_id\"),\r\n    CONSTRAINT \"fk_artwork_badges_artworks_artwork_id\" FOREIGN KEY (\"artwork_id\") REFERENCES \"artworks\" (\"artwork_id\") ON DELETE CASCADE,\r\n    CONSTRAINT \"fk_artwork_badges_badges_badge_id\" FOREIGN KEY (\"badge_id\") REFERENCES \"badges\" (\"badge_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "comments",
+    "CREATE TABLE \"comments\" (\r\n    \"comment_id\" TEXT NOT NULL CONSTRAINT \"pk_comments\" PRIMARY KEY,\r\n    \"artwork_id\" TEXT NOT NULL,\r\n    \"content\" TEXT NOT NULL,\r\n    \"created_at\" TEXT NOT NULL,\r\n    \"parent_id\" TEXT NULL,\r\n    \"position_x\" REAL NULL,\r\n    \"position_y\" REAL NULL,\r\n    \"target_image_index\" INTEGER NULL,\r\n    \"updated_at\" TEXT NOT NULL,\r\n    \"user_id\" TEXT NOT NULL,\r\n    CONSTRAINT \"fk_comments_artworks_artwork_id\" FOREIGN KEY (\"artwork_id\") REFERENCES \"artworks\" (\"artwork_id\") ON DELETE CASCADE,\r\n    CONSTRAINT \"fk_comments_comments_parent_id\" FOREIGN KEY (\"parent_id\") REFERENCES \"comments\" (\"comment_id\"),\r\n    CONSTRAINT \"fk_comments_users_user_id\" FOREIGN KEY (\"user_id\") REFERENCES \"users\" (\"user_id\") ON DELETE CASCADE\r\n)"
+  ],
+  [
+    "account_badges",
+    "CREATE TABLE account_badges (\n                        account_badge_id TEXT PRIMARY KEY,\n                        name TEXT NOT NULL,\n                        icon_url TEXT,\n                        text_color TEXT,\n                        bg_color TEXT,\n                        tooltip TEXT,\n                        type TEXT,\n                        condition TEXT,\n                        created_at TEXT\n                    )"
+  ],
+  [
+    "user_account_badges",
+    "CREATE TABLE user_account_badges (\n                        user_id TEXT,\n                        account_badge_id TEXT,\n                        assigned_at TEXT,\n                        PRIMARY KEY (user_id, account_badge_id)\n                    )"
+  ]
+]

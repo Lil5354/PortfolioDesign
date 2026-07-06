@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, Image, Type, LayoutGrid, Play, Settings, PenTool, ArrowLeftRight, MoveHorizontal, Edit2, Plus, X, ChevronDown, AlignLeft, AlignCenter, AlignRight, Link, Unlink, Pilcrow, Mail, ThumbsUp, Folder, Upload, Eye, MessageCircle } from "lucide-react";
+import JustifiedGrid from "./journal/JustifiedGrid";
+import EditGridModal from "./journal/EditGridModal";
+import ReorderProjectModal from "./journal/ReorderProjectModal";
 
 export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, currentUser, initialBlocks = [], initialSettingsData = null }) {
   const [blocks, setBlocks] = useState(initialBlocks);
@@ -9,6 +12,11 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
   const [editingBlockId, setEditingBlockId] = useState(null);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [dropdownBlockId, setDropdownBlockId] = useState(null);
+  const [activeOverlayId, setActiveOverlayId] = useState(null);
+  const [draggedImg, setDraggedImg] = useState(null);
+  const [editGridBlockId, setEditGridBlockId] = useState(null);
+  const [isReorderModalOpen, setIsReorderModalOpen] = useState(false);
   
   const handlePublish = async () => {
     onPublish(blocks, settingsData);
@@ -33,7 +41,8 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
       setIsStylesModalOpen(false);
       setProjectStyles(initialSettingsData?.projectStyles || { backgroundColor: '#ffffff', contentSpacing: 0 });
     }
-  }, [isOpen, initialBlocks, initialSettingsData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const autoSaveRef = useRef({ blocks, settingsData });
   useEffect(() => {
@@ -89,10 +98,131 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
         onMouseLeave={() => setHoveredBlockId(null)}
         style={{ padding: block.fullWidth ? '0' : `${projectStyles.contentSpacing || 0}px` }}
       >
+        {block.type !== 'text' && !isPreviewMode && (
+          <>
+            {/* Edit Button */}
+            <div className="absolute top-3 left-3 z-50 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="relative">
+                <button 
+                  className="w-8 h-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg transition-colors cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); setDropdownBlockId(dropdownBlockId === block.id ? null : block.id); }}
+                >
+                  <Edit2 size={14} />
+                </button>
+                {dropdownBlockId === block.id && (
+                  <div className="absolute top-full left-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-gray-200 py-1 overflow-hidden z-[60]">
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={(e) => { e.stopPropagation(); setIsReorderModalOpen(true); setDropdownBlockId(null); }}>Reorder Project</button>
+                    {block.type === 'grid' && (
+                      <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={(e) => { e.stopPropagation(); setEditGridBlockId(block.id); setDropdownBlockId(null); }}>Edit Grid</button>
+                    )}
+                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors" onClick={(e) => { e.stopPropagation(); removeBlock(block.id); setDropdownBlockId(null); }}>Delete Block</button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Resize Button */}
+            <div className="absolute top-3 right-3 z-50 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button 
+                className="h-8 px-3 bg-gray-900/80 hover:bg-black text-white rounded-full flex items-center justify-center gap-1 shadow-lg transition-colors cursor-pointer backdrop-blur-sm border border-white/20"
+                onClick={(e) => { e.stopPropagation(); updateBlock(block.id, { fullWidth: !block.fullWidth }); }}
+                title="Toggle Full Width"
+              >
+                <ArrowLeftRight size={14} />
+              </button>
+            </div>
+          </>
+        )}
         {block.type === 'image' && (
-           <div className="w-full h-full min-h-[300px] bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden">
+           <div 
+             className="w-full h-full min-h-[300px] bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden"
+             onClick={() => setActiveOverlayId(null)}
+             onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "copy"; }}
+             onDrop={(e) => {
+               e.preventDefault();
+               e.stopPropagation();
+               const rect = e.currentTarget.getBoundingClientRect();
+               const x = e.clientX - rect.left;
+               const y = e.clientY - rect.top;
+               
+               const overlayType = e.dataTransfer.getData("application/json");
+               if (overlayType) {
+                 try {
+                   const data = JSON.parse(overlayType);
+                   if (data.type === 'text-overlay') {
+                     const newOverlay = { 
+                       id: Date.now().toString(), 
+                       type: 'text', 
+                       content: data.content || 'Văn bản', 
+                       x, y, 
+                       fontSize: data.styles?.fontSize || 24, 
+                       color: data.styles?.color || '#000',
+                       fontWeight: data.styles?.fontWeight || 'normal',
+                       fontStyle: data.styles?.fontStyle || 'normal'
+                     };
+                     updateBlock(block.id, { overlays: [...(block.overlays || []), newOverlay] });
+                   } else if (data.type === 'move-overlay' && data.blockId === block.id) {
+                     const newOverlays = (block.overlays || []).map(o => o.id === data.overlayId ? { ...o, x: e.clientX - data.offsetX, y: e.clientY - data.offsetY } : o);
+                     updateBlock(block.id, { overlays: newOverlays });
+                   }
+                   return; // Stop here if it's our internal JSON
+                 } catch(err) {}
+               }
+               
+               // Fallback: It's an image drag from Collection
+               const src = draggedImg || e.dataTransfer.getData("text/plain");
+               if (src) {
+                 const newOverlay = { id: Date.now().toString(), type: 'image', content: src, x, y, width: 200, height: 200 };
+                 updateBlock(block.id, { overlays: [...(block.overlays || []), newOverlay] });
+                 setDraggedImg(null);
+               }
+             }}
+           >
              {block.content ? (
-               <img src={block.content} alt="Block" className="w-full h-full object-cover" />
+               <div 
+                 className="absolute inset-0 w-full h-full"
+                 style={{
+                   backgroundImage: `url(${block.content})`,
+                   backgroundSize: 'cover',
+                   backgroundPosition: block.bgPosition || '50% 50%',
+                   cursor: 'grab'
+                 }}
+                 onMouseDown={(e) => {
+                   e.preventDefault();
+                   const startX = e.clientX;
+                   const startY = e.clientY;
+                   
+                   let posX = 50, posY = 50;
+                   if (block.bgPosition) {
+                     const parts = block.bgPosition.split(' ');
+                     posX = parseFloat(parts[0]) || 50;
+                     posY = parseFloat(parts[1]) || 50;
+                   }
+
+                   const handleMouseMove = (moveEvent) => {
+                     const dx = moveEvent.clientX - startX;
+                     const dy = moveEvent.clientY - startY;
+                     
+                     // Adjust sensitivity
+                     const newX = Math.max(0, Math.min(100, posX - (dx / 3)));
+                     const newY = Math.max(0, Math.min(100, posY - (dy / 3)));
+                     
+                     e.target.style.backgroundPosition = `${newX}% ${newY}%`;
+                     e.target.dataset.newPos = `${newX}% ${newY}%`;
+                   };
+
+                   const handleMouseUp = () => {
+                     window.removeEventListener('mousemove', handleMouseMove);
+                     window.removeEventListener('mouseup', handleMouseUp);
+                     if (e.target.dataset.newPos) {
+                       updateBlock(block.id, { bgPosition: e.target.dataset.newPos });
+                     }
+                   };
+
+                   window.addEventListener('mousemove', handleMouseMove);
+                   window.addEventListener('mouseup', handleMouseUp);
+                 }}
+               />
              ) : (
                <>
                   <Image size={48} className="text-gray-400 mb-2" />
@@ -112,6 +242,149 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
                   />
                </>
              )}
+
+             {/* RENDER OVERLAYS */}
+             {block.overlays && block.overlays.map(overlay => (
+               <div 
+                 key={overlay.id} 
+                 style={{ position: 'absolute', left: overlay.x, top: overlay.y, zIndex: 10, cursor: (overlay.type === 'image' || activeOverlayId !== overlay.id) ? 'move' : 'default' }}
+                 onClick={(e) => { e.stopPropagation(); setActiveOverlayId(overlay.id); }}
+                 draggable={overlay.type === 'image' || activeOverlayId !== overlay.id}
+                 onDragStart={(e) => {
+                   e.stopPropagation();
+                   e.dataTransfer.setData("application/json", JSON.stringify({ type: 'move-overlay', blockId: block.id, overlayId: overlay.id, offsetX: e.clientX - overlay.x, offsetY: e.clientY - overlay.y }));
+                 }}
+               >
+                 {overlay.type === 'image' && (
+                   <div className="relative group/overlay">
+                     <img src={overlay.content} style={{ width: overlay.width || 200, height: overlay.height || 200, objectFit: 'cover', border: activeOverlayId === overlay.id ? '2px dashed #1a4ba8' : 'none' }} />
+                     
+                     {/* Delete Icon */}
+                     {activeOverlayId === overlay.id && (
+                       <div className="absolute -top-3 -right-3 flex items-center gap-1 bg-white shadow rounded-full p-1 z-20 border border-gray-200">
+                         <div 
+                           className="w-6 h-6 flex items-center justify-center cursor-pointer text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-full"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             updateBlock(block.id, { overlays: block.overlays.filter(o => o.id !== overlay.id) });
+                           }}
+                         >
+                           <X size={14} />
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 )}
+                 {overlay.type === 'text' && (
+                   <div className="relative group/overlay">
+                     {activeOverlayId === overlay.id ? (
+                       <input 
+                         autoFocus
+                         value={overlay.content}
+                         onChange={(e) => {
+                           const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, content: e.target.value } : o);
+                           updateBlock(block.id, { overlays: newOverlays });
+                         }}
+                         onBlur={() => setActiveOverlayId(null)}
+                         style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', fontWeight: overlay.fontWeight || 'normal', fontStyle: overlay.fontStyle || 'normal', background: 'transparent', border: '1px dashed #1a4ba8', outline: 'none', minWidth: '150px' }}
+                       />
+                     ) : (
+                       <div style={{ fontSize: overlay.fontSize || 24, color: overlay.color || '#000', fontWeight: overlay.fontWeight || 'normal', fontStyle: overlay.fontStyle || 'normal', border: '1px solid transparent', whiteSpace: 'nowrap', minHeight: '32px', minWidth: '50px' }}>{overlay.content}</div>
+                     )}
+                     
+                     {/* Text Formatting Toolbar */}
+                     {activeOverlayId === overlay.id && (
+                       <div className="absolute bottom-[calc(100%+10px)] left-0 flex flex-wrap items-center gap-1.5 bg-white shadow-lg border border-gray-200 rounded p-1.5 z-30" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.preventDefault()} style={{ width: 'max-content', maxWidth: '350px' }}>
+                         
+                         {/* Font Family */}
+                         <select 
+                           value={overlay.fontFamily || 'Helvetica'} 
+                           onChange={(e) => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontFamily: e.target.value } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className="bg-gray-100 px-2 h-7 rounded text-[13px] outline-none cursor-pointer border border-gray-200"
+                         >
+                           <option value="Helvetica">Helvetica</option>
+                           <option value="Arial">Arial</option>
+                           <option value="Times New Roman">Times New Roman</option>
+                           <option value="Courier New">Courier</option>
+                         </select>
+
+                         <input 
+                           type="number" 
+                           title="Cỡ chữ"
+                           value={overlay.fontSize || 24} 
+                           onChange={(e) => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontSize: parseInt(e.target.value) || 24 } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className="w-12 h-7 px-1 border border-gray-200 rounded text-[13px] outline-none bg-gray-50" 
+                         />
+                         <input 
+                           type="color" 
+                           title="Đổi màu chữ"
+                           value={overlay.color || '#000000'} 
+                           onChange={(e) => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, color: e.target.value } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className="w-7 h-7 p-0 border-0 cursor-pointer rounded" 
+                         />
+
+                         <div className="w-[1px] h-5 bg-gray-300 mx-1"></div>
+
+                         <button 
+                           title="In đậm"
+                           onClick={() => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontWeight: o.fontWeight === 'bold' ? 'normal' : 'bold' } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className={`w-7 h-7 flex items-center justify-center rounded ${overlay.fontWeight === 'bold' ? 'bg-gray-300' : 'hover:bg-gray-100'} font-serif font-bold text-[14px]`}
+                         >
+                           B
+                         </button>
+                         <button 
+                           title="In nghiêng"
+                           onClick={() => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, fontStyle: o.fontStyle === 'italic' ? 'normal' : 'italic' } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className={`w-7 h-7 flex items-center justify-center rounded ${overlay.fontStyle === 'italic' ? 'bg-gray-300' : 'hover:bg-gray-100'} font-serif italic text-[14px]`}
+                         >
+                           I
+                         </button>
+                         <button 
+                           title="Gạch dưới"
+                           onClick={() => {
+                             const newOverlays = block.overlays.map(o => o.id === overlay.id ? { ...o, textDecoration: o.textDecoration === 'underline' ? 'none' : 'underline' } : o);
+                             updateBlock(block.id, { overlays: newOverlays });
+                           }}
+                           className={`w-7 h-7 flex items-center justify-center rounded ${overlay.textDecoration === 'underline' ? 'bg-gray-300' : 'hover:bg-gray-100'} font-serif underline text-[14px]`}
+                         >
+                           U
+                         </button>
+                       </div>
+                     )}
+                     
+                     {/* Delete Icon */}
+                     {activeOverlayId === overlay.id && (
+                       <div className="absolute -top-6 -right-3 flex items-center gap-1 bg-white shadow rounded-full p-1 z-20 border border-gray-200">
+                         <div 
+                           className="w-6 h-6 flex items-center justify-center cursor-pointer text-gray-600 hover:text-red-600 hover:bg-gray-100 rounded-full"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             updateBlock(block.id, { overlays: block.overlays.filter(o => o.id !== overlay.id) });
+                           }}
+                         >
+                           <X size={14} />
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 )}
+               </div>
+             ))}
            </div>
         )}
         {block.type === 'text' && (
@@ -192,85 +465,106 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
         )}
         {block.type === 'grid' && (
            <div 
-             className={`w-full h-full min-h-[300px] flex flex-col relative transition-all duration-200 border 
+             className={`w-full relative transition-all duration-200 border 
                ${focusedBlockId === block.id ? 'border-[#2b64ff]' : 
-                 hoveredBlockId === block.id ? 'border-dashed border-[#2b64ff]' : 'border-transparent'} bg-white`}
+                 hoveredBlockId === block.id ? 'border-dashed border-[#2b64ff]' : 'border-transparent'} bg-white flex flex-col items-center justify-center overflow-hidden`}
              onClick={(e) => { e.stopPropagation(); setFocusedBlockId(block.id); if (editingBlockId !== block.id) setEditingBlockId(null); }}
            >
-              {focusedBlockId === block.id && (
-                <>
-                  <div className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-[#2b64ff] flex items-center justify-center cursor-pointer text-white shadow-md z-20 hover:bg-blue-700 transition">
-                    <Edit2 size={14} />
-                  </div>
-                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center cursor-pointer text-white shadow-md z-20 hover:bg-black/80 transition">
-                    <ArrowLeftRight size={14} />
-                  </div>
-                </>
+              {(!block.images || block.images.length === 0) ? (
+                <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 w-full border border-dashed border-gray-300">
+                   <h2 className="text-[20px] font-medium text-gray-500 mb-6">Empty Grid</h2>
+                   <button 
+                     onClick={(e) => { e.stopPropagation(); setEditGridBlockId(block.id); }}
+                     className="px-6 py-2 bg-[#2b64ff] text-white font-medium rounded-full hover:bg-blue-700 transition"
+                   >
+                     Add Photos
+                   </button>
+                </div>
+              ) : (
+                <div className="w-full flex flex-col items-center justify-center min-h-[400px] overflow-hidden" style={{ maxWidth: block.fullWidth ? 1400 : 1000 }}>
+                  <JustifiedGrid 
+                    images={block.images} 
+                    targetWidth={block.fullWidth ? 1400 : 1000}
+                    targetHeight={400}
+                    autoHeight={true}
+                    watermarkText="UEF"
+                  />
+                </div>
               )}
-              
-              <div className="flex-1 flex flex-col items-center justify-center">
-                 <h2 className="text-[20px] font-medium text-gray-500 mb-8">Add Photos to create your grid:</h2>
-                 <div className="flex items-center gap-6">
-                    <div className="flex flex-col items-center gap-3 cursor-pointer group relative">
-                       <div className="w-[72px] h-[72px] rounded-full bg-[#f4f7ff] flex items-center justify-center text-[#2b64ff] group-hover:bg-[#e8efff] transition overflow-hidden shadow-sm">
-                          <Image size={24} />
-                          <input 
-                            type="file" 
-                            accept="image/*" 
-                            multiple
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                          />
-                       </div>
-                       <span className="font-bold text-[13px] text-gray-900">Image</span>
-                    </div>
-                    
-                    <div className="flex flex-col items-center gap-3 cursor-pointer group">
-                       <div className="w-[72px] h-[72px] rounded-full bg-[#f4f7ff] flex items-center justify-center text-[#2b64ff] group-hover:bg-[#e8efff] transition shadow-sm">
-                          <div className="border-[2px] border-[#2b64ff] rounded-sm px-1.5 py-0.5 text-[12px] font-bold">Lr</div>
-                       </div>
-                       <span className="font-bold text-[13px] text-gray-900">Lightroom</span>
-                    </div>
-                 </div>
-              </div>
            </div>
         )}
         {block.type === 'video' && (
-           <div className="w-full h-full min-h-[200px] p-4 border border-dashed border-gray-300 rounded flex items-center justify-center">
-             <span className="text-gray-500 font-medium">Video/Audio Placeholder</span>
-           </div>
-        )}
-        
-        {/* Floating Actions on Hover */}
-        {hoveredBlockId === block.id && (
-          <div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
-             <button 
-               className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-lg hover:bg-gray-800 transition group/btn relative"
-               onClick={() => toggleFullWidth(block.id)}
+             <div 
+               className={`w-full relative transition-all duration-200 border 
+                 ${focusedBlockId === block.id ? 'border-[#2b64ff]' : 
+                   hoveredBlockId === block.id ? 'border-dashed border-[#2b64ff]' : 'border-transparent'} bg-white flex flex-col items-center justify-center overflow-hidden`}
+               onClick={(e) => { e.stopPropagation(); setFocusedBlockId(block.id); if (editingBlockId !== block.id) setEditingBlockId(null); }}
              >
-               {block.fullWidth ? <MoveHorizontal size={18} /> : <ArrowLeftRight size={18} />}
-               <div className="absolute right-full mr-2 px-3 py-1.5 bg-white text-gray-900 text-xs font-semibold rounded shadow opacity-0 group-hover/btn:opacity-100 pointer-events-none whitespace-nowrap">
-                 {block.fullWidth ? "Give the grid some breathing room and add padding to the sides" : "Make the grid full-width"}
-               </div>
-             </button>
-             <button 
-               className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:bg-red-600 transition"
-               onClick={() => removeBlock(block.id)}
-               title="Delete Grid"
-             >
-               <X size={18} />
-             </button>
-          </div>
-        )}
-
-        {/* Toolbar Top Left */}
-        {hoveredBlockId === block.id && (
-          <div className={`absolute left-4 bg-gray-900 text-white rounded-lg flex items-center px-2 py-1.5 shadow-lg z-10 ${block.type === 'text' ? 'top-16' : 'top-4'}`}>
-            <span className="text-xs font-semibold text-gray-300 mr-3 ml-2">Insert Media:</span>
-            <button className="p-1.5 hover:bg-gray-800 rounded mx-0.5 transition" onClick={() => addBlock('image')}><Image size={16} /></button>
-            <button className="p-1.5 hover:bg-gray-800 rounded mx-0.5 transition" onClick={() => addBlock('text')}><Type size={16} /></button>
-            <button className="p-1.5 hover:bg-gray-800 rounded mx-0.5 transition" onClick={() => addBlock('grid')}><LayoutGrid size={16} /></button>
-            <button className="p-1.5 hover:bg-gray-800 rounded mx-0.5 transition" onClick={() => addBlock('video')}><Play size={16} /></button>
-          </div>
+                {focusedBlockId === block.id && block.content && (
+                    <div className="absolute -top-4 -left-4 w-8 h-8 rounded-full bg-[#2b64ff] flex items-center justify-center cursor-pointer text-white shadow-md z-20 hover:bg-blue-700 transition" onClick={(e) => { e.stopPropagation(); updateBlock(block.id, { content: "" }); }}>
+                      <Edit2 size={14} />
+                    </div>
+                )}
+                {(!block.content) ? (
+                  <div className="flex flex-col items-center justify-center min-h-[300px] bg-gray-50 w-full border border-dashed border-gray-300 p-8">
+                     <h2 className="text-[20px] font-medium text-gray-500 mb-2">Embed Media</h2>
+                     <p className="text-[14px] text-gray-400 mb-6 text-center">Paste a link from YouTube, Vimeo, Figma, Sketchfab, or a direct MP4 link.</p>
+                     <div className="flex w-full max-w-lg gap-2">
+                       <input 
+                         type="text" 
+                         placeholder="https://..." 
+                         className="flex-1 px-4 py-2 border border-gray-300 rounded text-sm outline-none focus:border-[#2b64ff]"
+                         id={`embed-input-${block.id}`}
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter') {
+                             updateBlock(block.id, { content: e.target.value });
+                           }
+                         }}
+                       />
+                       <button 
+                         onClick={(e) => { e.stopPropagation(); updateBlock(block.id, { content: document.getElementById(`embed-input-${block.id}`).value }); }}
+                         className="px-6 py-2 bg-[#2b64ff] text-white font-medium rounded hover:bg-blue-700 transition"
+                       >
+                         Embed
+                       </button>
+                     </div>
+                  </div>
+                ) : (
+                  <div className="w-full relative" style={{ aspectRatio: '16 / 9' }}>
+                    {(() => {
+                       let type = 'iframe';
+                       let url = block.content;
+                       if (url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)) {
+                         type = 'youtube';
+                         url = `https://www.youtube.com/embed/${url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)[1]}`;
+                       } else if (url.match(/(?:vimeo\.com\/)(\d+)/)) {
+                         type = 'vimeo';
+                         url = `https://player.vimeo.com/video/${url.match(/(?:vimeo\.com\/)(\d+)/)[1]}`;
+                       } else if (url.includes('figma.com')) {
+                         type = 'figma';
+                         url = `https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(url)}`;
+                       } else if (url.includes('sketchfab.com') && url.match(/([a-fA-F0-9]{32})/)) {
+                         type = 'sketchfab';
+                         url = `https://sketchfab.com/models/${url.match(/([a-fA-F0-9]{32})/)[1]}/embed`;
+                       } else if (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm')) {
+                         type = 'video';
+                       }
+                       
+                       if (type === 'video') {
+                         return <video src={url} controls className="absolute top-0 left-0 w-full h-full object-cover" />;
+                       }
+                       return (
+                         <iframe 
+                           src={url} 
+                           className="absolute top-0 left-0 w-full h-full border-0" 
+                           allowFullScreen 
+                           allow="autoplay; fullscreen; xr-spatial-tracking"
+                         />
+                       );
+                    })()}
+                  </div>
+                )}
+             </div>
         )}
       {/* PREVIEW OVERLAY */}
       {isPreviewMode && (
@@ -381,8 +675,57 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
                                    <div key={block.id} style={{ width: block.fullWidth ? "100%" : "min(100%, 1024px)", margin: "0 auto", padding: block.fullWidth ? "0" : `${projectStyles.contentSpacing || 0}px`, marginBottom: 16 }}>
                                       {block.type === 'image' && block.content && <img src={block.content} style={{ width: "100%", height: "auto", display: "block" }} />}
                                       {block.type === 'text' && <div style={{ color: "#212121", padding: 16, fontSize: 17, fontFamily: "sans-serif", whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: block.content ? block.content.replace(/\\n/g, '<br/>') : '' }}></div>}
-                                      {block.type === 'grid' && <div style={{ width: "100%", height: 300, background: "rgba(0,0,0,0.05)", border: "1px dashed rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.4)" }}>Grid Preview</div>}
-                                      {block.type === 'video' && <div style={{ width: "100%", height: 300, background: "rgba(0,0,0,0.05)", border: "1px dashed rgba(0,0,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(0,0,0,0.4)" }}>Video/Audio Preview</div>}
+                                      {block.type === 'grid' && (
+                                        <div style={{ width: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                            <div className="w-full flex flex-col justify-center items-center overflow-hidden min-h-[400px]" style={{ maxWidth: block.fullWidth ? 1400 : 1000, margin: "0 auto" }}>
+                                              <JustifiedGrid 
+                                                images={block.images || []} 
+                                                targetWidth={block.fullWidth ? 1400 : 1000}
+                                                targetHeight={400}
+                                                autoHeight={true}
+                                                watermarkText="UEF"
+                                              />
+                                            </div>
+                                        </div>
+                                      )}
+                                        {block.type === 'video' && (
+                                           <div style={{ width: "100%", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                              <div className="w-full flex flex-col justify-center items-center overflow-hidden" style={{ maxWidth: block.fullWidth ? 1400 : 1000, margin: "0 auto", aspectRatio: '16 / 9' }}>
+                                                {(() => {
+                                                   if (!block.content) return null;
+                                                   let type = 'iframe';
+                                                   let url = block.content;
+                                                   if (url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)) {
+                                                     type = 'youtube';
+                                                     url = `https://www.youtube.com/embed/${url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)[1]}`;
+                                                   } else if (url.match(/(?:vimeo\.com\/)(\d+)/)) {
+                                                     type = 'vimeo';
+                                                     url = `https://player.vimeo.com/video/${url.match(/(?:vimeo\.com\/)(\d+)/)[1]}`;
+                                                   } else if (url.includes('figma.com')) {
+                                                     type = 'figma';
+                                                     url = `https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(url)}`;
+                                                   } else if (url.includes('sketchfab.com') && url.match(/([a-fA-F0-9]{32})/)) {
+                                                     type = 'sketchfab';
+                                                     url = `https://sketchfab.com/models/${url.match(/([a-fA-F0-9]{32})/)[1]}/embed`;
+                                                   } else if (url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm')) {
+                                                     type = 'video';
+                                                   }
+                                                   
+                                                   if (type === 'video') {
+                                                     return <video src={url} controls className="w-full h-full object-cover" />;
+                                                   }
+                                                   return (
+                                                     <iframe 
+                                                       src={url} 
+                                                       className="w-full h-full border-0" 
+                                                       allowFullScreen 
+                                                       allow="autoplay; fullscreen; xr-spatial-tracking"
+                                                     />
+                                                   );
+                                                })()}
+                                              </div>
+                                           </div>
+                                        )}
                                    </div>
                                 ))
                              )}
@@ -537,7 +880,7 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
               </button>
               <button className="bg-white hover:bg-gray-50 py-4 flex flex-col items-center justify-center gap-2 transition" onClick={() => addBlock('video')}>
                 <Play size={24} className="text-gray-800" />
-                <span className="text-[13px] font-medium text-gray-700">Video/Audio</span>
+                  <span className="text-[13px] font-medium text-gray-700">Video/Embed</span>
               </button>
             </div>
           </div>
@@ -605,6 +948,33 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
             </div>
           </div>
         </div>
+      )}
+
+      {editGridBlockId && (
+        <EditGridModal
+          isOpen={!!editGridBlockId}
+          onClose={() => setEditGridBlockId(null)}
+          block={blocks.find(b => b.id === editGridBlockId)}
+          onSave={(id, updatedBlock) => {
+             updateBlock(id, updatedBlock);
+             setEditGridBlockId(null);
+          }}
+          orientation="landscape"
+          projectStyles={projectStyles}
+          watermarkText="UEF"
+        />
+      )}
+
+      {isReorderModalOpen && (
+        <ReorderProjectModal
+          isOpen={true}
+          onClose={() => setIsReorderModalOpen(false)}
+          blocks={blocks}
+          onSaveReorder={(newBlocks) => {
+            setBlocks(newBlocks);
+            setIsReorderModalOpen(false);
+          }}
+        />
       )}
 
       {isSettingsModalOpen && (
