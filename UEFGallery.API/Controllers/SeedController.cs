@@ -72,7 +72,7 @@ public class SeedController : ControllerBase
             {
                 Id = Guid.NewGuid().ToString(),
                 UserId = targetStudent.Id,
-                DisplayOrder = DisplayOrder.newest,
+                DisplayOrder = "newest",
                 IsPortfolioPublic = true,
                 SocialLinks = "{\"behance\":\"https://behance.net/uef_student\",\"linkedin\":\"https://linkedin.com/in/uef_student\"}",
                 UpdatedAt = DateTime.UtcNow

@@ -1,0 +1,1 @@
+const db = require('better-sqlite3')('./UEFGallery.API/gallery.db'); const artworks = db.prepare('SELECT artwork_id, subject FROM artworks').all(); const stmt = db.prepare('UPDATE artworks SET tags = ? WHERE artwork_id = ?'); db.transaction(() => { artworks.forEach(a => stmt.run(JSON.stringify(['design', a.subject]), a.artwork_id)); })(); console.log('Tags fixed!');

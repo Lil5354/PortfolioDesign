@@ -235,6 +235,15 @@ public class PortfoliosController : ControllerBase
         if (user.PortfolioSettings != null && !user.PortfolioSettings.IsPortfolioPublic)
             return NotFound(new { error = "Portfolio đang riêng tư." });
 
+        if (user.Artworks != null)
+        {
+            foreach(var a in user.Artworks) { a.User = null; }
+        }
+        if (user.TimelineEntries != null)
+        {
+            foreach(var t in user.TimelineEntries) { t.User = null; }
+        }
+
         return Ok(new
         {
             user.Id,

@@ -872,10 +872,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
                 <LayoutGrid size={18} className="text-gray-800" />
                 <span className="text-[11px] font-medium text-gray-700">Photo Grid</span>
               </button>
-              <button className="bg-white hover:bg-gray-50 py-3 flex flex-col items-center justify-center gap-1.5 transition" onClick={() => addBlock('video')}>
-                <Play size={18} className="text-gray-800" />
-                <span className="text-[11px] font-medium text-gray-700">Video/Audio</span>
-              </button>
+
               <button type="button" className="bg-white hover:bg-gray-50 py-3 flex flex-col items-center justify-center gap-1.5 transition" onClick={(e) => { e.stopPropagation(); setShowCollectionDrawer(!showCollectionDrawer); }}>
                 <Folder size={18} className="text-[#1a4ba8]" />
                 <span className="text-[11px] font-medium text-[#1a4ba8]">Bộ sưu tập</span>
@@ -898,16 +895,7 @@ export default function JournalBuilderModal({ isOpen, onClose, collection, orien
             </div>
           </div>
           
-          <div className="p-4">
-            <h3 className="text-[13px] font-bold text-gray-500 uppercase tracking-wide mb-3">Attach Assets</h3>
-            <div className="flex flex-col items-center border border-gray-200 rounded p-4 bg-[#f8f8f8]">
-               <button className="px-4 py-1.5 border border-gray-300 bg-white rounded-full text-sm font-semibold text-gray-800 mb-3 w-full hover:bg-gray-50 flex items-center justify-center gap-2">
-                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                 Attach Assets
-               </button>
-               <p className="text-[11px] text-gray-500 text-center leading-relaxed">Add files like fonts, illustrations, photos, zips, or templates as free or paid downloads.</p>
-            </div>
-          </div>
+
         </div>
 
         {/* Collection Drawer Popup */}

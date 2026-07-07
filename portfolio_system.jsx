@@ -28,6 +28,8 @@ window.MOCK_PROJECTS = [
     subject: "Graphic Design",
     description: "This is a draft version. It only has a cover image and no case study yet.",
     coverImageUrl: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&q=80",
+    likeCount: 45,
+    viewCount: 156,
     settingsData: JSON.stringify({ projectStatus: "Draft", aiUsage: "none", role: "Designer" }),
     blocksJson: JSON.stringify([]),
     user: { name: "Mock Student", id: "student-1", portfolioSettings: { portfolioSlug: "student-1" } },
@@ -39,6 +41,8 @@ window.MOCK_PROJECTS = [
     subject: "Graphic Design",
     description: "Submitted for grading. Waiting for instructor feedback.",
     coverImageUrl: "https://images.unsplash.com/photo-1607083206968-13611e3d76db?w=800&q=80",
+    likeCount: 120,
+    viewCount: 432,
     settingsData: JSON.stringify({ projectStatus: "Submitted", aiUsage: "brainstorm", role: "Lead Designer" }),
     blocksJson: JSON.stringify([
       { id: "1", type: "text", content: "<h2 style='text-align:center;'>1. Research & Ideation</h2><p>Here is some early research.</p>" },
@@ -48,27 +52,13 @@ window.MOCK_PROJECTS = [
     createdAt: new Date().toISOString()
   },
   {
-    id: "mock-3",
-    title: "[Revision] Poster Typography",
-    subject: "Graphic Design",
-    description: "Instructor requested some changes. See comments.",
-    coverImageUrl: "https://images.unsplash.com/photo-1561089489-8d8a7a922d25?w=800&q=80",
-    settingsData: JSON.stringify({ projectStatus: "Revision", aiUsage: "none", role: "Typography" }),
-    blocksJson: JSON.stringify([
-      { id: "1", type: "image", content: "https://images.unsplash.com/photo-1561089489-8d8a7a922d25?w=800&q=80", caption: "Typography test 1" }
-    ]),
-    comments: [
-      { id: "c1", content: "The contrast is too low on the second section. Please revise.", authorName: "Instructor Long", createdAt: new Date().toISOString() }
-    ],
-    user: { name: "Mock Student", id: "student-1", portfolioSettings: { portfolioSlug: "student-1" } },
-    createdAt: new Date().toISOString()
-  },
-  {
     id: "mock-4",
     title: "[Approved] UX/UI Mobile App",
     subject: "UI/UX",
     description: "This project has been graded and approved by the instructor. It has the Academic Verified badge.",
     coverImageUrl: "https://images.unsplash.com/photo-1618761714954-0b8cd0026356?w=800&q=80",
+    likeCount: 310,
+    viewCount: 1205,
     settingsData: JSON.stringify({ projectStatus: "Approved", aiUsage: "generation", aiPrompt: "Generate abstract mobile UI patterns", role: "UI Designer" }),
     blocksJson: JSON.stringify([
       { id: "1", type: "text", content: "<h2 style='text-align:center;'>Final Design</h2><p>Approved outcome.</p>" },
@@ -83,6 +73,8 @@ window.MOCK_PROJECTS = [
     subject: "3D Animation",
     description: "Published to the public portfolio.",
     coverImageUrl: "https://images.unsplash.com/photo-1616423640778-28d1b53229bd?w=800&q=80",
+    likeCount: 85,
+    viewCount: 300,
     settingsData: JSON.stringify({ projectStatus: "Published", aiUsage: "editing", role: "3D Artist" }),
     blocksJson: JSON.stringify([
       { id: "1", type: "video", content: "https://www.w3schools.com/html/mov_bbb.mp4" }
@@ -969,7 +961,7 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
               <div style={{ position: "absolute", top: "100%", right: 0, marginTop: 8, width: 800, maxWidth: "calc(100vw - 40px)", background: "#fff", borderRadius: 12, boxShadow: "0 4px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)", zIndex: 100, padding: 24 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 16, fontWeight: 700, color: "#191919" }}>Search by Image</span>
+                    <span style={{ fontSize: 16, fontWeight: 700, color: "#191919" }}>Tìm kiếm bằng hình ảnh</span>
                     <span style={{ background: UEF_BLUE, color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 4, letterSpacing: 0.5 }}>AI</span>
                   </div>
                   <button onClick={() => setShowVisualSearchPopup(false)} style={{ background: "none", border: "1px solid #e0e0e0", borderRadius: 4, cursor: "pointer", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", color: "#666" }} onMouseOver={e => e.currentTarget.style.background="#f5f5f5"} onMouseOut={e => e.currentTarget.style.background="none"}>
@@ -1004,10 +996,10 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
                     </div>
                   ) : (
                     <>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: "#191919", marginBottom: 12 }}>Drag and drop an image here</span>
-                      <span style={{ fontSize: 13, color: "#666", marginBottom: 24 }}>File types supported: JPG, PNG, GIF, TIFF, WebP. Max size 10MB</span>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: "#191919", marginBottom: 12 }}>Kéo và thả hình ảnh vào đây</span>
+                      <span style={{ fontSize: 13, color: "#666", marginBottom: 24 }}>Định dạng hỗ trợ: JPG, PNG, GIF, TIFF, WebP. Tối đa 10MB</span>
                       <button style={{ background: "#fff", border: "1px solid #d0d0d0", borderRadius: 999, padding: "8px 24px", fontSize: 14, fontWeight: 600, color: "#191919", cursor: "pointer" }}>
-                        Choose Image
+                        Chọn hình ảnh
                       </button>
                     </>
                   )}
@@ -1368,10 +1360,28 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
         if (pData.artworks) {
           const mergedArtworks = [...(window.MOCK_PROJECTS || []), ...pData.artworks];
           setPortfolioArtworks(mergedArtworks);
+          
+          const beDrafts = pData.artworks.filter(a => !a.isPublic).map(a => {
+            let s = {};
+            let parsedBlocks = [];
+            try { s = typeof a.settingsData === 'string' ? JSON.parse(a.settingsData) : (a.settingsData || {}); } catch(e){}
+            try { parsedBlocks = typeof a.blocksJson === 'string' ? JSON.parse(a.blocksJson) : (a.blocksJson || []); } catch(e){}
+            return { 
+              ...a, 
+              blocks: parsedBlocks,
+              coverImageUrl: a.coverImageUrl || a.img, 
+              settingsData: { projectStatus: s.projectStatus || (a.isPending ? 'Submitted' : 'Draft') } 
+            };
+          });
+          if (beDrafts.length > 0) setDrafts(beDrafts);
         }
         setPortfolioData(pData);
         const pSet = pData.portfolioSettings || pData.settings || {};
-        setPublicMoodboards(pSet.publicMoodboards || []);
+        let pm = pSet.publicMoodboards;
+        if (typeof pm === 'string') {
+           try { pm = JSON.parse(pm); } catch(e) { pm = []; }
+        }
+        setPublicMoodboards(Array.isArray(pm) ? pm : []);
         
         const uId = pData.user?.id || pData.id;
         if (uId) {
@@ -1390,8 +1400,23 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
       setLoading(false);
     }).catch(() => setLoading(false));
 
-    api.portfolios.mine().then(data => {
+    api.portfolios.me().then(data => {
       setPortfolioSettingsData(data);
+      if (data && data.artworks) {
+        const beDrafts = data.artworks.filter(a => !a.isPublic).map(a => {
+          let s = {};
+          let parsedBlocks = [];
+          try { s = typeof a.settingsData === 'string' ? JSON.parse(a.settingsData) : (a.settingsData || {}); } catch(e){}
+          try { parsedBlocks = typeof a.blocksJson === 'string' ? JSON.parse(a.blocksJson) : (a.blocksJson || []); } catch(e){}
+          return { 
+            ...a, 
+            blocks: parsedBlocks,
+            coverImageUrl: a.coverImageUrl || a.img, 
+            settingsData: { projectStatus: s.projectStatus || (a.isPending ? 'Submitted' : 'Draft') } 
+          };
+        });
+        if (beDrafts.length > 0) setDrafts(beDrafts);
+      }
     }).catch(() => {});
   }, [slug]);
 
@@ -1613,7 +1638,8 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
   const isOwner = authUser && authUser.id === pUser?.id;
 
   return (
-    <div className="bg-[#f8f8f8] min-h-screen">
+    <div className="min-h-screen bg-[#F8F9FA] relative">
+      <div className="relative z-10 pb-20">
       <style>{`
         .bento-grid {
           display: grid;
@@ -2065,8 +2091,10 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                      
                      let autoCover = settingsData?.coverImage || "";
                      if (!autoCover && blocks && blocks.length > 0) {
-                        const firstImg = blocks.find(b => b.type === 'image' && b.content);
-                        if (firstImg) autoCover = firstImg.content;
+                        const firstImgBlock = blocks.find(b => (b.type === 'image' && b.content) || (b.type === 'grid' && b.images && b.images.length > 0));
+                        if (firstImgBlock) {
+                           autoCover = firstImgBlock.type === 'image' ? firstImgBlock.content : (firstImgBlock.images[0]?.content || firstImgBlock.images[0]?.url);
+                        }
                      }
                      if (!autoCover) autoCover = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400';
 
@@ -2300,6 +2328,7 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -2459,7 +2488,7 @@ function StudentMoodboardsPage({ setPage, setActiveArtworkId, userData }) {
   useEffect(() => {
     Promise.all([
       refreshCollections(),
-      api.portfolios.mine().then(res => {
+      api.portfolios.me().then(res => {
         setPublicMoodboards(res?.publicMoodboards || []);
       }).catch(() => {})
     ]).finally(() => setLoading(false));
@@ -2746,10 +2775,10 @@ function BadgesPage({ setPage, userData }) {
     if (!userData?.id) return;
     setLoading(true);
     Promise.all([
-      api.badges.list(userData.id),
+      api.badges.list('SYSTEM'),
       fetch('/api/accountbadges').then(r => r.json())
-    ]).then(([artB, accB]) => {
-      setBadges(artB);
+    ]).then(([sysB, accB]) => {
+      setBadges(sysB);
       setAccountBadges(accB || []);
       setLoading(false);
     }).catch(e => {
@@ -2762,7 +2791,7 @@ function BadgesPage({ setPage, userData }) {
     if (!newBadge.name) return;
     setCreating(true);
     try {
-      const created = await api.badges.create({ ...newBadge, lecturerId: userData.id });
+      const created = await api.badges.create({ ...newBadge, lecturerId: 'SYSTEM' });
       setBadges([created, ...badges]);
       setNewBadge({ name: "", colorCode: "#1A4BA8", textColor: "#FFFFFF" });
     } catch (e) {
@@ -2774,7 +2803,7 @@ function BadgesPage({ setPage, userData }) {
   const handleDeleteBadge = async (badgeId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa huy hiệu này? Huy hiệu sẽ bị gỡ khỏi tất cả các đồ án đã được cấp.")) return;
     try {
-      await api.badges.delete(badgeId, userData.id);
+      await api.badges.delete(badgeId, 'SYSTEM');
       setBadges(badges.filter(b => b.id !== badgeId));
     } catch (e) {
       alert("Lỗi khi xóa huy hiệu: " + e.message);
@@ -2944,15 +2973,20 @@ function BadgesPage({ setPage, userData }) {
               {badges.length === 0 ? (
                 <p style={{ color: MUTED, fontSize: 14 }}>Chưa có huy hiệu nào được tạo.</p>
               ) : (
-                badges.map(b => (
-                  <div key={b.id} onClick={() => setEditingArtworkBadge(b)} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 100, background: b.colorCode, color: b.textColor || "#fff", fontSize: 13, fontWeight: 600, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", paddingRight: 36, cursor: "pointer" }}>
+                badges.map(b => {
+                  const defaultCatNames = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
+                  const isDefault = defaultCatNames.includes(b.name);
+                  return (
+                  <div key={b.id} onClick={() => { if (!isDefault) setEditingArtworkBadge(b); }} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 100, background: b.colorCode, color: b.textColor || "#fff", fontSize: 13, fontWeight: 600, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", paddingRight: isDefault ? 16 : 36, cursor: isDefault ? "default" : "pointer" }}>
                     <Star size={14} fill={b.textColor || "#fff"} />
                     {b.name}
-                    <div onClick={(e) => { e.stopPropagation(); handleDeleteBadge(b.id); }} style={{ position: "absolute", right: 6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.15)", color: b.textColor || "#fff", transition: "all .2s" }} onMouseEnter={e => e.currentTarget.style.background="rgba(0,0,0,0.3)"} onMouseLeave={e => e.currentTarget.style.background="rgba(0,0,0,0.15)"}>
-                      <X size={12} strokeWidth={3} />
-                    </div>
+                    {!isDefault && (
+                      <div onClick={(e) => { e.stopPropagation(); handleDeleteBadge(b.id); }} style={{ position: "absolute", right: 6, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: 22, height: 22, borderRadius: "50%", background: "rgba(0,0,0,0.15)", color: b.textColor || "#fff", transition: "all .2s" }} onMouseEnter={e => e.currentTarget.style.background="rgba(0,0,0,0.3)"} onMouseLeave={e => e.currentTarget.style.background="rgba(0,0,0,0.15)"}>
+                        <X size={12} strokeWidth={3} />
+                      </div>
+                    )}
                   </div>
-                ))
+                )})
               )}
             </div>
           )}
@@ -7261,7 +7295,7 @@ function AdminOrdersPage({ setPage }) {
     <div className="flex h-screen overflow-hidden bg-white">
       <AdminSidebar active="admin_orders" setPage={setPage} />
       <div className="flex-1 overflow-y-auto p-8">
-        <h2 className="text-2xl font-bold text-[#212121] mb-6">Quản lý Đơn hàng In ấn</h2>
+        <h2 className="text-2xl font-bold text-[#212121] mb-6">Quản lý đơn hàng in ấn</h2>
         
         <div className="bg-white border border-[#E0E0E0] rounded-xl overflow-hidden shadow-sm">
           <table className="w-full text-left text-sm">
@@ -7645,16 +7679,16 @@ function MessagesPage({ setPage, userData }) {
                               return (
                                 <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
                                   <div style={{ flex: "0 0 120px", borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
-                                    <img src={data.artworkImage} alt={data.artworkTitle} style={{ width: "100%", height: 120, objectFit: "cover" }} />
+                                    <img src={data.artworkImage || '/logo-uef.png'} alt={data.artworkTitle} style={{ width: "100%", height: 120, objectFit: "cover" }} onError={(e) => { e.target.onerror = null; e.target.src = '/logo-uef.png'; }} />
                                   </div>
                                   <div>
                                     <p style={{ fontSize: 14, fontWeight: 600, color: BLACK, margin: "0 0 8px" }}>{data.artworkTitle}</p>
                                     <p style={{ fontSize: 13, color: "#444", margin: "0 0 8px", lineHeight: 1.5 }}>{data.description || t("noDescription")}</p>
-                                    <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                                    <div style={{ display: "flex", gap: 16, marginBottom: 8 }}>
                                       {data.phone && (
-                                        <a href={`tel:${data.phone}`} style={{ fontSize: 13, color: CERULEAN, textDecoration: "underline" }}>📞 {data.phone}</a>
+                                        <p style={{ fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 4, margin: 0 }}><Phone size={13} /> {data.phone}</p>
                                       )}
-                                      {data.company && <p style={{ fontSize: 13, color: "#666" }}>🏢 {data.company}</p>}
+                                      {data.company && <p style={{ fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 4, margin: 0 }}><Building2 size={13} /> {data.company}</p>}
                                     </div>
                                   </div>
                                 </div>
@@ -11115,7 +11149,7 @@ function PortfolioSettingsPage({ setPage, userData }) {
 
   useEffect(() => {
     Promise.all([
-      api.portfolios.mine().catch(() => ({})),
+      api.portfolios.me().catch(() => ({})),
       api.users.myArtworks().catch(() => []),
     ]).then(([data, arts]) => {
       const p = data.portfolioSettings || data;
@@ -12105,7 +12139,7 @@ function TimelineSection({ entries: propEntries, slug, isOwner, setPage }) {
           </div>
           {/* Right: Image Area */}
           <div className="w-full md:w-1/2 relative min-h-[300px] md:min-h-full">
-            <div className="absolute inset-0" style={{ backgroundImage: `url(${timelineData[activeIndex].img})`, backgroundSize: 'cover', backgroundPosition: 'center', transition: 'background-image 0.5s cubic-bezier(0.4,0,0.2,1)' }} />
+            <div className="absolute inset-0" style={{ backgroundImage: `url("${timelineData[activeIndex].img}")`, backgroundSize: 'cover', backgroundPosition: 'center', transition: 'background-image 0.5s cubic-bezier(0.4,0,0.2,1)' }} />
           </div>
         </div>
 

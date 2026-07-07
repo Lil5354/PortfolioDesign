@@ -26,7 +26,7 @@ public class PortfolioSetting
 
     public bool ContactEnabled { get; set; }
 
-    public DisplayOrder DisplayOrder { get; set; }
+    public string DisplayOrder { get; set; } = "newest";
 
     public string? Major { get; set; }
 

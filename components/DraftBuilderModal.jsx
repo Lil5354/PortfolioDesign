@@ -141,7 +141,7 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
         )}
         {block.type === 'image' && (
            <div 
-             className="w-full h-full min-h-[300px] bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden"
+             className={`w-full bg-gray-100 flex flex-col items-center justify-center relative overflow-hidden ${!block.content ? 'min-h-[300px]' : ''}`}
              onClick={() => setActiveOverlayId(null)}
              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect = "copy"; }}
              onDrop={(e) => {
@@ -185,49 +185,10 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
              }}
            >
              {block.content ? (
-               <div 
-                 className="absolute inset-0 w-full h-full"
-                 style={{
-                   backgroundImage: `url(${block.content})`,
-                   backgroundSize: 'cover',
-                   backgroundPosition: block.bgPosition || '50% 50%',
-                   cursor: 'grab'
-                 }}
-                 onMouseDown={(e) => {
-                   e.preventDefault();
-                   const startX = e.clientX;
-                   const startY = e.clientY;
-                   
-                   let posX = 50, posY = 50;
-                   if (block.bgPosition) {
-                     const parts = block.bgPosition.split(' ');
-                     posX = parseFloat(parts[0]) || 50;
-                     posY = parseFloat(parts[1]) || 50;
-                   }
-
-                   const handleMouseMove = (moveEvent) => {
-                     const dx = moveEvent.clientX - startX;
-                     const dy = moveEvent.clientY - startY;
-                     
-                     // Adjust sensitivity
-                     const newX = Math.max(0, Math.min(100, posX - (dx / 3)));
-                     const newY = Math.max(0, Math.min(100, posY - (dy / 3)));
-                     
-                     e.target.style.backgroundPosition = `${newX}% ${newY}%`;
-                     e.target.dataset.newPos = `${newX}% ${newY}%`;
-                   };
-
-                   const handleMouseUp = () => {
-                     window.removeEventListener('mousemove', handleMouseMove);
-                     window.removeEventListener('mouseup', handleMouseUp);
-                     if (e.target.dataset.newPos) {
-                       updateBlock(block.id, { bgPosition: e.target.dataset.newPos });
-                     }
-                   };
-
-                   window.addEventListener('mousemove', handleMouseMove);
-                   window.addEventListener('mouseup', handleMouseUp);
-                 }}
+               <img 
+                 src={block.content} 
+                 className="w-full h-auto block cursor-pointer" 
+                 alt="Block Image" 
                />
              ) : (
                <>
@@ -474,11 +435,26 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
              
              {/* TEXTAREA */}
              <textarea 
-               className="w-full flex-1 min-h-[100px] resize-none p-4 outline-none text-[17px] text-[#b3b3b3] placeholder-gray-400 font-sans bg-transparent" 
+               className="w-full flex-1 min-h-[100px] resize-none p-4 outline-none text-[17px] text-[#b3b3b3] placeholder-gray-400 font-sans bg-transparent overflow-hidden" 
                placeholder="Enter your text here..."
                value={block.content}
-               onChange={(e) => updateBlock(block.id, { content: e.target.value })}
-               onFocus={() => { setFocusedBlockId(block.id); setEditingBlockId(block.id); }}
+               onChange={(e) => {
+                 e.target.style.height = 'auto';
+                 e.target.style.height = e.target.scrollHeight + 'px';
+                 updateBlock(block.id, { content: e.target.value });
+               }}
+               onFocus={(e) => { 
+                 setFocusedBlockId(block.id); 
+                 setEditingBlockId(block.id); 
+                 e.target.style.height = 'auto';
+                 e.target.style.height = e.target.scrollHeight + 'px';
+               }}
+               ref={(el) => {
+                 if (el) {
+                   el.style.height = 'auto';
+                   el.style.height = el.scrollHeight + 'px';
+                 }
+               }}
              />
            </div>
         )}
@@ -651,8 +627,12 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
               </button>
               
               <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 bg-white rounded flex items-center justify-center shrink-0">
-                    <Image size={24} className="text-gray-300" />
+                 <div className="w-12 h-12 bg-white rounded flex items-center justify-center shrink-0 overflow-hidden">
+                    {settingsData?.coverImage ? (
+                      <img src={settingsData.coverImage} className="w-full h-full object-cover" />
+                    ) : (
+                      <Image size={24} className="text-gray-300" />
+                    )}
                  </div>
                  <div className="flex flex-col justify-center">
                     <span className="text-white font-semibold text-[15px] leading-tight">{settingsData?.title || "Untitled Project"}</span>
@@ -1017,7 +997,7 @@ export default function DraftBuilderModal({ isOpen, onClose, onPublish, onSave, 
           isOpen={true}
           onClose={() => setIsReorderModalOpen(false)}
           blocks={blocks}
-          onSaveReorder={(newBlocks) => {
+          onSave={(newBlocks) => {
             setBlocks(newBlocks);
             setIsReorderModalOpen(false);
           }}

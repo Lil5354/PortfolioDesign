@@ -1,0 +1,1 @@
+const db = require('better-sqlite3')('./UEFGallery.API/gallery.db'); console.log(db.prepare('SELECT user_id, full_name, (SELECT COUNT(*) FROM artworks WHERE artworks.user_id = users.user_id) as art_count FROM users LIMIT 10').all());

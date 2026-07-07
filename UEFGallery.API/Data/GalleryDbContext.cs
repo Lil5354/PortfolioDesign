@@ -68,7 +68,7 @@ public class GalleryDbContext : DbContext
         modelBuilder.Entity<Models.User>().Property(x => x.Role).HasConversion<string>();
         modelBuilder.Entity<Models.Notification>().Property(x => x.Type).HasConversion<string>();
         modelBuilder.Entity<Models.Report>().Property(x => x.Status).HasConversion<string>();
-        modelBuilder.Entity<Models.PortfolioSetting>().Property(x => x.DisplayOrder).HasConversion<string>();
+        
         modelBuilder.Entity<Models.Like>().Property(x => x.ReactionType).HasConversion<string>();
         
         // ArtworkBadge Configuration
