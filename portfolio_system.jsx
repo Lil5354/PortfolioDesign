@@ -86,7 +86,7 @@ window.MOCK_PROJECTS = [
 
 import HTMLFlipBook from 'react-pageflip';
 import {
-  Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2,
+  Image, Eye, Heart, Globe, LayoutDashboard, Folder, MessageSquare, BarChart2, TrendingUp,
   Settings, Trash2, Edit2, Search, X, Check, CheckCircle, ArrowDownCircle, ExternalLink,
   Maximize2, Lock, FileImage, ShieldAlert, Plus, Send, Clock, PenTool, Bookmark,
   Mail, Link, User, Briefcase, Unlock, FileDown, GripVertical, Users, LogOut, ChevronDown, MailOpen,
@@ -540,7 +540,7 @@ function ProfileQuickViewModal({ person, onClose, setPage }) {
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, color: "#666", fontSize: 12, marginBottom: 10 }}>
             <MapPin size={12} />
-            {person.location} <span style={{ margin: "0 4px" }}>•</span> <span style={{ color: "#2e7d32", fontWeight: 600 }}>Responds quickly</span>
+            {person.location} <span style={{ margin: "0 4px" }}>•</span> <span style={{ color: "#2e7d32", fontWeight: 600 }}>Phản hồi nhanh</span>
           </div>
           
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginBottom: 16 }}>
@@ -562,10 +562,10 @@ function ProfileQuickViewModal({ person, onClose, setPage }) {
           
           <div style={{ display: "flex", gap: 8 }}>
             <button style={{ flex: 1, padding: "8px", borderRadius: 999, background: "#0057ff", color: "#fff", border: "none", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background .2s" }} onMouseOver={e => e.currentTarget.style.background="#0047d4"} onMouseOut={e => e.currentTarget.style.background="#0057ff"} onClick={() => { onClose(); setPage("portfolio", { portfolioSlug: person.id, openContact: true }); }}>
-              <Mail size={14} /> Send Inquiry
+              <Mail size={14} /> Liên hệ
             </button>
             <button style={{ flex: 1, padding: "8px", borderRadius: 999, background: "#fff", color: "#191919", border: "1px solid #e0e0e0", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, transition: "background .2s" }} onMouseOver={e => e.currentTarget.style.background="#f5f5f5"} onMouseOut={e => e.currentTarget.style.background="#fff"} onClick={() => { onClose(); setPage("portfolio", { portfolioSlug: person.id }); }}>
-              <ExternalLink size={14} /> View Profile
+              <ExternalLink size={14} /> Xem hồ sơ
             </button>
           </div>
         </div>
@@ -898,20 +898,47 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
 
   const getDisplayBadge = (art) => {
     if (!art.badges || art.badges.length === 0) return null;
-    if (filters.category && filters.category !== "Tất cả") {
-      const match = art.badges.find(b => b.name?.toLowerCase() === filters.category.toLowerCase());
-      if (match) return match;
-    }
-    if (filters.year && filters.year !== "Tất cả") {
-      const yearTag = filters.year.split('-')[1]?.slice(2) || filters.year;
-      const match = art.badges.find(b => b.name?.toLowerCase() === yearTag.toLowerCase());
-      if (match) return match;
-    }
-    if (filters.tool && filters.tool !== "Tất cả") {
-      const match = art.badges.find(b => b.name?.toLowerCase() === filters.tool.toLowerCase());
-      if (match) return match;
-    }
-    return art.badges[0];
+    
+    // Sort badges so that the one matching active filters is first
+    const sortedBadges = [...art.badges].sort((a, b) => {
+      const getScore = (badge) => {
+        let score = 0;
+        const n = (badge.name || "").toLowerCase();
+        
+        if (filters.category && filters.category !== "Tất cả" && filters.category !== "All") {
+          const cat = filters.category.toLowerCase().trim();
+          if (n === cat || n.includes(cat) || cat.includes(n)) score += 10;
+          else if (cat === "branding" && (n.includes("thương hiệu") || n.includes("nhận diện"))) score += 10;
+          else if (cat === "illustration" && (n.includes("minh họa") || n.includes("vẽ"))) score += 10;
+          else if (cat === "photography" && n.includes("nhiếp ảnh")) score += 10;
+          else if (cat === "motion design" && (n.includes("chuyển động") || n.includes("motion"))) score += 10;
+          else if (cat === "editorial" && (n.includes("dàn trang") || n.includes("xuất bản") || n.includes("ấn phẩm"))) score += 10;
+          else if (cat === "packaging" && (n.includes("bao bì") || n.includes("đóng gói"))) score += 10;
+        }
+        
+        if (filters.year && filters.year !== "Tất cả" && filters.year !== "All") {
+          const yearStr = filters.year.toLowerCase().trim();
+          let searchTag = yearStr;
+          if (yearStr.includes('2021')) searchTag = "năm 4";
+          else if (yearStr.includes('2022')) searchTag = "năm 3";
+          else if (yearStr.includes('2023')) searchTag = "năm 2";
+          else if (yearStr.includes('2024')) searchTag = "năm 1";
+          
+          if (n.includes(searchTag)) score += 5;
+        }
+        
+        if (filters.tool && filters.tool !== "Tất cả" && filters.tool !== "All") {
+          const tool = filters.tool.toLowerCase().trim();
+          if (n.includes(tool)) score += 5;
+        }
+        
+        return score;
+      };
+      
+      return getScore(b) - getScore(a);
+    });
+    
+    return sortedBadges[0];
   };
 
   return (
@@ -1337,6 +1364,26 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
   useEffect(() => {
     if (pageParams?.openContact) {
       setIsContactModalOpen(true);
+    }
+    if (pageParams?.openDraft && pageParams?.draftId) {
+      setCurrentDraftId(pageParams.draftId);
+      if (pageParams.draftBlocks || pageParams.draftSettings) {
+         const tempDraft = {
+            id: pageParams.draftId,
+            blocks: pageParams.draftBlocks || [],
+            settingsData: pageParams.draftSettings || {},
+            title: pageParams.draftSettings?.title || "Draft",
+            coverImageUrl: pageParams.draftSettings?.coverImage || "",
+         };
+         setDrafts(prev => {
+            if (prev.some(d => d.id === tempDraft.id)) {
+               return prev.map(d => d.id === tempDraft.id ? tempDraft : d);
+            }
+            return [tempDraft, ...prev];
+         });
+      }
+      setIsDraftBuilderOpen(true);
+      setActiveTab("drafts");
     }
   }, [pageParams]);
 
@@ -3415,7 +3462,29 @@ function DashboardPage({ setPage, setEditingArtworkId, setActiveArtworkId, userD
                         }} />
                       </div>
                       <div style={{ display: "flex", gap: 6 }}>
-                        <button onClick={() => { setActiveArtworkId(art.id); setTimeout(() => setPage("edit_artwork"), 50); }} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <button onClick={async () => { 
+                          try {
+                            const res = await api.artworks.get(art.id);
+                            const semMap = { HK1: "Năm 1", HK2: "Năm 2", HK3: "Năm 3", HK4: "Năm 4" };
+                            const draftSettings = {
+                               title: res.title || "",
+                               description: res.description || "",
+                               category: res.subject || "",
+                               tags: res.tags || [],
+                               tools: res.tools || res.toolsUsed || [],
+                               projectYear: res.semester ? semMap[res.semester] || "Năm 3" : "Năm 3",
+                               coverImage: res.coverImageUrl || "",
+                               coOwners: res.collaborators || []
+                            };
+                            let draftBlocks = [];
+                            if (res.blocksJson) {
+                               try { draftBlocks = JSON.parse(res.blocksJson); } catch(e) {}
+                            }
+                            setPage("portfolio", { portfolioSlug: userData?.portfolioSettings?.portfolioSlug || userData?.id || "", openDraft: true, draftId: res.id, draftBlocks, draftSettings });
+                          } catch (err) {
+                            alert("Không thể tải dữ liệu ấn phẩm. Vui lòng thử lại.");
+                          }
+                        }} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <Edit2 size={14} color={BLACK} strokeWidth={1.5} />
                         </button>
                         <button onClick={() => {
@@ -5278,6 +5347,7 @@ if (mins < 1) return t("justNow");
                 <span style={{ fontSize: 16, fontWeight: "bold", color: "#fff" }}>{art.title}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#bbb" }}>
                   <span onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} style={{ cursor: "pointer", color: "#fff", fontWeight: 500 }}>{art.user?.fullName}</span>
+                  {art.collaborators?.length > 0 && <span style={{ color: "#bbb", fontWeight: 500 }}>, {art.collaborators.join(", ")}</span>}
                   <span style={{ background: "#0057ff", color: "#fff", fontSize: 9, padding: "2px 4px", borderRadius: 4, fontWeight: "bold" }}>PRO</span>
                   <span>•</span>
                   <span onClick={() => {
@@ -5793,7 +5863,10 @@ if (mins < 1) return t("justNow");
                 <img onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <h3 onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} style={{ margin: 0, fontSize: 16, fontWeight: "bold", color: "#fff", cursor: "pointer" }}>{art.user?.fullName}</h3>
+                    <h3 onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} style={{ margin: 0, fontSize: 16, fontWeight: "bold", color: "#fff", cursor: "pointer" }}>
+                      {art.user?.fullName}
+                      {art.collaborators?.length > 0 && <span style={{ color: "#bbb", fontWeight: "normal", fontSize: 14 }}>, {art.collaborators.join(", ")}</span>}
+                    </h3>
                     <span style={{ background: "#0057ff", color: "#fff", fontSize: 10, padding: "2px 6px", borderRadius: 4, fontWeight: "bold" }}>PRO</span>
                   </div>
                   <button onClick={() => setIsFollowing(!isFollowing)} style={{ background: isFollowing ? "rgba(255,255,255,0.2)" : "#0057ff", color: "#fff", border: "none", padding: "6px 20px", borderRadius: 16, fontSize: 12, fontWeight: "bold", marginTop: 8, cursor: "pointer" }}>{isFollowing ? "Following" : "Follow"}</button>
@@ -6069,7 +6142,7 @@ if (mins < 1) return t("justNow");
               <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
                 <span style={{ fontSize: 11, fontWeight: "bold", color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, display: "block" }}>Project Made For</span>
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {art.tags?.map((tStr, i) => {
+                  {Array.from(new Set([...(art.tags || []), ...(art.badges?.map(b => b.name) || [])])).map((tStr, i) => {
                     const tL = tStr.toLowerCase();
                     let IconComp = Tag;
                     if (tL.includes('package') || tL.includes('bao bì')) IconComp = Package;
@@ -6164,7 +6237,7 @@ if (mins < 1) return t("justNow");
 
                 <span style={{ fontSize: 11, fontWeight: "bold", color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, display: "block" }}>Creative Fields</span>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {Array.from(new Set([art.category, ...(art.tags || [])])).filter(Boolean).slice(0, 4).map((field, i) => {
+                  {Array.from(new Set([art.category, ...(art.tags || []), ...(art.badges?.map(b => b.name) || [])])).filter(Boolean).slice(0, 4).map((field, i) => {
                     const fallbackCategories = {
                       'graphic design': 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400',
                       'creative': 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400',
@@ -7385,10 +7458,59 @@ function AdminOrdersPage({ setPage }) {
   );
 }
 
+const SvgAreaChart = ({ data, metricKey, metricName, color }) => {
+  if (!data || data.length === 0) return <div className="text-gray-400 text-sm text-center pt-10">Đang tải biểu đồ...</div>;
+  const maxViews = Math.max(...data.map(d => d[metricKey] || 0), 10) * 1.2;
+  const w = 1000;
+  const h = 260;
+  
+  const getX = (index) => (index / (data.length - 1)) * w;
+  const getY = (val) => h - ((val || 0) / maxViews) * h;
+  
+  const points = data.map((d, i) => `${getX(i)},${getY(d[metricKey])}`).join(' ');
+  const areaPoints = `0,${h} ${points} ${w},${h}`;
+  
+  return (
+    <div className="relative w-full h-[260px] mb-8 ml-6 pr-6">
+       <div className="absolute left-[-30px] top-0 h-full flex flex-col justify-between text-[11px] text-gray-400 text-right w-[25px]">
+          <span>{Math.round(maxViews)}</span>
+          <span>{Math.round(maxViews * 0.75)}</span>
+          <span>{Math.round(maxViews * 0.5)}</span>
+          <span>{Math.round(maxViews * 0.25)}</span>
+          <span>0</span>
+       </div>
+       <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="w-full h-full overflow-visible">
+          <defs>
+            <linearGradient id={`gradient_${metricKey}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
+              <stop offset="95%" stopColor={color} stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          {[0, 1, 2, 3, 4].map(i => (
+             <line key={i} x1="0" y1={h * (i/4)} x2={w} y2={h * (i/4)} stroke="#E5E7EB" strokeDasharray="3 3" />
+          ))}
+          <polygon points={areaPoints} fill={`url(#gradient_${metricKey})`} className="transition-all duration-1000" />
+          <polyline points={points} fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" className="transition-all duration-1000" />
+          {data.map((d, i) => (
+             <g key={i} className="group">
+               <circle cx={getX(i)} cy={getY(d[metricKey])} r="5" fill="#fff" stroke={color} strokeWidth="2" className="cursor-pointer transition-all duration-300" style={{ transformOrigin: `${getX(i)}px ${getY(d[metricKey])}px` }} onMouseEnter={(e) => e.target.setAttribute('r', '7')} onMouseLeave={(e) => e.target.setAttribute('r', '5')} />
+               <text x={getX(i)} y={getY(d[metricKey]) - 15} textAnchor="middle" fill={color} fontSize="12" fontWeight="bold" className="opacity-0 group-hover:opacity-100 transition-opacity cursor-default">{d[metricKey]} {metricName}</text>
+             </g>
+          ))}
+       </svg>
+       <div className="absolute -bottom-6 w-full flex justify-between text-[11px] text-gray-400 font-medium px-1">
+         {data.map((d, i) => <span key={i}>{d.name}</span>)}
+       </div>
+    </div>
+  )
+}
+
 function AdminDashboardPage({ setPage }) {
     const { user } = useAuth();
     const userRole = user?.role || "admin";
     const [adminStats, setAdminStats] = useState({ publishedArtworks: 0, reportedArtworks: 0, totalAccounts: 0, totalInteractions: 0 });
+  const [chartData, setChartData] = useState([]);
+  const [chartMetric, setChartMetric] = useState("views");
   const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -7396,9 +7518,11 @@ function AdminDashboardPage({ setPage }) {
     Promise.all([
       api.admin.stats(),
       api.admin.artworks({ limit: "6" }).catch(() => ({ artworks: [] })),
-    ]).then(([stats, artRes]) => {
+      fetch('http://localhost:5000/api/admin/chart-stats', { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('token') } }).then(res => res.json()).catch(() => [])
+    ]).then(([stats, artRes, chartRes]) => {
       setAdminStats(stats);
       setRecentActivity((artRes.artworks || []).slice(0, 6));
+      setChartData(chartRes || []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -7480,6 +7604,39 @@ function AdminDashboardPage({ setPage }) {
           ))}
         </div>
 
+        <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-bold text-[#212121] flex items-center gap-2">
+                <TrendingUp size={20} className="text-[#1a4ba8]" /> Tần suất Tương tác Hệ thống
+              </h3>
+              <p className="text-sm text-[#666666] mt-1">Lưu lượng truy cập và hoạt động hệ thống 14 ngày qua</p>
+            </div>
+            
+            <div className="flex items-center">
+              <select 
+                value={chartMetric} 
+                onChange={(e) => setChartMetric(e.target.value)} 
+                className="px-4 py-2 border border-[#E0E0E0] rounded-lg text-sm font-medium text-[#212121] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#1a4ba8] transition-all cursor-pointer"
+              >
+                <option value="views">Lượt xem theo từng ngày</option>
+                <option value="artworks">Ấn phẩm được đăng</option>
+                <option value="reports">Ấn phẩm bị báo cáo</option>
+                <option value="users">Tài khoản</option>
+              </select>
+            </div>
+          </div>
+          
+          <div className="w-full mt-4">
+             <SvgAreaChart 
+                data={chartData} 
+                metricKey={chartMetric} 
+                metricName={chartMetric === "views" ? "Lượt xem" : chartMetric === "artworks" ? "Ấn phẩm" : chartMetric === "reports" ? "Báo cáo" : "Tài khoản"}
+                color={chartMetric === "views" ? "#1a4ba8" : chartMetric === "artworks" ? "#10b981" : chartMetric === "reports" ? "#ef4444" : "#8b5cf6"}
+             />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           <div className="xl:col-span-2 bg-white border border-[#E0E0E0] rounded-xl overflow-hidden">
             <div className="p-5 border-b border-[#E0E0E0] flex items-center justify-between">
@@ -7517,8 +7674,8 @@ function AdminDashboardPage({ setPage }) {
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.user?.fullName || ""}</td>
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.subject || ""}</td>
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("vi-VN") : ""}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(aStatus)}`}>{aStatus}</span>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap ${statusBadge(aStatus)}`}>{aStatus}</span>
                       </td>
                     </tr>
                   );
@@ -7594,10 +7751,55 @@ function MessagesPage({ setPage, userData }) {
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
-    api.messages.list().then(data => {
-      setMessages(Array.isArray(data) ? data : []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    const fetchMsgs = () => {
+      api.messages.list().then(data => {
+        const arr = Array.isArray(data) ? data : [];
+        setMessages(arr.filter(m => m.purpose !== "message" && m.purpose !== "chat"));
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    };
+
+    fetchMsgs();
+
+    // Setup SignalR connection for Real-time chat
+    const connection = new HubConnectionBuilder()
+      .withUrl("/chatHub", {
+        accessTokenFactory: () => localStorage.getItem("token") || ""
+      })
+      .configureLogging(LogLevel.Information)
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start().catch(err => console.error("SignalR Connection Error: ", err));
+
+    connection.on("ReceiveMessage", (message) => {
+      // Optimistically append the message to ensure immediate real-time display
+      setMessages(prev => {
+        const msgId = message.id || message.Id;
+        if (prev.some(m => m.id === msgId)) return prev;
+        const msgPurpose = message.purpose || message.Purpose;
+        if (msgPurpose === "message" || msgPurpose === "chat") return prev; // Do not show direct chats in Inbox
+        const newMsg = {
+          ...message,
+          id: msgId,
+          senderName: message.senderName || message.SenderName,
+          senderEmail: message.senderEmail || message.SenderEmail,
+          recipientSlug: message.recipientSlug || message.RecipientSlug || "",
+          purpose: msgPurpose,
+          content: message.content || message.Content,
+          isRead: message.isRead || message.IsRead,
+          createdAt: message.createdAt || message.CreatedAt
+        };
+        return [newMsg, ...prev];
+      });
+
+      // Fetch messages again to update inbox in real time
+      fetchMsgs();
+    });
+
+    return () => {
+      connection.stop();
+    };
   }, []);
 
   const toggleMessage = (id) => {
@@ -7658,9 +7860,18 @@ function MessagesPage({ setPage, userData }) {
                       {msg.purpose === 'order' && (
                         <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t("orderArtwork")}</p>
                       )}
-                      {msg.purpose !== 'order' && msg.content && (
-                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
-                      )}
+                      {msg.purpose !== 'order' && msg.content && (() => {
+                        let textPreview = msg.content;
+                        try {
+                          const d = JSON.parse(msg.content);
+                          if (d.description !== undefined || d.text !== undefined) {
+                            textPreview = d.description || d.text || "[Đính kèm ấn phẩm]";
+                          }
+                        } catch {}
+                        return (
+                          <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{textPreview?.substring(0, 100) || ""}</p>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
@@ -7671,61 +7882,67 @@ function MessagesPage({ setPage, userData }) {
                 {expandedId === msg.id && (
                   <div style={{ padding: "0 20px 20px 80px" }}>
                     <div style={{ padding: "16px", background: GRAY_BG, borderRadius: 8, border: `1px solid ${GRAY_LIGHT}` }}>
-                      {msg.purpose === 'order' ? (
-                        <div style={{ display: "flex", gap: 16, alignItems: "start" }}>
-                          {(() => {
-                            try {
-                              const data = JSON.parse(msg.content);
-                              return (
-                                <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-                                  <div style={{ flex: "0 0 120px", borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
-                                    <img src={data.artworkImage || '/logo-uef.png'} alt={data.artworkTitle} style={{ width: "100%", height: 120, objectFit: "cover" }} onError={(e) => { e.target.onerror = null; e.target.src = '/logo-uef.png'; }} />
-                                  </div>
-                                  <div>
-                                    <p style={{ fontSize: 14, fontWeight: 600, color: BLACK, margin: "0 0 8px" }}>{data.artworkTitle}</p>
-                                    <p style={{ fontSize: 13, color: "#444", margin: "0 0 8px", lineHeight: 1.5 }}>{data.description || t("noDescription")}</p>
-                                    <div style={{ display: "flex", gap: 16, marginBottom: 8 }}>
-                                      {data.phone && (
-                                        <p style={{ fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 4, margin: 0 }}><Phone size={13} /> {data.phone}</p>
-                                      )}
-                                      {data.company && <p style={{ fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 4, margin: 0 }}><Building2 size={13} /> {data.company}</p>}
-                                    </div>
+                      {(() => {
+                        let parsedData = null;
+                        try {
+                          parsedData = JSON.parse(msg.content);
+                        } catch {}
+
+                        if (parsedData && (parsedData.artworkId || parsedData.attachedArtwork || msg.purpose === 'order' || msg.purpose === 'feedback')) {
+                          const data = parsedData;
+                          const artworkImage = data.artworkImage || data.attachedArtwork?.coverUrl || '/logo-uef.png';
+                          const artworkTitle = data.artworkTitle || data.attachedArtwork?.title || t("artwork");
+                          return (
+                            <div style={{ display: "flex", gap: 16, alignItems: "start" }}>
+                              <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                                <div style={{ flex: "0 0 120px", borderRadius: 8, overflow: "hidden", border: `1px solid ${GRAY_LIGHT}` }}>
+                                  <img src={artworkImage} alt={artworkTitle} style={{ width: "100%", height: 120, objectFit: "cover" }} onError={(e) => { e.target.onerror = null; e.target.src = '/logo-uef.png'; }} />
+                                </div>
+                                <div>
+                                  <p style={{ fontSize: 14, fontWeight: 600, color: BLACK, margin: "0 0 8px" }}>{artworkTitle}</p>
+                                  <p style={{ fontSize: 13, color: "#444", margin: "0 0 8px", lineHeight: 1.5 }}>{data.description || data.text || t("noDescription")}</p>
+                                  <div style={{ display: "flex", gap: 16, marginBottom: 8 }}>
+                                    {data.phone && (
+                                      <p style={{ fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 4, margin: 0 }}><Phone size={13} /> {data.phone}</p>
+                                    )}
+                                    {data.company && <p style={{ fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 4, margin: 0 }}><Building2 size={13} /> {data.company}</p>}
                                   </div>
                                 </div>
-                              );
-                            } catch {
-                              return <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>;
-                            }
-                          })()}
-                        </div>
-                      ) : (
-                        <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>
-                      )}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return <p style={{ fontSize: 14, color: BLACK, lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{msg.content}</p>;
+                      })()}
                     </div>
                     <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-                      {msg.purpose === 'order' ? (
-                        <button onClick={() => {
+                      {(() => {
+                        let artworkId = null;
+                        let textBody = msg.content;
+                        try {
                           const data = JSON.parse(msg.content);
-                          if (data.artworkId) {
-                            setPage("detail", { artworkId: data.artworkId });
-                          } else {
-                            setPage("messages");
-                          }
-                        }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
-                          <Mail size={14} /> {t("viewArtwork")}
-                        </button>
-                      ) : (
-                        <a
-                          href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(
-                            `--- Original message from ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Purpose: ${msg.purpose}\n` : ""}${msg.content}\n\n--- My reply ---\n`
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
-                        >
-                          <Mail size={14} /> {t("replyViaEmail")}
-                        </a>
-                      )}
+                          if (data.artworkId) artworkId = data.artworkId;
+                          else if (data.attachedArtwork?.artworkId) artworkId = data.attachedArtwork.artworkId;
+                          textBody = data.description || data.text || msg.content;
+                        } catch {}
+
+                        return artworkId ? (
+                          <button onClick={() => { setPage("detail", { artworkId }); }} style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                            <Mail size={14} /> {t("viewArtwork")}
+                          </button>
+                        ) : (
+                          <a
+                            href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(msg.senderEmail)}&su=${encodeURIComponent(`Reply: ${msg.purpose || t("portfolioContact")}`)}&body=${encodeURIComponent(
+                              `--- Original message from ${msg.senderName} (${msg.senderEmail}) ---\n${msg.purpose ? `Purpose: ${msg.purpose}\n` : ""}${textBody}\n\n--- My reply ---\n`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ padding: "8px 16px", borderRadius: 8, border: "none", background: CERULEAN, color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}
+                          >
+                            <Mail size={14} /> {t("replyViaEmail")}
+                          </a>
+                        );
+                      })()}
                       <button onClick={() => handleArchive(msg.id)} style={{ padding: "8px 16px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: "#fff", fontSize: 13, cursor: "pointer", color: BLACK, display: "flex", alignItems: "center", gap: 6 }}>
                         <Archive size={14} /> {t("archive")}
                       </button>
@@ -12671,7 +12888,7 @@ export default function App() {
       />
 
       {/* ChatBot */}
-      <ChatBot userRole={userRole} />
+      <ChatBot userRole={userRole} userData={userData} />
     </div>
   );
 }

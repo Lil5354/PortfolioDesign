@@ -16,6 +16,20 @@ public class SeedController : ControllerBase
         _context = context;
     }
 
+    [HttpGet("fix-tools")]
+    public async Task<IActionResult> FixTools()
+    {
+        var artworks = await _context.Artworks.ToListAsync();
+        var toolsList = new List<string> { "Figma", "Photoshop", "Illustrator", "After Effects", "Blender", "Procreate", "InDesign", "Lightroom", "Cinema 4D" };
+        var rng = new Random();
+        foreach (var art in artworks)
+        {
+            art.ToolsUsed = toolsList.OrderBy(x => rng.Next()).Take(3).ToList();
+        }
+        await _context.SaveChangesAsync();
+        return Ok("Tools fixed for all artworks (3 tools each)!");
+    }
+
     [HttpGet]
     public async Task<IActionResult> SeedData()
     {

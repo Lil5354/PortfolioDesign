@@ -38,6 +38,71 @@ public class AdminController : ControllerBase
         });
     }
 
+    [HttpGet("chart-stats")]
+    public async Task<IActionResult> GetChartStats()
+    {
+        var days = 14;
+        var startDate = DateTime.UtcNow.Date.AddDays(-days + 1);
+
+        // Fetch users
+        var userStats = await _context.Users
+            .Where(u => u.CreatedAt >= startDate)
+            .GroupBy(u => u.CreatedAt.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        // Fetch artworks
+        var artworkStats = await _context.Artworks
+            .Where(a => a.CreatedAt >= startDate && !a.IsPending && a.IsPublic)
+            .GroupBy(a => a.CreatedAt.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        // Fetch reports
+        var reportStats = await _context.Reports
+            .Where(r => r.CreatedAt >= startDate)
+            .GroupBy(r => r.CreatedAt.Date)
+            .Select(g => new { Date = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        // Fetch views from raw table
+        var viewStats = new Dictionary<string, int>();
+        using (var connection = _context.Database.GetDbConnection())
+        {
+            await connection.OpenAsync();
+            using (var command = connection.CreateCommand())
+            {
+                command.CommandText = "SELECT date, views FROM daily_views WHERE date >= date('now', '-14 days')";
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        viewStats[reader.GetString(0)] = reader.GetInt32(1);
+                    }
+                }
+            }
+        }
+
+        var result = new List<object>();
+        for (int i = days - 1; i >= 0; i--)
+        {
+            var date = DateTime.UtcNow.Date.AddDays(-i);
+            var dateString = date.ToString("yyyy-MM-dd");
+            var dateFormatted = date.ToString("dd/MM");
+
+            result.Add(new
+            {
+                name = dateFormatted,
+                users = userStats.FirstOrDefault(u => u.Date.Date == date)?.Count ?? 0,
+                artworks = artworkStats.FirstOrDefault(a => a.Date.Date == date)?.Count ?? 0,
+                reports = reportStats.FirstOrDefault(r => r.Date.Date == date)?.Count ?? 0,
+                views = viewStats.ContainsKey(dateString) ? viewStats[dateString] : 0
+            });
+        }
+
+        return Ok(result);
+    }
+
     [HttpGet("artworks")]
     public async Task<IActionResult> GetArtworks([FromQuery] int page = 1, [FromQuery] int limit = 20, [FromQuery] string? q = null, [FromQuery] string? tab = "all", [FromQuery] string? subject = "Tất cả", [FromQuery] string? year = "Tất cả")
     {

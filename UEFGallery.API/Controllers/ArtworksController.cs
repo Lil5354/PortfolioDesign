@@ -118,9 +118,7 @@ public class ArtworksController : ControllerBase
         }
 
         if (!string.IsNullOrEmpty(collaboratorId))
-        {
-            query = query.Where(a => a.CollaboratorIds.Contains(collaboratorId) || a.UserId == collaboratorId);
-        }
+            query = query.Where(a => a.CollaboratorIds.Contains(collaboratorId) && a.UserId != collaboratorId);
         else if (!isPendingFilter)
         {
             query = query.Where(a => a.IsPublic);
@@ -132,8 +130,28 @@ public class ArtworksController : ControllerBase
             query = query.Where(a => a.Title.ToLower().Contains(searchLower) || (a.Description != null && a.Description.ToLower().Contains(searchLower)) || (a.User != null && a.User.FullName != null && a.User.FullName.ToLower().Contains(searchLower)));
         }
 
-        if (!string.IsNullOrEmpty(category)) query = query.Where(a => a.Subject != null && a.Subject.ToLower() == category.ToLower());
-        if (!string.IsNullOrEmpty(tool)) query = query.Where(a => a.ToolsUsed != null && a.ToolsUsed.Any(t => t.ToLower() == tool.ToLower()));
+        if (!string.IsNullOrEmpty(category)) 
+        {
+            var catLower = category.ToLower();
+            var badgeQuery = _context.ArtworkBadges
+                .Where(ab => ab.Badge.Name.ToLower() == catLower || ab.Badge.Name.ToLower().Contains(catLower))
+                .Select(ab => ab.ArtworkId)
+                .Distinct();
+            
+            query = query.Where(a => badgeQuery.Contains(a.Id));
+        }
+        
+        if (!string.IsNullOrEmpty(tool)) 
+        {
+            var toolLower = tool.ToLower();
+            var toolBadgeQuery = _context.ArtworkBadges
+                .Where(ab => ab.Badge.Name.ToLower() == toolLower || ab.Badge.Name.ToLower().Contains(toolLower))
+                .Select(ab => ab.ArtworkId)
+                .Distinct();
+            
+            query = query.Where(a => toolBadgeQuery.Contains(a.Id) || (a.ToolsUsed != null && a.ToolsUsed.Any(t => t.ToLower().Contains(toolLower))));
+        }
+        
         if (!string.IsNullOrEmpty(year)) query = query.Where(a => a.AcademicYear != null && a.AcademicYear.ToLower() == year.ToLower());
         if (!string.IsNullOrEmpty(userId)) query = query.Where(a => a.UserId == userId);
         if (hasBadge == true)
@@ -816,6 +834,12 @@ public class ArtworksController : ControllerBase
 
         var artwork = await _context.Artworks.FirstOrDefaultAsync(a => a.Id == id);
         if (artwork == null) return NotFound();
+
+        // Validate Input: Cấm title rỗng
+        if (dto.Title != null && string.IsNullOrWhiteSpace(dto.Title))
+        {
+            return BadRequest(new { errors = new { Title = new[] { "Tiêu đề không được để trống hoặc chỉ chứa khoảng trắng." } } });
+        }
 
         // Check ownership or admin
         var role = User.FindFirstValue(ClaimTypes.Role);
