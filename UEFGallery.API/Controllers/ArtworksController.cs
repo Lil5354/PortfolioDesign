@@ -178,6 +178,7 @@ public class ArtworksController : ControllerBase
             {
                 a.Id,
                 a.Title,
+                a.Description,
                 a.CoverImageUrl,
                 a.OriginalCoverUrl,
                 a.Subject,

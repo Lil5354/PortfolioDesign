@@ -1318,6 +1318,8 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
   const [contactState, setContactState] = useState("idle");
   const [contactName, setContactName] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [contactCompany, setContactCompany] = useState("");
   const [contactPurpose, setContactPurpose] = useState(t("recruitmentInternship"));
   const [contactContent, setContactContent] = useState("");
   const [portfolioData, setPortfolioData] = useState(null);
@@ -1604,7 +1606,11 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
         senderName: contactName,
         senderEmail: contactEmail,
         purpose: contactPurpose,
-        content: contactContent,
+        content: JSON.stringify({
+          text: contactContent,
+          phone: contactPhone,
+          company: contactCompany
+        }),
       });
       setContactState("success");
     } catch (e) {
@@ -2255,6 +2261,16 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("contactEmail")}</label>
                   <input value={contactEmail} onChange={e => setContactEmail(e.target.value)} type="email" placeholder="email@company.com" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-[#666666] mb-1.5">Số điện thoại</label>
+                    <input value={contactPhone} onChange={e => setContactPhone(e.target.value)} type="tel" placeholder="0901234567" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-semibold text-[#666666] mb-1.5">Công ty (Tùy chọn)</label>
+                    <input value={contactCompany} onChange={e => setContactCompany(e.target.value)} type="text" placeholder="Tên công ty" className="w-full px-3 py-2 border border-[#E0E0E0] rounded-lg text-sm outline-none focus:border-[#1a4ba8]" />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#666666] mb-1.5">{t("purpose")}</label>
@@ -7901,11 +7917,15 @@ function MessagesPage({ setPage, userData }) {
                                 <div>
                                   <p style={{ fontSize: 14, fontWeight: 600, color: BLACK, margin: "0 0 8px" }}>{artworkTitle}</p>
                                   <p style={{ fontSize: 13, color: "#444", margin: "0 0 8px", lineHeight: 1.5 }}>{data.description || data.text || t("noDescription")}</p>
-                                  <div style={{ display: "flex", gap: 16, marginBottom: 8 }}>
-                                    {data.phone && (
-                                      <p style={{ fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 4, margin: 0 }}><Phone size={13} /> {data.phone}</p>
-                                    )}
-                                    {data.company && <p style={{ fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 4, margin: 0 }}><Building2 size={13} /> {data.company}</p>}
+                                  <div style={{ display: "flex", gap: 16, marginBottom: 8, flexWrap: "wrap" }}>
+                                    {Object.entries(data).map(([key, value]) => {
+                                      if (["artworkId", "attachedArtwork", "artworkImage", "artworkTitle", "description", "text"].includes(key) || !value) return null;
+                                      return (
+                                        <p key={key} style={{ fontSize: 13, color: "#666", display: "flex", alignItems: "center", gap: 4, margin: 0 }}>
+                                          <strong style={{textTransform: 'capitalize'}}>{key}:</strong> {value}
+                                        </p>
+                                      );
+                                    })}
                                   </div>
                                 </div>
                               </div>

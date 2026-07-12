@@ -103,7 +103,8 @@ public class UsersController : ControllerBase
                 Artworks = _context.Artworks.Where(a => a.UserId == u.Id).OrderByDescending(a => a.ViewCount).Select(a => new { a.Id, a.Title, a.CoverImageUrl, a.ViewCount, a.LikeCount }).ToList(),
                 Appreciations = _context.Artworks.Where(a => a.UserId == u.Id).Sum(a => a.Likes.Count),
                 FollowersCount = _context.Follows.Count(f => f.FollowedId == u.Id),
-                ProjectViews = _context.Artworks.Where(a => a.UserId == u.Id).Sum(a => (int?)a.ViewCount) ?? 0
+                ProjectViews = _context.Artworks.Where(a => a.UserId == u.Id).Sum(a => (int?)a.ViewCount) ?? 0,
+                Badges = _context.UserAccountBadges.Where(ub => ub.UserId == u.Id).Select(ub => new { ub.Badge.Id, ub.Badge.Name, ub.Badge.ColorCode, ub.Badge.TextColor }).ToList()
             })
             .OrderByDescending(u => u.FollowersCount)
             .Take(50)
@@ -115,13 +116,7 @@ public class UsersController : ControllerBase
             u.FullName,
             AvatarUrl = u.AvatarUrl != null && u.AvatarUrl.Contains("ui-avatars") ? "https://i.pravatar.cc/150?u=" + Math.Abs(u.Id.GetHashCode()) : u.AvatarUrl,
             u.Location,
-            Badges = new[] { 
-                u.Cohort == "Năm 1" ? "Designer Mầm non" : 
-                u.Cohort == "Năm 2" ? "Designer Thực tập" : 
-                u.Cohort == "Năm 3" ? "Designer Chuyên nghiệp" : 
-                u.Cohort == "Năm 4" ? "Designer Tiền bối" : 
-                u.Cohort == "Tốt nghiệp" ? "Designer Tiền bối" : "Designer Mầm non" 
-            },
+            Badges = u.Badges.Select(b => b.Name).ToArray(),
             u.Artworks,
             Appreciations = u.Appreciations > 0 ? u.Appreciations * 1234 : Math.Abs(u.Id.GetHashCode() % 50000) + 10000,
             FollowersCount = u.FollowersCount > 0 ? u.FollowersCount * 345 : Math.Abs(u.Id.GetHashCode() % 30000) + 5000,

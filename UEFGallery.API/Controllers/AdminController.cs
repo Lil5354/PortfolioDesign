@@ -149,8 +149,10 @@ public class AdminController : ControllerBase
                     Id = a.User.Id,
                     FullName = a.User.FullName,
                     Email = a.User.Email,
-                    AvatarUrl = a.User.AvatarUrl
+                    AvatarUrl = a.User.AvatarUrl,
+                    PortfolioSettings = a.User.PortfolioSettings
                 },
+                Badges = _context.ArtworkBadges.Where(ab => ab.ArtworkId == a.Id).Select(ab => new { ab.Badge.Id, ab.Badge.Name, ab.Badge.ColorCode, ab.Badge.TextColor }).ToList(),
                 _count = new { reports = a.Reports.Count() }
             })
             .ToListAsync();
@@ -182,7 +184,11 @@ public class AdminController : ControllerBase
         var limit = 1000;
         var skip = (page - 1) * limit;
 
-        var query = _context.Users;
+        var query = _context.Users
+            .Include(u => u.PortfolioSettings)
+            .Include(u => u.UserAccountBadges)
+            .ThenInclude(ub => ub.Badge)
+            .AsQueryable();
         
         var total = await query.CountAsync();
         var users = await query
