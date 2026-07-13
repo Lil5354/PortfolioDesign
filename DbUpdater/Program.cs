@@ -1,22 +1,46 @@
 using System;
-using Npgsql;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using UEFGallery.API.Data;
+using UEFGallery.API.Models;
 
 class Program
 {
     static void Main()
     {
-        var connString = "Host=ep-tiny-mode-aqaqluvi-pooler.c-8.us-east-1.aws.neon.tech;Database=neondb;Username=neondb_owner;Password=npg_0ItvywJCB4RX;Ssl Mode=Require;Trust Server Certificate=true;";
-        using var conn = new NpgsqlConnection(connString);
-        conn.Open();
-
-        try {
-            using var cmd = new NpgsqlCommand("SELECT id, email, role FROM users WHERE role='lecturer'", conn);
-            using var reader = cmd.ExecuteReader();
-            while(reader.Read()) {
-                Console.WriteLine($"Found Lecturer: ID={reader.GetString(0)}, Email={reader.GetString(1)}");
+        var options = new DbContextOptionsBuilder<GalleryDbContext>()
+            .UseSqlite("Data Source=../UEFGallery.API/gallery.db")
+            .Options;
+            
+        using var context = new GalleryDbContext(options);
+        
+        try
+        {
+            var artwork = context.Artworks.FirstOrDefault();
+            var badge = context.Badges.FirstOrDefault();
+            
+            if (artwork == null || badge == null) {
+                Console.WriteLine("No artwork or badge found");
+                return;
             }
-        } catch (Exception e) {
-            Console.WriteLine("Error: " + e.Message);
+            
+            Console.WriteLine($"Assigning badge {badge.Id} to artwork {artwork.Id}");
+            
+            var newAb = new ArtworkBadge
+            {
+                BadgeId = badge.Id,
+                ArtworkId = artwork.Id,
+                AssignedAt = DateTime.UtcNow
+            };
+            
+            context.ArtworkBadges.Add(newAb);
+            context.SaveChanges();
+            Console.WriteLine("Success!");
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("ERROR DETAILS:");
+            Console.WriteLine(e.ToString());
         }
     }
 }

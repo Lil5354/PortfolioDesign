@@ -23,6 +23,26 @@ public class ArtworksController : ControllerBase
         _embeddingService = embeddingService;
     }
 
+    [HttpGet("proxy-image")]
+    public async Task<IActionResult> ProxyImage([FromQuery] string url)
+    {
+        if (string.IsNullOrEmpty(url)) return BadRequest("URL is required");
+        try 
+        {
+            using var client = new HttpClient();
+            var response = await client.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return StatusCode((int)response.StatusCode);
+            
+            var stream = await response.Content.ReadAsStreamAsync();
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
+            return File(stream, contentType);
+        } 
+        catch 
+        {
+            return StatusCode(500, "Error proxying image");
+        }
+    }
+
     [HttpGet("feed")]
     [Authorize]
     public async Task<IActionResult> GetFeed([FromQuery] int page = 1, [FromQuery] int limit = 20)
@@ -138,7 +158,7 @@ public class ArtworksController : ControllerBase
                 .Select(ab => ab.ArtworkId)
                 .Distinct();
             
-            query = query.Where(a => badgeQuery.Contains(a.Id));
+            query = query.Where(a => badgeQuery.Contains(a.Id) || (a.Subject != null && a.Subject.ToLower().Contains(catLower)) || (a.Tags != null && a.Tags.Any(t => t.ToLower().Contains(catLower))));
         }
         
         if (!string.IsNullOrEmpty(tool)) 
@@ -731,10 +751,10 @@ public class ArtworksController : ControllerBase
             AcademicYear = dto.AcademicYear,
             Tags = dto.Tags ?? new List<string>(),
             CollaboratorIds = dto.CollaboratorIds ?? new List<string>(),
-            CoverImageUrl = dto.CoverImageUrl,
-            OriginalCoverUrl = dto.OriginalCoverUrl,
+            CoverImageUrl = ApplyCloudinaryWatermark(dto.OriginalCoverUrl ?? dto.CoverImageUrl, dto.WatermarkText),
+            OriginalCoverUrl = dto.OriginalCoverUrl ?? dto.CoverImageUrl,
             WatermarkImageUrl = dto.WatermarkImageUrl,
-            FileUrls = dto.FileUrls,
+            FileUrls = dto.FileUrls?.Select(u => ApplyCloudinaryWatermark(u, dto.WatermarkText)).ToList(),
             BlocksJson = dto.BlocksJson,
             WatermarkText = dto.WatermarkText,
             WatermarkPosition = dto.WatermarkPosition,
@@ -873,14 +893,25 @@ public class ArtworksController : ControllerBase
         if (dto.Subject != null && dto.Subject != artwork.Subject) { artwork.Subject = dto.Subject; }
         if (dto.Semester != null) artwork.Semester = dto.Semester;
         if (dto.AcademicYear != null) artwork.AcademicYear = dto.AcademicYear;
-        if (!string.IsNullOrEmpty(dto.CoverImageUrl) && dto.CoverImageUrl != artwork.CoverImageUrl) { artwork.CoverImageUrl = dto.CoverImageUrl; }
-        if (!string.IsNullOrEmpty(dto.OriginalCoverUrl)) artwork.OriginalCoverUrl = dto.OriginalCoverUrl;
-        if (dto.WatermarkImageUrl != null) artwork.WatermarkImageUrl = dto.WatermarkImageUrl;
-        if (dto.FileUrls != null) artwork.FileUrls = dto.FileUrls;
-        if (dto.BlocksJson != null) artwork.BlocksJson = dto.BlocksJson;
-        if (dto.SettingsData != null) artwork.SettingsData = dto.SettingsData;
+        
+        if (!string.IsNullOrEmpty(dto.CoverImageUrl) && dto.CoverImageUrl != artwork.CoverImageUrl) 
+        { 
+            artwork.OriginalCoverUrl = dto.OriginalCoverUrl ?? dto.CoverImageUrl; 
+        }
+        
         if (dto.WatermarkText != null) artwork.WatermarkText = dto.WatermarkText;
         if (dto.WatermarkPosition != null) artwork.WatermarkPosition = dto.WatermarkPosition;
+        
+        if (!string.IsNullOrEmpty(artwork.OriginalCoverUrl))
+        {
+            artwork.CoverImageUrl = ApplyCloudinaryWatermark(artwork.OriginalCoverUrl, artwork.WatermarkText);
+        }
+
+        if (dto.WatermarkImageUrl != null) artwork.WatermarkImageUrl = dto.WatermarkImageUrl;
+        if (dto.FileUrls != null) artwork.FileUrls = dto.FileUrls.Select(u => ApplyCloudinaryWatermark(u, artwork.WatermarkText)).ToList();
+        if (dto.BlocksJson != null) artwork.BlocksJson = dto.BlocksJson;
+        if (dto.SettingsData != null) artwork.SettingsData = dto.SettingsData;
+
 
         if (artwork.IsPublic && role != "admin" && role != "lecturer")
         {
@@ -1260,28 +1291,11 @@ public class ArtworksController : ControllerBase
         foreach (var name in autoBadgeNames)
         {
             var badge = await _context.Badges.FirstOrDefaultAsync(b => b.Name.ToLower() == name.ToLower());
-            if (badge == null)
+            if (badge != null)
             {
-                string bgColor = "#8b5cf6"; // Violet 500
-                if (System.Text.RegularExpressions.Regex.IsMatch(name, @"^20\d{2}$"))
-                    bgColor = "#eab308"; // Yellow 500
-                else if (new[] { "photoshop", "illustrator", "figma", "sketch", "after effects", "premiere", "blender", "maya", "indesign", "lightroom" }.Contains(name.ToLower()))
-                    bgColor = "#3b82f6"; // Blue 500
-
-                badge = new Badge
-                {
-                    Id = Guid.NewGuid(),
-                    Name = name,
-                    ColorCode = bgColor, 
-                    TextColor = "#FFFFFF",
-                    CreatedAt = DateTime.UtcNow,
-                    LecturerId = systemLecturerId
-                };
-                _context.Badges.Add(badge);
+                dbBadges.Add(badge);
             }
-            dbBadges.Add(badge);
         }
-        await _context.SaveChangesAsync();
 
         var existingArtworkBadges = await _context.ArtworkBadges
             .Include(ab => ab.Badge)
@@ -1311,6 +1325,15 @@ public class ArtworksController : ControllerBase
         }
 
         await _context.SaveChangesAsync();
+    }
+
+    private string ApplyCloudinaryWatermark(string originalUrl, string watermarkText)
+    {
+        if (string.IsNullOrEmpty(watermarkText) || string.IsNullOrEmpty(originalUrl)) return originalUrl;
+        if (!originalUrl.Contains("res.cloudinary.com") || !originalUrl.Contains("/upload/")) return originalUrl;
+        var text = watermarkText.Replace(",", "%2C").Replace("/", "%2F");
+        var transformation = $"l_text:Arial_60_bold:{text},co_white,o_50/";
+        return originalUrl.Replace("/upload/", $"/upload/{transformation}");
     }
 }
 

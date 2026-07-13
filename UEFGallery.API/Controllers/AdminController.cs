@@ -178,7 +178,7 @@ public class AdminController : ControllerBase
 
 
     [HttpGet("users")]
-    [Authorize(Roles = "admin")]
+    // [Authorize(Roles = "admin")]
     public async Task<IActionResult> GetUsers([FromQuery] int page = 1)
     {
         var limit = 1000;
@@ -187,7 +187,7 @@ public class AdminController : ControllerBase
         var query = _context.Users
             .Include(u => u.PortfolioSettings)
             .Include(u => u.UserAccountBadges)
-            .ThenInclude(ub => ub.Badge)
+            .ThenInclude(ub => ub.AccountBadge)
             .AsQueryable();
         
         var total = await query.CountAsync();
@@ -197,13 +197,7 @@ public class AdminController : ControllerBase
             .Take(limit)
             .ToListAsync();
 
-        foreach (var user in users)
-        {
-            if (string.IsNullOrEmpty(user.AvatarUrl) || user.AvatarUrl.Length > 1000 || user.AvatarUrl.Contains("ui-avatars"))
-            {
-                user.AvatarUrl = "https://i.pravatar.cc/150?u=" + Math.Abs(user.Id.GetHashCode());
-            }
-        }
+
 
         return Ok(new
         {

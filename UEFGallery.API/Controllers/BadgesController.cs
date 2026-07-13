@@ -17,6 +17,13 @@ namespace UEFGallery.API.Controllers
         public BadgesController(GalleryDbContext context)
         {
             _context = context;
+            // Ensure artwork_badges table exists (workaround for missing migrations)
+            _context.Database.ExecuteSqlRawAsync(@"CREATE TABLE IF NOT EXISTS artwork_badges (
+                artwork_id TEXT NOT NULL,
+                badge_id TEXT NOT NULL,
+                assigned_at TEXT NOT NULL,
+                PRIMARY KEY (artwork_id, badge_id)
+            );").GetAwaiter().GetResult();
         }
 
         [HttpGet]
@@ -54,6 +61,7 @@ namespace UEFGallery.API.Controllers
         }
 
         [HttpPost("{badgeId}/assign/{artworkId}")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "admin,lecturer")]
         public async Task<IActionResult> AssignBadge(Guid badgeId, string artworkId)
         {
             var exists = await _context.ArtworkBadges.AnyAsync(ab => ab.BadgeId == badgeId && ab.ArtworkId == artworkId);
@@ -67,6 +75,18 @@ namespace UEFGallery.API.Controllers
             }
             else
             {
+                var artworkExists = await _context.Artworks.AnyAsync(a => a.Id == artworkId);
+                var badgeExists = await _context.Badges.AnyAsync(b => b.Id == badgeId);
+
+                if (!artworkExists)
+                {
+                    return BadRequest(new { error = $"Artwork with id '{artworkId}' not found in database." });
+                }
+                if (!badgeExists)
+                {
+                    return BadRequest(new { error = $"Badge with id '{badgeId}' not found in database." });
+                }
+
                 var newAb = new ArtworkBadge
                 {
                     BadgeId = badgeId,
@@ -74,8 +94,15 @@ namespace UEFGallery.API.Controllers
                     AssignedAt = DateTime.UtcNow
                 };
                 _context.ArtworkBadges.Add(newAb);
-                await _context.SaveChangesAsync();
-                return Ok(new { status = "assigned" });
+                try 
+                {
+                    await _context.SaveChangesAsync();
+                    return Ok(new { status = "assigned" });
+                }
+                catch (Exception e)
+                {
+                    return StatusCode(500, new { error = e.ToString() });
+                }
             }
         }
 

@@ -1005,8 +1005,8 @@ function AdminDashboardPage({ setPage }) {
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.user?.fullName || ""}</td>
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.subject || ""}</td>
                       <td className="px-4 py-3 text-sm text-[#666666]">{a.createdAt ? new Date(a.createdAt).toLocaleDateString("vi-VN") : ""}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusBadge(aStatus)}`}>{aStatus}</span>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap ${statusBadge(aStatus)}`}>{aStatus}</span>
                       </td>
                     </tr>
                   );
@@ -1082,10 +1082,52 @@ function MessagesPage({ setPage, userData }) {
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
-    api.messages.list().then(data => {
-      setMessages(Array.isArray(data) ? data : []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    const fetchMsgs = () => {
+      api.messages.list().then(data => {
+        setMessages(Array.isArray(data) ? data : []);
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    };
+
+    fetchMsgs();
+
+    // Setup SignalR connection for Real-time chat
+    const connection = new HubConnectionBuilder()
+      .withUrl("/chatHub", {
+        accessTokenFactory: () => localStorage.getItem("token") || ""
+      })
+      .configureLogging(LogLevel.Information)
+      .withAutomaticReconnect()
+      .build();
+
+    connection.start().catch(err => console.error("SignalR Connection Error: ", err));
+
+    connection.on("ReceiveMessage", (message) => {
+      // Optimistically append the message to ensure immediate real-time display
+      setMessages(prev => {
+        const msgId = message.id || message.Id;
+        if (prev.some(m => m.id === msgId)) return prev;
+        const newMsg = {
+          ...message,
+          id: msgId,
+          senderName: message.senderName || message.SenderName,
+          senderEmail: message.senderEmail || message.SenderEmail,
+          recipientSlug: message.recipientSlug || message.RecipientSlug || "",
+          purpose: message.purpose || message.Purpose,
+          content: message.content || message.Content,
+          isRead: message.isRead || message.IsRead,
+          createdAt: message.createdAt || message.CreatedAt
+        };
+        return [newMsg, ...prev];
+      });
+
+      // Fetch messages again to update inbox in real time
+      fetchMsgs();
+    });
+
+    return () => {
+      connection.stop();
+    };
   }, []);
 
   const toggleMessage = (id) => {
@@ -1146,9 +1188,18 @@ function MessagesPage({ setPage, userData }) {
                       {msg.purpose === 'order' && (
                         <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{t("orderArtwork")}</p>
                       )}
-                      {msg.purpose !== 'order' && msg.content && (
-                        <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{msg.content?.substring(0, 100) || ""}</p>
-                      )}
+                      {msg.purpose !== 'order' && msg.content && (() => {
+                        let textPreview = msg.content;
+                        try {
+                          const d = JSON.parse(msg.content);
+                          if (d.description || d.text) {
+                            textPreview = d.description || d.text;
+                          }
+                        } catch {}
+                        return (
+                          <p style={{ fontSize: 13, color: msg.isRead ? MUTED : BLACK, margin: 0, fontWeight: msg.isRead ? 400 : 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{textPreview?.substring(0, 100) || ""}</p>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
@@ -5610,7 +5661,7 @@ export default function App() {
       )}
 
       {/* ChatBot */}
-      <ChatBot userRole={userRole} />
+      <ChatBot userRole={userRole} userData={userData} />
     </div>
   );
 }

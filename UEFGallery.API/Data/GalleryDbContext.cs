@@ -56,7 +56,7 @@ public class GalleryDbContext : DbContext
 
         modelBuilder.Entity<Models.UserAccountBadge>()
             .HasOne(uab => uab.User)
-            .WithMany()
+            .WithMany(u => u.UserAccountBadges)
             .HasForeignKey(uab => uab.UserId);
 
         modelBuilder.Entity<Models.UserAccountBadge>()

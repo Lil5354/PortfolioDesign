@@ -49,18 +49,38 @@ export default function MessageDropdown({ setPage, userData }) {
     connection.start().catch(err => console.error("SignalR Connection Error: ", err));
 
     connection.on("ReceiveMessage", (message) => {
-      // Re-fetch messages when receiving a new one
+      // Optimistically append the message to ensure immediate real-time display
+      setMessages(prev => {
+        const msgId = message.id || message.Id;
+        if (prev.some(m => m.id === msgId)) return prev;
+        const newMsg = {
+          ...message,
+          id: msgId,
+          senderName: message.senderName || message.SenderName,
+          senderEmail: message.senderEmail || message.SenderEmail,
+          recipientSlug: message.recipientSlug || message.RecipientSlug || "",
+          purpose: message.purpose || message.Purpose,
+          content: message.content || message.Content,
+          isRead: message.isRead || message.IsRead,
+          createdAt: message.createdAt || message.CreatedAt
+        };
+        return [newMsg, ...prev];
+      });
+
+      // Re-fetch messages to ensure full data consistency
       fetchMessages();
+      
       // Only show popup/badge if it's not sent by me
-      if (userData && message.senderEmail !== userData.email) {
-        // We could show a toast here if we wanted
+      const isOutbox = message.senderName?.startsWith("To: ") || message.SenderName?.startsWith("To: ");
+      if (!isOutbox) {
+        setUnreadCount(prev => prev + 1);
       }
     });
 
     return () => {
       connection.stop();
     };
-  }, [fetchMessages]);
+  }, [fetchMessages, userData?.email]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -76,12 +96,14 @@ export default function MessageDropdown({ setPage, userData }) {
   }, []);
 
   useEffect(() => {
-    if (showAttachMenu && attachArtworks.length === 0) {
-      api.artworks.list().then(data => {
+    if (!showAttachMenu) return;
+    const timeoutId = setTimeout(() => {
+      api.artworks.list(attachSearch.trim() ? { q: attachSearch.trim(), limit: 20 } : { limit: 10 }).then(data => {
         setAttachArtworks(Array.isArray(data) ? data : (data.artworks || data.items || []));
       }).catch(()=>{});
-    }
-  }, [showAttachMenu]);
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [showAttachMenu, attachSearch]);
 
   // Group into threads for display
   const threadedMessages = [];
@@ -156,7 +178,7 @@ export default function MessageDropdown({ setPage, userData }) {
                        }
                      })
                    : replyText,
-          purpose: selectedAttachment ? "feedback" : "message"
+          purpose: "chat"
       });
       
       const outboxMsg = {
@@ -272,26 +294,26 @@ export default function MessageDropdown({ setPage, userData }) {
         if (senderNameDisplay?.startsWith("To: ")) senderNameDisplay = senderNameDisplay.replace("To: ", "");
         
         return (
-        <div ref={popupRef} className="fixed bottom-4 right-4 sm:right-24 w-[340px] bg-white rounded-t-xl rounded-b-md shadow-2xl border border-gray-200 z-[999] flex flex-col" style={{ height: "450px" }}>
+        <div ref={popupRef} className="fixed bottom-4 right-4 sm:right-24 w-[380px] bg-white rounded-2xl shadow-2xl border border-gray-200 z-[999] flex flex-col overflow-hidden animate-slide-up" style={{ height: "560px" }}>
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 bg-[#1a4ba8] text-white rounded-t-xl cursor-pointer" onClick={() => setActiveChatId(null)}>
-            <div className="flex items-center gap-2 overflow-hidden">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <div className="bg-gradient-to-r from-[#1a4ba8] to-[#0d2e6e] px-4 py-3 flex items-center justify-between shrink-0 cursor-pointer" onClick={() => setActiveChatId(null)}>
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0 overflow-hidden border-2 border-white/40 shadow-md">
                 {activeChat.otherAvatarUrl ? (
                   <img src={activeChat.otherAvatarUrl} alt="" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="font-bold text-sm">
+                  <span className="font-bold text-sm text-white">
                     {senderNameDisplay?.charAt(0)?.toUpperCase()}
                   </span>
                 )}
               </div>
               <div className="flex flex-col min-w-0">
-                <h3 className="font-semibold text-sm truncate">{senderNameDisplay}</h3>
-                <span className="text-[10px] text-white/70 truncate">{activeChat.artworkData?.artworkTitle || "Trực tuyến"}</span>
+                <h3 className="text-white font-semibold text-sm truncate">{senderNameDisplay}</h3>
+                <span className="text-white/70 text-xs truncate">{activeChat.artworkData?.artworkTitle || "Trực tuyến"}</span>
               </div>
             </div>
-            <button className="text-white hover:bg-white/20 p-1 rounded-full cursor-pointer transition-colors flex-shrink-0" onClick={(e) => { e.stopPropagation(); setActiveChatId(null); }}>
-              <X size={16} />
+            <button className="text-white/70 hover:text-white transition-colors p-1 rounded-full flex-shrink-0" onClick={(e) => { e.stopPropagation(); setActiveChatId(null); }}>
+              <X size={20} />
             </button>
           </div>
           
@@ -309,14 +331,14 @@ export default function MessageDropdown({ setPage, userData }) {
           </div>
           
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-3 flex flex-col-reverse gap-3 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse gap-4 bg-[#F5F7FA]">
              {activeChat.messages.map((m, i) => {
                 const isMe = m.senderEmail === userData?.email || m.senderName?.startsWith("To: ");
                 let mText = m.content;
                 let attachment = null;
                 try {
                   const d = JSON.parse(m.content);
-                  mText = d.description || m.content;
+                  mText = typeof d.description === "string" ? d.description : m.content;
                   if (d.attachedArtwork) {
                     attachment = d.attachedArtwork;
                   } else if (d.artworkId) {
@@ -329,11 +351,11 @@ export default function MessageDropdown({ setPage, userData }) {
                     {attachment && (
                       <div 
                         onClick={() => { setPage('detail', { artworkId: attachment.artworkId }); setIsOpen(false); }}
-                        className="w-[220px] rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                        className="w-[240px] rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                       >
                         <div className="aspect-[4/3] bg-gray-100 relative">
-                           {attachment.artworkImage && attachment.artworkImage !== "null" && attachment.artworkImage !== "undefined" ? (
-                             <img src={attachment.artworkImage} className="w-full h-full object-cover" />
+                           {((attachment.artworkImage && attachment.artworkImage !== "null" && attachment.artworkImage !== "undefined") || (attachment.coverUrl && attachment.coverUrl !== "null" && attachment.coverUrl !== "undefined")) ? (
+                             <img src={(attachment.artworkImage && attachment.artworkImage !== "null" && attachment.artworkImage !== "undefined") ? attachment.artworkImage : attachment.coverUrl} className="w-full h-full object-cover" />
                            ) : (
                              <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">Không có ảnh</div>
                            )}
@@ -341,15 +363,17 @@ export default function MessageDropdown({ setPage, userData }) {
                              {activeChat.purpose === "order" ? "ĐẶT HÀNG" : "PHẢN HỒI"}
                            </div>
                         </div>
-                        <div className="p-2.5">
-                          <p className="text-xs font-bold text-gray-800 line-clamp-1">{attachment.artworkTitle || "Tác phẩm"}</p>
+                        <div className="p-3">
+                          <p className="text-sm font-bold text-gray-800 line-clamp-1">{attachment.artworkTitle || "Tác phẩm"}</p>
                         </div>
                       </div>
                     )}
                     
-                    <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${isMe ? "bg-[#1a4ba8] text-white rounded-br-sm" : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm"}`}>
-                      <p className="whitespace-pre-wrap break-words">{mText}</p>
-                    </div>
+                    {mText && (
+                      <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-[15px] ${isMe ? "bg-[#1a4ba8] text-white rounded-br-sm" : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm shadow-sm"}`}>
+                        <p className="whitespace-pre-wrap break-words leading-relaxed">{mText}</p>
+                      </div>
+                    )}
                   </div>
                 );
              })}
@@ -369,10 +393,10 @@ export default function MessageDropdown({ setPage, userData }) {
                   />
                 </div>
                 <div className="flex-1 overflow-y-auto p-1">
-                  {attachArtworks.filter(a => a.title.toLowerCase().includes(attachSearch.toLowerCase())).length === 0 ? (
+                  {attachArtworks.length === 0 ? (
                     <div className="text-center p-3 text-xs text-gray-500">Không tìm thấy tác phẩm</div>
                   ) : (
-                    attachArtworks.filter(a => a.title.toLowerCase().includes(attachSearch.toLowerCase())).map(art => (
+                    attachArtworks.map(art => (
                       <div 
                         key={art.id} 
                         onClick={() => { setSelectedAttachment(art); setShowAttachMenu(false); }}
@@ -400,28 +424,31 @@ export default function MessageDropdown({ setPage, userData }) {
               </div>
             )}
             
-            <div className="p-3 bg-white border-t border-gray-200 flex items-center gap-2">
-              <button 
-                onClick={() => setShowAttachMenu(!showAttachMenu)}
-                className={`p-2 rounded-full transition-colors flex-shrink-0 ${showAttachMenu || selectedAttachment ? "text-[#1a4ba8] bg-blue-50" : "text-gray-400 hover:text-gray-600 hover:bg-gray-100"}`}
-                title="Đính kèm ấn phẩm"
-              >
-                <Paperclip size={18} />
-              </button>
-              <input 
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Nhập tin nhắn..."
-                onKeyDown={(e) => { if (e.key === 'Enter') handleReply(); }}
-                className="flex-1 bg-gray-100 border-none rounded-full px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-[#1a4ba8]/30 min-w-0"
-              />
-              <button 
-                disabled={replying || (!replyText.trim() && !selectedAttachment)}
-                onClick={handleReply}
-                className="w-9 h-9 rounded-full bg-[#1a4ba8] text-white flex items-center justify-center disabled:opacity-50 cursor-pointer flex-shrink-0"
-              >
-                <Send size={15} className={replying ? "opacity-50" : ""} style={{ marginLeft: "2px" }} />
-              </button>
+            <div className="p-3 border-t border-gray-200 bg-white shrink-0">
+              <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-1.5 border border-gray-200 focus-within:border-[#1a4ba8] focus-within:ring-1 focus-within:ring-[#1a4ba8]/20 transition-all">
+                <button 
+                  onClick={() => setShowAttachMenu(!showAttachMenu)}
+                  className={`p-1.5 rounded-full transition-colors flex-shrink-0 ${showAttachMenu || selectedAttachment ? "text-[#1a4ba8] bg-blue-50" : "text-gray-400 hover:text-[#1a4ba8] hover:bg-[#1a4ba8]/10"}`}
+                  title="Đính kèm ấn phẩm"
+                >
+                  <Paperclip size={18} />
+                </button>
+                <input 
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Nhập tin nhắn..."
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleReply(); }}
+                  disabled={replying}
+                  className="flex-1 py-1.5 text-[15px] bg-transparent outline-none disabled:opacity-50 min-w-0"
+                />
+                <button 
+                  disabled={replying || (!replyText.trim() && !selectedAttachment)}
+                  onClick={handleReply}
+                  className="w-8 h-8 rounded-lg bg-[#1a4ba8] text-white flex items-center justify-center hover:bg-[#1642a6] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                >
+                  <Send size={14} className={replying ? "opacity-50" : ""} />
+                </button>
+              </div>
             </div>
           </div>
         </div>

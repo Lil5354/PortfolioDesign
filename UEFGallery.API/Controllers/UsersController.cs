@@ -104,7 +104,7 @@ public class UsersController : ControllerBase
                 Appreciations = _context.Artworks.Where(a => a.UserId == u.Id).Sum(a => a.Likes.Count),
                 FollowersCount = _context.Follows.Count(f => f.FollowedId == u.Id),
                 ProjectViews = _context.Artworks.Where(a => a.UserId == u.Id).Sum(a => (int?)a.ViewCount) ?? 0,
-                Badges = _context.UserAccountBadges.Where(ub => ub.UserId == u.Id).Select(ub => new { ub.Badge.Id, ub.Badge.Name, ub.Badge.ColorCode, ub.Badge.TextColor }).ToList()
+                Badges = _context.UserAccountBadges.Where(ub => ub.UserId == u.Id).Select(ub => new { ub.AccountBadge.Id, ub.AccountBadge.Name, ColorCode = ub.AccountBadge.BgColor, ub.AccountBadge.TextColor }).ToList()
             })
             .OrderByDescending(u => u.FollowersCount)
             .Take(50)
@@ -114,7 +114,7 @@ public class UsersController : ControllerBase
         {
             u.Id,
             u.FullName,
-            AvatarUrl = u.AvatarUrl != null && u.AvatarUrl.Contains("ui-avatars") ? "https://i.pravatar.cc/150?u=" + Math.Abs(u.Id.GetHashCode()) : u.AvatarUrl,
+            AvatarUrl = u.AvatarUrl,
             u.Location,
             Badges = u.Badges.Select(b => b.Name).ToArray(),
             u.Artworks,
@@ -173,7 +173,7 @@ public class UsersController : ControllerBase
                 Id = Guid.NewGuid().ToString(),
                 Email = $"user_{Guid.NewGuid().ToString().Substring(0, 8)}@uef.edu.vn",
                 FullName = i == 1 ? "Andreas Preis" : i == 2 ? "Graphéine" : i == 3 ? "Anagrama Studio" : i == 4 ? "Thomas Moeller" : $"Creator {i}",
-                AvatarUrl = "https://i.pravatar.cc/150?u=" + Guid.NewGuid().ToString().Substring(0, 5),
+                AvatarUrl = "https://ui-avatars.com/api/?name=" + Uri.EscapeDataString("Mock User " + i) + "&background=random",
                 Role = Role.student,
                 Cohort = cohorts[rnd.Next(cohorts.Length)],
                 CreatedAt = DateTime.UtcNow,

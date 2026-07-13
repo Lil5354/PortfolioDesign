@@ -112,15 +112,21 @@ function TypingIndicator() {
   );
 }
 
-function ChatMessage({ msg }) {
+function ChatMessage({ msg, userAvatar }) {
   const isUser = msg.role === "user";
   return (
     <div className={`flex items-start gap-2.5 ${isUser ? "flex-row-reverse" : ""} ${isUser ? "ml-auto" : "mr-auto"} animate-fade-in`}>
       {/* Avatar */}
       {isUser ? (
-        <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-[#1a4ba8] flex items-center justify-center">
-          <User size={14} className="text-white" />
-        </div>
+        userAvatar ? (
+          <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden border border-gray-200 shadow-sm">
+            <img src={userAvatar} alt="" className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden bg-[#1a4ba8] flex items-center justify-center">
+            <User size={14} className="text-white" />
+          </div>
+        )
       ) : (
         <div className="w-8 h-8 rounded-full shrink-0 overflow-hidden border-2 border-white shadow-sm">
           <img src={BOT_AVATAR} alt="" className="w-full h-full object-cover" />
@@ -139,7 +145,7 @@ function ChatMessage({ msg }) {
   );
 }
 
-export default function ChatBot({ userRole = "employer" }) {
+export default function ChatBot({ userRole = "employer", userData = null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -223,7 +229,7 @@ export default function ChatBot({ userRole = "employer" }) {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#F5F7FA]">
             {messages.map((msg) => (
-              <ChatMessage key={msg.id} msg={msg} />
+              <ChatMessage key={msg.id} msg={msg} userAvatar={userData?.avatarUrl} />
             ))}
             {isLoading && <TypingIndicator />}
             <div ref={messagesEndRef} />

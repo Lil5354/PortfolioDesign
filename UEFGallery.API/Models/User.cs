@@ -84,4 +84,6 @@ public class User
 
     public ICollection<Follow> Following { get; set; } = new List<Follow>();
 
+    public ICollection<UserAccountBadge> UserAccountBadges { get; set; } = new List<UserAccountBadge>();
+
 }

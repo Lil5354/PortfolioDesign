@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DbUpdater")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7534ae30f43df1c75bbf2450f8196ee5ce629386")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cdf146063f3c0d487b179a5dd3b6115ad95669c9")]
 [assembly: System.Reflection.AssemblyProductAttribute("DbUpdater")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DbUpdater")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

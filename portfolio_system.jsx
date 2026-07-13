@@ -189,6 +189,18 @@ const getBadgeColor = (badgeName) => {
   if (badgeName === "Designer Tốt nghiệp") return { text: "#000000", bg: "#ffffff" }; // Black
   return { text: "#444444", bg: "#ffffff" };
 };
+
+export const getUserAvatar = (user) => {
+  if (!user) return "https://ui-avatars.com/api/?name=User&background=random";
+  const avatarUrl = user.avatarUrl || user.AvatarUrl;
+  if (avatarUrl) {
+    if (avatarUrl.includes("ui-avatars")) {
+      return `https://i.pravatar.cc/150?u=${user.id || user.Id || 1}`;
+    }
+    return avatarUrl;
+  }
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || user.FullName || user.name || "User")}&background=random`;
+};
 import ChatBot from './components/ChatBot';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -262,7 +274,7 @@ function AppHeader({ activePage, setPage, isLoggedIn, userRole, onLogout, userDa
 
   const userName = userData?.fullName || userData?.name || t("defaultUser");
   const userEmail = userData?.email || "";
-  const userAvatar = userData?.avatarUrl || userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+  const userAvatar = getUserAvatar(userData);
 
   return (
     <header className="flex items-center justify-between px-8 py-3 border-b border-gray-100 bg-white sticky top-0 z-50">
@@ -525,7 +537,7 @@ function ProfileQuickViewModal({ person, onClose, setPage }) {
         
         <div style={{ padding: "0 24px 20px", textAlign: "center", position: "relative" }}>
           <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#fff", padding: 4, margin: "-40px auto 12px", position: "relative", zIndex: 2, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
-            <img src={person.avatarUrl || "https://via.placeholder.com/150"} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} alt="" />
+            <img src={getUserAvatar(person)} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} alt="" />
           </div>
           
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 4 }}>
@@ -639,7 +651,7 @@ function PeopleGrid({ setPage, searchQuery }) {
   return (
     <div style={{ padding: "0 32px 64px", background: "#f9f9f9", minHeight: "100vh" }}>
       <div style={{ background: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url('${mostLikedArtwork}')`, backgroundSize: "cover", backgroundPosition: "center", borderRadius: 16, padding: "64px 32px", textAlign: "center", color: "#fff", marginBottom: 32, position: "relative", overflow: "hidden" }}>
-        <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12, position: "relative", zIndex: 2 }}>Looking to Hire a Creator?</h2>
+        <h2 style={{ fontSize: 36, fontWeight: 800, marginBottom: 12, position: "relative", zIndex: 2 }}>Looking to Order a Creator?</h2>
         <p style={{ fontSize: 18, color: "#e0e0e0", position: "relative", zIndex: 2 }}>Over 10,000 students are available for your next big project.</p>
       </div>
 
@@ -656,7 +668,7 @@ function PeopleGrid({ setPage, searchQuery }) {
                 );
               })}
               <div style={{ position: "absolute", bottom: -40, left: "50%", transform: "translateX(-50%)", width: 84, height: 84, borderRadius: "50%", background: "#fff", padding: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 2 }}>
-                <img src={p.avatarUrl || "https://via.placeholder.com/150"} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} alt="" />
+                <img src={getUserAvatar(p)} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} alt="" />
               </div>
             </div>
             
@@ -836,6 +848,26 @@ function GalleryPage({ setPage, setActiveArtworkId, onBookmarkClick, isBookmarke
       }
     }).catch(() => { if (id === fetchId.current) setLoading(false); });
   }, [filters, page, limit, feedMode, authUser]);
+
+  useEffect(() => {
+    const handleArtworkUpdate = (e) => {
+      const { artworkId, type, count, isLiked, badges } = e.detail;
+      setData(prev => {
+        if (!prev.artworks) return prev;
+        const updated = prev.artworks.map(a => {
+          if (String(a.id) === String(artworkId)) {
+            if (type === 'like') return { ...a, likeCount: count, likes: count, isLiked: isLiked };
+            if (type === 'view') return { ...a, viewCount: count, views: count };
+            if (type === 'badge') return { ...a, badges: badges };
+          }
+          return a;
+        });
+        return { ...prev, artworks: updated };
+      });
+    };
+    window.addEventListener('artworkUpdate', handleArtworkUpdate);
+    return () => window.removeEventListener('artworkUpdate', handleArtworkUpdate);
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -1469,6 +1501,25 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
     }).catch(() => {});
   }, [slug]);
 
+  useEffect(() => {
+    const handleArtworkUpdate = (e) => {
+      const { artworkId, type, count, isLiked, badges } = e.detail;
+      setPortfolioArtworks(prev => {
+        if (!prev) return prev;
+        return prev.map(a => {
+          if (String(a.id) === String(artworkId)) {
+            if (type === 'like') return { ...a, likeCount: count, likes: count, isLiked: isLiked };
+            if (type === 'view') return { ...a, viewCount: count, views: count };
+            if (type === 'badge') return { ...a, badges: badges };
+          }
+          return a;
+        });
+      });
+    };
+    window.addEventListener('artworkUpdate', handleArtworkUpdate);
+    return () => window.removeEventListener('artworkUpdate', handleArtworkUpdate);
+  }, []);
+
   if (loading) return <GlobalLoading />;
   if (!portfolioData) {
     return (
@@ -1748,7 +1799,7 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
           <div className="w-full lg:w-[280px] xl:w-[320px] flex-shrink-0 -mt-14 relative z-20">
             <div className="flex flex-col items-start text-left">
                <div className="relative w-[110px] h-[110px] rounded-full border-[4px] border-white shadow-sm bg-[#F8F8F8] mb-3 group overflow-hidden">
-                  <img src={profile.avatarUrl} alt={profile.fullName} className="w-full h-full object-cover" />
+                  <img src={getUserAvatar(profile)} alt={profile.fullName} className="w-full h-full object-cover" />
                   {isOwner && (
                     <div 
                       className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
@@ -2312,7 +2363,7 @@ function PortfolioPage({ setPage, pageParams, onBookmarkClick, isBookmarked }) {
                   <div key={u.id} 
                        className="flex items-center gap-3 p-3 hover:bg-[#F8F8F8] rounded-xl cursor-pointer transition-colors border border-transparent hover:border-[#EAEAEA]" 
                        onClick={() => { setModalType(null); setPage && setPage("portfolio", { portfolioSlug: u.id }); }}>
-                    <img src={u.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(u.fullName || "User") + "&background=random"} 
+                    <img src={getUserAvatar(u)} 
                          className="w-12 h-12 rounded-full object-cover border border-[#E0E0E0]" />
                     <div>
                       <p className="font-semibold text-[15px] text-[#212121] leading-tight">{u.fullName}</p>
@@ -2434,7 +2485,7 @@ function DashboardSidebar({ activePage, setPage, userData }) {
   
   const roleLabel = { student: t("student"), lecturer: t("lecturer"), admin: t("admin") };
   const profileName = userData?.fullName || userData?.name || roleLabel[userData?.role] || t("student");
-  const profileAvatar = userData?.avatarUrl || userData?.image || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80";
+  const profileAvatar = getUserAvatar(userData);
   const studentYear = roleLabel[userData?.role] || t("student");
 
   return (
@@ -3037,8 +3088,6 @@ function BadgesPage({ setPage, userData }) {
                 <p style={{ color: MUTED, fontSize: 14 }}>Chưa có huy hiệu nào được tạo.</p>
               ) : (
                 badges.map(b => {
-                  const defaultCatNames = ["Poster", "Branding", "UI/UX", "3D Art", "Illustration", "Typography", "Photography", "Packaging", "Motion Design", "Editorial"];
-                  const isDefault = defaultCatNames.includes(b.name);
                   return (
                   <div key={b.id} onClick={() => { if (!isDefault) setEditingArtworkBadge(b); }} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 16px", borderRadius: 100, background: b.colorCode, color: b.textColor || "#fff", fontSize: 13, fontWeight: 600, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", paddingRight: isDefault ? 16 : 36, cursor: isDefault ? "default" : "pointer" }}>
                     <Star size={14} fill={b.textColor || "#fff"} />
@@ -3792,33 +3841,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
       submitTags.push("EBOOK_LANDSCAPE");
     }
 
-    const generateWatermarkDataURL = async (imgUrl, text) => {
-      const img = new window.Image();
-      img.crossOrigin = "anonymous";
-      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imgUrl; });
-      const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-      const wmText = text || "UEF";
-      const wmSize = Math.max(Math.min(canvas.width, canvas.height) * 0.04, 14);
-      ctx.font = `bold ${wmSize}px sans-serif`;
-      ctx.textAlign = "right";
-      ctx.textBaseline = "bottom";
-      const tw = ctx.measureText(wmText).width;
-      const pad = 20;
-      const bx = canvas.width - pad;
-      const by = canvas.height - pad;
-      const bh = wmSize * 1.8;
-      ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.beginPath();
-      ctx.roundRect(bx - tw - pad, by - bh, tw + pad, bh, 6);
-      ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,0.92)";
-      ctx.fillText(wmText, bx, by - bh / 2 + wmSize * 0.35);
-      return canvas.toDataURL("image/jpeg", 0.92);
-    };
+
 
     try {
       let finalWatermarkText = defaultWatermarkText || "UEF";
@@ -3830,8 +3853,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
         }
       } catch (e) {}
 
-      const watermarkedCover = await generateWatermarkDataURL(coverImage, finalWatermarkText);
-
+      const watermarkedCover = coverImage; // Backend will transform it
       setUploadState("analyzing_ai");
       const aiResult = await api.artworks.analyzeArtworkWithAI(coverImage);
       let uploadStatus = submissionType === "Final" ? "pending_approval" : "revision";
@@ -4048,7 +4070,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
                 {[{ key: false, label: t("individual"), desc: t("selfPerformed"), icon: <User size={16} /> }, { key: true, label: t("group"), desc: t("teamwork"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, padding: "10px 14px", borderRadius: 8, border: `1px solid ${isGroupProject === opt.key ? CERULEAN : GRAY_LIGHT}`, cursor: "pointer", background: isGroupProject === opt.key ? "#eef4ff" : GRAY_BG }}><span style={{ color: isGroupProject === opt.key ? CERULEAN : MUTED }}>{opt.icon}</span><div><p style={{ fontSize: 13, fontWeight: 600, color: isGroupProject === opt.key ? CERULEAN : BLACK, margin: 0 }}>{opt.label}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{opt.desc}</p></div></div>))}
               </div>
             </div>
-            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("addTeamMembers")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#e0eaff", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={u.avatarUrl || ""} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
+            {isGroupProject && (<div style={{ position: "relative" }}><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("addTeamMembers")}</label><div style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "10px 12px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, background: GRAY_BG, minHeight: 44 }}>{friends.map((f, i) => (<span key={f.id || i} style={{ background: "#e0eaff", color: CERULEAN, fontSize: 12, padding: "3px 10px", borderRadius: 12, display: "flex", alignItems: "center", gap: 5 }}><User size={12} /> {f.fullName || f}<X size={12} color={CERULEAN} onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} style={{ cursor: "pointer" }} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} style={{ border: "none", background: "transparent", outline: "none", fontSize: 13, minWidth: 120, color: BLACK, flex: 1 }} /></div>{friendResults.length > 0 && (<div style={{ position: "absolute", zIndex: 50, top: "100%", left: 0, right: 0, marginTop: 4, background: "#fff", border: `1px solid ${GRAY_LIGHT}`, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", maxHeight: 200, overflowY: "auto" }}>{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", cursor: "pointer", borderBottom: `1px solid ${GRAY_LIGHT}` }}><img src={getUserAvatar(u)} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", background: GRAY_BG }} /><div><p style={{ fontSize: 13, fontWeight: 500, margin: 0, color: BLACK }}>{u.fullName}</p><p style={{ fontSize: 11, color: MUTED, margin: 0 }}>{u.email}</p></div></div>))}</div>)}</div>)}
             <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} placeholder={t("describeYourArtwork")} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: `1px solid ${GRAY_LIGHT}`, fontSize: 13, color: BLACK, outline: "none", resize: "vertical", minHeight: 90, lineHeight: 1.6, boxSizing: "border-box", background: GRAY_BG, fontFamily: "inherit" }} /></div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div><label style={{ display: "block", fontSize: 12, fontWeight: 600, color: MUTED, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{t("category")} *</label>
@@ -4225,7 +4247,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
                <span style={{ fontSize: 18, fontWeight: 900, color: "#fff", letterSpacing: "-0.5px", marginRight: 8 }}>Bēhance</span>
                
                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                 <img src={currentUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", cursor: "pointer", border: "1px solid #333" }} />
+                 <img src={getUserAvatar(currentUser)} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", cursor: "pointer", border: "1px solid #333" }} />
                  <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                    <span style={{ fontSize: 15, fontWeight: 600, color: "#fff", lineHeight: "1.2" }}>{title || "Untitled Project"}</span>
                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#bbb" }}>
@@ -4250,7 +4272,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
            <div className="hidden xl:flex flex-col items-center gap-4 fixed right-6 top-[88px] z-[10020]">
               <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
                  <div className="relative">
-                    <img src={currentUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} className="w-9 h-9 rounded-full border-2 border-[#151515] object-cover group-hover:scale-105 transition-transform" />
+                    <img src={getUserAvatar(currentUser)} className="w-9 h-9 rounded-full border-2 border-[#151515] object-cover group-hover:scale-105 transition-transform" />
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#0057ff] rounded-full flex items-center justify-center text-white border-[1.5px] border-[#151515] font-bold text-[12px] leading-none pb-[1px]">+</div>
                  </div>
                  <span className="text-[11px] font-medium text-white">Follow</span>
@@ -4368,7 +4390,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
                        {/* Cột trái (Bình luận) */}
                        <div style={{ flex: "0 0 65%", paddingRight: 60 }}>
                           <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, marginBottom: 40, display: "flex", gap: 16, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
-                             <img src={currentUser?.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUser?.fullName || currentUser?.name || "User")} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
+                             <img src={getUserAvatar(currentUser)} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
                              <div style={{ flex: 1 }}>
                                <textarea placeholder="What are your thoughts on this project?" style={{ width: "100%", padding: "12px", borderRadius: 6, border: "1px solid #CCC", outline: "none", resize: "vertical", minHeight: 80, boxSizing: "border-box", fontSize: 14, fontFamily: "inherit" }} disabled />
                                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
@@ -4384,7 +4406,7 @@ function UploadPage({ setPage, setActiveArtworkId, pageParams }) {
                           <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
                              <span style={{ fontSize: 11, fontWeight: "bold", color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, display: "block" }}>Owner</span>
                              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                               <img src={currentUser?.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(currentUser?.fullName || currentUser?.name || "User")} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
+                               <img src={getUserAvatar(currentUser)} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }} />
                                <div>
                                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                    <h3 style={{ margin: 0, fontSize: 15, fontWeight: "bold", color: "#191919" }}>{currentUser?.fullName || currentUser?.name || "Author"}</h3>
@@ -4843,7 +4865,14 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, 
 
   useEffect(() => {
     if (canGrade && currentUserId) {
-      api.badges.list(currentUserId).then(setLecturerBadges).catch(console.error);
+      Promise.all([
+        api.badges.list('SYSTEM'),
+        api.badges.list(currentUserId)
+      ]).then(([sysB, myB]) => {
+        const all = [...sysB, ...myB];
+        const unique = Array.from(new Map(all.map(b => [b.id, b])).values());
+        setLecturerBadges(unique);
+      }).catch(console.error);
     }
   }, [canGrade, currentUserId]);
 
@@ -4922,6 +4951,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, 
         description: res.description || "",
         settings: parsedSettings
       });
+      if (res.viewCount !== undefined) {
+         window.dispatchEvent(new CustomEvent('artworkUpdate', { detail: { artworkId: activeArtworkId, type: 'view', count: res.viewCount } }));
+      }
       setIsLiked(res.isLiked || false);
       setLikeCount(res.likeCount || 0);
       setComments(res.comments || []);
@@ -4979,7 +5011,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, 
     setTimeout(() => setAnimatingLike(false), 300);
     const wasLiked = isLiked;
     setIsLiked(!wasLiked);
-    setLikeCount(prev => wasLiked ? Math.max(0, prev - 1) : prev + 1);
+    const newCount = wasLiked ? Math.max(0, likeCount - 1) : likeCount + 1;
+    setLikeCount(newCount);
+    window.dispatchEvent(new CustomEvent('artworkUpdate', { detail: { artworkId: activeArtworkId, type: 'like', count: newCount, isLiked: !wasLiked } }));
     try {
       if (wasLiked) {
         await api.artworks.unlike(activeArtworkId);
@@ -4988,7 +5022,9 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, 
       }
     } catch {
       setIsLiked(wasLiked);
-      setLikeCount(prev => wasLiked ? prev + 1 : Math.max(0, prev - 1));
+      const rollbackCount = wasLiked ? newCount + 1 : Math.max(0, newCount - 1);
+      setLikeCount(rollbackCount);
+      window.dispatchEvent(new CustomEvent('artworkUpdate', { detail: { artworkId: activeArtworkId, type: 'like', count: rollbackCount, isLiked: wasLiked } }));
     }
     setLiking(false);
   };
@@ -5001,10 +5037,18 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, 
       if (res.status === "assigned") {
         const badge = lecturerBadges.find(b => b.id === badgeId);
         if (badge) {
-          setArt(prev => ({ ...prev, badges: [...(prev.badges || []), badge] }));
+          setArt(prev => {
+             const newBadges = [...(prev.badges || []), badge];
+             window.dispatchEvent(new CustomEvent('artworkUpdate', { detail: { artworkId: activeArtworkId, type: 'badge', badges: newBadges } }));
+             return { ...prev, badges: newBadges };
+          });
         }
       } else {
-        setArt(prev => ({ ...prev, badges: (prev.badges || []).filter(b => b.id !== badgeId) }));
+        setArt(prev => {
+             const newBadges = (prev.badges || []).filter(b => b.id !== badgeId);
+             window.dispatchEvent(new CustomEvent('artworkUpdate', { detail: { artworkId: activeArtworkId, type: 'badge', badges: newBadges } }));
+             return { ...prev, badges: newBadges };
+        });
       }
     } catch (e) {
       alert("Error assigning badge: " + e.message);
@@ -5104,7 +5148,7 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, 
         positionY: rawComment.positionY ?? rawComment.PositionY,
         targetImageIndex: rawComment.targetImageIndex ?? rawComment.TargetImageIndex,
         createdAt: rawComment.createdAt || rawComment.CreatedAt || new Date().toISOString(),
-        user: rawComment.user || rawComment.User || { fullName: authUser?.fullName || "User", avatarUrl: authUser?.image || authUser?.avatarUrl || "" },
+        user: rawComment.user || rawComment.User || { fullName: authUser?.fullName || "User", avatarUrl: getUserAvatar(authUser) },
         parentId: rawComment.parentId ?? rawComment.ParentId ?? replyingTo?.id
       };
       setComments(prev => [newComment, ...prev]);
@@ -5206,8 +5250,8 @@ function DetailPage({ setPage, setActiveArtworkId, activeArtworkId, pageParams, 
     const dStr = (!dateStr.endsWith('Z') && !dateStr.includes('+')) ? dateStr + 'Z' : dateStr;
     const diff = Date.now() - new Date(dStr).getTime();
     const mins = Math.floor(diff / 60000);
-if (mins < 1) return t("justNow");
-      if (mins < 60) return t("minutesAgo").replace("{mins}", mins);
+    if (mins < 1) return t("justNow");
+    if (mins < 60) return t("minutesAgo").replace("{mins}", mins);
     const hours = Math.floor(mins / 60);
     if (hours < 24) return t("hoursAgo").replace("{hours}", hours);
     const days = Math.floor(hours / 24);
@@ -5216,33 +5260,40 @@ if (mins < 1) return t("justNow");
   };
 
   const drawWatermarkedImage = async (imgUrl, fmt = "png") => {
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = imgUrl; });
-    const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
-    const wmText = art.watermarkText || "UEF";
-    const wmSize = Math.max(Math.min(canvas.width, canvas.height) * 0.04, 14);
-    ctx.font = `bold ${wmSize}px sans-serif`;
-    ctx.textAlign = "right";
-    ctx.textBaseline = "bottom";
-    const tw = ctx.measureText(wmText).width;
-    const pad = 20;
-    const bx = canvas.width - pad;
-    const by = canvas.height - pad;
-    const bh = wmSize * 1.8;
-    ctx.fillStyle = "rgba(0,0,0,0.6)";
-    ctx.beginPath();
-    ctx.roundRect(bx - tw - pad, by - bh, tw + pad, bh, 6);
-    ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.92)";
-    ctx.fillText(wmText, bx, by - bh / 2 + wmSize * 0.35);
-    const mime = fmt === "jpg" ? "image/jpeg" : "image/png";
-    const blob = await new Promise(res => canvas.toBlob(b => res(b), mime, fmt === "jpg" ? 0.92 : undefined));
-    return { blob, width: canvas.width, height: canvas.height };
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+      img.crossOrigin = "anonymous";
+      
+      const processImage = (imageElement) => {
+        try {
+          const canvas = document.createElement("canvas");
+          canvas.width = imageElement.naturalWidth;
+          canvas.height = imageElement.naturalHeight;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(imageElement, 0, 0);
+          canvas.toBlob(blob => {
+            resolve({ blob, width: imageElement.naturalWidth, height: imageElement.naturalHeight });
+          }, `image/${fmt}`, 1.0);
+        } catch (e) {
+          reject(e);
+        }
+      };
+
+      img.onload = () => processImage(img);
+      img.onerror = () => {
+        if (!imgUrl.includes("proxy-image")) {
+          const proxyUrl = "/api/artworks/proxy-image?url=" + encodeURIComponent(imgUrl);
+          const proxyImg = new window.Image();
+          proxyImg.crossOrigin = "anonymous";
+          proxyImg.onload = () => processImage(proxyImg);
+          proxyImg.onerror = () => reject(new Error("CORS Proxy load failed"));
+          proxyImg.src = proxyUrl;
+        } else {
+          reject(new Error("Image load failed"));
+        }
+      };
+      img.src = imgUrl;
+    });
   };
 
   const getPdfBlob = async ({ blob, width, height }) => {
@@ -5358,7 +5409,7 @@ if (mins < 1) return t("justNow");
           {/* BEHANCE HEADER */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", background: "#191919", color: "#fff", width: "100%", zIndex: 50, position: "relative" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <img onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", cursor: "pointer", border: "2px solid #333" }} />
+              <img onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} src={getUserAvatar(art.user)} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", cursor: "pointer", border: "2px solid #333" }} />
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <span style={{ fontSize: 16, fontWeight: "bold", color: "#fff" }}>{art.title}</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "#bbb" }}>
@@ -5543,13 +5594,19 @@ if (mins < 1) return t("justNow");
                 </div>
               )
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+              <div style={{ 
+                display: "flex", 
+                flexDirection: "column",
+                gap: 0, 
+                width: "100%",
+                alignItems: "center"
+              }}>
                 {/* Toolbar moved to header */}
                 {allImagesDeduped.map((img, i) => {
                   if (!img) return null;
                   const imageComments = comments?.filter(c => c.targetImageIndex === i && c.positionX != null) || [];
                   return (
-                    <div key={i} style={{ width: "100%", position: "relative" }} onMouseEnter={e => {
+                    <div key={i} style={{ width: "100%", position: "relative", marginBottom: 0 }} onMouseEnter={e => {
                       const overlay = e.currentTarget.querySelector('.img-hover-actions');
                       if(overlay) overlay.style.opacity = 1;
                     }} onMouseLeave={e => {
@@ -5558,7 +5615,7 @@ if (mins < 1) return t("justNow");
                     }}>
                       <img 
                         src={img} 
-                        style={{ width: "100%", display: "block", cursor: (pinpointMode && (currentUserRole === "lecturer" || currentUserRole === "admin")) ? "crosshair" : "default" }} 
+                        style={{ width: "100%", height: "auto", display: "block", cursor: (pinpointMode && (currentUserRole === "lecturer" || currentUserRole === "admin")) ? "crosshair" : "default" }} 
                         alt="" 
                         onClick={(e) => {
                           if (!pinpointMode || (currentUserRole !== "lecturer" && currentUserRole !== "admin")) return;
@@ -5628,7 +5685,7 @@ if (mins < 1) return t("justNow");
                             {isActive && (
                               <div style={{ position: "absolute", top: 16, left: 16, background: "#fff", padding: 16, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", width: 250, display: "flex", flexDirection: "column", gap: 8, cursor: "default" }} onClick={e => e.stopPropagation()}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                                  <img src={c.user?.avatarUrl || c.User?.AvatarUrl || "https://ui-avatars.com/api/?name=User"} style={{ width: 24, height: 24, borderRadius: "50%" }} alt="" />
+                                  <img src={getUserAvatar(c.user || c.User)} style={{ width: 24, height: 24, borderRadius: "50%" }} alt="" />
                                   <span style={{ fontSize: 13, fontWeight: "bold", color: "#333" }}>{c.user?.fullName || c.User?.FullName}</span>
                                 </div>
                                 <div style={{ fontSize: 14, color: "#444", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
@@ -5787,7 +5844,7 @@ if (mins < 1) return t("justNow");
                                     {isActive && (
                                       <div style={{ position: "absolute", top: 16, left: 16, background: "#fff", padding: 16, borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", width: 250, display: "flex", flexDirection: "column", gap: 8, cursor: "default" }} onClick={e => e.stopPropagation()}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                                          <img src={c.user?.avatarUrl || c.User?.AvatarUrl || "https://ui-avatars.com/api/?name=User"} style={{ width: 24, height: 24, borderRadius: "50%" }} alt="" />
+                                          <img src={getUserAvatar(c.user || c.User)} style={{ width: 24, height: 24, borderRadius: "50%" }} alt="" />
                                           <span style={{ fontSize: 13, fontWeight: "bold", color: "#333" }}>{c.user?.fullName || c.User?.FullName}</span>
                                         </div>
                                         <div style={{ fontSize: 14, color: "#444", whiteSpace: "pre-wrap", lineHeight: 1.5 }}>
@@ -5876,7 +5933,7 @@ if (mins < 1) return t("justNow");
             {/* Tác giả & Related Artworks */}
             <div style={{ width: "100%", display: "flex", flexDirection: "column", borderTop: "1px solid #333", paddingTop: 40 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 32 }}>
-                <img onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
+                <img onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} src={getUserAvatar(art.user)} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <h3 onClick={() => { if(art.user?.portfolioSettings?.portfolioSlug) setPage("portfolio", { portfolioSlug: art.user.portfolioSettings.portfolioSlug }); else setPage("portfolio", { portfolioSlug: art.user?.id || art.userId }); }} style={{ margin: 0, fontSize: 16, fontWeight: "bold", color: "#fff", cursor: "pointer" }}>
@@ -5977,14 +6034,14 @@ if (mins < 1) return t("justNow");
               {/* Bình luận Input */}
               {replyingTo ? (
                 <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: "16px 24px", marginBottom: 40, display: "flex", gap: 16, alignItems: "center", cursor: "pointer", transition: "background 0.2s" }} onClick={() => { setReplyingTo(null); setCommentText(""); }} onMouseEnter={e => e.currentTarget.style.background = "#fafafa"} onMouseLeave={e => e.currentTarget.style.background = "#fff"}>
-                  <img src={authUser?.image || authUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+                  <img src={getUserAvatar(authUser)} style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
                   <div style={{ flex: 1, padding: "10px 16px", background: "#f0f2f5", borderRadius: 20, color: "#65676b", fontSize: 14 }}>
                     Viết bình luận mới...
                   </div>
                 </div>
               ) : (
                 <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, marginBottom: 40, display: "flex", gap: 16, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
-                <img src={authUser?.image || authUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
+                <img src={getUserAvatar(authUser)} style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover" }} />
                 <div style={{ flex: 1, position: "relative" }}>
                   {pendingComment && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, background: "#eef4ff", padding: "8px 12px", borderRadius: 6, color: CERULEAN, fontSize: 13, fontWeight: "bold" }}>
@@ -6002,7 +6059,7 @@ if (mins < 1) return t("justNow");
                       ) : (
                         mentionState.results.map((mu, index) => (
                           <div key={mu.id} onClick={() => handleSelectMention(mu)} onMouseEnter={e => e.currentTarget.style.background = "#f0f2f5"} onMouseLeave={e => e.currentTarget.style.background = "transparent"} style={{ padding: "10px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", transition: "background 0.2s" }}>
-                            <img src={mu.avatarUrl || "https://i.pravatar.cc/150"} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+                            <img src={getUserAvatar(mu)} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
                             <div style={{ display: "flex", flexDirection: "column" }}>
                                 <span style={{ fontSize: 14, fontWeight: 600, color: "#1c1e21" }}>{mu.fullName}</span>
                                 <span style={{ fontSize: 12, color: "#65676b" }}>{mu.role === 'lecturer' ? 'Giảng viên' : (mu.role === 'admin' ? 'Admin' : 'Sinh viên')}</span>
@@ -6035,7 +6092,7 @@ if (mins < 1) return t("justNow");
                     return (
                       <div id={"comment-" + currentId} key={currentId || Math.random()} style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: isReply ? 16 : 0, marginLeft: isReply ? 48 : 0, borderRadius: 8 }}>
                         <div style={{ display: "flex", gap: 16 }}>
-                          <img onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} src={c.user?.image || c.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: isReply ? 32 : 40, height: isReply ? 32 : 40, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
+                          <img onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} src={getUserAvatar(c.user)} style={{ width: isReply ? 32 : 40, height: isReply ? 32 : 40, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
                           <div style={{ flex: 1 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                               <span onClick={() => { setPage("portfolio", { portfolioSlug: c.user?.portfolioSettings?.portfolioSlug || c.user?.id || c.userId }); }} style={{ fontWeight: "bold", color: "#191919", fontSize: 14, cursor: "pointer", textDecoration: "none" }} onMouseEnter={e=>e.currentTarget.style.textDecoration="underline"} onMouseLeave={e=>e.currentTarget.style.textDecoration="none"}>{c.user?.fullName}</span>
@@ -6086,7 +6143,7 @@ if (mins < 1) return t("justNow");
                         )}
                         {replyingTo?.id === currentId && (
                           <div style={{ display: "flex", gap: 12, marginTop: 12, marginLeft: isReply ? 48 : 0, transition: "all 0.3s" }}>
-                            <img src={authUser?.image || authUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                            <img src={getUserAvatar(authUser)} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
                             <div style={{ flex: 1, position: "relative" }}>
                               <textarea 
                                 id={"comment-textarea-inline-" + currentId} 
@@ -6103,7 +6160,7 @@ if (mins < 1) return t("justNow");
                                   ) : (
                                     mentionState.results.map((mu, index) => (
                                       <div key={mu.id} onClick={() => handleSelectMention(mu)} onMouseEnter={e => e.currentTarget.style.background = "#f0f2f5"} onMouseLeave={e => e.currentTarget.style.background = "transparent"} style={{ padding: "10px 16px", display: "flex", alignItems: "center", gap: 12, cursor: "pointer", transition: "background 0.2s" }}>
-                                        <img src={mu.avatarUrl || "https://i.pravatar.cc/150"} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+                                        <img src={getUserAvatar(mu)} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
                                         <div style={{ display: "flex", flexDirection: "column" }}>
                                             <span style={{ fontSize: 14, fontWeight: 600, color: "#1c1e21" }}>{mu.fullName}</span>
                                             <span style={{ fontSize: 12, color: "#65676b" }}>{mu.role === 'lecturer' ? 'Giảng viên' : (mu.role === 'admin' ? 'Admin' : 'Sinh viên')}</span>
@@ -6136,7 +6193,7 @@ if (mins < 1) return t("justNow");
               <div style={{ background: "#fff", border: "1px solid #EAEAEA", borderRadius: 8, padding: 24, boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
                 <span style={{ fontSize: 11, fontWeight: "bold", color: "#888", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16, display: "block" }}>Owner</span>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-                  <img onClick={() => { setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=60"} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
+                  <img onClick={() => { setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} src={getUserAvatar(art.user)} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", cursor: "pointer" }} />
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <h3 onClick={() => { setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} style={{ margin: 0, fontSize: 15, fontWeight: "bold", color: "#191919", cursor: "pointer" }}>{art.user?.fullName}</h3>
@@ -6296,7 +6353,7 @@ if (mins < 1) return t("justNow");
                 setIsFollowingAnimPlaying(false);
               }
             }}>
-              <img onClick={(e) => { e.stopPropagation(); setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} src={art.user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=40"} style={{ width: 36, height: 36, borderRadius: "50%", border: "2px solid #191919", objectFit: "cover", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"} />
+              <img onClick={(e) => { e.stopPropagation(); setPage("portfolio", { portfolioSlug: art.user?.portfolioSettings?.portfolioSlug || art.user?.id || art.userId }); }} src={getUserAvatar(art.user)} style={{ width: 36, height: 36, borderRadius: "50%", border: "2px solid #191919", objectFit: "cover", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"} />
               
               {(!isFollowing || isFollowingAnimPlaying) && (
                 <div style={{ position: "absolute", bottom: 18, right: -4, width: 18, height: 18, borderRadius: "50%", background: "#0057ff", color: "#fff", border: "2px solid #191919", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: "bold", padding: 0, transition: "background 0.3s" }}>
@@ -6311,7 +6368,7 @@ if (mins < 1) return t("justNow");
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform 0.2s" }} onMouseEnter={e => e.currentTarget.style.transform="scale(1.1)"} onMouseLeave={e => e.currentTarget.style.transform="scale(1)"}>
                 <Mail size={14} color="#191919" />
               </div>
-              <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>Hire</span>
+              <span style={{ fontSize: 10, fontWeight: "bold", color: "#fff" }}>Order</span>
             </div>
 
             {(authUser?.role === "lecturer" || authUser?.role === "admin") && (
@@ -8220,7 +8277,7 @@ function EditArtworkPage({ setPage, activeArtworkId }) {
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("courseName")}</label><input value={title} onChange={e => setTitle(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none focus:border-[#1a4ba8] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("projectType")}</label><div className="flex gap-1.5">{["Năm 1", "Năm 2", "Năm 3", "Năm 4", "Tốt nghiệp"].map((y) => (<button key={y} onClick={() => setProjectYear(y)} className={`flex-1 py-2 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${projectYear === y ? 'bg-[#eef4ff] border-[#1a4ba8] text-[#1a4ba8]' : 'bg-[#F8F8F8] border-[#E0E0E0] text-[#666666]'}`}>{y}</button>))}</div></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("assignmentType")}</label><div className="flex gap-3">{[{ key: false, label: t("individual"), icon: <User size={16} /> }, { key: true, label: t("group"), icon: <Users size={16} /> }].map((opt) => (<div key={opt.label} onClick={() => setIsGroupProject(opt.key)} className={`flex items-center gap-2 flex-1 px-4 py-2.5 rounded-lg border cursor-pointer ${isGroupProject === opt.key ? 'bg-[#eef4ff] border-[#1a4ba8]' : 'bg-[#F8F8F8] border-[#E0E0E0]'}`}><span className={isGroupProject === opt.key ? 'text-[#1a4ba8]' : 'text-[#666666]'}>{opt.icon}</span><span className={`text-sm font-semibold ${isGroupProject === opt.key ? 'text-[#1a4ba8]' : 'text-[#212121]'}`}>{opt.label}</span></div>))}</div></div>
-            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#e0eaff] text-[#1a4ba8] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={u.avatarUrl || ''} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
+            {isGroupProject && (<div className="relative"><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("addTeamMembers")}</label><div className="flex flex-wrap gap-2 p-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] min-h-[44px]">{friends.map((f, i) => (<span key={f.id || i} className="inline-flex items-center gap-1.5 bg-[#e0eaff] text-[#1a4ba8] text-xs px-2.5 py-1 rounded-full"><User size={12} /> {f.fullName || f}  <X size={10} className="cursor-pointer" onClick={() => setFriends(friends.filter((_, idx) => idx !== i))} /></span>))}<input value={friendInput} onChange={e => handleFriendSearch(e.target.value)} placeholder={t("enterNameOrEmail")} className="border-none bg-transparent outline-none text-sm min-w-[120px] text-[#212121] flex-1" /></div>{friendResults.length > 0 && (<div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white border border-[#E0E0E0] rounded-lg shadow-lg max-h-48 overflow-y-auto">{friendResults.map(u => (<div key={u.id} onClick={() => addFriend(u)} className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#F8F8F8] cursor-pointer border-b border-[#E0E0E0] last:border-b-0"><img src={getUserAvatar(u)} alt="" className="w-7 h-7 rounded-full object-cover bg-[#E0E0E0]" /><div><p className="text-sm font-medium text-[#212121]">{u.fullName}</p><p className="text-xs text-[#666666]">{u.email}</p></div></div>))}</div>)}</div>)}
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("description")}</label><textarea value={description} onChange={e => setDescription(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-[#212121] text-sm outline-none min-h-[80px] resize-y focus:border-[#1a4ba8] focus:bg-white transition-colors" /></div>
             <div><label className="block text-xs font-semibold text-[#666666] uppercase tracking-wider mb-2">{t("category")}</label>
               <select value={subject} onChange={e => setSubject(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border border-[#E0E0E0] bg-[#F8F8F8] text-sm text-[#212121] outline-none focus:border-[#1a4ba8] focus:bg-white transition-colors cursor-pointer">
@@ -8477,7 +8534,7 @@ function AdminUsersPage({ setPage }) {
                 <tr key={u.id} onClick={(e) => { if (!e.target.closest("button")) setEditModal({ isOpen: true, user: u }) }} className="border-b border-[#E0E0E0] hover:bg-[#F8F8F8] transition-colors cursor-pointer">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <img src={u.avatarUrl || "https://ui-avatars.com/api/?name=" + encodeURIComponent(u.fullName || "User") + "&background=random"} className="w-8 h-8 rounded-full object-cover bg-[#E0E0E0]" />
+                      <img src={getUserAvatar(u)} className="w-8 h-8 rounded-full object-cover bg-[#E0E0E0]" />
                       <span className="text-sm font-semibold text-[#212121]">{u.fullName}</span>
                     </div>
                   </td>
@@ -8542,7 +8599,7 @@ function AdminUsersPage({ setPage }) {
               <div className="space-y-4">
                 <h4 className="font-semibold text-[#1a4ba8] border-b pb-2">Thông tin cơ bản</h4>
                 <div className="flex items-center gap-4 mb-4">
-                  <img src={editModal.user.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(editModal.user.fullName || "User")}&background=random`} alt="Avatar" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
+                  <img src={getUserAvatar(editModal.user)} alt="Avatar" className="w-16 h-16 rounded-full object-cover border border-gray-200" />
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Họ và tên</label>
                     <input type="text" value={editModal.user.fullName || ""} onChange={e => handleEditChange("fullName", e.target.value)} className="w-full border border-gray-300 rounded-md px-3 py-1.5 text-sm" />
@@ -11882,7 +11939,7 @@ function SettingsPage({ setPage, userData }) {
           <div className="bg-white border border-[#E0E0E0] rounded-xl p-6 mb-6">
             <h3 className="font-bold text-[#212121] mb-4">{t("avatar")}</h3>
             <div className="flex items-center gap-6">
-              <img src={pendingAvatar || profile.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&q=80"} className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
+              <img src={pendingAvatar || getUserAvatar(profile)} className="w-20 h-20 rounded-full object-cover border-2 border-[#E0E0E0]" />
               <div>
                 <div className="flex gap-3 mb-2">
                   <input type="file" id="avatarInput" accept="image/*" style={{ display: "none" }} onChange={(e) => {
